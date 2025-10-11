@@ -10,6 +10,7 @@ export class UserEntity {
 
   createdAt: Date;
   updatedAt: Date;
+  refreshToken?: string | null;
 
 
 }
