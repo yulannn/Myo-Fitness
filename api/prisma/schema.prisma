@@ -7,6 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Goal {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  ENDURANCE
+  MAINTENANCE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -15,5 +34,33 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   refreshToken String? 
+  fitnessProfiles FitnessProfile[]
 }
 
+model FitnessProfile {
+  id          Int      @id @default(autoincrement())
+  userId     Int
+  age        Int
+  height    Float
+  weight    Float
+  trainingFrequency Int
+  experienceLevel ExperienceLevel
+  goals      Goal[]
+  gender    Gender
+  gym       Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  weightHistory WeightHistory[]
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+
+model WeightHistory {
+  id          Int      @id @default(autoincrement())
+  fitnessProfileId Int
+  weight      Float
+  date        DateTime @default(now())
+
+  fitnessProfile FitnessProfile @relation(fields: [fitnessProfileId], references: [id], onDelete: Cascade)
+}
