@@ -24,8 +24,17 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Body() signUpDto: SignUpDto) {
-    return this.authService.register(signUpDto);
+  async register(@Body() signUpDto: SignUpDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.register(signUpDto);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { accessToken: result.accessToken, user: result.user };
   }
 
   @UseGuards(AuthGuard('jwt'))
