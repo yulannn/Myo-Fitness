@@ -9,22 +9,33 @@ export class ExerciceService {
   constructor(private prisma: PrismaService) { }
 
   async create(createExerciceDto: CreateExerciceDto): Promise<ExerciceEntity> {
-    const { muscleGroupIds, ...exerciceData } = createExerciceDto;
+    const { muscleGroupIds, equipmentIds, ...exerciceData } = createExerciceDto;
+
     const exercice = await this.prisma.exercice.create({
       data: {
         ...exerciceData,
         groupes: {
-          create: muscleGroupIds.map((groupeId) => ({ groupeId })),
+          create: muscleGroupIds?.map((groupeId) => ({ groupeId })) || [],
+        },
+        equipments: {
+          create: equipmentIds?.map((equipmentId) => ({
+            equipment: { connect: { id: equipmentId } },
+          })) || [],
         },
       },
-      include: { groupes: true },
+      include: {
+        groupes: { include: { groupe: true } },
+        equipments: { include: { equipment: true } },
+      },
     });
+
     return exercice;
   }
 
+
   async findAll(): Promise<ExerciceEntity[]> {
     const exercices = await this.prisma.exercice.findMany({
-      include: { groupes: { include: { groupe: true } } },
+      include: { groupes: { include: { groupe: true } }, equipments: true },
     });
 
     if (!exercices) {
@@ -37,7 +48,7 @@ export class ExerciceService {
   async findOne(id: number): Promise<ExerciceEntity> {
     const exercice = await this.prisma.exercice.findUnique({
       where: { id },
-      include: { groupes: true },
+      include: { groupes: true, equipments: true },
     });
 
     if (!exercice) {
@@ -48,38 +59,73 @@ export class ExerciceService {
   }
 
   async update(id: number, updateExerciceDto: UpdateExerciceDto): Promise<ExerciceEntity> {
+    const { muscleGroupIds, equipmentIds, ...exerciceData } = updateExerciceDto;
+
     const exercice = await this.prisma.exercice.findUnique({
       where: { id },
-      include: { groupes: true },
+      include: { groupes: true, equipments: true },
     });
+    if (!exercice) throw new Error(`Exercice with id ${id} not found`);
 
-    if (!exercice) {
-      throw new Error(`Exercice with id ${id} not found`);
-    }
-
-    if (updateExerciceDto.muscleGroupIds && updateExerciceDto.muscleGroupIds !== exercice.groupes.map(g => g.groupeId)) {
+    if (muscleGroupIds) {
       await this.prisma.exerciceMuscleGroup.deleteMany({
         where: { exerciceId: id },
       });
-
       await this.prisma.exerciceMuscleGroup.createMany({
-        data: updateExerciceDto.muscleGroupIds.map(groupeId => ({
-          exerciceId: id,
-          groupeId,
-        })),
+        data: muscleGroupIds.map((groupeId) => ({ exerciceId: id, groupeId })),
       });
     }
 
-    return await this.prisma.exercice.update({
+    if (equipmentIds) {
+      await this.prisma.exerciseEquipment.deleteMany({
+        where: { exerciceId: id },
+      });
+      await this.prisma.exerciseEquipment.createMany({
+        data: equipmentIds.map((equipmentId) => ({ exerciceId: id, equipmentId })),
+      });
+    }
+
+    const updatedExercice = await this.prisma.exercice.update({
       where: { id },
-      data: updateExerciceDto,
-      include: { groupes: true },
+      data: exerciceData,
+      include: {
+        groupes: { include: { groupe: true } },
+        equipments: { include: { equipment: true } },
+      },
     });
+
+    return updatedExercice;
   }
+
 
   remove(id: number) {
     return this.prisma.exercice.delete({
       where: { id },
     });
+  }
+
+
+  async addEquipment(exerciceId: number, equipmentId: number): Promise<ExerciceEntity> {
+    try {
+      const exercice = await this.prisma.exercice.findUnique({
+        where: { id: exerciceId },
+        include: { equipments: true },
+      });
+
+      if (!exercice) {
+        throw new Error('Exercice not found');
+      }
+
+      await this.prisma.exerciseEquipment.create({
+        data: {
+          exerciceId,
+          equipmentId,
+        },
+      });
+
+      return exercice;
+    } catch (error) {
+      throw new Error('Failed to add equipment to exercice: ' + error.message);
+    }
   }
 }

@@ -16,5 +16,10 @@ export class CreateExerciceDto {
 
   @IsArray()
   @IsInt({ each: true, message: 'Chaque groupe musculaire doit être un entier (id).' })
-  muscleGroupIds: number[];
+  muscleGroupIds?: number[];
+
+  @IsArray()
+  @IsInt({ each: true, message: 'Chaque équipement doit être un entier (id).' })
+  @IsOptional()
+  equipmentIds?: number[];
 }

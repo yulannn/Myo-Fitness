@@ -31,7 +31,7 @@ export class AuthService {
     async signIn(user: SafeUser): Promise<AuthResultDto> {
         const payload = { sub: user.id, email: user.email };
 
-        const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
+        const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
         const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
 
         await this.usersService.updateUser(user.id, { refreshToken: refreshToken });

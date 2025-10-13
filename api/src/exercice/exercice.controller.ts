@@ -33,4 +33,9 @@ export class ExerciceController {
   remove(@Param('id') id: string) {
     return this.exerciceService.remove(+id);
   }
+
+  @Post(':id/equipments/:equipmentId')
+  addEquipment(@Param('id') exerciceId: string, @Param('equipmentId') equipmentId: string) {
+    return this.exerciceService.addEquipment(+exerciceId, +equipmentId);
+  }
 }
