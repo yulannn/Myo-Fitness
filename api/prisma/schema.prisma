@@ -34,6 +34,19 @@ enum ProgramStatus {
 }
 
 
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -41,9 +54,16 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  refreshToken String? 
+  refreshToken String?
+
   fitnessProfiles FitnessProfile[]
   exercicesCreated Exercice[]  @relation("ExerciceCreatedBy")
+
+  // Relations sociales
+  friends       Friend[]        @relation("UserFriends")
+  friendsOf     Friend[]        @relation("UserFriendsReverse")
+  sentRequests  FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
 }
 
 model FitnessProfile {
@@ -106,8 +126,8 @@ model Exercice {
   name          String
   difficulty    Int
   description   String?
-  isDefault   Boolean  @default(true)  // ← exercice officiel (accessible à tous)
-  createdByUserId Int?                 // ← optionnel : null = exercice global
+  isDefault   Boolean  @default(true) 
+  createdByUserId Int?                 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
 
@@ -184,4 +204,30 @@ model ExerciceEquipment {
   equipment     Equipment  @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@id([exerciceId, equipmentId])
+}
+
+
+model Friend {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  friendId Int
+  status   FriendStatus @default(ACCEPTED) 
+
+  user   User @relation("UserFriends", fields: [userId], references: [id])
+  friend User @relation("UserFriendsReverse", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+}
+
+model FriendRequest {
+  id         String        @id @default(uuid())
+  senderId   Int
+  receiverId Int
+  status     RequestStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
 }

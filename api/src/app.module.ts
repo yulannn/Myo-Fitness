@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { FitnessProfileModule } from './fitness-profile/fitness-profile.module';
 import { ExerciceModule } from './exercice/exercice.module';
 import { EquipmentModule } from './equipment/equipment.module';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule],
+  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule],
   controllers: [AppController],
   providers: [AppService],
 })
