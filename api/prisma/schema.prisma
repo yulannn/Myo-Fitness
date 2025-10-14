@@ -43,6 +43,7 @@ model User {
   updatedAt DateTime @default(now()) @updatedAt
   refreshToken String? 
   fitnessProfiles FitnessProfile[]
+  exercicesCreated Exercice[]  @relation("ExerciceCreatedBy")
 }
 
 model FitnessProfile {
@@ -105,12 +106,15 @@ model Exercice {
   name          String
   difficulty    Int
   description   String?
+  isDefault   Boolean  @default(true)  // ← exercice officiel (accessible à tous)
+  createdByUserId Int?                 // ← optionnel : null = exercice global
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
 
   groupes       ExerciceMuscleGroup[]
   trainingSession      ExerciceSession[]
-  equipments    ExerciseEquipment[]
+  equipments    ExerciceEquipment[]
+  createdBy   User?     @relation("ExerciceCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
 
 }
 
@@ -157,7 +161,7 @@ model ExerciceMuscleGroup {
 model MuscleGroup {
   id          Int      @id @default(autoincrement())
   name       String   @unique
-  exercises  ExerciceMuscleGroup[]
+  exercices  ExerciceMuscleGroup[]
 }
 
 
@@ -168,11 +172,11 @@ model Equipment {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  exercices  ExerciseEquipment[]
+  exercices  ExerciceEquipment[]
 }
 
 
-model ExerciseEquipment {
+model ExerciceEquipment {
   exerciceId    Int
   equipmentId   Int
 

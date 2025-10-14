@@ -8,12 +8,14 @@ import { ExerciceEntity } from './entities/exercice.entity';
 export class ExerciceService {
   constructor(private prisma: PrismaService) { }
 
-  async create(createExerciceDto: CreateExerciceDto): Promise<ExerciceEntity> {
+  async create(createExerciceDto: CreateExerciceDto, userId: number): Promise<ExerciceEntity> {
     const { muscleGroupIds, equipmentIds, ...exerciceData } = createExerciceDto;
 
     const exercice = await this.prisma.exercice.create({
       data: {
         ...exerciceData,
+        isDefault: false,
+        createdByUserId: userId,
         groupes: {
           create: muscleGroupIds?.map((groupeId) => ({ groupeId })) || [],
         },
@@ -22,6 +24,7 @@ export class ExerciceService {
             equipment: { connect: { id: equipmentId } },
           })) || [],
         },
+
       },
       include: {
         groupes: { include: { groupe: true } },
@@ -33,8 +36,14 @@ export class ExerciceService {
   }
 
 
-  async findAll(): Promise<ExerciceEntity[]> {
+  async findAll(userId: number): Promise<ExerciceEntity[]> {
     const exercices = await this.prisma.exercice.findMany({
+      where: {
+        OR: [
+          { isDefault: true },
+          { createdByUserId: userId },
+        ],
+      },
       include: { groupes: { include: { groupe: true } }, equipments: true },
     });
 
@@ -67,6 +76,10 @@ export class ExerciceService {
     });
     if (!exercice) throw new Error(`Exercice with id ${id} not found`);
 
+    if (exercice.isDefault) {
+      throw new Error('Cannot modify a default exercice');
+    }
+
     if (muscleGroupIds) {
       await this.prisma.exerciceMuscleGroup.deleteMany({
         where: { exerciceId: id },
@@ -77,10 +90,10 @@ export class ExerciceService {
     }
 
     if (equipmentIds) {
-      await this.prisma.exerciseEquipment.deleteMany({
+      await this.prisma.exerciceEquipment.deleteMany({
         where: { exerciceId: id },
       });
-      await this.prisma.exerciseEquipment.createMany({
+      await this.prisma.exerciceEquipment.createMany({
         data: equipmentIds.map((equipmentId) => ({ exerciceId: id, equipmentId })),
       });
     }
@@ -98,7 +111,16 @@ export class ExerciceService {
   }
 
 
-  remove(id: number) {
+  async remove(id: number) {
+    const exercice = await this.prisma.exercice.findUnique({
+      where: { id },
+    });
+    if (!exercice) throw new Error(`Exercice with id ${id} not found`);
+
+    if (exercice.isDefault) {
+      throw new Error('Cannot delete a default exercice');
+    }
+
     return this.prisma.exercice.delete({
       where: { id },
     });
@@ -116,7 +138,7 @@ export class ExerciceService {
         throw new Error('Exercice not found');
       }
 
-      await this.prisma.exerciseEquipment.create({
+      await this.prisma.exerciceEquipment.create({
         data: {
           exerciceId,
           equipmentId,

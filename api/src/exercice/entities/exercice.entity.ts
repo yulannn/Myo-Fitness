@@ -5,6 +5,8 @@ export class ExerciceEntity implements Exercice {
   name: string;
   difficulty: number;
   description: string | null;
+  isDefault: boolean;
+  createdByUserId: number | null;
   createdAt: Date;
   updatedAt: Date;
 
