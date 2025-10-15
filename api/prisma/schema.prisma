@@ -46,6 +46,24 @@ enum RequestStatus {
   REJECTED
 }
 
+enum ExerciceType {
+  COMPOUND
+  ISOLATION
+  CARDIO
+  MOBILITY
+  STRETCH
+}
+
+enum ProgramTemplate {
+  FULL_BODY
+  PUSH_PULL_LEGS
+  UPPER_LOWER
+  UPPER_LOWER_PUSH_PULL
+  PUSH_PULL_LEGS_CARDIO
+  CUSTOM
+}
+
+
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -101,6 +119,7 @@ model TrainingProgram {
   fitnessProfileId   Int
   name       String
   description String
+  template ProgramTemplate?
   status     ProgramStatus @default(DRAFT)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -126,6 +145,7 @@ model Exercice {
   name          String
   difficulty    Int
   description   String?
+  type         ExerciceType? 
   isDefault   Boolean  @default(true) 
   createdByUserId Int?                 
   createdAt     DateTime        @default(now())
