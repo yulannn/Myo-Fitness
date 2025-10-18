@@ -64,7 +64,6 @@ export class ProgramService {
         const createdSession = await prisma.trainingSession.create({
           data: {
             programId: createdProgram.id,
-            date: new Date(),
             notes: session.name,
           },
         });

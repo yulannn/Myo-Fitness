@@ -62,7 +62,7 @@ export class IaService {
     const prompt = `
           Tu es un coach sportif expert.
           L'utilisateur a un profil "${fitnessProfile.experienceLevel}" qui s'entraîne ${fitnessProfile.trainingFrequency} fois par semaine.
-          Tu dois lui proposer un programme ${template} en choisissant des exercices adaptés dans la liste en recouvrant chaque groupe musculaire correspondant au type séances.
+          Tu dois lui proposer un programme ${template} en choisissant au moins 4 à 5 exercices par séance en travaillant les groupes musculaires correspondants à la séance.
 
           Retourne STRICTEMENT du JSON valide (Rien d'autre). Le format attendu est :
           {
@@ -78,6 +78,8 @@ export class IaService {
           Voici la liste d'exercices disponibles (ID - NOM) :
           ${exercices.map(e => `ID: ${e.id} - ${e.name}`).join('\n')}
 
+          Ne renvoie pas d'id d'exercice qui n'est pas dans cette liste.
+
           Respecte strictement le format JSON demandé et ne fournis aucun texte supplémentaire.
               `;
 
@@ -89,7 +91,7 @@ export class IaService {
         { role: 'user', content: prompt },
       ],
       temperature: 0.2,
-      max_tokens: 800,
+      max_tokens: 1000,
     });
 
     const response = completion.choices[0]?.message?.content?.trim();
