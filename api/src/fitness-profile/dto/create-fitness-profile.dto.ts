@@ -38,5 +38,5 @@ export class CreateFitnessProfileDto {
   gender: Gender;
 
   @IsBoolean()
-  gym: boolean;
+  bodyWeight: boolean;
 }

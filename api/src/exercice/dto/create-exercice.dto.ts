@@ -14,6 +14,13 @@ export class CreateExerciceDto {
   @IsString()
   description?: string;
 
+  @IsString()
+  bodyWeight: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  Materials?: boolean;
+
   @IsArray()
   @IsInt({ each: true, message: 'Chaque groupe musculaire doit être un entier (id).' })
   muscleGroupIds?: number[];

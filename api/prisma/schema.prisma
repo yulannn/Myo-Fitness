@@ -94,7 +94,7 @@ model FitnessProfile {
   experienceLevel ExperienceLevel
   goals      Goal[]
   gender    Gender
-  gym       Boolean
+  bodyWeight       Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   weightHistory WeightHistory[]
@@ -118,7 +118,7 @@ model TrainingProgram {
   id          Int      @id @default(autoincrement())
   fitnessProfileId   Int
   name       String
-  description String
+  description String?
   template ProgramTemplate?
   status     ProgramStatus @default(DRAFT)
   createdAt DateTime @default(now())
@@ -131,7 +131,7 @@ model TrainingProgram {
 model TrainingSession {
   id          Int      @id @default(autoincrement())
   programId   Int
-  date       DateTime
+  date       DateTime?
   duration   Int?    
   notes      String?
   exercices   ExerciceSession[]
@@ -146,7 +146,9 @@ model Exercice {
   difficulty    Int
   description   String?
   type         ExerciceType? 
-  isDefault   Boolean  @default(true) 
+  Materials    Boolean  @default(false)
+  bodyWeight   Boolean  @default(false)
+  isDefault   Boolean  @default(false) 
   createdByUserId Int?                 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt

@@ -10,7 +10,7 @@ export class FitnessProfileEntity implements FitnessProfile {
   experienceLevel: ExperienceLevel;
   goals: Goal[];
   gender: Gender;
-  gym: boolean;
+  bodyWeight: boolean;
   createdAt: Date;
   updatedAt: Date;
 

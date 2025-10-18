@@ -6,6 +6,8 @@ export class ExerciceEntity implements Exercice {
   difficulty: number;
   description: string | null;
   type: $Enums.ExerciceType | null;
+  Materials: boolean;
+  bodyWeight: boolean;
   isDefault: boolean;
   createdByUserId: number | null;
   createdAt: Date;
