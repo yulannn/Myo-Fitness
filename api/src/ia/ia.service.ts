@@ -27,10 +27,9 @@ const LlmProgramSchema = z.object({
 
 const FULL_BODY = 'FULL_BODY';
 const PUSH_PULL_LEGS = 'PUSH_PULL_LEGS';
-const UPPER_LOWER = 'UPPER_LOWER';
+const UPPER_LOWER_UPPER_LOWER = 'UPPER_LOWER_UPPER_LOWER';
 const PUSH_PULL_LEGS_UPPER_LOWER = 'PUSH_PULL_LEGS_UPPER_LOWER';
 const PUSH_PULL_LEGS_PUSH_PULL_LEGS = 'PUSH_PULL_LEGS_PUSH_PULL_LEGS';
-const PUSH_PULL_LEGS_CARDIO = 'PUSH_PULL_LEGS_CARDIO';
 
 @Injectable()
 export class IaService {
@@ -129,10 +128,10 @@ export class IaService {
   templateCreation(frequency: number) {
     if (frequency < 3) return FULL_BODY;
     if (frequency === 3) return PUSH_PULL_LEGS;
-    if (frequency === 4) return UPPER_LOWER;
+    if (frequency === 4) return UPPER_LOWER_UPPER_LOWER;
     if (frequency === 5) return PUSH_PULL_LEGS_UPPER_LOWER;
     if (frequency === 6) return PUSH_PULL_LEGS_PUSH_PULL_LEGS;
-    return PUSH_PULL_LEGS_CARDIO;
+    return FULL_BODY;
   }
 
 

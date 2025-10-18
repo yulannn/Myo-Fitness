@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ProgramTemplate" ADD VALUE 'UPPER_LOWER_UPPER_LOWER';
