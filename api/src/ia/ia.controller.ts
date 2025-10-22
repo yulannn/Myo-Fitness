@@ -5,7 +5,7 @@ import { UpdateIaDto } from './dto/update-ia.dto';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
 
-@Controller('ia')
+@Controller('api/v1/ia')
 export class IaController {
   constructor(private readonly iaService: IaService) { }
 
