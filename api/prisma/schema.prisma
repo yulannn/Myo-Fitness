@@ -153,6 +153,7 @@ model Exercice {
   bodyWeight   Boolean  @default(false)
   isDefault   Boolean  @default(false) 
   createdByUserId Int?                 
+  imageUrl String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
 
