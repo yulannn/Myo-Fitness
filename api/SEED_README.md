@@ -76,8 +76,20 @@ npm run prisma:migrate
 
 ### 5. Exécution du seed
 
+**Option A : Seed de base (70 exercices manuels)**
 ```bash
 npm run prisma:seed
+```
+
+**Option B : Seed depuis le CSV (800+ exercices)**
+```bash
+npm run prisma:seed:exercices
+```
+
+**Option C : Les deux (recommandé pour une base complète)**
+```bash
+npm run prisma:seed
+npm run prisma:seed:exercices
 ```
 
 ### 6. Reset complet (optionnel)
@@ -90,7 +102,8 @@ npm run db:reset
 
 - `npm run prisma:generate` - Génère le client Prisma
 - `npm run prisma:migrate` - Exécute les migrations
-- `npm run prisma:seed` - Exécute le seed
+- `npm run prisma:seed` - Exécute le seed de base (utilisateurs, groupes musculaires, équipements, 70 exercices)
+- `npm run prisma:seed:exercices` - **NOUVEAU** : Importe tous les exercices depuis le fichier CSV (800+ exercices)
 - `npm run db:reset` - Reset complet + seed
 
 ## 🔐 Identifiants de Test
@@ -147,6 +160,63 @@ Pour ajouter vos propres données, modifiez le fichier `prisma/seed.ts` :
 3. **Ajouter des groupes musculaires** : Modifiez la section `muscleGroups`
 4. **Ajouter des équipements** : Modifiez la section `equipments`
 
+## 🆕 Seed depuis CSV (`seed_exercices.ts`)
+
+Le nouveau fichier de seed permet d'importer automatiquement tous les exercices depuis le fichier `fitness_final.csv`.
+
+### Fonctionnalités
+
+✅ **Parsing CSV intelligent** : Gère les virgules dans les descriptions
+✅ **Mapping automatique** : Catégories → Groupes musculaires
+✅ **Détection intelligente** :
+  - Type d'exercice (COMPOUND, ISOLATION, CARDIO, MOBILITY, STRETCH)
+  - Difficulté (1-5) basée sur les mots-clés
+  - Matériel requis
+  - Équipements nécessaires
+
+✅ **Prévention des doublons** : Ne crée pas d'exercices déjà existants
+✅ **Statistiques détaillées** : Affiche un résumé complet après l'import
+
+### Mapping des Catégories
+
+| Catégorie CSV | Groupes Musculaires |
+|---------------|-------------------|
+| Exercices épaules | Épaules, Trapèzes |
+| Exercices biceps | Biceps, Avant-bras |
+| Exercices triceps | Triceps |
+| Exercices pectoraux | Pectoraux |
+| Exercices dos | Dorsaux, Trapèzes |
+| Exercices jambes | Quadriceps, Ischio-jambiers, Fessiers |
+| Exercices abdos | Abdominaux |
+| ... | ... |
+
+### Détection Automatique
+
+**Difficulté :**
+- Niveau 5 : handstand, muscle-up, pistol, dragon flag, planche avancée
+- Niveau 4 : militaire, soulevé de terre, squat barre, lesté
+- Niveau 3 : par défaut
+- Niveau 2 : classique, standard, base
+- Niveau 1 : assisté, débutant, genou, incliné
+
+**Type d'exercice :**
+- COMPOUND : développé, squat, traction, pompe, rowing
+- ISOLATION : curl, extension, élévation, fly, oiseau
+- CARDIO : burpee, sprint, course
+- STRETCH : étirement
+- MOBILITY : mobilité
+
+**Équipement détecté automatiquement** : haltères, barre, kettlebell, poulie, banc, rack, etc.
+
+### Résultat attendu
+
+Après l'exécution du seed CSV, vous aurez :
+- 800+ exercices importés
+- Relations automatiques avec groupes musculaires
+- Relations automatiques avec équipements
+- Difficulté et type assignés intelligemment
+- Aucun doublon
+
 ## ⚠️ Notes Importantes
 
 - Les mots de passe sont hashés avec bcrypt
@@ -154,3 +224,5 @@ Pour ajouter vos propres données, modifiez le fichier `prisma/seed.ts` :
 - Les relations entre exercices et groupes musculaires sont automatiquement créées
 - Les programmes sont créés avec le statut `DRAFT`
 - Les données sont réalistes et utilisables en production
+- **Le seed CSV ignore les exercices déjà existants** (pas de doublons)
+- **Exécutez d'abord `prisma:seed` puis `prisma:seed:exercices`** pour avoir les groupes musculaires et équipements nécessaires
