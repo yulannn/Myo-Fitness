@@ -8,12 +8,11 @@ import { FitnessProfileModule } from './fitness-profile/fitness-profile.module';
 import { ExerciceModule } from './exercice/exercice.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { FriendModule } from './friend/friend.module';
-import { IaModule } from './ia/ia.module';
 import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, IaModule, ProgramModule, SessionModule],
+  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, ProgramModule, SessionModule],
   controllers: [AppController],
   providers: [AppService],
 })
