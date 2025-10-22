@@ -1,9 +1,12 @@
+// src/ia/ia.module.ts
 import { Module } from '@nestjs/common';
 import { IaService } from './ia.service';
-import { IaController } from './ia.controller';
+import { GroqClient } from './groq/groq.client';
+import { PromptBuilder } from './groq/prompt.builder';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Module({
-  controllers: [IaController],
-  providers: [IaService],
+  providers: [IaService, GroqClient, PromptBuilder, PrismaService],
+  exports: [IaService],
 })
 export class IaModule {}
