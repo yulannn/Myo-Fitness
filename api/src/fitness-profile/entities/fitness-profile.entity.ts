@@ -1,17 +1,81 @@
 import { FitnessProfile, Goal, Gender, ExperienceLevel } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FitnessProfileEntity implements FitnessProfile {
+  @ApiProperty({
+    description: 'Identifiant unique du profil fitness',
+    example: 1,
+  })
   id: number;
+
+  @ApiProperty({
+    description: 'ID de l’utilisateur auquel appartient le profil',
+    example: 2,
+  })
   userId: number;
+
+  @ApiProperty({
+    description: 'Âge de l’utilisateur',
+    example: 28,
+  })
   age: number;
+
+  @ApiProperty({
+    description: 'Taille en cm',
+    example: 175,
+  })
   height: number;
+
+  @ApiProperty({
+    description: 'Poids en kg',
+    example: 70,
+  })
   weight: number;
+
+  @ApiProperty({
+    description: 'Nombre de séances par semaine',
+    example: 4,
+  })
   trainingFrequency: number;
+
+  @ApiProperty({
+    description: 'Niveau d’expérience de l’utilisateur',
+    enum: ExperienceLevel,
+    example: ExperienceLevel.INTERMEDIATE,
+  })
   experienceLevel: ExperienceLevel;
+
+  @ApiProperty({
+    description: 'Objectifs de l’utilisateur',
+    enum: Goal,
+    isArray: true,
+    example: [Goal.MUSCLE_GAIN, Goal.WEIGHT_LOSS],
+  })
   goals: Goal[];
+
+  @ApiProperty({
+    description: 'Genre de l’utilisateur',
+    enum: Gender,
+    example: Gender.MALE,
+  })
   gender: Gender;
+
+  @ApiProperty({
+    description: 'Indique si l’utilisateur souhaite uniquement des exercices au poids du corps',
+    example: true,
+  })
   bodyWeight: boolean;
+
+  @ApiProperty({
+    description: 'Date de création du profil',
+    example: '2025-10-22T12:00:00.000Z',
+  })
   createdAt: Date;
+
+  @ApiProperty({
+    description: 'Date de dernière mise à jour du profil',
+    example: '2025-10-22T12:00:00.000Z',
+  })
   updatedAt: Date;
 
   constructor(partial: Partial<FitnessProfileEntity>) {
