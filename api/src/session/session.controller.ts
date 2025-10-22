@@ -2,7 +2,7 @@ import { Controller, Patch, Param, Body } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
 
-@Controller('session')
+@Controller('api/v1/session')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 

@@ -1,20 +1,40 @@
-import { Controller, Get, Post, Body, Request } from '@nestjs/common';
+import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { CreateTrainingProgramDto } from './dto/create-program.dto';
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { TrainingProgramEntity } from '../program/entities/program.entity';
 
-
-@Controller('program')
+@ApiTags('program')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
+@Controller('api/v1/program')
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) { }
+  constructor(private readonly programService: ProgramService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Créer un nouveau programme d’entraînement' })
+  @ApiBody({ type: CreateTrainingProgramDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Programme créé avec succès',
+    type: TrainingProgramEntity,
+    schema: {
+      example: {
+        id: 1,
+        fitnessProfileId: 1,
+        name: 'Programme Force & Endurance',
+        description: 'Programme de 12 semaines',
+        template: 'STRENGTH',
+        status: 'DRAFT',
+        createdAt: '2025-10-22T12:00:00.000Z',
+        updatedAt: '2025-10-22T12:00:00.000Z',
+        sessions: [],
+      },
+    },
+  })
   create(@Body() createProgramDto: CreateTrainingProgramDto, @Request() req) {
     const userId = req.user.userId;
     return this.programService.create(createProgramDto, userId);
   }
-
-
 }
