@@ -34,5 +34,12 @@ export class FriendController {
     return this.friendService.getPendingFriendRequest(userId);
   }
 
+  @Get('friendlist')
+  @UseGuards(AuthGuard('jwt'))
+  getFriendsList(@Request() req){
+    const userId = req.user.userId
+    return this.friendService.getFriendsList(userId)
+  }
+
 
 }
