@@ -4,13 +4,14 @@ import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { EquipmentEntity } from './entities/equipment.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('equipment')
 @Controller('api/v1/equipment')
 export class EquipmentController {
   constructor(private readonly equipmentService: EquipmentService) {}
 
-
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Créer un nouvel équipement de musculation' })
   @ApiBody({ type: CreateEquipmentDto })
@@ -83,6 +84,8 @@ export class EquipmentController {
     return this.equipmentService.findOne(+id);
   }
 
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un équipement' })
   @ApiBody({ type: UpdateEquipmentDto })
@@ -104,6 +107,8 @@ export class EquipmentController {
     return this.equipmentService.update(+id, updateEquipmentDto);
   }
 
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un équipement' })
   @ApiResponse({

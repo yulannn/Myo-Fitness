@@ -6,6 +6,7 @@ import { SignInDto } from './dto/sign-in.dto';
 import { AuthResultDto } from './dto/auth-result.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('api/v1/auth')
@@ -13,6 +14,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(AuthGuard('local'))
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('login')
   @ApiOperation({ summary: 'Se connecter avec e-mail et mot de passe' })
   @ApiBody({ type: SignInDto, description: 'Informations de connexion' })
@@ -31,6 +33,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ summary: 'Créer un nouvel utilisateur' })
   @ApiBody({ type: SignUpDto, description: 'Informations pour l’inscription' })
   @ApiResponse({ status: 201, description: 'Utilisateur créé avec succès', type: AuthResultDto })
@@ -46,6 +49,7 @@ export class AuthController {
       return { accessToken: result.accessToken, user: result.user };
     });
   }
+
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   @ApiOperation({ summary: 'Récupérer les informations de l’utilisateur connecté' })
@@ -55,6 +59,8 @@ export class AuthController {
     return { user: req.user };
   }
 
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('refresh')
   @ApiOperation({ summary: 'Rafraîchir le token d’accès' })
   @ApiResponse({
@@ -79,6 +85,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('logout')
   @ApiOperation({ summary: 'Se déconnecter et supprimer le refresh token' })
   @ApiBearerAuth()

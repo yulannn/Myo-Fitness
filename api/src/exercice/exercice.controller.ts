@@ -5,6 +5,7 @@ import { UpdateExerciceDto } from './dto/update-exercice.dto';
 import { ExerciceEntity } from './entities/exercice.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('exercice')
 @ApiBearerAuth()
@@ -14,6 +15,7 @@ export class ExerciceController {
   constructor(private readonly exerciceService: ExerciceService) {}
 
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Créer un nouvel exercice' })
   @ApiBody({ type: CreateExerciceDto })
@@ -85,7 +87,7 @@ export class ExerciceController {
     return this.exerciceService.findOne(+id);
   }
 
-  
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un exercice' })
   @ApiBody({ type: UpdateExerciceDto })
@@ -99,7 +101,7 @@ export class ExerciceController {
     return this.exerciceService.update(+id, updateExerciceDto);
   }
 
-  
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un exercice' })
   @ApiParam({ name: 'id', description: 'ID de l’exercice à supprimer', type: Number, example: 1 })
@@ -112,7 +114,7 @@ export class ExerciceController {
     return this.exerciceService.remove(+id);
   }
 
-  
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post(':id/equipments/:equipmentId')
   @ApiOperation({ summary: 'Ajouter un équipement à un exercice' })
   @ApiParam({ name: 'id', description: 'ID de l’exercice', type: Number, example: 1 })

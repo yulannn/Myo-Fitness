@@ -4,6 +4,7 @@ import { CreateFriendDto } from './dto/create-friend.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
 import { FriendEntity } from './entities/friend.entity';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('friend')
 @ApiBearerAuth()
@@ -12,6 +13,8 @@ import { FriendEntity } from './entities/friend.entity';
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
 
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Envoyer une demande d’amitié' })
   @ApiBody({ type: CreateFriendDto })
@@ -48,6 +51,7 @@ export class FriendController {
     return this.friendService.acceptFriendRequest(requestId);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':requestId/decline')
   @ApiOperation({ summary: 'Refuser une demande d’amitié' })
   @ApiParam({ name: 'requestId', description: 'ID de la demande', type: Number, example: 1 })
