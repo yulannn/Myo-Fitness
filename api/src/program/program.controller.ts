@@ -4,6 +4,7 @@ import { CreateTrainingProgramDto } from './dto/create-program.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { TrainingProgramEntity } from '../program/entities/program.entity';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('program')
 @ApiBearerAuth()
@@ -12,6 +13,8 @@ import { TrainingProgramEntity } from '../program/entities/program.entity';
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
 
+
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Créer un nouveau programme d’entraînement' })
   @ApiBody({ type: CreateTrainingProgramDto })

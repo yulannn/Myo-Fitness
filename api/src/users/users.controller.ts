@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { UserEntity } from './entities/users.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -16,6 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('api/v1/users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
 
   @Get('email/:email')
   @ApiOperation({ summary: 'Récupérer un utilisateur par email' })

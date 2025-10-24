@@ -5,6 +5,7 @@ import { UpdateFitnessProfileDto } from './dto/update-fitness-profile.dto';
 import { FitnessProfileEntity } from './entities/fitness-profile.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('fitness-profile')
 @ApiBearerAuth()
@@ -14,6 +15,7 @@ export class FitnessProfileController {
   constructor(private readonly fitnessProfileService: FitnessProfileService) {}
 
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Créer un nouveau profil fitness' })
   @ApiBody({ type: CreateFitnessProfileDto })
@@ -69,6 +71,7 @@ export class FitnessProfileController {
     return this.fitnessProfileService.findOne(+id, userId);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un profil fitness' })
   @ApiParam({ name: 'id', description: 'ID du profil à modifier', type: Number, example: 1 })
@@ -83,6 +86,7 @@ export class FitnessProfileController {
     return this.fitnessProfileService.update(+id, updateFitnessProfileDto, userId);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un profil fitness' })
   @ApiParam({ name: 'id', description: 'ID du profil à supprimer', type: Number, example: 1 })
