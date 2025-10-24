@@ -33,8 +33,8 @@ export class AuthService {
 
         const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
         const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
-
-        await this.usersService.updateUser(user.id, { refreshToken: refreshToken });
+        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+        await this.usersService.updateUser(user.id, { refreshToken: hashedRefreshToken });
 
         return {
             accessToken,
@@ -81,14 +81,18 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid token');
             }
 
-            const isMatch = refreshToken === user.refreshToken;
-            if (!isMatch) throw new UnauthorizedException('Invalid token');
+            const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+
+            if (!isMatch) {
+                throw new UnauthorizedException('Invalid token');
+            }
 
             const newPayload = { sub: user.id, email: user.email };
             const newAccessToken = await this.jwtService.signAsync(newPayload, { expiresIn: '15m' });
             const newRefreshToken = await this.jwtService.signAsync(newPayload, { expiresIn: '7d' });
+            const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
 
-            await this.usersService.updateUser(user.id, { refreshToken: newRefreshToken });
+            await this.usersService.updateUser(user.id, { refreshToken: hashedRefreshToken });
 
             return { accessToken: newAccessToken, refreshToken: newRefreshToken };
         } catch (err) {
