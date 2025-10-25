@@ -19,6 +19,56 @@ export class ProgramService {
     return this.persistProgram(createProgramDto, program, validatedExercises);
   }
 
+
+  async createManualProgram(
+    sessionData: any,
+    createProgramDto: CreateTrainingProgramDto,
+  ) {
+    return this.prisma.$transaction(async (prisma) => {
+      const createdProgram = await prisma.trainingProgram.create({
+        data: {
+          name: createProgramDto.name,
+          description: createProgramDto.description ?? '',
+          fitnessProfileId: createProgramDto.fitnessProfileId,
+          template: 'CUSTOM' as ProgramTemplate,
+        },
+      });
+
+
+      for (const session of sessionData.sessions) {
+        const createdSession = await prisma.trainingSession.create({
+          data: {
+            programId: createdProgram.id,
+            notes: session.name ?? '',
+          },
+        });
+
+        if (session.exercises && Array.isArray(session.exercises)) {
+          for (const ex of session.exercises) {
+            await prisma.exerciceSession.create({
+              data: {
+                sessionId: createdSession.id,
+                exerciceId: typeof ex === 'number' ? ex : ex.id,
+                sets: typeof ex === 'object' ? ex.sets ?? 3 : 3,
+                reps: typeof ex === 'object' ? ex.reps ?? 8 : 8,
+              },
+            });
+          }
+        }
+      }
+
+      return prisma.trainingProgram.findUnique({
+        where: { id: createdProgram.id },
+        include: {
+          sessions: {
+            include: { exercices: true },
+          },
+        },
+      });
+    });
+  }
+
+
   private async validateFitnessProfile(profileId: number, userId: number) {
     const profile = await this.prisma.fitnessProfile.findFirst({ where: { id: profileId, userId } });
     if (!profile) throw new Error('Fitness profile not found for this user');
