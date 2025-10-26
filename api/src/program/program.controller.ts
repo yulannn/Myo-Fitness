@@ -104,19 +104,18 @@ export class ProgramController {
 
 
 
-    @Delete('delete-session/:programId/:sessionId')
+    @Delete('delete-session/:sessionId')
     @ApiOperation({ summary: 'Supprimer une session d’un programme existant' })
     @ApiResponse({
         status: 200,
         description: 'Session supprimée avec succès du programme',
     })
     async deleteSessionFromProgram(
-        @Param('programId', ParseIntPipe) programId: number,
         @Param('sessionId', ParseIntPipe) sessionId: number,
         @Request() req,
     ) {
         const userId = req.user.userId;
-        return this.programService.deleteSessionFromProgram(sessionId, programId, userId);
+        return this.programService.deleteSessionFromProgram(sessionId, userId);
     }
 
 
