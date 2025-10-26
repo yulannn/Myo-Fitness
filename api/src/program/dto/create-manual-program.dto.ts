@@ -27,6 +27,15 @@ export class ExerciseDataDto {
     @IsOptional()
     @IsNumber()
     reps?: number;
+
+    @ApiProperty({
+        example: 50,
+        description: 'Poids utilisé pour l’exercice',
+        required: false,
+    })
+    @IsOptional()
+    @IsNumber()
+    weight?: number;
 }
 
 // --- Sessions ---

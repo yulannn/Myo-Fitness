@@ -4,7 +4,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { IaService } from 'src/ia/ia.service';
 import type { ProgramTemplate } from '@prisma/client';
 import { CreateManualProgramDto } from './dto/create-manual-program.dto';
-import { AddSessionToProgramDto } from './dto/add-session-program.dto';
+import { AddSessionToProgramDto, ExerciseDataDto } from './dto/add-session-program.dto';
 const MAX_SESSIONS_PER_PROGRAM = 7;
 
 @Injectable()
@@ -34,6 +34,13 @@ export class ProgramService {
         if (missing.length) throw new BadRequestException(`Exercices manquants: ${missing.join(', ')}`);
         return [...foundIds];
     }
+
+    private ensureOwnership(entityUserId: number, userId: number, context: string) {
+        if (entityUserId !== userId) {
+            throw new ForbiddenException(`Accès refusé à ${context}`);
+        }
+    }
+
 
     private async persistProgram(dto: CreateTrainingProgramDto, program: any, exerciseIds: number[], userId: number) {
         return this.prisma.$transaction(async (prisma) => {
@@ -96,9 +103,10 @@ export class ProgramService {
                         await prisma.exerciceSession.create({
                             data: {
                                 sessionId: createdSession.id,
-                                exerciceId,
-                                sets: typeof ex === 'object' ? (ex.sets ?? 3) : 3,
-                                reps: typeof ex === 'object' ? (ex.reps ?? 8) : 8,
+                                exerciceId: ex.id,
+                                sets: ex.sets ?? 3,
+                                reps: ex.reps ?? 8,
+                                weight: ex.weight ?? null,
                             },
                         });
                     }
@@ -112,8 +120,8 @@ export class ProgramService {
         });
     }
 
-    async addSessionToProgram(body: AddSessionToProgramDto, userId: number) {
-        const { sessionData, programId } = body;
+    async addSessionToProgram(body: AddSessionToProgramDto, programId: number, userId: number) {
+        const { sessionData } = body;
 
         const program = await this.prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -124,9 +132,7 @@ export class ProgramService {
             throw new BadRequestException('Programme introuvable');
         }
 
-        if (program.fitnessProfile.userId !== userId) {
-            throw new ForbiddenException('Accès refusé à ce programme');
-        }
+        this.ensureOwnership(program.fitnessProfile.userId, userId, 'ce programme');
 
         const sessionNumber = await this.prisma.trainingSession.count({ where: { programId } });
         if (sessionNumber >= MAX_SESSIONS_PER_PROGRAM)
@@ -138,17 +144,17 @@ export class ProgramService {
             });
 
             for (const ex of sessionData.exercises) {
-                const exerciceId = typeof ex === 'number' ? ex : ex.id;
-                if (!exerciceId) continue;
                 await prisma.exerciceSession.create({
                     data: {
                         sessionId: createdSession.id,
-                        exerciceId,
-                        sets: typeof ex === 'object' ? (ex.sets ?? 3) : 3,
-                        reps: typeof ex === 'object' ? (ex.reps ?? 8) : 8,
+                        exerciceId: ex.id,
+                        sets: ex.sets ?? 3,
+                        reps: ex.reps ?? 8,
+                        weight: ex.weight ?? null,
                     },
                 });
             }
+
 
             return prisma.trainingProgram.findUnique({
                 where: { id: programId },
@@ -158,10 +164,11 @@ export class ProgramService {
     }
 
     async deleteSessionFromProgram(
-        body: { programId: number; sessionId: number },
+        sessionId: number,
+        programId: number,
         userId: number,
     ) {
-        const { programId, sessionId } = body;
+
 
         const program = await this.prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -172,9 +179,7 @@ export class ProgramService {
             throw new BadRequestException('Programme introuvable');
         }
 
-        if (program.fitnessProfile.userId !== userId) {
-            throw new ForbiddenException('Accès refusé à ce programme');
-        }
+        this.ensureOwnership(program.fitnessProfile.userId, userId, 'ce programme');
 
         return this.prisma.$transaction(async (prisma) => {
             await prisma.exerciceSession.deleteMany({ where: { sessionId } });
@@ -182,6 +187,132 @@ export class ProgramService {
             return prisma.trainingProgram.findUnique({
                 where: { id: programId },
                 include: { sessions: { include: { exercices: true } } },
+            });
+        });
+    }
+
+
+    async addExerciseToSession(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
+        return this.prisma.$transaction(async (prisma) => {
+            const session = await prisma.trainingSession.findUnique({
+                where: { id: sessionId },
+                include: { exercices: true, trainingProgram: { include: { fitnessProfile: true } } },
+            });
+
+            if (!session) {
+                throw new BadRequestException('Session introuvable');
+            }
+
+            this.ensureOwnership(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+
+            if (!exerciseData.id) throw new BadRequestException('ID d\'exercice manquant');
+
+            const exercice = await prisma.exercice.findUnique({
+                where: { id: exerciceId },
+            });
+
+            if (!exercice) {
+                throw new BadRequestException('Exercice introuvable');
+            }
+
+            await prisma.exerciceSession.create({
+                data: {
+                    sessionId,
+                    exerciceId: exercice.id,
+                    sets: exerciseData.sets ?? 3,
+                    reps: exerciseData.reps ?? 8,
+                },
+            });
+
+            return prisma.trainingProgram.findUnique({
+                where: { id: session.programId },
+                include: { sessions: { include: { exercices: true } } },
+            });
+        });
+    }
+
+    async deleteExerciseFromSession(sessionId: number, exerciceId: number, userId: number) {
+        return this.prisma.$transaction(async (prisma) => {
+            const session = await prisma.trainingSession.findUnique({
+                where: { id: sessionId },
+                include: {
+                    exercices: true, trainingProgram: {
+                        include: { fitnessProfile: true },
+                    },
+                },
+            });
+
+
+            if (!session) {
+                throw new BadRequestException('Session introuvable')
+            }
+
+            this.ensureOwnership(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+
+            await prisma.exerciceSession.delete({
+                where: {
+                    sessionId_exerciceId: {
+                        sessionId,
+                        exerciceId,
+                    },
+                },
+            });
+
+            return prisma.trainingProgram.findUnique({
+                where: { id: session.programId },
+                include: { sessions: { include: { exercices: true } } },
+            });
+        });
+    }
+
+
+    async updateExerciceData(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
+        return this.prisma.$transaction(async (prisma) => {
+            const session = await prisma.trainingSession.findUnique({
+                where: { id: sessionId },
+                include: {
+                    trainingProgram: {
+                        include: { fitnessProfile: true },
+                    },
+                },
+            });
+
+            if (!session) {
+                throw new BadRequestException('Session introuvable');
+            }
+
+            this.ensureOwnership(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+
+            const exercice = await prisma.exerciceSession.findUnique({
+                where: {
+                    sessionId_exerciceId: {
+                        sessionId,
+                        exerciceId,
+                    },
+                },
+            });
+
+            if (!exercice) {
+                throw new BadRequestException('Exercice introuvable');
+            }
+
+            await prisma.exerciceSession.update({
+                where: {
+                    sessionId_exerciceId: {
+                        sessionId,
+                        exerciceId,
+                    },
+                },
+                data: {
+                    reps: exerciseData.reps,
+                    sets: exerciseData.sets,
+                    weight: exerciseData.weight ?? exercice.weight,
+                },
+            });
+
+            return prisma.trainingSession.findUnique({
+                where: { id: sessionId },
+                include: { exercices: true },
             });
         });
     }

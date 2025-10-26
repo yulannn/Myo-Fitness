@@ -22,6 +22,11 @@ export class ExerciseDataDto {
     @IsOptional()
     @IsNumber()
     reps?: number;
+
+    @ApiProperty({ example: 16, description: 'Nombre de poids', required: false })
+    @IsOptional()
+    @IsNumber()
+    weight?: number
 }
 
 export class SessionDataDto {
@@ -41,9 +46,6 @@ export class SessionDataDto {
 }
 
 export class AddSessionToProgramDto {
-    @ApiProperty({ example: 4, description: 'ID du programme auquel ajouter la session' })
-    @IsNumber()
-    programId: number;
 
     @ApiProperty({
         type: SessionDataDto,
