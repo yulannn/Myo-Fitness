@@ -32,6 +32,12 @@ export class ExerciceEntity implements Exercice {
   })
   type: $Enums.ExerciceType | null;
 
+  @ApiPropertyOptional({
+    description: "URL de l'image illustrant l’exercice",
+    example: 'https://example.com/images/push-up.png',
+  })
+  imageUrl: string | null;
+
   @ApiProperty({
     description: 'Indique si l’exercice nécessite du matériel',
     example: true,

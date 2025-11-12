@@ -6,6 +6,33 @@ Ce document liste les améliorations prioritaires pour l'application Myo-Fitness
 
 ---
 
+## 🏋️‍♂️ TODO — Autoriser plusieurs occurrences du même exercice dans une session
+
+### 🎯 Objectif
+Permettre d’ajouter plusieurs fois le même exercice dans une session sans lever l’erreur Prisma `P2002: Unique constraint failed on the fields: (sessionId, exerciceId)`.
+
+### 🧩 Problème actuel
+La table `ExerciceSession` possède une contrainte d’unicité sur (`sessionId`, `exerciceId`), empêchant la duplication d’un même exercice dans une session.  
+Lorsqu’on tente d’ajouter un exercice déjà existant, Prisma renvoie une erreur de contrainte unique.
+
+### ✅ Solution à implémenter
+- [ ] Modifier le modèle `ExerciceSession` dans `schema.prisma` :
+  ```prisma
+  model ExerciceSession {
+    id             Int      @id @default(autoincrement())
+    sessionId      Int
+    exerciceId     Int
+    sets           Int?
+    reps           Int?
+    weight         Int?
+
+    trainingSession TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    exercice         Exercice        @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+  }
+
+
+
+
 ## 🔧 **1. Gestion Intelligente des Équipements**
 
 ### 📝 Description
