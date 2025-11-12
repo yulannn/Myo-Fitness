@@ -19,11 +19,14 @@ export class SessionService {
     });
   }
 
-  findOne(id: number) {
-    return this.prisma.trainingSession.findUnique({
+  async findOne(id: number) {
+    const session = await this.prisma.trainingSession.findUnique({
       where: { id },
       include: { exercices: true },
     });
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
   }
 
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {
@@ -41,7 +44,8 @@ export class SessionService {
     });
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    await this.findOne(id);
     return this.prisma.trainingSession.delete({ where: { id } });
   }
 }
