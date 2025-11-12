@@ -9,12 +9,42 @@ import { use } from 'react';
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
-  @Post("/:groupId/request")
+
+
+  @Post("groupId/request")
   @UseGuards(AuthGuard('jwt'))
   createGroup(@Body() createGroupDto: CreateGroupDto, @Request() req) {
     const userId = req.user.userId;
     const groupId = req.params.groupId;
     return this.groupService.sendGroupRequest(userId, groupId);
   }
+
+  @Patch('request/:requestId/accept')
+  acceptGroupRequest(@Param('requestId') requestId: string) {
+    return this.groupService.acceptGroupRequest(requestId);
+  }
+
+  @Patch('request/:requestId/decline')
+  declineGroupRequest(@Param('requestId') requestId: string) {
+    return this.groupService.declineGroupRequest(requestId);
+  }
+
+  @Get ('requests')
+  getPendingGroupRequests(@Request() req) {
+    const userId = req.user.userId;
+    return this.groupService.getPendingGroupRequests(userId);
+  }
+
+  @Get ('groupmembers/:groupId')
+    getGroupMembers(@Param('groupId') groupId: number) {
+        return this.groupService.getGroupMembers(groupId); 
+    }
+
+    @Get('mygroups')
+    @UseGuards(AuthGuard('jwt'))
+    getUserGroups(@Request() req) {
+        const userId = req.user.userId;
+      return this.groupService.getGroupsList(userId);
+    }
 
 }
