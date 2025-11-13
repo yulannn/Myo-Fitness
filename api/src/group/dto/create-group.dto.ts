@@ -5,9 +5,6 @@ export class CreateGroupDto {
     @IsString()
     name: string;
     
-    @IsInt()
-    groupId: number;
-    
     @IsString()
     @IsOptional()
     description?: string; 

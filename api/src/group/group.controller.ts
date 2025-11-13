@@ -5,7 +5,7 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
 import { use } from 'react';
 
-@Controller('group')
+@Controller('api/v1/group')
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
