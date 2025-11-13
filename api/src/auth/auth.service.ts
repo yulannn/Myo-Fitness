@@ -16,17 +16,16 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async validateUser(signInDto: SignInDto): Promise<SafeUser> {
-        const user = await this.usersService.findUserByEmail(signInDto.email);
-
-        if (!user) throw new UnauthorizedException('Invalid credentials');
-
-        const passwordValid = await bcrypt.compare(signInDto.password, user.password);
-        if (!passwordValid) throw new UnauthorizedException('Invalid credentials');
-
-        const { password, ...safeUser } = user;
-        return safeUser as SafeUser;
-    }
+    async validateUser(email: string, password: string): Promise<any> {
+        const user = await this.usersService.findUserByEmail(email);
+        if (!user) return null;
+      
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) return null;
+      
+        const { password: _, ...result } = user;
+        return result;
+      }
 
     async signIn(user: SafeUser): Promise<AuthResultDto> {
         const payload = {
@@ -62,8 +61,8 @@ export class AuthService {
         });
 
         const { password, ...safeUser } = newUser;
-        const accessToken = await this.jwtService.signAsync({ sub: safeUser.id, email: safeUser.email }, { expiresIn: '15m' });
-        const refreshToken = await this.jwtService.signAsync({ sub: safeUser.id, email: safeUser.email }, { expiresIn: '7d' });
+        const accessToken = await this.jwtService.signAsync({ sub: safeUser.id, email: safeUser.email, name: safeUser.name }, { expiresIn: '15m' });
+        const refreshToken = await this.jwtService.signAsync({ sub: safeUser.id, email: safeUser.email, name: safeUser.name }, { expiresIn: '7d' });
 
         return {
             accessToken,
