@@ -9,7 +9,6 @@ import {
 } from '@nestjs/swagger';
 import { UserEntity } from './entities/users.entity';
 import { AuthGuard } from '@nestjs/passport';
-import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('users')
 @ApiBearerAuth()

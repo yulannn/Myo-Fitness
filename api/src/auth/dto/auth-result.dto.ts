@@ -9,7 +9,7 @@ export class AuthResultDto {
 
   @ApiPropertyOptional({
     description: 'Jeton de rafraîchissement (facultatif)',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh...',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh... (facultatif)',
   })
   refreshToken?: string;
 
