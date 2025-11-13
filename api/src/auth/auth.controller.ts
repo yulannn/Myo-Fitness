@@ -125,7 +125,7 @@ export class AuthController {
     schema: { example: { message: 'Logged out successfully' } },
   })
   async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
-    await this.authService.logout(req.user.userId);
+    await this.authService.logout(req.user.id);
     res.clearCookie('refreshToken');
     return { message: 'Logged out successfully' };
   }
