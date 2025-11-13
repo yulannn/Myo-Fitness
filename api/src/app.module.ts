@@ -15,6 +15,7 @@ import { SessionModule } from './session/session.module';
 import { GroupModule } from './group/group.module';
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
+import { SessionPhotoModule } from './session-photo/session-photo.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot({
@@ -36,6 +37,7 @@ import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
     SessionModule,
     PerformanceModule,
     GroupModule,
+    SessionPhotoModule,
   ],
   controllers: [AppController],
   providers: [
