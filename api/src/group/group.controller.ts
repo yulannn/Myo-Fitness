@@ -1,9 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
-import { use } from 'react';
 
 @Controller('api/v1/group')
 export class GroupController {
@@ -16,8 +24,7 @@ export class GroupController {
     return this.groupService.createGroup(createGroupDto, userId);
   }
 
-
-  @Post("groupId/request")
+  @Post('groupId/request')
   @UseGuards(AuthGuard('jwt'))
   createGroup(@Request() req) {
     const userId = req.user.userId;
@@ -36,22 +43,21 @@ export class GroupController {
     return this.groupService.declineGroupRequest(requestId);
   }
 
-  @Get ('requests')
+  @Get('requests')
   getPendingGroupRequests(@Request() req) {
     const userId = req.user.userId;
     return this.groupService.getPendingGroupRequests(userId);
   }
 
-  @Get ('groupmembers/:groupId')
-    getGroupMembers(@Param('groupId') groupId: number) {
-        return this.groupService.getGroupMembers(groupId); 
-    }
+  @Get('groupmembers/:groupId')
+  getGroupMembers(@Param('groupId') groupId: number) {
+    return this.groupService.getGroupMembers(groupId);
+  }
 
-    @Get('mygroups')
-    @UseGuards(AuthGuard('jwt'))
-    getUserGroups(@Request() req) {
-        const userId = req.user.userId;
-      return this.groupService.getGroupsList(userId);
-    }
-
+  @Get('mygroups')
+  @UseGuards(AuthGuard('jwt'))
+  getUserGroups(@Request() req) {
+    const userId = req.user.userId;
+    return this.groupService.getGroupsList(userId);
+  }
 }
