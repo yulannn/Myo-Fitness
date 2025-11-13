@@ -11,9 +11,10 @@ import { FriendModule } from './friend/friend.module';
 import { IaModule } from './ia/ia.module';
 import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
+import { GroupModule } from './group/group.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, IaModule, ProgramModule, SessionModule],
+  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, IaModule, ProgramModule, SessionModule, GroupModule ],
   controllers: [AppController],
   providers: [AppService],
 })

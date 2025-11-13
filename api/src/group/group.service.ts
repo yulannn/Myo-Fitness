@@ -19,25 +19,29 @@ export class GroupService {
         return group;
     }
 
-    async sendGroupRequest(userId: number, groupId: number) {
-        const existingRequest = await this.prisma.friendGroupRequest.findFirst({
-            where: {
-                senderId: userId,
-                groupId: groupId,
-                status: 'PENDING',
-            },
-        });
-        if (existingRequest) {
-            throw new ConflictException('Group request already sent');
-        }   
-        return this.prisma.friendGroupRequest.create({
-            data: {
-                senderId: userId,
-                groupId: groupId,
-                status: 'PENDING',
-            },
-        });
+   async sendGroupRequest(senderId: number, receiverId: number, groupId: number) {
+    const existingRequest = await this.prisma.friendGroupRequest.findFirst({
+        where: {
+            senderId,
+            receiverId,
+            groupId,
+            status: 'PENDING',
+        },
+    });
+
+    if (existingRequest) {
+        throw new ConflictException('Group request already sent');
     }
+
+    return this.prisma.friendGroupRequest.create({
+        data: {
+            senderId,
+            receiverId,
+            groupId,
+            status: 'PENDING',
+        },
+    });
+}
 
     async acceptGroupRequest(requestId: string) {
         const request = await this.prisma.friendGroupRequest.findUnique({
@@ -52,7 +56,7 @@ export class GroupService {
             where: { id: request.groupId },
             data: {
                 members: {
-                    connect: { id: request.senderId },
+                    connect: { id: request.receiverId },
                 },
             },
         });

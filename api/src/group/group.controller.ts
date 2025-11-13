@@ -9,14 +9,21 @@ import { use } from 'react';
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
+  @Post()
+  @UseGuards(AuthGuard('jwt'))
+  create(@Body() createGroupDto: CreateGroupDto, @Request() req) {
+    const userId = req.user.userId;
+    return this.groupService.createGroup(createGroupDto, userId);
+  }
 
 
   @Post("groupId/request")
   @UseGuards(AuthGuard('jwt'))
-  createGroup(@Body() createGroupDto: CreateGroupDto, @Request() req) {
+  createGroup(@Request() req) {
     const userId = req.user.userId;
     const groupId = req.params.groupId;
-    return this.groupService.sendGroupRequest(userId, groupId);
+    const receiverId = req.body.receiverId;
+    return this.groupService.sendGroupRequest(userId, receiverId, groupId);
   }
 
   @Patch('request/:requestId/accept')
