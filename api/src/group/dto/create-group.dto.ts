@@ -1,11 +1,16 @@
-import { IsEnum, IsInt, IsOptional, IsString, } from 'class-validator';
-import { GroupStatus } from '@prisma/client';
+import { IsString, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateGroupDto {
-    @IsString()
-    name: string;
-    
-    @IsString()
-    @IsOptional()
-    description?: string; 
+  @ApiProperty({ description: 'Nom du groupe', example: 'Fitness Buddies' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({
+    description: 'Description du groupe',
+    example: 'Groupe pour les passionnés de fitness',
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

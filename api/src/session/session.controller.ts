@@ -1,13 +1,21 @@
-import { Controller, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('session')
 @Controller('api/v1/session')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id/date')
   @ApiOperation({ summary: 'Mettre à jour la date d’une session' })
   @ApiParam({
@@ -19,7 +27,10 @@ export class SessionController {
     description: 'Nouvelles informations de date pour la session',
     type: UpdateSessionDateDto,
   })
-  @ApiResponse({ status: 200, description: 'Date de session mise à jour avec succès' })
+  @ApiResponse({
+    status: 200,
+    description: 'Date de session mise à jour avec succès',
+  })
   @ApiResponse({ status: 400, description: 'Données invalides' })
   @ApiResponse({ status: 404, description: 'Session non trouvée' })
   updateDate(
