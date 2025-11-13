@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule} from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,12 +13,8 @@ import { FriendModule } from './friend/friend.module';
 import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
 import { GroupModule } from './group/group.module';
-
-@Module({
-  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, IaModule, ProgramModule, SessionModule, GroupModule ],
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
-
 @Module({
   imports: [
     ThrottlerModule.forRoot({
@@ -39,6 +35,7 @@ import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
     ProgramModule,
     SessionModule,
     PerformanceModule,
+    GroupModule,
   ],
   controllers: [AppController],
   providers: [
@@ -49,4 +46,4 @@ import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
