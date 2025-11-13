@@ -1,4 +1,4 @@
-import { mockFitnessProfiles, mockUser } from '../data/mockData'
+import { mockFitnessProfiles, mockUser } from '../../data/mockData'
 
 export default function FitnessProfiles() {
   return (

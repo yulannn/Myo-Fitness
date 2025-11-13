@@ -1,4 +1,4 @@
-import { mockUser } from '../data/mockData'
+import { mockUser } from '../../data/mockData'
 
 export default function Settings() {
   return (

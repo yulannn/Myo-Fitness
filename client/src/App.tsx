@@ -1,18 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Dashboard from './pages/Dashboard'
-import FitnessProfiles from './pages/Profile'
-import Programs from './pages/Programs'
-import Sessions from './pages/Sessions'
-import Performance from './pages/Performance'
-import Exercises from './pages/Exercises'
-import Equipment from './pages/Equipment'
-import Community from './pages/Community'
-import Settings from './pages/Settings'
-import Coach from './pages/Coach'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import BottomNav from './components/BottomNav'
+import Home from './pages/profile'
+import Dashboard from './pages/dashboard/dashboard'
+import FitnessProfiles from './pages/profile'
+import Settings from './pages/settings'
+import Login from './pages/login'
+import Register from './pages/register'
+import BottomNav from './components/app/BottomNav'
 
 export default function App() {
   return (
@@ -23,13 +16,6 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profiles" element={<FitnessProfiles />} />
-            <Route path="/programs" element={<Programs />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/performance" element={<Performance />} />
-            <Route path="/exercises" element={<Exercises />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/coach" element={<Coach />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />

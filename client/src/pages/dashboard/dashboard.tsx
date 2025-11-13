@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { mockPrograms, mockUser } from '../data/mockData'
+import { mockPrograms, mockUser } from '../../data/mockData'
 
 const upcomingSessions = mockPrograms
   .flatMap((program) => program.sessions.map((session) => ({ ...session, programName: program.name })))
@@ -58,7 +58,7 @@ export default function Dashboard() {
 
       <Link
         to="/coach"
-        className="block rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 p-5 text-center text-white shadow-lg"
+        className="block rounded-2xl from-indigo-500 to-purple-600 p-5 text-center text-white shadow-lg"
       >
         <p className="font-semibold">Créer un programme</p>
         <p className="mt-1 text-sm text-white/80">Avec le coach IA</p>

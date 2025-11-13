@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { mockUser } from '../data/mockData'
+import { mockUser } from '../../data/mockData'
 
 export default function Home() {
   return (
@@ -9,7 +9,7 @@ export default function Home() {
         <img src={mockUser.avatarUrl} alt={mockUser.name} className="h-10 w-10 rounded-full" />
       </div>
 
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-white">
+      <div className="rounded-2xl from-indigo-500 to-purple-600 p-6 text-white">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold">{mockUser.streak}</p>
