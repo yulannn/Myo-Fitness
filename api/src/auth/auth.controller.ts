@@ -6,6 +6,7 @@ import {
   UseGuards,
   Request,
   Res,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -88,6 +89,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('refresh')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Rafraîchir le token d’accès' })
   @ApiResponse({
     status: 200,
@@ -114,6 +116,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('logout')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Se déconnecter et supprimer le refresh token' })
   @ApiBearerAuth()
   @ApiResponse({
@@ -122,7 +125,7 @@ export class AuthController {
     schema: { example: { message: 'Logged out successfully' } },
   })
   async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
-    await this.authService.logout(req.user.sub);
+    await this.authService.logout(req.user.userId);
     res.clearCookie('refreshToken');
     return { message: 'Logged out successfully' };
   }

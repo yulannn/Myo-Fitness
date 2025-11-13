@@ -1,12 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import * as cookieParser from 'cookie-parser';
+import { PrismaService } from 'prisma/prisma.service';
 import { AppModule } from '../src/app.module';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let refreshCookie: string;
+  let prisma: PrismaService;
+  const testEmail = `test-${Date.now()}@example.com`;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -14,11 +18,15 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser.default());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    prisma = moduleFixture.get(PrismaService);
+    await prisma.user.deleteMany({ where: { email: testEmail } });
     await app.init();
   });
 
   afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: testEmail } });
     await app.close();
   });
 
@@ -26,7 +34,7 @@ describe('AuthController (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
-        email: 'test@example.com',
+        email: testEmail,
         password: 'Password123!',
         name: 'Test User',
       })
@@ -41,7 +49,7 @@ describe('AuthController (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({
-        email: 'test@example.com',
+        email: testEmail,
         password: 'Password123!',
       })
       .expect(201);
@@ -58,7 +66,7 @@ describe('AuthController (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body.user.email).toBe('test@example.com');
+    expect(res.body.user.email).toBe(testEmail);
   });
 
   it('/api/v1/auth/refresh (POST) - should refresh token', async () => {
