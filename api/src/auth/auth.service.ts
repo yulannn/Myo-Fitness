@@ -29,7 +29,11 @@ export class AuthService {
     }
 
     async signIn(user: SafeUser): Promise<AuthResultDto> {
-        const payload = { sub: user.id, email: user.email };
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            name: user.name,
+          };
 
         const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
         const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
@@ -87,7 +91,7 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid token');
             }
 
-            const newPayload = { sub: user.id, email: user.email };
+            const newPayload = { sub: user.id, email: user.email, name: user.name };
             const newAccessToken = await this.jwtService.signAsync(newPayload, { expiresIn: '15m' });
             const newRefreshToken = await this.jwtService.signAsync(newPayload, { expiresIn: '7d' });
             const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);

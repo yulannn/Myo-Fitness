@@ -9,25 +9,6 @@ export default function Home() {
         <img src={mockUser.avatarUrl} alt={mockUser.name} className="h-10 w-10 rounded-full" />
       </div>
 
-      <div className="rounded-2xl from-indigo-500 to-purple-600 p-6 text-white">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold">{mockUser.streak}</p>
-            <p className="text-xs text-white/80">Jours</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{mockUser.totalWorkouts}</p>
-            <p className="text-xs text-white/80">Sessions</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">
-              {mockUser.currentGoal.replace('_', ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-            </p>
-            <p className="text-xs text-white/80">Objectif</p>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-3">
         <Link
           to="/programs"
