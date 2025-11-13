@@ -64,6 +64,7 @@ enum ProgramTemplate {
   FULL_BODY
   PUSH_PULL_LEGS
   UPPER_LOWER
+  UPPER_LOWER_UPPER_LOWER
   UPPER_LOWER_PUSH_PULL
   PUSH_PULL_LEGS_UPPER_LOWER
   PUSH_PULL_LEGS_PUSH_PULL_LEGS
@@ -163,6 +164,7 @@ model Exercice {
   bodyWeight   Boolean  @default(false)
   isDefault   Boolean  @default(false) 
   createdByUserId Int?                 
+  imageUrl String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
 
