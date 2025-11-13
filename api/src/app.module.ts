@@ -14,6 +14,7 @@ import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
+import { SessionAdaptationModule } from './session-adaptation/session-adaptation.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
     ProgramModule,
     SessionModule,
     PerformanceModule,
+    SessionAdaptationModule,
   ],
   controllers: [AppController],
   providers: [
