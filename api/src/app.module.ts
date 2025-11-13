@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule} from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,10 +12,12 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { FriendModule } from './friend/friend.module';
 import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
+import { GroupModule } from './group/group.module';
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
 import { SessionAdaptationModule } from './session-adaptation/session-adaptation.module';
 
+import { SessionPhotoModule } from './session-photo/session-photo.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot({
@@ -37,6 +39,8 @@ import { SessionAdaptationModule } from './session-adaptation/session-adaptation
     SessionModule,
     PerformanceModule,
     SessionAdaptationModule,
+    GroupModule,
+    SessionPhotoModule,
   ],
   controllers: [AppController],
   providers: [
@@ -47,4 +51,4 @@ import { SessionAdaptationModule } from './session-adaptation/session-adaptation
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

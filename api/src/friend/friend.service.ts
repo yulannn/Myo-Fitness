@@ -81,6 +81,18 @@ export class FriendService {
     return requests;
   }
 
+  async getFriendsList(userId: number) {
+    const friendList = await this.prisma.friend.findMany({
+      where: {
+        userId: userId
+      }
+    })
+
+    if (!friendList){
+      throw new Error("No friend found")
+    }
+    return friendList
+  }
 
 
 }

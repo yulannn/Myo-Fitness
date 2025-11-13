@@ -1,8 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FriendEntity } from './entities/friend.entity';
 import { Throttle } from '@nestjs/throttler';
 
@@ -12,7 +28,6 @@ import { Throttle } from '@nestjs/throttler';
 @Controller('api/v1/friend')
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
-
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
@@ -41,7 +56,12 @@ export class FriendController {
 
   @Patch(':requestId/accept')
   @ApiOperation({ summary: 'Accepter une demande d’amitié' })
-  @ApiParam({ name: 'requestId', description: 'ID de la demande', type: Number, example: 1 })
+  @ApiParam({
+    name: 'requestId',
+    description: 'ID de la demande',
+    type: Number,
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Demande acceptée',
@@ -54,7 +74,12 @@ export class FriendController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':requestId/decline')
   @ApiOperation({ summary: 'Refuser une demande d’amitié' })
-  @ApiParam({ name: 'requestId', description: 'ID de la demande', type: Number, example: 1 })
+  @ApiParam({
+    name: 'requestId',
+    description: 'ID de la demande',
+    type: Number,
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Demande refusée',
@@ -65,7 +90,10 @@ export class FriendController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Récupérer toutes les demandes d’amitié en attente pour l’utilisateur' })
+  @ApiOperation({
+    summary:
+      'Récupérer toutes les demandes d’amitié en attente pour l’utilisateur',
+  })
   @ApiResponse({
     status: 200,
     description: 'Liste des demandes en attente',
@@ -74,5 +102,40 @@ export class FriendController {
   getPendingFriendRequest(@Request() req) {
     const userId = req.user.userId;
     return this.friendService.getPendingFriendRequest(userId);
+  }
+
+  @Get('friendlist')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Récupérer la liste des amis de l’utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des amis',
+    type: [FriendEntity],
+    schema: {
+      example: [
+        {
+          id: 1,
+          userId: 2,
+          friendId: 3,
+          status: 'ACCEPTED',
+          createdAt: '2025-10-22T12:00:00.000Z',
+          user: { id: 2, name: 'Jean' },
+          friend: { id: 3, name: 'Bob' },
+        },
+        {
+          id: 2,
+          userId: 2,
+          friendId: 4,
+          status: 'ACCEPTED',
+          createdAt: '2025-10-23T09:30:00.000Z',
+          user: { id: 2, name: 'Jean' },
+          friend: { id: 4, name: 'Alice' },
+        },
+      ],
+    },
+  })
+  getFriendsList(@Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.getFriendsList(userId);
   }
 }

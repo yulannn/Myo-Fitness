@@ -40,6 +40,12 @@ enum FriendStatus {
   BLOCKED
 }
 
+enum GroupStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
 enum RequestStatus {
   PENDING
   ACCEPTED
@@ -85,6 +91,12 @@ model User {
   friendsOf     Friend[]        @relation("UserFriendsReverse")
   sentRequests  FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  groups        FriendGroup[]   @relation("GroupMembers")
+  sentGroupRequests FriendGroupRequest[] @relation("SentGroupRequests")
+  receivedGroupRequests FriendGroupRequest[] @relation("ReceivedGroupRequests")
+
+
+  sessionPhotos SessionPhoto[]
 }
 
 model FitnessProfile {
@@ -102,6 +114,8 @@ model FitnessProfile {
   updatedAt DateTime @default(now()) @updatedAt
   weightHistory WeightHistory[]
   trainingPrograms TrainingProgram[]
+
+
 
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -143,7 +157,23 @@ model TrainingSession {
   
   exercices   ExerciceSession[]
   trainingProgram TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  sessionPhotos SessionPhoto[]
 }
+
+model SessionPhoto {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  userId      Int
+  photoUrl    String
+  createdAt   DateTime @default(now())
+  description String?
+
+  session     TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
 
 model Exercice {
   id   Int             @id @default(autoincrement())
@@ -258,4 +288,32 @@ model FriendRequest {
   receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
+}
+
+model FriendGroup {
+  id         Int       @id @default(autoincrement())
+  name       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  members    User[]    @relation("GroupMembers")
+
+  joinRequests FriendGroupRequest[] @relation("GroupJoinRequests")
+
+}
+
+model FriendGroupRequest {
+  id         String    @id @default(uuid())
+  senderId   Int
+  receiverId Int
+  groupId    Int
+  status     GroupStatus   @default(PENDING)
+  createdAt  DateTime      @default(now())
+
+  sender     User          @relation("SentGroupRequests", fields: [senderId], references: [id])
+  group      FriendGroup   @relation("GroupJoinRequests", fields: [groupId], references: [id])
+  receiver   User          @relation("ReceivedGroupRequests", fields: [receiverId], references: [id])
+
+
+  @@unique([senderId, groupId])
 }
