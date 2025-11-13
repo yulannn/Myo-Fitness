@@ -151,8 +151,11 @@ model TrainingSession {
   date       DateTime?
   duration   Int?    
   notes      String?
+  originalSessionId Int? 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  
   exercices   ExerciceSession[]
-
   trainingProgram TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   sessionPhotos SessionPhoto[]

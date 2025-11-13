@@ -15,6 +15,8 @@ import { SessionModule } from './session/session.module';
 import { GroupModule } from './group/group.module';
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
+import { SessionAdaptationModule } from './session-adaptation/session-adaptation.module';
+
 import { SessionPhotoModule } from './session-photo/session-photo.module';
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { SessionPhotoModule } from './session-photo/session-photo.module';
     ProgramModule,
     SessionModule,
     PerformanceModule,
+    SessionAdaptationModule,
     GroupModule,
     SessionPhotoModule,
   ],

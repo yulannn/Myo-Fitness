@@ -28,7 +28,7 @@ import {
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/performance')
 export class PerformanceController {
-  constructor(private readonly performanceService: PerformanceService) {}
+  constructor(private readonly performanceService: PerformanceService) { }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()

@@ -962,6 +962,304 @@ async function main() {
 
   console.log('✅ Programmes d\'exemple créés');
 
+  // 7. Créer des sessions d'entraînement avec exercices
+  // Récupérer quelques exercices pour les sessions
+  const allExercices = await prisma.exercice.findMany();
+
+  // Session 1 - Upper Body pour User 1
+  const session1 = await prisma.trainingSession.create({
+    data: {
+      programId: program1.id,
+      date: new Date('2024-11-10'),
+      duration: 60,
+      notes: 'Bonne séance, je me sens en forme',
+    },
+  });
+
+  // Développé couché - 4 séries de 8 reps
+  const benchPress = allExercices.find(e => e.name === 'Développé couché');
+  if (benchPress) {
+    const exerciceSession1 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session1.id,
+        exerciceId: benchPress.id,
+        sets: 4,
+        reps: 8,
+        weight: 80.0,
+      },
+    });
+
+    // Créer les performances pour chaque série
+    for (let i = 1; i <= 4; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession1.id,
+          set_index: i,
+          reps_effectuees: i === 4 ? 7 : 8, // Dernière série un peu plus difficile
+          reps_prevues: 8,
+          weight: 80.0,
+          rpe: i * 2, // RPE augmente avec les séries (2, 4, 6, 8)
+          success: i !== 4, // Dernière série est un échec (7 reps au lieu de 8)
+        },
+      });
+    }
+  }
+
+  // Tractions - 4 séries de 10 reps
+  const pullUps = allExercices.find(e => e.name === 'Tractions');
+  if (pullUps) {
+    const exerciceSession2 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session1.id,
+        exerciceId: pullUps.id,
+        sets: 4,
+        reps: 10,
+        weight: null, // Poids du corps
+      },
+    });
+
+    for (let i = 1; i <= 4; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession2.id,
+          set_index: i,
+          reps_effectuees: [10, 10, 9, 8][i - 1], // Fatigue progressive
+          reps_prevues: 10,
+          weight: null,
+          rpe: [6, 7, 8, 9][i - 1],
+          success: i <= 2, // Seulement les 2 premières séries sont réussies
+        },
+      });
+    }
+  }
+
+  // Développé militaire - 3 séries de 10 reps
+  const militaryPress = allExercices.find(e => e.name === 'Développé militaire');
+  if (militaryPress) {
+    const exerciceSession3 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session1.id,
+        exerciceId: militaryPress.id,
+        sets: 3,
+        reps: 10,
+        weight: 50.0,
+      },
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession3.id,
+          set_index: i,
+          reps_effectuees: [11, 10, 10][i - 1], // Première série bonus
+          reps_prevues: 10,
+          weight: 50.0,
+          rpe: [7, 8, 8][i - 1],
+          success: true,
+        },
+      });
+    }
+  }
+
+  console.log('✅ Session 1 (Upper Body) créée avec performances');
+
+  // Session 2 - Lower Body pour User 1
+  const session2 = await prisma.trainingSession.create({
+    data: {
+      programId: program1.id,
+      date: new Date('2024-11-12'),
+      duration: 70,
+      notes: 'Legs day difficile mais satisfaisant',
+    },
+  });
+
+  // Squats - 5 séries de 6 reps
+  const squats = allExercices.find(e => e.name === 'Squats');
+  if (squats) {
+    const exerciceSession4 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session2.id,
+        exerciceId: squats.id,
+        sets: 5,
+        reps: 6,
+        weight: 100.0,
+      },
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession4.id,
+          set_index: i,
+          reps_effectuees: [6, 6, 6, 5, 5][i - 1],
+          reps_prevues: 6,
+          weight: 100.0,
+          rpe: [6, 7, 8, 9, 9][i - 1],
+          success: i <= 3,
+        },
+      });
+    }
+  }
+
+  // Soulevé de terre - 4 séries de 5 reps
+  const deadlift = allExercices.find(e => e.name === 'Soulevé de terre');
+  if (deadlift) {
+    const exerciceSession5 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session2.id,
+        exerciceId: deadlift.id,
+        sets: 4,
+        reps: 5,
+        weight: 120.0,
+      },
+    });
+
+    for (let i = 1; i <= 4; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession5.id,
+          set_index: i,
+          reps_effectuees: 5,
+          reps_prevues: 5,
+          weight: 120.0,
+          rpe: [7, 8, 9, 9][i - 1],
+          success: true, // Toutes réussies
+        },
+      });
+    }
+  }
+
+  // Leg press - 3 séries de 12 reps
+  const legPress = allExercices.find(e => e.name === 'Leg press');
+  if (legPress) {
+    const exerciceSession6 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session2.id,
+        exerciceId: legPress.id,
+        sets: 3,
+        reps: 12,
+        weight: 150.0,
+      },
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession6.id,
+          set_index: i,
+          reps_effectuees: [12, 12, 11][i - 1],
+          reps_prevues: 12,
+          weight: 150.0,
+          rpe: [6, 7, 8][i - 1],
+          success: i <= 2,
+        },
+      });
+    }
+  }
+
+  console.log('✅ Session 2 (Lower Body) créée avec performances');
+
+  // Session 3 - Full Body pour User 2 (poids du corps)
+  const session3 = await prisma.trainingSession.create({
+    data: {
+      programId: program2.id,
+      date: new Date('2024-11-11'),
+      duration: 45,
+      notes: 'Premier entraînement, très motivée !',
+    },
+  });
+
+  // Pompes - 3 séries de 12 reps
+  const pushUps = allExercices.find(e => e.name === 'Pompes');
+  if (pushUps) {
+    const exerciceSession7 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session3.id,
+        exerciceId: pushUps.id,
+        sets: 3,
+        reps: 12,
+        weight: null,
+      },
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession7.id,
+          set_index: i,
+          reps_effectuees: [12, 10, 8][i - 1], // Fatigue importante
+          reps_prevues: 12,
+          weight: null,
+          rpe: [7, 8, 9][i - 1],
+          success: i === 1,
+        },
+      });
+    }
+  }
+
+  // Squats au poids du corps - 3 séries de 15 reps
+  const bodyweightSquats = allExercices.find(e => e.name === 'Squats au poids du corps');
+  if (bodyweightSquats) {
+    const exerciceSession8 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session3.id,
+        exerciceId: bodyweightSquats.id,
+        sets: 3,
+        reps: 15,
+        weight: null,
+      },
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession8.id,
+          set_index: i,
+          reps_effectuees: [15, 15, 14][i - 1],
+          reps_prevues: 15,
+          weight: null,
+          rpe: [5, 6, 7][i - 1],
+          success: i <= 2,
+        },
+      });
+    }
+  }
+
+  // Planche - 3 séries de 30 secondes (représentées en reps)
+  const plank = allExercices.find(e => e.name === 'Planche');
+  if (plank) {
+    const exerciceSession9 = await prisma.exerciceSession.create({
+      data: {
+        sessionId: session3.id,
+        exerciceId: plank.id,
+        sets: 3,
+        reps: 30, // secondes
+        weight: null,
+      },
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      await prisma.setPerformance.create({
+        data: {
+          id_exercice_session: exerciceSession9.id,
+          set_index: i,
+          reps_effectuees: [30, 28, 25][i - 1], // Temps diminue
+          reps_prevues: 30,
+          weight: null,
+          rpe: [6, 7, 8][i - 1],
+          success: i === 1,
+        },
+      });
+    }
+  }
+
+  console.log('✅ Session 3 (Full Body poids du corps) créée avec performances');
+
+  // Compter les performances créées
+  const totalPerformances = await prisma.setPerformance.count();
+  const totalExerciceSessions = await prisma.exerciceSession.count();
+  const totalSessions = await prisma.trainingSession.count();
+
   console.log('🎉 Seeding terminé avec succès !');
   console.log(`📊 Résumé:`);
   console.log(`- ${muscleGroups.length} groupes musculaires`);
@@ -976,6 +1274,9 @@ async function main() {
   console.log(`- 2 utilisateurs`);
   console.log(`- 2 profils fitness`);
   console.log(`- 2 programmes d'exemple`);
+  console.log(`- ${totalSessions} sessions d'entraînement`);
+  console.log(`- ${totalExerciceSessions} exercices dans les sessions`);
+  console.log(`- ${totalPerformances} performances (séries complètes avec données)`);
 }
 
 main()
