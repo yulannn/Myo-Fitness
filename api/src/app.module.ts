@@ -12,6 +12,10 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { FriendModule } from './friend/friend.module';
 import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
+import { GroupModule } from './group/group.module';
+
+@Module({
+  imports: [PrismaModule, UsersModule, AuthModule, FitnessProfileModule, ExerciceModule, EquipmentModule, FriendModule, IaModule, ProgramModule, SessionModule, GroupModule ],
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
 
