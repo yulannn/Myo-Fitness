@@ -95,6 +95,8 @@ model User {
   sentGroupRequests FriendGroupRequest[] @relation("SentGroupRequests")
   receivedGroupRequests FriendGroupRequest[] @relation("ReceivedGroupRequests")
 
+
+  sessionPhotos SessionPhoto[]
 }
 
 model FitnessProfile {
@@ -152,7 +154,22 @@ model TrainingSession {
   exercices   ExerciceSession[]
 
   trainingProgram TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  sessionPhotos SessionPhoto[]
 }
+
+model SessionPhoto {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  userId      Int
+  photoUrl    String
+  createdAt   DateTime @default(now())
+  description String?
+
+  session     TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 
 
 model Exercice {
