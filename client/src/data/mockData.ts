@@ -47,23 +47,6 @@ export const mockFitnessProfiles: FitnessProfile[] = [
     })),
     activeProgramId: 1,
   },
-  {
-    id: 2,
-    nickname: 'Cardio Reset',
-    userId: 1,
-    age: 28,
-    height: 172,
-    currentWeight: 66.8,
-    trainingFrequency: 3,
-    experienceLevel: 'BEGINNER',
-    goals: ['ENDURANCE', 'MAINTENANCE'],
-    gender: 'FEMALE',
-    bodyWeight: true,
-    weightHistory: Array.from({ length: 8 }).map((_, index) => ({
-      date: iso(new Date(now.getFullYear(), now.getMonth() - (7 - index), 15)),
-      weight: 68 - index * 0.25,
-    })),
-  },
 ]
 
 mockUser.fitnessProfiles = mockFitnessProfiles
