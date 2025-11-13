@@ -82,6 +82,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   refreshToken String?
+  leveling   Leveling?
 
   fitnessProfiles FitnessProfile[]
   exercicesCreated Exercice[]  @relation("ExerciceCreatedBy")
@@ -297,3 +298,16 @@ model FriendGroupRequest {
 
   @@unique([senderId, groupId])
 }
+
+model Leveling {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  level     Int      @default(1)
+  experience Int     @default(0)
+  nextLevelExp Int   @default(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
