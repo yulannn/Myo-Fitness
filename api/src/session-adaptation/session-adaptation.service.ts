@@ -1,173 +1,212 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { CreateSessionAdaptationDto } from './dto/create-session-adaptation.dto';
-import { UpdateSessionAdaptationDto } from './dto/update-session-adaptation.dto';
 import { PrismaService } from 'prisma/prisma.service';
+
+enum PerformanceStatus {
+    TOO_EASY = 'too_easy',
+    TOO_HARD = 'too_hard',
+    PERFECT = 'perfect',
+}
 
 @Injectable()
 export class SessionAdaptationService {
-  constructor(private prisma: PrismaService) { }
+    constructor(private prisma: PrismaService) { }
 
 
-  async getSessionWithPerformances(trainingSessionId: number, userId: number) {
-    const session = await this.prisma.trainingSession.findUnique({
-      where: { id: trainingSessionId },
-      include: {
-        trainingProgram: {
-          include: {
-            fitnessProfile: {
-              select: {
-                userId: true,
-              }
+    async getSessionWithPerformances(trainingSessionId: number, userId: number) {
+        const session = await this.prisma.trainingSession.findUnique({
+            where: { id: trainingSessionId },
+            include: {
+                trainingProgram: {
+                    include: {
+                        fitnessProfile: {
+                            select: { userId: true },
+                        },
+                    },
+                },
+                exercices: {
+                    include: {
+                        performances: true,
+                        exercice: true,
+                    },
+                },
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Training session #${trainingSessionId} not found`);
+        }
+
+        if (session.trainingProgram.fitnessProfile.userId !== userId) {
+            throw new ForbiddenException('You do not have access to this training session');
+        }
+
+        return session;
+    }
+
+
+    // Fonction  lorsque l'utilisateur veut une adaptation automatique basée sur les performances précédentes
+
+    async createAdaptedSessionFromPrevious(trainingSessionId: number, userId: number) {
+        const session = await this.getSessionWithPerformances(trainingSessionId, userId);
+
+        const hasPerformances = session.exercices.every(
+            ex => ex.performances && ex.performances.length > 0,
+        );
+
+        if (!hasPerformances) {
+            throw new NotFoundException(
+                'Cannot adapt session: no performances data found. Please complete the session first.',
+            );
+        }
+
+        return this.createAdaptedSession(session);
+    }
+
+
+
+    private analyzePerformance(performances: any[]) {
+        const totalSets = performances.length;
+
+        const failedSets = performances.filter((p) => p.success === false).length;
+
+        const avgRPE =
+            performances.reduce((sum, p) => sum + (p.rpe ?? 0), 0) / totalSets;
+
+
+        if (failedSets === 0 && avgRPE < 8) {
+            return PerformanceStatus.TOO_EASY;
+        }
+        if (failedSets >= 3 || avgRPE > 9) {
+            return PerformanceStatus.TOO_HARD;
+        }
+        return PerformanceStatus.PERFECT;
+    }
+
+
+    private adaptExercise(exerciceSession: any, status: PerformanceStatus) {
+        let reps = exerciceSession.reps;
+        let weight = exerciceSession.weight;
+        const isBodyweight = exerciceSession.exercice.bodyWeight;
+
+        switch (status) {
+            case PerformanceStatus.TOO_EASY:
+                if (isBodyweight) {
+                    reps += 2;
+                } else if (weight) {
+                    weight = Math.round(weight * 1.05 * 2) / 2;
+                }
+                break;
+
+            case PerformanceStatus.TOO_HARD:
+                if (isBodyweight) {
+                    reps = Math.max(5, reps - 2);
+                } else if (weight) {
+                    weight = Math.round(weight * 0.9 * 2) / 2;
+                }
+                break;
+
+            case PerformanceStatus.PERFECT:
+            default:
+
+                break;
+        }
+
+        return { reps, weight };
+    }
+
+
+    private async createAdaptedSession(previousSession) {
+
+        const originalSessionId = previousSession.originalSessionId || previousSession.id;
+
+        const newSession = await this.prisma.trainingSession.create({
+            data: {
+                programId: previousSession.programId,
+                date: null,
+                duration: null,
+                notes: `Session adaptée basée sur la session du ${previousSession.date
+                    ? new Date(previousSession.date).toLocaleDateString()
+                    : 'précédente'
+                    }`,
+                originalSessionId: originalSessionId,
+            },
+        });
+
+
+        for (const exerciceSession of previousSession.exercices) {
+            const status = this.analyzePerformance(exerciceSession.performances);
+            const adapted = this.adaptExercise(exerciceSession, status);
+
+            await this.prisma.exerciceSession.create({
+                data: {
+                    sessionId: newSession.id,
+                    exerciceId: exerciceSession.exerciceId,
+                    sets: exerciceSession.sets,
+                    reps: adapted.reps,
+                    weight: adapted.weight,
+                },
+            });
+        }
+
+        return this.prisma.trainingSession.findUnique({
+            where: { id: newSession.id },
+            include: {
+                exercices: {
+                    include: { exercice: true },
+                },
+            },
+        });
+    }
+
+
+
+    // Fonction lorsque l'utilisateur ne veut pas d'adaptation automatique ou n'a pas de données de performance
+
+    async createNewSimilarSession(trainingSessionId: number, userId: number) {
+
+
+        const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
+
+
+        const originalSessionId = oldSession.originalSessionId || oldSession.id;
+
+        const newSession = await this.prisma.trainingSession.create({
+            data: {
+                programId: oldSession.programId,
+                date: null,
+                duration: null,
+                notes: `Session adaptée basée sur la session du ${oldSession.date
+                    ? new Date(oldSession.date).toLocaleDateString()
+                    : 'précédente'
+                    }`,
+                originalSessionId: originalSessionId,
             }
-          }
-        },
-        exercices: {
-          include: {
-            performances: true,
-            exercice: true,
-          }
+        })
+
+        if (!newSession) {
+            throw new NotFoundException('Failed to create a new training session.');
         }
-      },
-    });
 
-    if (!session) {
-      throw new NotFoundException(`Training session #${trainingSessionId} not found`);
-    }
+        for (const exerciceSession of oldSession.exercices) {
 
-    if (session.trainingProgram.fitnessProfile.userId !== userId) {
-      throw new ForbiddenException('You do not have access to this training session');
-    }
-
-    return session;
-  }
-
-
-  async createAdaptedSessionFromPrevious(trainingSessionId: number, userId: number) {
-    const session = await this.prisma.trainingSession.findUnique({
-      where: { id: trainingSessionId },
-      include: {
-        trainingProgram: {
-          include: {
-            fitnessProfile: {
-              select: {
-                userId: true,
-              }
-            }
-          }
-        },
-        exercices: {
-          include: {
-            performances: true,
-            exercice: true,
-          }
+            await this.prisma.exerciceSession.create({
+                data: {
+                    sessionId: newSession.id,
+                    exerciceId: exerciceSession.exerciceId,
+                    sets: exerciceSession.sets,
+                    reps: exerciceSession.reps,
+                    weight: exerciceSession.weight,
+                }
+            })
         }
-      },
-    });
 
-    if (!session) {
-      throw new NotFoundException(`Training session #${trainingSessionId} not found`);
+        return this.prisma.trainingSession.findUnique({
+            where: { id: newSession.id },
+            include: {
+                exercices: {
+                    include: { exercice: true },
+                },
+            },
+        });
     }
-
-    if (session.trainingProgram.fitnessProfile.userId !== userId) {
-      throw new ForbiddenException('You do not have access to this training session');
-    }
-
-    if (!session.exercices || session.exercices.length === 0) {
-      throw new NotFoundException('No exercices found for this session');
-    }
-
-    const hasPerformances = session.exercices.every(
-      exercice => exercice.performances && exercice.performances.length > 0
-    );
-
-    if (!hasPerformances) {
-      throw new NotFoundException(
-        'Cannot adapt session: no performances data found. Please complete the session first.'
-      );
-    }
-
-    const newSession = await this.createAdaptedSession(session);
-
-    if (!newSession) {
-      throw new Error('Failed to create adapted session');
-    }
-
-    return newSession;
-  }
-
-  /**
-   * Crée une nouvelle session adaptée basée sur les performances de la session précédente
-   * Règles d'adaptation :
-   * - Si l'utilisateur a réussi toutes les séries : augmenter la charge de 5%
-   * - Si l'utilisateur a échoué à 1-2 séries : maintenir la charge
-   * - Si l'utilisateur a échoué à 3+ séries : réduire la charge de 10%
-   * - Pour les exercices au poids du corps : ajuster les reps au lieu du poids
-   */
-
-  private async createAdaptedSession(previousSession) {
-    const newSession = await this.prisma.trainingSession.create({
-      data: {
-        programId: previousSession.programId,
-        date: null,
-        duration: null,
-        notes: `Session adaptée basée sur la session du ${previousSession.date ? new Date(previousSession.date).toLocaleDateString() : 'précédente'}`,
-        originalSessionId: previousSession.id,
-      },
-    });
-
-    for (const exerciceSession of previousSession.exercices) {
-
-      const performances = exerciceSession.performances;
-      const totalSets = performances.length;
-      const failedSets = performances.filter(p => p.success === false).length;
-      const avgRPE = performances.reduce((sum, p) => sum + (p.rpe || 0), 0) / totalSets;
-
-      let newWeight = exerciceSession.weight;
-      let newReps = exerciceSession.reps;
-
-
-      if (failedSets === 0 && avgRPE < 8) {
-
-        if (exerciceSession.exercice.bodyWeight) {
-
-          newReps = exerciceSession.reps + 2;
-        } else {
-          newWeight = exerciceSession.weight ? Math.round(exerciceSession.weight * 1.05 * 2) / 2 : null; // Arrondi à 0.5kg
-        }
-      } else if (failedSets >= 3 || avgRPE > 9) {
-
-        if (exerciceSession.exercice.bodyWeight) {
-
-          newReps = Math.max(5, exerciceSession.reps - 2);
-        } else {
-
-          newWeight = exerciceSession.weight ? Math.round(exerciceSession.weight * 0.90 * 2) / 2 : null; // Arrondi à 0.5kg
-        }
-      } else if (failedSets >= 1 && failedSets <= 2) {
-        newWeight = exerciceSession.weight;
-        newReps = exerciceSession.reps;
-      }
-
-      await this.prisma.exerciceSession.create({
-        data: {
-          sessionId: newSession.id,
-          exerciceId: exerciceSession.exerciceId,
-          sets: exerciceSession.sets,
-          reps: newReps,
-          weight: newWeight,
-        },
-      });
-    }
-
-    return await this.prisma.trainingSession.findUnique({
-      where: { id: newSession.id },
-      include: {
-        exercices: {
-          include: {
-            exercice: true,
-          }
-        }
-      },
-    });
-  }
 }

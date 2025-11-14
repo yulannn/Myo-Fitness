@@ -2,12 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePerformanceDto } from './dto/create-performance.dto';
 import { UpdatePerformanceDto } from './dto/update-performance.dto';
 import { PrismaService } from 'prisma/prisma.service';
-import { success } from 'zod';
 import { error } from 'console';
 
 @Injectable()
 export class PerformanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
   async create(createPerformanceDto: CreatePerformanceDto) {
     const exerciceSession = await this.prisma.exerciceSession.findUnique({
       where: { id: createPerformanceDto.exerciceSessionId },
@@ -17,18 +16,18 @@ export class PerformanceService {
       throw new Error('Exercice session not found');
     }
 
-  const lastSet = await this.prisma.setPerformance.findFirst({
-    where: { id_exercice_session : exerciceSession.id },
-    orderBy: { set_index: 'desc' },
-  });
+    const lastSet = await this.prisma.setPerformance.findFirst({
+      where: { id_exercice_session: exerciceSession.id },
+      orderBy: { set_index: 'desc' },
+    });
 
-  
-  var success = true
-  if (createPerformanceDto.reps_effectuees ?? 0 <= exerciceSession.reps) {
-    success = false;
-  }
 
-   const setIndex = lastSet ? lastSet.set_index + 1 : 1;
+    var success = true
+    if (createPerformanceDto.reps_effectuees ?? 0 <= exerciceSession.reps) {
+      success = false;
+    }
+
+    const setIndex = lastSet ? lastSet.set_index + 1 : 1;
 
     const performance = await this.prisma.setPerformance.create({
       data: {
@@ -49,14 +48,14 @@ export class PerformanceService {
 
   async findOne(id: number) {
     const performance = await this.prisma.setPerformance.findUnique({
-      where: {id_set : id}
+      where: { id_set: id }
     });
     if (!performance) {
       throw new error(`Performance #${id} not found`)
     }
   }
 
-  async findAllPerformanceByUser(userId : number) {
+  async findAllPerformanceByUser(userId: number) {
     const performances = await this.prisma.setPerformance.findMany({
       where: {
         exerciceSession: {
@@ -80,7 +79,7 @@ export class PerformanceService {
     return performances;
   }
 
-   async update(id: number, updatePerformanceDto: UpdatePerformanceDto) {
+  async update(id: number, updatePerformanceDto: UpdatePerformanceDto) {
     const existing = await this.prisma.setPerformance.findUnique({
       where: { id_set: id },
     });
