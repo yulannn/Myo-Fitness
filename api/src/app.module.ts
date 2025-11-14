@@ -16,17 +16,23 @@ import { GroupModule } from './group/group.module';
 import { PerformanceModule } from './performance/performance.module';
 import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
 import { SessionAdaptationModule } from './session-adaptation/session-adaptation.module';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { SessionPhotoModule } from './session-photo/session-photo.module';
+
 @Module({
   imports: [
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60000, // --> en ms donc 1min là
-          limit: 1000, // --> mettre moins en Prod
+          ttl: 60000,
+          limit: 1000, 
         },
       ],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
     }),
     PrismaModule,
     UsersModule,

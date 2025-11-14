@@ -14,6 +14,12 @@ export class UserEntity {
   @ApiProperty({ description: 'Nom de l’utilisateur', example: 'Jean' })
   name: string;
 
+  @ApiPropertyOptional({
+    description: 'URL de la photo de profil',
+    example: 'https://example.com/profile.jpg',
+  })
+  profilePictureUrl?: string | null;
+
   @Exclude()
   password: string;
 

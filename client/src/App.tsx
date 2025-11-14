@@ -6,6 +6,7 @@ import Register from "./pages/register";
 import BottomNav from "./components/app/BottomNav";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import ComingSoon from "./pages/placeHolder";
 
 export default function App() {
   const location = useLocation();
@@ -32,6 +33,30 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <FitnessProfiles />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/programs"
+              element={
+                <ProtectedRoute>
+                  <ComingSoon />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coach"
+              element={
+                <ProtectedRoute>
+                  <ComingSoon />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sessions"
+              element={
+                <ProtectedRoute>
+                  <ComingSoon />
                 </ProtectedRoute>
               }
             />
