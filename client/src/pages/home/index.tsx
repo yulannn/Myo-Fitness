@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { mockUser } from '../../data/mockData'
 
 export default function Home() {
