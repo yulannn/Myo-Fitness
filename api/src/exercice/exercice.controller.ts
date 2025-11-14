@@ -12,7 +12,7 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/exercice')
 export class ExerciceController {
-  constructor(private readonly exerciceService: ExerciceService) {}
+  constructor(private readonly exerciceService: ExerciceService) { }
 
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -43,7 +43,7 @@ export class ExerciceController {
     const userId = req.user.userId;
     return this.exerciceService.create(createExerciceDto, userId);
   }
- 
+
 
   @Get()
   @ApiOperation({ summary: 'Récupérer tous les exercices de l’utilisateur' })
@@ -74,7 +74,7 @@ export class ExerciceController {
     return this.exerciceService.findAll(userId);
   }
 
- 
+
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un exercice par son ID' })
   @ApiParam({ name: 'id', description: 'ID de l’exercice', type: Number, example: 1 })
