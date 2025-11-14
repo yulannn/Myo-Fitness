@@ -1,88 +1,105 @@
 // src/pages/FitnessProfiles.tsx
-import { mockFitnessProfiles, mockUser } from '../../data/mockData'
-import { useAuth } from '../../context/AuthContext'
-import { useLogout } from '../../api/hooks/useLogout'
+import { useRef, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useLogout } from '../../api/hooks/useLogout';
+import { useUploadProfilePicture } from '../../api/hooks/useUploadProfilePicture';
+import { Pencil } from 'lucide-react';
 
 export default function FitnessProfiles() {
-  const { user } = useAuth()
-  const logout = useLogout()
+  const { user } = useAuth();
+  const logout = useLogout();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadMutation = useUploadProfilePicture();
 
   console.log(user)
+  const handleOpenFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image trop lourde (max 5 Mo)');
+      return;
+    }
   
+    setIsUploading(true);
+    try {
+      await uploadMutation.mutateAsync(file);
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors de l’upload');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <section className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Profil</h1>
+
         <button
-  onClick={logout}
-  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-4 w-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-    />
-  </svg>
-  Déconnexion
-</button>
+          type="button"
+          onClick={logout}
+          className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          Déconnexion
+        </button>
       </div>
 
+      {/* Profil */}
       <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-4">
-          <img
-            src={ mockUser.avatarUrl}
-            
-            alt={user?.name || mockUser.name}
-            className="h-16 w-16 rounded-full object-cover"
-          />
+        <div className="flex items-center gap-4 relative">
+          <div className="relative">
+
+            {/* IMAGE */}
+            <img
+              src={`http://localhost:3000${user?.profilePictureUrl ?? '/uploads/profile-pictures/default.png'}`}
+              alt={user?.name ?? "John Doe"}
+              className="h-16 w-16 rounded-full object-cover ring-2 ring-slate-200"
+            />
+
+            {/* INPUT FILE (toujours enabled) */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Bouton pour ouvrir le picker */}
+            <button
+              type="button"
+              onClick={handleOpenFilePicker}
+              className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-black text-white flex items-center justify-center shadow-md focus:outline-none"
+              title="Changer la photo"
+            >
+              <Pencil size={10} />
+            </button>
+
+            {/* Overlay de chargement */}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              </div>
+            )}
+          </div>
+
           <div>
-            <p className="text-lg font-semibold text-slate-900">
-              {user?.name || mockUser.name}
-            </p>
-            <p className="text-sm text-slate-500">{user?.email || mockUser.email}</p>
+            <p className="text-lg font-semibold text-slate-900">{user?.name || "John Doe"}</p>
+            <p className="text-sm text-slate-500">{user?.email || "email@example.com"}</p>
           </div>
         </div>
       </div>
-
-      <div className="space-y-4">
-        {mockFitnessProfiles.map((profile) => (
-          <div key={profile.id} className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="font-semibold text-slate-900">{profile.nickname}</p>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs text-slate-500">Poids</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {profile.currentWeight} kg
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Taille</p>
-                <p className="mt-1 font-semibold text-slate-900">{profile.height} cm</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Niveau</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {profile.experienceLevel}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Fréquence</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {profile.trainingFrequency} séances/sem
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
     </section>
-  )
+  );
 }

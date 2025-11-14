@@ -25,5 +25,6 @@ export class AuthResultDto {
     id: number;
     email: string;
     name: string;
+    profilePictureUrl?: string | null;
   };
 }
