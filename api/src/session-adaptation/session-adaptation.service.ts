@@ -117,6 +117,8 @@ export class SessionAdaptationService {
 
     private async createAdaptedSession(previousSession) {
 
+        const originalSessionId = previousSession.originalSessionId || previousSession.id;
+
         const newSession = await this.prisma.trainingSession.create({
             data: {
                 programId: previousSession.programId,
@@ -126,7 +128,7 @@ export class SessionAdaptationService {
                     ? new Date(previousSession.date).toLocaleDateString()
                     : 'précédente'
                     }`,
-                originalSessionId: previousSession.id,
+                originalSessionId: originalSessionId,
             },
         });
 
@@ -162,7 +164,11 @@ export class SessionAdaptationService {
 
     async createNewSimilarSession(trainingSessionId: number, userId: number) {
 
+
         const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
+
+
+        const originalSessionId = oldSession.originalSessionId || oldSession.id;
 
         const newSession = await this.prisma.trainingSession.create({
             data: {
@@ -173,7 +179,7 @@ export class SessionAdaptationService {
                     ? new Date(oldSession.date).toLocaleDateString()
                     : 'précédente'
                     }`,
-                originalSessionId: oldSession.id,
+                originalSessionId: originalSessionId,
             }
         })
 
