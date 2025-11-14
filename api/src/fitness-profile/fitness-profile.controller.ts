@@ -41,7 +41,7 @@ export class FitnessProfileController {
     },
   })
   create(@Body() createFitnessProfileDto: CreateFitnessProfileDto, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.fitnessProfileService.create(createFitnessProfileDto, userId);
   }
 
@@ -67,7 +67,7 @@ export class FitnessProfileController {
     type: FitnessProfileEntity,
   })
   findOne(@Param('id') id: string, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.fitnessProfileService.findOne(+id, userId);
   }
 

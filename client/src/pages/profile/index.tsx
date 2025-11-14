@@ -1,51 +1,43 @@
-// src/pages/FitnessProfiles.tsx
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLogout } from '../../api/hooks/useLogout';
-import { useUploadProfilePicture } from '../../api/hooks/useUploadProfilePicture';
-import { Pencil } from 'lucide-react';
+import { useFitnessProfiles } from '../../api/hooks/useFitnessProfiles';
+import UserCard from '../../components/profile/UserCard';
+import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
+import CreateProfileModal from '../../components/profile/CreateProfileModal';
+import DeleteProfileModal from '../../components/profile/DeleteProfileModal';
+import { Plus } from "lucide-react"
 
 export default function FitnessProfiles() {
   const { user } = useAuth();
   const logout = useLogout();
+  const { data: profiles = [], isLoading, createMutation, deleteMutation } = useFitnessProfiles();
 
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadMutation = useUploadProfilePicture();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [profileToDelete, setProfileToDelete] = useState<number | null>(null);
 
-  console.log(user)
-  const handleOpenFilePicker = () => {
-    fileInputRef.current?.click();
+  const handleCreate = (form: any) => {
+    createMutation.mutate(form, {
+      onSuccess: () => setIsCreateModalOpen(false),
+    });
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image trop lourde (max 5 Mo)');
-      return;
-    }
-  
-    setIsUploading(true);
-    try {
-      await uploadMutation.mutateAsync(file);
-    } catch (err: any) {
-      alert(err.message || 'Erreur lors de l’upload');
-    } finally {
-      setIsUploading(false);
+  const handleDelete = (id: number) => {
+    setProfileToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (profileToDelete) {
+      deleteMutation.mutate(profileToDelete, {
+        onSuccess: () => setProfileToDelete(null),
+      });
     }
   };
 
   return (
     <section className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Profil</h1>
-
         <button
           type="button"
           onClick={logout}
@@ -55,51 +47,43 @@ export default function FitnessProfiles() {
         </button>
       </div>
 
-      {/* Profil */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-4 relative">
-          <div className="relative">
+      <UserCard
+        name={user?.name || 'John Doe'}
+        email={user?.email || 'email@example.com'}
+        profilePictureUrl={user?.profilePictureUrl}
+      />
 
-            {/* IMAGE */}
-            <img
-              src={`http://localhost:3000${user?.profilePictureUrl ?? '/uploads/profile-pictures/default.png'}`}
-              alt={user?.name ?? "John Doe"}
-              className="h-16 w-16 rounded-full object-cover ring-2 ring-slate-200"
-            />
-
-            {/* INPUT FILE (toujours enabled) */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            {/* Bouton pour ouvrir le picker */}
-            <button
-              type="button"
-              onClick={handleOpenFilePicker}
-              className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-black text-white flex items-center justify-center shadow-md focus:outline-none"
-              title="Changer la photo"
-            >
-              <Pencil size={10} />
-            </button>
-
-            {/* Overlay de chargement */}
-            {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <p className="text-lg font-semibold text-slate-900">{user?.name || "John Doe"}</p>
-            <p className="text-sm text-slate-500">{user?.email || "email@example.com"}</p>
-          </div>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-slate-900">Mes profils fitness</h2>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <Plus size={16} />
+          Ajouter un profil
+        </button>
       </div>
+
+      <FitnessProfilesList
+        profiles={profiles}
+        isLoading={isLoading}
+        onAddClick={() => setIsCreateModalOpen(true)}
+        onDeleteClick={handleDelete}
+      />
+
+      <CreateProfileModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreate}
+        isPending={createMutation.isPending}
+      />
+
+      <DeleteProfileModal
+        isOpen={profileToDelete !== null}
+        onClose={() => setProfileToDelete(null)}
+        onConfirm={confirmDelete}
+        isPending={deleteMutation.isPending}
+      />
     </section>
   );
 }
