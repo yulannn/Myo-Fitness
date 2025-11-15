@@ -11,11 +11,16 @@ const MAX_SESSIONS_PER_PROGRAM = 7;
 export class ProgramService {
     constructor(private prisma: PrismaService, private iaService: IaService) { }
 
-
+    // Recupere tout les programmes d'un utilisateur avec sessions non complétées
     async getProgramsByUser(userId: number) {
         return this.prisma.trainingProgram.findMany({
-            where: { fitnessProfile: { userId } },
-            include: { sessions: { include: { exercices: true } } },
+            where: { fitnessProfile: { userId }, sessions: { some: { completed: false } } },
+            include: {
+                sessions: {
+                    where: { completed: false },
+                    include: { exercices: true },
+                },
+            },
         });
     }
 
