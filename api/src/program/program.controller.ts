@@ -6,7 +6,7 @@ import {
   UseGuards,
   Delete,
   Param,
-  Put,
+  Get,
   ParseIntPipe,
 } from '@nestjs/common';
 import { ProgramService } from './program.service';
@@ -31,7 +31,31 @@ import { AddSessionToProgramDto } from './dto/add-session-program.dto';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/program')
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) {}
+  constructor(private readonly programService: ProgramService) { }
+
+  @Get()
+  @ApiOperation({ summary: 'Récupérer tous les programmes d’entraînement de l’utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programmes récupérés avec succès',
+    type: [TrainingProgramEntity],
+  })
+  getProgramsByUser(@Request() req) {
+    const userId = req.user.userId;
+    return this.programService.getProgramsByUser(userId);
+  }
+
+  @Get(':programId')
+  @ApiOperation({ summary: 'Récupérer un programme d’entraînement par ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programme récupéré avec succès',
+    type: TrainingProgramEntity,
+  })
+  getProgramById(@Param('programId', ParseIntPipe) programId: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.programService.getProgramById(programId, userId);
+  }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post()
@@ -107,84 +131,5 @@ export class ProgramController {
     return this.programService.deleteSessionFromProgram(sessionId, userId);
   }
 
-  @Delete('delete-exercise/:sessionId/:exerciceId')
-  @ApiOperation({ summary: 'Supprimer un exercice d’une session' })
-  @ApiResponse({
-    status: 200,
-    description: 'Exercice supprimé avec succès de la session',
-  })
-  async deleteExerciseFromSession(
-    @Param('sessionId', ParseIntPipe) sessionId: number,
-    @Param('exerciceId', ParseIntPipe) exerciceId: number,
-    @Request() req,
-  ) {
-    const userId = req.user.userId;
-    return this.programService.deleteExerciseFromSession(
-      sessionId,
-      exerciceId,
-      userId,
-    );
-  }
 
-  @Post('add-exercise/:sessionId/:exerciceId')
-  @ApiOperation({ summary: 'Ajouter un exercice à une session' })
-  @ApiBody({
-    schema: {
-      example: {
-        id: 10,
-        sets: 3,
-        reps: 12,
-        weight: 40,
-      },
-    },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Exercice ajouté avec succès à la session',
-  })
-  async addExerciseToSession(
-    @Param('sessionId', ParseIntPipe) sessionId: number,
-    @Param('exerciceId', ParseIntPipe) exerciceId: number,
-    @Body() exerciseData: ExerciseDataDto,
-    @Request() req,
-  ) {
-    const userId = req.user.userId;
-    return this.programService.addExerciseToSession(
-      sessionId,
-      exerciceId,
-      exerciseData,
-      userId,
-    );
-  }
-
-  @Put('update-exercise/:sessionId/:exerciceId')
-  @ApiOperation({ summary: 'Mettre à jour un exercice dans une session' })
-  @ApiBody({
-    schema: {
-      example: {
-        id: 10,
-        sets: 4,
-        reps: 10,
-        weight: 50,
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Exercice mis à jour avec succès',
-  })
-  async updateExerciseInSession(
-    @Param('sessionId', ParseIntPipe) sessionId: number,
-    @Param('exerciceId', ParseIntPipe) exerciceId: number,
-    @Body() exerciseData: ExerciseDataDto,
-    @Request() req,
-  ) {
-    const userId = req.user.userId;
-    return this.programService.updateExerciceData(
-      sessionId,
-      exerciceId,
-      exerciseData,
-      userId,
-    );
-  }
 }

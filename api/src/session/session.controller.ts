@@ -1,4 +1,4 @@
-import { Controller, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
 import {
@@ -9,11 +9,12 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ExerciseDataDto } from 'src/program/dto/session-data.dto';
 
 @ApiTags('session')
 @Controller('api/v1/session')
 export class SessionController {
-  constructor(private readonly sessionService: SessionService) {}
+  constructor(private readonly sessionService: SessionService) { }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/date')
@@ -38,5 +39,88 @@ export class SessionController {
     @Body() updateSessionDateDto: UpdateSessionDateDto,
   ) {
     return this.sessionService.updateDate(Number(id), updateSessionDateDto);
+  }
+
+
+  @Delete('delete-exercise/:sessionId/:exerciceId')
+  @ApiOperation({ summary: 'Supprimer un exercice d’une session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Exercice supprimé avec succès de la session',
+  })
+  async deleteExerciseFromSession(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('exerciceId', ParseIntPipe) exerciceId: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.deleteExerciseFromSession(
+      sessionId,
+      exerciceId,
+      userId,
+    );
+  }
+
+  @Post('add-exercise/:sessionId/:exerciceId')
+  @ApiOperation({ summary: 'Ajouter un exercice à une session' })
+  @ApiBody({
+    schema: {
+      example: {
+        id: 10,
+        sets: 3,
+        reps: 12,
+        weight: 40,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Exercice ajouté avec succès à la session',
+  })
+  async addExerciseToSession(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('exerciceId', ParseIntPipe) exerciceId: number,
+    @Body() exerciseData: ExerciseDataDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.addExerciseToSession(
+      sessionId,
+      exerciceId,
+      exerciseData,
+      userId,
+    );
+  }
+
+
+  @Put('update-exercise/:sessionId/:exerciceId')
+  @ApiOperation({ summary: 'Mettre à jour un exercice dans une session' })
+  @ApiBody({
+    schema: {
+      example: {
+        id: 10,
+        sets: 4,
+        reps: 10,
+        weight: 50,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Exercice mis à jour avec succès',
+  })
+  async updateExerciseInSession(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('exerciceId', ParseIntPipe) exerciceId: number,
+    @Body() exerciseData: ExerciseDataDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.updateExerciceFromSession(
+      sessionId,
+      exerciceId,
+      exerciseData,
+      userId,
+    );
   }
 }

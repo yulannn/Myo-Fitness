@@ -8,6 +8,6 @@ import { IaModule } from 'src/ia/ia.module';
   imports: [IaModule],
   controllers: [ProgramController],
   providers: [ProgramService],
-
+  exports: [ProgramService],
 })
 export class ProgramModule { }
