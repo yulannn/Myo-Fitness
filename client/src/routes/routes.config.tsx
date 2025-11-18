@@ -5,49 +5,67 @@ import ComingSoon from "../pages/placeHolder";
 import Login from "../pages/login";
 import Register from "../pages/register";
 import type { ReactNode } from "react";
-import { HOME, PROFILES, PROGRAMS, COACH, SESSIONS, LOGIN, REGISTER } from "../utils/paths";
+import {
+    HOME,
+    PROFILES,
+    PROGRAMS,
+    COACH,
+    SESSIONS,
+    LOGIN,
+    REGISTER,
+} from "../utils/paths";
 
 export interface AppRouteConfig {
     path: string;
     element: ReactNode;
     protected?: boolean;
+    redirectIfAuthenticated?: boolean;
     hideBottomNav?: boolean;
 }
 
 export const routes: AppRouteConfig[] = [
+
     {
         path: HOME,
         element: <Home />,
-        protected: true,
+        protected: true
     },
     {
         path: PROFILES,
         element: <FitnessProfiles />,
-        protected: true,
+        protected: true
     },
     {
         path: PROGRAMS,
         element: <Program />,
-        protected: true,
+        protected: true
     },
     {
         path: COACH,
         element: <ComingSoon />,
-        protected: true,
+        protected: true
     },
     {
         path: SESSIONS,
         element: <ComingSoon />,
-        protected: true,
+        protected: true
     },
     {
         path: LOGIN,
         element: <Login />,
-        hideBottomNav: true,
+        redirectIfAuthenticated: true,
+        hideBottomNav: true
     },
     {
         path: REGISTER,
         element: <Register />,
-        hideBottomNav: true,
+        redirectIfAuthenticated: true,
+        hideBottomNav: true
     },
+    {
+        path: "*",
+        element: <Home />,
+        protected: true
+    }
+
 ];

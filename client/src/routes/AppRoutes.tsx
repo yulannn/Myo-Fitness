@@ -2,27 +2,27 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { routes } from "./routes.config";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
-import { HOME, LOGIN, REGISTER } from "../utils/paths";
+import { HOME } from "../utils/paths";
 
 export const AppRoutes = () => {
     const { isAuthenticated } = useAuth();
 
     return (
         <Routes>
-            {routes.map(({ path, element, protected: isProtected }) => {
-                const Page = element;
-
+            {routes.map(({ path, element, protected: isProtected, redirectIfAuthenticated }) => {
+                // 1️ Cas : route protégée → nécessite un token
                 if (isProtected) {
                     return (
                         <Route
                             key={path}
                             path={path}
-                            element={<ProtectedRoute>{Page}</ProtectedRoute>}
+                            element={<ProtectedRoute>{element}</ProtectedRoute>}
                         />
                     );
                 }
 
-                if ((path === LOGIN || path === REGISTER) && isAuthenticated) {
+                // 2️ Cas : route publique qui ne doit pas être visible si user connecté (login/register)
+                if (redirectIfAuthenticated && isAuthenticated) {
                     return (
                         <Route
                             key={path}
@@ -32,7 +32,8 @@ export const AppRoutes = () => {
                     );
                 }
 
-                return <Route key={path} path={path} element={Page} />;
+                // 3️ Cas : route publique classique
+                return <Route key={path} path={path} element={element} />;
             })}
         </Routes>
     );
