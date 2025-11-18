@@ -13,7 +13,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   /** Valide l'utilisateur pour le LocalStrategy */
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
@@ -39,9 +39,9 @@ export class AuthService {
 
   async getFreshUser(id: number) {
     const user = await this.usersService.findUserById(id);
-  
+
     const { password, refreshToken, ...safeUser } = user;
-  
+
     return safeUser;
   }
 
@@ -49,7 +49,7 @@ export class AuthService {
   async signIn(user: SafeUser): Promise<AuthResultDto> {
     const payload = this.buildJwtPayload(user);
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '1m' });
     const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);

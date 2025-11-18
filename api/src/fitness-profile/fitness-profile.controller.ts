@@ -12,7 +12,7 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/fitness-profile')
 export class FitnessProfileController {
-  constructor(private readonly fitnessProfileService: FitnessProfileService) {}
+  constructor(private readonly fitnessProfileService: FitnessProfileService) { }
 
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -41,7 +41,7 @@ export class FitnessProfileController {
     },
   })
   create(@Body() createFitnessProfileDto: CreateFitnessProfileDto, @Request() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.fitnessProfileService.create(createFitnessProfileDto, userId);
   }
 
@@ -67,7 +67,7 @@ export class FitnessProfileController {
     type: FitnessProfileEntity,
   })
   findOne(@Param('id') id: string, @Request() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.fitnessProfileService.findOne(+id, userId);
   }
 

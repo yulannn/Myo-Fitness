@@ -1,3 +1,6 @@
+import api from "../apiClient";
+import axios, { type AxiosResponse } from "axios";
+
 export interface SignUpPayload {
   email: string
   name: string
@@ -50,9 +53,6 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = 'http://localhost:3000'
-const AUTH_BASE_URL = `${API_BASE_URL}/api/v1/auth`
-
 const KNOWN_FIELDS = new Set(['email', 'password', 'name', 'firstName', 'lastName'])
 
 function normaliseFieldErrors(messages: unknown): FieldErrors {
@@ -103,83 +103,41 @@ function buildApiError(status: number, body: unknown): ApiError {
   })
 }
 
-async function parseJsonSafe<T>(response: Response): Promise<T | undefined> {
-  const text = await response.text()
-  if (!text) return undefined
+
+async function requestApi<T>(call: Promise<AxiosResponse<T>>): Promise<T> {
   try {
-    return JSON.parse(text) as T
-  } catch (error) {
-    console.warn('Failed to parse JSON response', error)
-    return undefined
-  }
-}
-
-async function fetchJson<T>(path: string, init: RequestInit = {}, accessToken?: string): Promise<T> {
-  const headers = new Headers(init.headers ?? {})
-  headers.set('Accept', 'application/json')
-
-  if (init.body && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json')
-  }
-
-  if (accessToken && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${accessToken}`)
-  }
-
-  try {
-    const response = await fetch(`${AUTH_BASE_URL}${path}`, {
-      ...init,
-      headers,
-      credentials: 'include',
-    })
-
-    const body = await parseJsonSafe<T | Record<string, unknown>>(response)
-
-    if (!response.ok) {
-      throw buildApiError(response.status, body)
+    const res = await call
+    return res.data
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const status = err.response?.status ?? 0
+      const body = err.response?.data ?? err.message
+      throw buildApiError(status, body)
     }
-
-    if (body === undefined || body === null) {
-      if (response.status === 204) return undefined as T
-      throw new ApiError({
-        status: response.status,
-        message: 'Réponse inattendue du serveur',
-        details: { status: response.status, url: response.url },
-      })
-    }
-
-    return body as T
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
-    }
-
-    throw new ApiError({
-      status: 0,
-      message: 'Impossible de contacter le serveur. Vérifie ta connexion.',
-      details: error,
-    })
+    throw buildApiError(0, err)
   }
 }
 
 export async function register(payload: SignUpPayload): Promise<AuthSuccessResponse> {
-  return fetchJson<AuthSuccessResponse>('/register', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+  return requestApi<AuthSuccessResponse>(api.post("/auth/register", payload))
 }
 
 export async function login(payload: LoginPayload): Promise<AuthSuccessResponse> {
-  return fetchJson<AuthSuccessResponse>('/login', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+  return requestApi<AuthSuccessResponse>(api.post("/auth/login", payload))
 }
 
 export async function getCurrentUser(accessToken: string): Promise<MeResponse> {
-  return fetchJson<MeResponse>('/me', undefined, accessToken)
+  return requestApi<MeResponse>(
+    api.get("/auth/me", {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    }),
+  )
 }
 
 export async function logout(accessToken: string): Promise<void> {
-  await fetchJson<{ message: string }>('/logout', { method: 'POST' }, accessToken)
+  await requestApi<{ message: string }>(
+    api.post("/auth/logout", undefined, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    }),
+  )
 }

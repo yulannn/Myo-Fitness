@@ -1,4 +1,4 @@
-import { Controller, Get, Post,Param, UseGuards, UseInterceptors, Req, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, UseInterceptors, Req, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import {
@@ -18,7 +18,7 @@ import { extname } from 'path';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
 
   @Get('email/:email')
@@ -76,7 +76,7 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req,
   ) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
 
     await this.usersService.updateUser(userId, {
