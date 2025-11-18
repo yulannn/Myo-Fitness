@@ -13,27 +13,6 @@ export class SessionService {
     private readonly programService: ProgramService,
   ) { }
 
-  create(createSessionDto: CreateTrainingSessionDto) {
-    return this.prisma.trainingSession.create({
-      data: createSessionDto,
-    });
-  }
-
-  findAll() {
-    return this.prisma.trainingSession.findMany({
-      include: { exercices: true },
-    });
-  }
-
-  async findOne(id: number) {
-    const session = await this.prisma.trainingSession.findUnique({
-      where: { id },
-      include: { exercices: true },
-    });
-    if (!session) {
-      throw new NotFoundException('Session not found');
-    }
-  }
 
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {
     const session = await this.prisma.trainingSession.findUnique({
@@ -50,10 +29,6 @@ export class SessionService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
-    return this.prisma.trainingSession.delete({ where: { id } });
-  }
 
   async addExerciseToSession(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
     return this.prisma.$transaction(async (prisma) => {

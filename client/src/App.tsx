@@ -7,6 +7,7 @@ import BottomNav from "./components/app/BottomNav";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import ComingSoon from "./pages/placeHolder";
+import Program from "./pages/program";
 
 export default function App() {
   const location = useLocation();
@@ -40,7 +41,7 @@ export default function App() {
               path="/programs"
               element={
                 <ProtectedRoute>
-                  <ComingSoon />
+                  <Program />
                 </ProtectedRoute>
               }
             />
@@ -65,7 +66,7 @@ export default function App() {
           </Routes>
         </main>
 
-        {}
+        { }
         {!shouldHideBottomNav && <BottomNav />}
       </div>
     </div>
