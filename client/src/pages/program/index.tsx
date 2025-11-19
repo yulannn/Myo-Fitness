@@ -1,7 +1,7 @@
-import { useProgramData } from "../../api//hooks/useProgramData";
+import { useProgramsByUser } from "../../api//hooks/program/useGetProgramsByUser";
 
 const Program = () => {
-    const { data, error, isLoading } = useProgramData();
+    const { data, error, isLoading } = useProgramsByUser();
 
     console.log("Program data:", data, "Error:", error);
 

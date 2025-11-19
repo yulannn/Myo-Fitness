@@ -1,9 +1,34 @@
 import api from '../apiClient';
-import type { Program } from '../../types/program.type';
+import type { Program, CreateProgramPayload, ManualProgramPayload, AddSessionPayload } from '../../types/program.type';
 
 export const ProgramFetchDataService = {
-    getProgramsById: async (): Promise<Program[]> => {
+    async getProgramsByUser(): Promise<Program[]> {
         const res = await api.get<Program[]>('/program');
+        return res.data;
+    },
+
+    async getProgramById(programId: number): Promise<Program> {
+        const res = await api.get<Program>(`/program/${programId}`);
+        return res.data;
+    },
+
+    async createProgram(payload: CreateProgramPayload): Promise<Program> {
+        const res = await api.post<Program>('/program', payload);
+        return res.data;
+    },
+
+    async createManualProgram(payload: ManualProgramPayload): Promise<Program> {
+        const res = await api.post<Program>('/program/manual', payload);
+        return res.data;
+    },
+
+    async addSessionToProgram(programId: number, payload: AddSessionPayload): Promise<Program> {
+        const res = await api.post<Program>(`/program/add-session/${programId}`, payload);
+        return res.data;
+    },
+
+    async deleteSessionFromProgram(sessionId: number): Promise<Program> {
+        const res = await api.delete<Program>(`/program/delete-session/${sessionId}`);
         return res.data;
     },
 };
