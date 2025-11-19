@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthSuccessResponse, AuthUser } from '../api/services/authService';
 import { getCurrentUser, logout as logoutService } from '../api/services/authService';
+import { tokenService } from '../utils/tokenService';
 
 interface MeResponse { user: AuthUser }
 
@@ -55,6 +56,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     if (accessToken) { try { await logoutService(accessToken); } catch { } }
     clearSession();
+    tokenService.clear(); // yulan : clear tokens 
+    queryClient.clear(); // yulan : clear react query cache
   }, [accessToken, clearSession]);
 
   const value = useMemo<AuthContextValue>(() => ({

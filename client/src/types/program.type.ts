@@ -26,3 +26,37 @@ export interface Program {
     fitnessProfileId?: number;
     sessions?: Session[];
 }
+
+export interface CreateProgramPayload {
+    name: string;
+    description?: string | null;
+    fitnessProfileId: number;
+}
+
+
+export interface ManualProgramPayload {
+    createProgramDto: CreateProgramPayload;
+    sessionData: {
+        sessions: Array<{
+            name?: string;
+            exercises?: Array<{
+                id: number;
+                sets?: number;
+                reps?: number;
+                weight?: number | null;
+            }>;
+        }>;
+    };
+}
+
+export interface AddSessionPayload {
+    sessionData: {
+        name?: string;
+        exercises: Array<{
+            id: number;
+            sets?: number;
+            reps?: number;
+            weight?: number | null;
+        }>;
+    };
+}
