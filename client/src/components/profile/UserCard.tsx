@@ -1,6 +1,6 @@
 // src/components/UserCard.tsx
 import { useRef, useState } from 'react';
-import { useUploadProfilePicture } from '../../api/hooks/useUploadProfilePicture';
+import { useUploadProfilePicture } from '../../api/hooks/user/useUploadProfilePicture';
 import { Pencil } from 'lucide-react';
 
 interface UserCardProps {

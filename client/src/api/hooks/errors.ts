@@ -1,12 +1,12 @@
-import type { FieldErrors } from '../services/authService'
+import type { FieldErrors } from '../../types/auth.type';
 
 export class ValidationError extends Error {
-  fieldErrors: FieldErrors
+    fieldErrors: FieldErrors;
 
-  constructor(message: string, fieldErrors: FieldErrors) {
-    super(message)
-    this.name = 'ValidationError'
-    this.fieldErrors = fieldErrors
-  }
+    constructor(message: string, fieldErrors: FieldErrors) {
+        super(message);
+        this.name = 'ValidationError';
+        this.fieldErrors = fieldErrors;
+    }
 }
 

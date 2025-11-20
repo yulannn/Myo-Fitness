@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useLogout } from '../../api/hooks/useLogout';
-import { useFitnessProfiles } from '../../api/hooks/useFitnessProfiles';
+import { useLogout } from '../../api/hooks/auth/useLogout';
+import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
+import { useCreateFitnessProfile } from '../../api/hooks/fitness-profile/useCreateFitnessProfile';
+import { useDeleteFitnessProfile } from '../../api/hooks/fitness-profile/useDeleteFitnessProfile';
 import UserCard from '../../components/profile/UserCard';
 import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
 import CreateProfileModal from '../../components/profile/CreateProfileModal';
@@ -11,7 +13,9 @@ import { Plus } from "lucide-react"
 export default function FitnessProfiles() {
   const { user } = useAuth();
   const logout = useLogout();
-  const { data: profiles = [], isLoading, createMutation, deleteMutation } = useFitnessProfiles();
+  const { data: profiles = [], isLoading } = useFitnessProfilesByUser();
+  const createMutation = useCreateFitnessProfile();
+  const deleteMutation = useDeleteFitnessProfile();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<number | null>(null);

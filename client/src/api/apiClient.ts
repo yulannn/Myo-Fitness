@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
-import { tokenService } from "../utils/tokenService";
+import { tokenService } from "./services/tokenService";
 
 const api = axios.create({
     baseURL: "http://localhost:3000/api/v1",

@@ -1,38 +1,27 @@
-import { ApiError } from './authService'
+import api from '../apiClient';
+import type { User, UploadProfilePictureResponse } from '../../types/user.type';
 
-const API_BASE_URL = 'http://localhost:3000'
-const USERS_BASE_URL = `${API_BASE_URL}/api/v1/users`
+export const UserFetchDataService = {
+    async getUserByEmail(email: string): Promise<User> {
+        const res = await api.get<User>(`/users/email/${email}`);
+        return res.data;
+    },
 
-export async function uploadProfilePicture(file: File, accessToken: string): Promise<{ profilePictureUrl: string }> {
-  const formData = new FormData()
-  formData.append('profilePicture', file)
+    async getUserById(userId: number): Promise<User> {
+        const res = await api.get<User>(`/users/${userId}`);
+        return res.data;
+    },
 
-  try {
-    const res = await fetch(`${USERS_BASE_URL}/me/profile-picture`, {
-      method: 'POST',
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      body: formData,
-      credentials: 'include',
-    })
+    async uploadProfilePicture(file: File): Promise<UploadProfilePictureResponse> {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        const res = await api.post<UploadProfilePictureResponse>('/users/me/profile-picture', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return res.data;
+    },
+};
 
-    const text = await res.text()
-    const body = text ? JSON.parse(text) : undefined
-
-    if (!res.ok) {
-      throw new ApiError({
-        status: res.status,
-        message: (body as any)?.message || 'Erreur lors de l\'upload',
-        details: body,
-      })
-    }
-
-    return body as { profilePictureUrl: string }
-  } catch (err) {
-    if (err instanceof ApiError) throw err
-    throw new ApiError({
-      status: 0,
-      message: 'Impossible de contacter le serveur',
-      details: err,
-    })
-  }
-}
+export default UserFetchDataService;

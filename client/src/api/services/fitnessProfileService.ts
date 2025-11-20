@@ -1,59 +1,31 @@
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+import api from '../apiClient';
+import type { FitnessProfile, CreateFitnessProfilePayload, UpdateFitnessProfilePayload } from '../../types/fitness-profile.type';
 
-export interface FitnessProfilePayload {
-    age: number;
-    height: number;
-    weight: number;
-    trainingFrequency: number;
-  
-    experienceLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    goals: ('MUSCLE_GAIN' | 'WEIGHT_LOSS')[];
-    gender?: 'MALE' | 'FEMALE' | 'OTHER';
-    bodyWeight: boolean;
-  }
+export const FitnessProfileFetchDataService = {
+    async createFitnessProfile(payload: CreateFitnessProfilePayload): Promise<FitnessProfile> {
+        const res = await api.post<FitnessProfile>('/fitness-profile', payload);
+        return res.data;
+    },
 
-export interface FitnessProfile extends FitnessProfilePayload {
-  id: number;
-  userId: number;
-  createdAt: string;
-  updatedAt: string;
-}
+    async getFitnessProfilesByUser(): Promise<FitnessProfile[]> {
+        const res = await api.get<FitnessProfile[]>('/fitness-profile');
+        return res.data;
+    },
 
-async function fetchJson<T>(path: string, init?: RequestInit, accessToken?: string): Promise<T> {
-  const headers = new Headers(init?.headers ?? {});
-  headers.set('Accept', 'application/json');
-  if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+    async getFitnessProfileById(profileId: number): Promise<FitnessProfile> {
+        const res = await api.get<FitnessProfile>(`/fitness-profile/${profileId}`);
+        return res.data;
+    },
 
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
-  const data = await res.json().catch(() => ({}));
+    async updateFitnessProfile(profileId: number, payload: UpdateFitnessProfilePayload): Promise<FitnessProfile> {
+        const res = await api.patch<FitnessProfile>(`/fitness-profile/${profileId}`, payload);
+        return res.data;
+    },
 
-  if (!res.ok) {
-    throw new Error(data?.message || 'Erreur API');
-  }
+    async deleteFitnessProfile(profileId: number): Promise<{ message: string }> {
+        const res = await api.delete<{ message: string }>(`/fitness-profile/${profileId}`);
+        return res.data;
+    },
+};
 
-  return data as T;
-}
-
-export async function getFitnessProfiles(accessToken: string): Promise<FitnessProfile[]> {
-  return fetchJson<FitnessProfile[]>('/fitness-profile', { method: 'GET' }, accessToken);
-}
-
-export async function createFitnessProfile(
-  payload: FitnessProfilePayload,
-  accessToken: string
-): Promise<FitnessProfile> {
-  return fetchJson<FitnessProfile>('/fitness-profile', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  }, accessToken);
-}
-
-export async function deleteFitnessProfile(
-    id: number,
-    accessToken: string
-  ): Promise<void> {
-    return fetchJson<void>(`/fitness-profile/${id}`, {
-      method: 'DELETE',
-    }, accessToken);
-  }
+export default FitnessProfileFetchDataService;

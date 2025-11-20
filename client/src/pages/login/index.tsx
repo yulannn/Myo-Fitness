@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { FieldErrors } from '../../api/services/authService'
-import { ApiError } from '../../api/services/authService'
-import { useLoginMutation, type LoginFormValues } from '../../api/hooks/useLogin'
-import { ValidationError } from '../../api/hooks/errors'
+import type { FieldErrors } from '../../types/auth.type';
+import { ApiError } from '../../types/auth.type';
+import { useLogin, type LoginFormValues } from '../../api/hooks/auth/useLogin';
+import { ValidationError } from '../../api/hooks/errors';
 import { useAuth } from '../../context/AuthContext'
 
 interface LoginFormState extends LoginFormValues {
@@ -18,9 +18,9 @@ const initialValues: LoginFormState = {
 }
 
 export default function Login() {
-  const navigate = useNavigate()
-  const { applyAuthResult } = useAuth()
-  const loginMutation = useLoginMutation()
+  const navigate = useNavigate();
+  const { applyAuthResult } = useAuth();
+  const loginMutation = useLogin();
   const [formValues, setFormValues] = useState(initialValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)

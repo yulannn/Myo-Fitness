@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { FieldErrors } from '../../api/services/authService'
-import { ApiError } from '../../api/services/authService'
-import { useRegisterMutation, type RegisterFormValues } from '../../api/hooks/useRegister'
-import { ValidationError } from '../../api/hooks/errors'
+import type { FieldErrors } from '../../types/auth.type';
+import { ApiError } from '../../types/auth.type';
+import { useRegister, type RegisterFormValues } from '../../api/hooks/auth/useRegister';
+import { ValidationError } from '../../api/hooks/errors';
 import { useAuth } from '../../context/AuthContext'
 
 const initialFormValues: RegisterFormValues = {
@@ -15,9 +15,9 @@ const initialFormValues: RegisterFormValues = {
 }
 
 export default function Register() {
-  const navigate = useNavigate()
-  const { applyAuthResult } = useAuth()
-  const registerMutation = useRegisterMutation()
+  const navigate = useNavigate();
+  const { applyAuthResult } = useAuth();
+  const registerMutation = useRegister();
   const [formValues, setFormValues] = useState(initialFormValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
