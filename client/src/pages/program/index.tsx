@@ -1,7 +1,18 @@
 import { useProgramsByUser } from "../../api//hooks/program/useGetProgramsByUser";
+import useCreateProgram from "../../api/hooks/program/useCreateProgram";
 
 const Program = () => {
     const { data, error, isLoading } = useProgramsByUser();
+    const { mutate, isPending, isSuccess, error: createError } = useCreateProgram();
+
+    const handleCreateProgram = () => {
+        const payload = {
+            name: "Nouveau Programme",
+            description: "Description du programme",
+            fitnessProfileId: 1,
+        };
+        mutate(payload);
+    }
 
     console.log("Program data:", data, "Error:", error);
 
@@ -11,6 +22,7 @@ const Program = () => {
 
     return (
         <div className="flex flex-col w-full h-full pb-8 space-y-6">
+            <button onClick={handleCreateProgram}>Ajouter un programme</button>
             {(Array.isArray(data) ? data : []).map((program: any) => (
                 <section key={program.id} className="bg-white shadow rounded p-4">
                     <header className="mb-2">
