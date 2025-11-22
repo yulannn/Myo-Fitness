@@ -27,12 +27,11 @@ enum Gender {
 }
 
 enum ProgramStatus {
-  ACTIVE      // Programme actuellement suivi par l'utilisateur
-  COMPLETED   // Programme terminé
-  ARCHIVED    // Programme archivé, non actif mais conservé pour l'historique
-  DRAFT       // Programme créé mais pas encore commencé (par ex. généré par l'IA)
+  ACTIVE // Programme actuellement suivi par l'utilisateur
+  COMPLETED // Programme terminé
+  ARCHIVED // Programme archivé, non actif mais conservé pour l'historique
+  DRAFT // Programme créé mais pas encore commencé (par ex. généré par l'IA)
 }
-
 
 enum FriendStatus {
   PENDING
@@ -72,93 +71,86 @@ enum ProgramTemplate {
   CUSTOM
 }
 
-
-
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
+  id                Int      @id @default(autoincrement())
+  name              String
+  email             String   @unique
+  password          String
   profilePictureUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  refreshToken String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+  refreshToken      String?
 
-  fitnessProfiles FitnessProfile[]
-  exercicesCreated Exercice[]  @relation("ExerciceCreatedBy")
+  fitnessProfiles  FitnessProfile[]
+  exercicesCreated Exercice[]       @relation("ExerciceCreatedBy")
 
   // Relations sociales
-  friends       Friend[]        @relation("UserFriends")
-  friendsOf     Friend[]        @relation("UserFriendsReverse")
-  sentRequests  FriendRequest[] @relation("SentRequests")
-  receivedRequests FriendRequest[] @relation("ReceivedRequests")
-  groups        FriendGroup[]   @relation("GroupMembers")
-  sentGroupRequests FriendGroupRequest[] @relation("SentGroupRequests")
+  friends               Friend[]             @relation("UserFriends")
+  friendsOf             Friend[]             @relation("UserFriendsReverse")
+  sentRequests          FriendRequest[]      @relation("SentRequests")
+  receivedRequests      FriendRequest[]      @relation("ReceivedRequests")
+  groups                FriendGroup[]        @relation("GroupMembers")
+  sentGroupRequests     FriendGroupRequest[] @relation("SentGroupRequests")
   receivedGroupRequests FriendGroupRequest[] @relation("ReceivedGroupRequests")
-
 
   sessionPhotos SessionPhoto[]
 }
 
 model FitnessProfile {
-  id          Int      @id @default(autoincrement())
-  userId     Int
-  age        Int
-  height    Float
-  weight    Float
+  id                Int               @id @default(autoincrement())
+  userId            Int               @unique
+  age               Int
+  height            Float
+  weight            Float
   trainingFrequency Int
-  experienceLevel ExperienceLevel
-  goals      Goal[]
-  gender    Gender
-  bodyWeight       Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  weightHistory WeightHistory[]
-  trainingPrograms TrainingProgram[]
+  experienceLevel   ExperienceLevel
+  goals             Goal[]
+  gender            Gender
+  bodyWeight        Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
+  weightHistory     WeightHistory[]
+  trainingPrograms  TrainingProgram[]
 
-
-
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
-
 model WeightHistory {
-  id          Int      @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   fitnessProfileId Int
-  weight      Float
-  date        DateTime @default(now())
+  weight           Float
+  date             DateTime @default(now())
 
   fitnessProfile FitnessProfile @relation(fields: [fitnessProfileId], references: [id], onDelete: Cascade)
 }
 
-
 model TrainingProgram {
-  id          Int      @id @default(autoincrement())
-  fitnessProfileId   Int
-  name       String
-  description String?
-  template ProgramTemplate?
-  status     ProgramStatus @default(DRAFT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  sessions   TrainingSession[]
+  id               Int               @id @default(autoincrement())
+  fitnessProfileId Int
+  name             String
+  description      String?
+  template         ProgramTemplate?
+  status           ProgramStatus     @default(DRAFT)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @default(now()) @updatedAt
+  sessions         TrainingSession[]
 
   fitnessProfile FitnessProfile @relation(fields: [fitnessProfileId], references: [id], onDelete: Cascade)
 }
 
 model TrainingSession {
-  id          Int      @id @default(autoincrement())
-  programId   Int
-  date       DateTime?
-  duration   Int?    
-  notes      String?
-  originalSessionId Int? 
-  completed   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  
-  exercices   ExerciceSession[]
-  trainingProgram TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  id                Int       @id @default(autoincrement())
+  programId         Int
+  date              DateTime?
+  duration          Int?
+  notes             String?
+  originalSessionId Int?
+  completed         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+
+  exercices       ExerciceSession[]
+  trainingProgram TrainingProgram   @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   sessionPhotos SessionPhoto[]
 }
@@ -171,107 +163,99 @@ model SessionPhoto {
   createdAt   DateTime @default(now())
   description String?
 
-  session     TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
-
 model Exercice {
-  id   Int             @id @default(autoincrement())
-  name          String
-  difficulty    Int
-  description   String?
-  type         ExerciceType? 
-  Materials    Boolean  @default(false)
-  bodyWeight   Boolean  @default(false)
-  isDefault   Boolean  @default(false) 
-  createdByUserId Int?                 
-  imageUrl String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @default(now()) @updatedAt
+  id              Int           @id @default(autoincrement())
+  name            String
+  difficulty      Int
+  description     String?
+  type            ExerciceType?
+  Materials       Boolean       @default(false)
+  bodyWeight      Boolean       @default(false)
+  isDefault       Boolean       @default(false)
+  createdByUserId Int?
+  imageUrl        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
 
-  groupes       ExerciceMuscleGroup[]
-  trainingSession      ExerciceSession[]
-  equipments    ExerciceEquipment[]
-  createdBy   User?     @relation("ExerciceCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
-
+  groupes         ExerciceMuscleGroup[]
+  trainingSession ExerciceSession[]
+  equipments      ExerciceEquipment[]
+  createdBy       User?                 @relation("ExerciceCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
 }
 
 model ExerciceSession {
-  id            Int      @id @default(autoincrement())
-  sessionId     Int
-  exerciceId    Int
-  sets          Int
-  reps          Int
-  weight        Float?
+  id         Int    @id @default(autoincrement())
+  sessionId  Int
+  exerciceId Int
+  sets       Int
+  reps       Int
+  weight     Float?
 
-
-  trainingSession TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  exercice        Exercice        @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
-  performances   SetPerformance[]
+  trainingSession TrainingSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercice        Exercice         @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+  performances    SetPerformance[]
 
   @@unique([sessionId, exerciceId])
 }
 
 model SetPerformance {
-  id_set             Int             @id @default(autoincrement())
+  id_set              Int      @id @default(autoincrement())
   id_exercice_session Int
-  set_index          Int
-  reps_effectuees    Int?
-  reps_prevues       Int?
-  weight             Float?
-  rpe                Int?
-  success           Boolean? @default(true)
+  set_index           Int
+  reps_effectuees     Int?
+  reps_prevues        Int?
+  weight              Float?
+  rpe                 Int?
+  success             Boolean? @default(true)
 
-  exerciceSession   ExerciceSession @relation(fields: [id_exercice_session], references: [id], onDelete: Cascade)
+  exerciceSession ExerciceSession @relation(fields: [id_exercice_session], references: [id], onDelete: Cascade)
 }
 
 model ExerciceMuscleGroup {
-  exerciceId    Int
-  groupeId      Int
+  exerciceId Int
+  groupeId   Int
 
-  exercice      Exercice       @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
-  groupe       MuscleGroup    @relation(fields: [groupeId], references: [id], onDelete: Cascade)
+  exercice Exercice    @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+  groupe   MuscleGroup @relation(fields: [groupeId], references: [id], onDelete: Cascade)
 
   @@id([exerciceId, groupeId])
 }
 
-
 model MuscleGroup {
-  id          Int      @id @default(autoincrement())
-  name       String   @unique
-  exercices  ExerciceMuscleGroup[]
+  id        Int                   @id @default(autoincrement())
+  name      String                @unique
+  exercices ExerciceMuscleGroup[]
 }
-
 
 model Equipment {
   id          Int      @id @default(autoincrement())
-  name       String   @unique
+  name        String   @unique
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
-  exercices  ExerciceEquipment[]
+  exercices ExerciceEquipment[]
 }
 
-
 model ExerciceEquipment {
-  exerciceId    Int
-  equipmentId   Int
+  exerciceId  Int
+  equipmentId Int
 
-  exercice      Exercice   @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
-  equipment     Equipment  @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  exercice  Exercice  @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@id([exerciceId, equipmentId])
 }
 
-
 model Friend {
-  id       Int      @id @default(autoincrement())
+  id       Int          @id @default(autoincrement())
   userId   Int
   friendId Int
-  status   FriendStatus @default(ACCEPTED) 
+  status   FriendStatus @default(ACCEPTED)
 
   user   User @relation("UserFriends", fields: [userId], references: [id])
   friend User @relation("UserFriendsReverse", fields: [friendId], references: [id])
@@ -293,29 +277,27 @@ model FriendRequest {
 }
 
 model FriendGroup {
-  id         Int       @id @default(autoincrement())
-  name       String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  members    User[]    @relation("GroupMembers")
+  members User[] @relation("GroupMembers")
 
   joinRequests FriendGroupRequest[] @relation("GroupJoinRequests")
-
 }
 
 model FriendGroupRequest {
-  id         String    @id @default(uuid())
+  id         String      @id @default(uuid())
   senderId   Int
   receiverId Int
   groupId    Int
-  status     GroupStatus   @default(PENDING)
-  createdAt  DateTime      @default(now())
+  status     GroupStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
 
-  sender     User          @relation("SentGroupRequests", fields: [senderId], references: [id])
-  group      FriendGroup   @relation("GroupJoinRequests", fields: [groupId], references: [id])
-  receiver   User          @relation("ReceivedGroupRequests", fields: [receiverId], references: [id])
-
+  sender   User        @relation("SentGroupRequests", fields: [senderId], references: [id])
+  group    FriendGroup @relation("GroupJoinRequests", fields: [groupId], references: [id])
+  receiver User        @relation("ReceivedGroupRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, groupId])
 }

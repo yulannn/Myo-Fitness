@@ -26,6 +26,24 @@ const refreshToken = async (): Promise<string> => {
                 tokenService.setAccessToken(newToken);
                 return newToken;
             })
+            .catch((error: AxiosError) => {
+                console.error('❌ Échec du refresh token:', error.response?.status, error.response?.data);
+
+                // Nettoyer complètement la session
+                tokenService.clear();
+
+                if (typeof window !== 'undefined') {
+                    window.localStorage.removeItem('myo.auth.accessToken');
+
+                    setTimeout(() => {
+                        if (typeof window !== 'undefined') {
+                            window.location.href = '/auth/login';
+                        }
+                    }, 500);
+                }
+
+                throw error;
+            })
             .finally(() => {
                 isRefreshing = false;
                 refreshPromise = null;
@@ -63,6 +81,11 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+        // Ne pas tenter de refresh sur les routes d'auth elles-mêmes
+        if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/login')) {
+            return Promise.reject(error);
+        }
+
         // Si 401 → token expiré
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -89,8 +112,10 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshErr) {
                 processQueue(refreshErr, null);
-                tokenService.clear();
-                throw refreshErr;
+
+                // Le refresh a échoué, la session est déjà nettoyée dans refreshToken()
+                // On rejette simplement l'erreur
+                return Promise.reject(refreshErr);
             }
         }
 

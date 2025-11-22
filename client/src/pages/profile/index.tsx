@@ -59,13 +59,16 @@ export default function FitnessProfiles() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-900">Mes profils fitness</h2>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          <Plus size={16} />
-          Ajouter un profil
-        </button>
+        {profiles.length === 0 && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <Plus size={16} />
+            Ajouter un profil
+          </button>
+        )
+        }
       </div>
 
       <FitnessProfilesList
