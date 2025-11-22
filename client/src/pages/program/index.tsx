@@ -1,4 +1,4 @@
-import { useProgramsByUser } from "../../api//hooks/program/useGetProgramsByUser";
+import { useProgramsByUser } from "../../api/hooks/program/useGetProgramsByUser";
 import useCreateProgram from "../../api/hooks/program/useCreateProgram";
 
 const Program = () => {
@@ -55,7 +55,9 @@ const Program = () => {
                                 <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
                                     {(session.exercices ?? []).map((ex: any) => (
                                         <li key={ex.id}>
-                                            <span className="font-medium">{ex.name}</span>
+                                            <span className="font-medium">
+                                                {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
+                                            </span>
                                             {ex.reps && ` — ${ex.reps} reps`}
                                             {ex.sets && ` • ${ex.sets} sets`}
                                         </li>

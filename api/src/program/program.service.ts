@@ -18,7 +18,7 @@ export class ProgramService {
             include: {
                 sessions: {
                     where: { completed: false },
-                    include: { exercices: true },
+                    include: { exercices: { include: { exercice: true } } },
                 },
             },
         });
