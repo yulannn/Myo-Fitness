@@ -1,4 +1,4 @@
-import { $Enums, Exercice } from '@prisma/client';
+import { Exercice, ExerciceType } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ExerciceEntity implements Exercice {
@@ -28,9 +28,9 @@ export class ExerciceEntity implements Exercice {
 
   @ApiPropertyOptional({
     description: 'Type d’exercice (Enum)',
-    example: $Enums.ExerciceType.STRETCH,
+    example: ExerciceType.STRETCH,
   })
-  type: $Enums.ExerciceType | null;
+  type: ExerciceType | null;
 
   @ApiPropertyOptional({
     description: "URL de l'image illustrant l’exercice",

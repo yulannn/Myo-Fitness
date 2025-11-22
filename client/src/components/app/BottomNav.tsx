@@ -8,9 +8,9 @@ import {
 } from '@heroicons/react/24/outline'
 
 const items = [
-  { to: '/', label: 'Accueil', icon: HomeIcon, end: true },
   { to: '/programs', label: 'Programmes', icon: ClipboardDocumentCheckIcon },
   { to: '/sessions', label: 'Sessions', icon: CalendarDaysIcon },
+  { to: '/', label: 'Accueil', icon: HomeIcon, end: true },
   { to: '/coach', label: 'Coach', icon: SparklesIcon },
   { to: '/profiles', label: 'Profil', icon: UserCircleIcon },
 ]

@@ -71,16 +71,20 @@ export class FitnessProfileService {
             });
         }
 
-        const profile = await this.prisma.fitnessProfile.update({
+        const existing = await this.prisma.fitnessProfile.findFirst({
             where: {
                 id: Number(id),
                 userId: userId,
             },
-            data: updateFitnessProfileDto,
         });
-        if (!profile) {
+        if (!existing) {
             throw new Error('Fitness profile not found');
         }
+
+        const profile = await this.prisma.fitnessProfile.update({
+            where: { id: Number(id) },
+            data: updateFitnessProfileDto,
+        });
         return profile as FitnessProfileEntity;
     }
 

@@ -54,7 +54,7 @@ export default function FitnessProfiles() {
       <UserCard
         name={user?.name || 'John Doe'}
         email={user?.email || 'email@example.com'}
-        profilePictureUrl={user?.profilePictureUrl}
+        profilePictureUrl={user?.profilePictureUrl || undefined}
       />
 
       <div className="flex items-center justify-between">
