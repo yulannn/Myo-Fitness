@@ -14,7 +14,7 @@ export class ProgramService {
     // Recupere tout les programmes d'un utilisateur avec sessions non complétées
     async getProgramsByUser(userId: number) {
         return this.prisma.trainingProgram.findMany({
-            where: { fitnessProfile: { userId }, sessions: { some: { completed: false } } },
+            where: { status: 'ACTIVE', fitnessProfile: { userId }, sessions: { some: { completed: false } } },
             include: {
                 sessions: {
                     where: { completed: false },
@@ -40,10 +40,16 @@ export class ProgramService {
     }
 
     async create(createProgramDto: CreateTrainingProgramDto, userId: number) {
+
         const fitnessProfile = await this.validateFitnessProfile(createProgramDto.fitnessProfileId, userId);
         const program = await this.iaService.generateProgram(fitnessProfile);
-        if (!program) throw new Error('Program generation failed');
+
+        if (!program) {
+            throw new Error('Program generation failed');
+        }
+
         const validatedExercises = await this.validateExercisesExist(program.sessions);
+
         return this.persistProgram(createProgramDto, program, validatedExercises, userId);
     }
 
@@ -54,12 +60,18 @@ export class ProgramService {
     }
 
     private async validateExercisesExist(sessions: any[]) {
+
         const allExerciseIds = new Set<number>();
         for (const s of sessions) for (const ex of s.exercises) allExerciseIds.add(typeof ex === 'number' ? ex : ex.id);
+
         const found = await this.prisma.exercice.findMany({ where: { id: { in: [...allExerciseIds] } }, select: { id: true } });
         const foundIds = new Set(found.map((e) => e.id));
         const missing = [...allExerciseIds].filter((id) => !foundIds.has(id));
-        if (missing.length) throw new BadRequestException(`Exercices manquants: ${missing.join(', ')}`);
+
+        if (missing.length) {
+            throw new BadRequestException(`Exercices manquants: ${missing.join(', ')}`);
+        }
+
         return [...foundIds];
     }
 
@@ -72,12 +84,18 @@ export class ProgramService {
 
     private async persistProgram(dto: CreateTrainingProgramDto, program: any, exerciseIds: number[], userId: number) {
         return this.prisma.$transaction(async (prisma) => {
+            await prisma.trainingProgram.updateMany({
+                where: { fitnessProfileId: dto.fitnessProfileId },
+                data: { status: 'ARCHIVED' },
+            });
+
             const createdProgram = await prisma.trainingProgram.create({
                 data: {
                     name: dto.name,
                     description: dto.description ?? '',
                     fitnessProfileId: dto.fitnessProfileId,
                     template: program.template as ProgramTemplate,
+                    status: 'ACTIVE',
                 },
             });
 
@@ -108,6 +126,12 @@ export class ProgramService {
 
     async createManualProgram(body: CreateManualProgramDto, userId: number) {
         const { createProgramDto, sessionData } = body;
+
+        await this.prisma.trainingProgram.updateMany({
+            where: { fitnessProfileId: createProgramDto.fitnessProfileId },
+            data: { status: 'ARCHIVED' },
+        });
+
         await this.validateFitnessProfile(createProgramDto.fitnessProfileId, userId);
         return this.prisma.$transaction(async (prisma) => {
             const createdProgram = await prisma.trainingProgram.create({
@@ -116,6 +140,7 @@ export class ProgramService {
                     description: createProgramDto.description ?? '',
                     fitnessProfileId: createProgramDto.fitnessProfileId,
                     template: 'CUSTOM' as ProgramTemplate,
+                    status: 'ACTIVE',
                 },
             });
 
