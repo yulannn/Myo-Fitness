@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
 .scrollbar-hide {
   -ms-overflow-style: none;

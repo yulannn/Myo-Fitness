@@ -1,7 +1,12 @@
 import { useProgramsByUser } from "../../api/hooks/program/useGetProgramsByUser";
 import useCreateProgram from "../../api/hooks/program/useCreateProgram";
+import { useState } from "react";
+import { Modal, ModalFooter, ModalHeader, ModalTitle } from "../../components/ui/modal";
+import Button from "../../components/ui/button/Button";
+import { Badge } from "../../components/ui/badge";
 
 const Program = () => {
+    const [open, setOpen] = useState(false);
     const { data, error, isLoading } = useProgramsByUser();
     const { mutate, isPending, isSuccess, error: createError } = useCreateProgram();
 
@@ -22,11 +27,35 @@ const Program = () => {
 
     return (
         <div className="flex flex-col w-full h-full pb-8 space-y-6">
-            <button onClick={handleCreateProgram}>Ajouter un programme</button>
+            <button onClick={() => setOpen(true)}>Ajouter un programme</button>
+
+            <Modal isOpen={open} onClose={() => setOpen(false)}>
+                <ModalHeader>
+                    <ModalTitle>Créer un nouveau programme</ModalTitle>
+                </ModalHeader>
+                <ModalFooter>
+                    <div className="flex justify-center gap-4">
+                        <Button onClick={handleCreateProgram} disabled={isPending} variant="primary" size="md">
+                            {isPending ? "Création en cours..." : "Créer"}
+                        </Button>
+                        <Button onClick={() => setOpen(false)} variant="secondary" size="md">
+                            Annuler
+                        </Button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+
             {(Array.isArray(data) ? data : []).map((program: any) => (
                 <section key={program.id} className="bg-white shadow rounded p-4">
                     <header className="mb-2">
-                        <h2 className="text-xl font-bold">{program.name}</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold">{program.name}</h2>
+                            {program.status === "ACTIVE" ? (
+                                <Badge className="badge badge-success">{program.status}</Badge>
+                            ) : (
+                                <Badge className="badge badge-secondary">{program.status}</Badge>
+                            )}
+                        </div>
                         {program.description && <p className="text-sm text-gray-600">{program.description}</p>}
                         <div className="text-xs text-gray-500 mt-1">
                             Créé le: {program.createdAt ? new Date(program.createdAt).toLocaleString() : "—"}
