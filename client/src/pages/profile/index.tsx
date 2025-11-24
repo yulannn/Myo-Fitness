@@ -39,7 +39,7 @@ export default function FitnessProfiles() {
 
   return (
     <section className="min-h-screen bg-[#2F4858] px-4 pt-6 pb-28 max-w-3xl mx-auto space-y-8">
-      {/* Header */}
+
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#7CD8EE]">Mon Profil</h1>
         <button
@@ -50,7 +50,6 @@ export default function FitnessProfiles() {
         </button>
       </div>
 
-      {/* User Card */}
       <div className="bg-[#1f3340] p-4 rounded-xl shadow-xl">
         <UserCard
           name={user?.name || 'John Doe'}
@@ -59,21 +58,6 @@ export default function FitnessProfiles() {
         />
       </div>
 
-      {/* Section Fitness Profiles */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-[#7CD8EE]">Profil Fitness</h2>
-        {!profiles && (
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#642f00] text-[#7CD8EE] px-4 py-2 font-semibold shadow-md hover:bg-[#8b4c00] transition active:scale-95"
-          >
-            <Plus size={16} />
-            Ajouter un profil
-          </button>
-        )}
-      </div>
-
-      {/* Profiles List */}
       <div className="bg-[#1f3340] p-4 rounded-xl shadow-xl">
         <FitnessProfilesList
           profiles={profiles || undefined}
@@ -83,7 +67,6 @@ export default function FitnessProfiles() {
         />
       </div>
 
-      {/* Modals */}
       <CreateProfileModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

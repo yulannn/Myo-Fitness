@@ -1,12 +1,12 @@
 // src/components/CreateProfileModal.tsx
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import type { FitnessProfilePayload } from '../../api/services/fitnessProfileService';
+import type { CreateFitnessProfilePayload } from '../../types/fitness-profile.type';
 
 interface CreateProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (form: FitnessProfilePayload) => void;
+  onSubmit: (form: CreateFitnessProfilePayload) => void;
   isPending: boolean;
 }
 
@@ -16,7 +16,7 @@ export default function CreateProfileModal({
   onSubmit,
   isPending,
 }: CreateProfileModalProps) {
-  const [form, setForm] = useState<FitnessProfilePayload>({
+  const [form, setForm] = useState<CreateFitnessProfilePayload>({
     age: 0,
     height: 0,
     weight: 0,
@@ -24,7 +24,7 @@ export default function CreateProfileModal({
     experienceLevel: 'BEGINNER',
     goals: [],
     gender: 'MALE',
-    bodyWeight: true,
+    bodyWeight: false,
   });
 
   useEffect(() => {
@@ -37,12 +37,14 @@ export default function CreateProfileModal({
         experienceLevel: 'BEGINNER',
         goals: [],
         gender: 'MALE',
-        bodyWeight: true,
+        bodyWeight: false,
       });
     }
   }, [isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
 
     if (type === 'checkbox' && 'checked' in e.target) {
@@ -72,16 +74,25 @@ export default function CreateProfileModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-[#1f3340] p-6 shadow-2xl border border-[#7CD8EE]/20">
+
+        {/* Header */}
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Créer un profil fitness</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
-            <X size={20} />
+          <h3 className="text-xl font-semibold text-[#7CD8EE]">
+            Créer un profil fitness
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#7CD8EE]/70 hover:text-[#7CD8EE]"
+          >
+            <X size={22} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 text-white">
+
+          {/*  Inputs grid */}
           <div className="grid grid-cols-2 gap-4">
             <input
               type="number"
@@ -89,7 +100,7 @@ export default function CreateProfileModal({
               placeholder="Âge"
               value={form.age || ''}
               onChange={handleChange}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE]"
               required
               min="13"
             />
@@ -99,17 +110,18 @@ export default function CreateProfileModal({
               placeholder="Taille (cm)"
               value={form.height || ''}
               onChange={handleChange}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE]"
               required
               min="100"
             />
+
             <input
               type="number"
               name="weight"
               placeholder="Poids (kg)"
               value={form.weight || ''}
               onChange={handleChange}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE]"
               required
               min="30"
             />
@@ -119,18 +131,19 @@ export default function CreateProfileModal({
               placeholder="Séances / semaine"
               value={form.trainingFrequency || ''}
               onChange={handleChange}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white placeholder-gray-300 focus:ring-2 focus:ring-[#7CD8EE]"
               required
               min="0"
               max="7"
             />
           </div>
 
+          {/* Experience level */}
           <select
             name="experienceLevel"
             value={form.experienceLevel}
             onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#7CD8EE]"
             required
           >
             <option value="">Niveau d’expérience</option>
@@ -139,16 +152,17 @@ export default function CreateProfileModal({
             <option value="ADVANCED">Avancé</option>
           </select>
 
-          <div className="flex gap-6">
+          {/* Goals */}
+          <div className="flex gap-6 text-sm text-white">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 name="MUSCLE_GAIN"
                 checked={form.goals.includes('MUSCLE_GAIN')}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
               />
-              <span className="text-sm">Gain musculaire</span>
+              Gain musculaire
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -156,17 +170,18 @@ export default function CreateProfileModal({
                 name="WEIGHT_LOSS"
                 checked={form.goals.includes('WEIGHT_LOSS')}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
               />
-              <span className="text-sm">Perte de poids</span>
+              Perte de poids
             </label>
           </div>
 
+          {/* Gender */}
           <select
             name="gender"
             value={form.gender}
             onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#7CD8EE]"
             required
           >
             <option value="">Genre</option>
@@ -175,33 +190,36 @@ export default function CreateProfileModal({
             <option value="OTHER">Autre</option>
           </select>
 
-          <label className="flex items-center gap-2">
+          {/* Bodyweight */}
+          <label className="flex items-center gap-2 text-sm text-white">
             <input
               type="checkbox"
               name="bodyWeight"
               checked={form.bodyWeight}
               onChange={handleChange}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
             />
-            <span className="text-sm">Bodyweight uniquement</span>
+            Bodyweight uniquement
           </label>
 
+          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-[#7CD8EE] px-4 py-2 text-sm font-semibold text-[#2F4858] shadow-md hover:bg-[#6acbe0] transition active:scale-95 disabled:opacity-50"
             >
               {isPending ? 'Création...' : 'Créer'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              className="flex-1 rounded-xl border border-[#7CD8EE]/40 bg-[#2F4858] px-4 py-2 text-sm font-semibold text-[#7CD8EE] shadow-sm hover:bg-[#3a5a6e] transition active:scale-95"
             >
               Annuler
             </button>
           </div>
+
         </form>
       </div>
     </div>
