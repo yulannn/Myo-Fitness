@@ -14,8 +14,9 @@ const Program = () => {
     const [automaticOpen, setAutomaticOpen] = useState(false);
     const [selectedProfileId, setSelectedProfileId] = useState<string>("");
     const [selectionError, setSelectionError] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
-    const { data: fitnessProfiles } = useFitnessProfilesByUser();
+    const { data: fitnessProfile } = useFitnessProfilesByUser();
     const { data, isLoading } = useProgramsByUser();
     const { mutate, isPending, isSuccess, error: createError } = useCreateProgram();
 
@@ -24,8 +25,6 @@ const Program = () => {
 
     const automaticProgramNameRef = useRef<string>("");
     const automaticProgramDescriptionRef = useRef<string>("");
-
-    const [isGenerating, setIsGenerating] = useState(false);
 
     const { user } = useAuth();
 
@@ -227,9 +226,9 @@ const Program = () => {
                         >
                             <option value="" disabled>Choisissez votre profil</option>
 
-                            {fitnessProfiles && (
-                                <option value={fitnessProfiles.id}>
-                                    {user?.name} – {fitnessProfiles.age} ans – {fitnessProfiles.weight} kg – {fitnessProfiles.height} cm
+                            {fitnessProfile && (
+                                <option value={fitnessProfile.id}>
+                                    {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg – {fitnessProfile.height} cm
                                 </option>
                             )}
                         </select>

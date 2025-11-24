@@ -13,7 +13,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen justify-center bg-slate-200/70">
       <div className="relative flex min-h-screen w-full max-w-md flex-col bg-slate-50 text-slate-900 shadow-xl">
-        <main className="flex-1 overflow-y-auto px-4 pb-28 pt-6">
+        <main className="flex-1 overflow-y-auto ">
           <AppRoutes />
         </main>
 
