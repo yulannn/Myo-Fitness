@@ -3,7 +3,7 @@ import { FitnessProfileFetchDataService } from '../../services/fitnessProfileSer
 import type { FitnessProfile } from '../../../types/fitness-profile.type';
 
 export function useFitnessProfilesByUser() {
-    return useQuery<FitnessProfile[], unknown>({
+    return useQuery<FitnessProfile, unknown>({
         queryKey: ['fitnessProfiles'],
         queryFn: () => FitnessProfileFetchDataService.getFitnessProfilesByUser(),
     });

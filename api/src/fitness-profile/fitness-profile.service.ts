@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateFitnessProfileDto } from './dto/create-fitness-profile.dto';
 import { UpdateFitnessProfileDto } from './dto/update-fitness-profile.dto';
 import { PrismaService } from 'prisma/prisma.service';
@@ -35,32 +35,22 @@ export class FitnessProfileService {
         }
     }
 
-    findAll(userId: number): Promise<FitnessProfileEntity[]> {
-        const profiles = this.prisma.fitnessProfile.findMany({
-            where: {
-                userId,
-            },
+    // Retourne null si aucun profil — le controller / front gèrera l'absence
+    async findByUser(userId: number): Promise<FitnessProfileEntity | null> {
+        const profile = await this.prisma.fitnessProfile.findUnique({
+            where: { userId },
         });
-
-        if (!profiles) {
-            throw new Error('No fitness profiles found');
-        }
-        return profiles;
+        return profile; // peut être null
     }
 
     async findOne(id: number, userId: number): Promise<FitnessProfileEntity> {
         const profile = await this.prisma.fitnessProfile.findFirst({
-            where: {
-                id: Number(id),
-                userId: userId,
-            },
+            where: { id: Number(id), userId },
             include: { weightHistory: true },
         });
-
         if (!profile) {
-            throw new Error('Fitness profile not found');
+            throw new NotFoundException('Fitness profile not found');
         }
-
         return profile as FitnessProfileEntity;
     }
 

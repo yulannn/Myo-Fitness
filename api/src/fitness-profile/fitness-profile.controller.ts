@@ -55,7 +55,7 @@ export class FitnessProfileController {
   })
   findAll(@Request() req) {
     const userId = req.user.userId;
-    return this.fitnessProfileService.findAll(userId);
+    return this.fitnessProfileService.findByUser(userId);
   }
 
   @Get(':id')

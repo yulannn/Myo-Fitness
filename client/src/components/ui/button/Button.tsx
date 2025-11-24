@@ -8,7 +8,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const base = "inline-flex items-center justify-center rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
 const variants: Record<string, string> = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500",
+    primary: "bg-indigo-500 text-white hover:bg-indigo-700 focus:ring-indigo-500",
     secondary: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-indigo-500",
     ghost: "bg-transparent text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500",
 };

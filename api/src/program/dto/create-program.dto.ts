@@ -29,11 +29,11 @@ export class CreateTrainingProgramDto {
   description?: string;
 
   @ApiPropertyOptional({
-  description: 'Statut du programme',
-  enum: ProgramStatus,
-  example: ProgramStatus.DRAFT,
-})
+    description: 'Statut du programme',
+    enum: ProgramStatus,
+    example: ProgramStatus.ACTIVE,
+  })
   @IsEnum(ProgramStatus)
   @IsOptional()
-  status?: ProgramStatus = ProgramStatus.DRAFT;
+  status?: ProgramStatus = ProgramStatus.ACTIVE;
 }

@@ -1,59 +1,110 @@
 import { useProgramsByUser } from "../../api/hooks/program/useGetProgramsByUser";
 import useCreateProgram from "../../api/hooks/program/useCreateProgram";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Modal, ModalFooter, ModalHeader, ModalTitle } from "../../components/ui/modal";
 import Button from "../../components/ui/button/Button";
 import { Badge } from "../../components/ui/badge";
+import useFitnessProfilesByUser from "../../api/hooks/fitness-profile/useGetFitnessProfilesByUser";
+import { useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 const Program = () => {
-    const [open, setOpen] = useState(false);
-    const { data, error, isLoading } = useProgramsByUser();
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [choiceOpen, setChoiceOpen] = useState(false);
+    const [automaticOpen, setAutomaticOpen] = useState(false);
+    const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+    const [selectionError, setSelectionError] = useState<string | null>(null);
+
+    const { data: fitnessProfiles } = useFitnessProfilesByUser();
+    const { data, isLoading } = useProgramsByUser();
     const { mutate, isPending, isSuccess, error: createError } = useCreateProgram();
 
-    const handleCreateProgram = () => {
-        const payload = {
-            name: "Nouveau Programme",
-            description: "Description du programme",
-            fitnessProfileId: 1,
-        };
-        mutate(payload);
-    }
+    const programs = Array.isArray(data) ? data : [];
+    const hasActiveProgram = useMemo(() => programs.some((p: any) => p.status === "ACTIVE"), [programs]);
 
-    console.log("Program data:", data, "Error:", error);
+    const automaticProgramNameRef = useRef<string>("");
+    const automaticProgramDescriptionRef = useRef<string>("");
+
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const { user } = useAuth();
+
+    const openAddFlow = () => {
+        if (hasActiveProgram) {
+            setConfirmOpen(true);
+        } else {
+            setChoiceOpen(true);
+        }
+    };
+
+    const handleConfirmContinue = () => {
+        setConfirmOpen(false);
+        setChoiceOpen(true);
+    };
+
+    const handleConfirmAutomatic = (name?: string, description?: string) => {
+        if (!selectedProfileId) {
+            setSelectionError("Veuillez sélectionner un profil fitness avant de continuer.");
+            return;
+        }
+        setSelectionError(null);
+
+        const profileIdNumber = Number(selectedProfileId);
+        if (Number.isNaN(profileIdNumber) || profileIdNumber <= 0) {
+            setSelectionError("Profil invalide sélectionné.");
+            return;
+        }
+
+        const payload = {
+            name: name || "Programme généré",
+            description: description || "Programme généré automatiquement",
+            fitnessProfileId: profileIdNumber,
+            status: "ACTIVE",
+        } as any;
+
+        setIsGenerating(true);
+
+        mutate(payload, {
+            onSuccess: () => {
+                setIsGenerating(false);
+                setAutomaticOpen(false);
+            },
+            onError: () => {
+                setIsGenerating(false);
+            },
+        });
+    };
+
+    const handleCreateManual = () => {
+        setChoiceOpen(false);
+    };
+
+
 
     if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error loading program data</div>;
-    if (!data || (Array.isArray(data) && data.length === 0)) return <div>Aucun programme</div>;
+
 
     return (
         <div className="flex flex-col w-full h-full pb-8 space-y-6">
-            <button onClick={() => setOpen(true)}>Ajouter un programme</button>
-
-            <Modal isOpen={open} onClose={() => setOpen(false)}>
-                <ModalHeader>
-                    <ModalTitle>Créer un nouveau programme</ModalTitle>
-                </ModalHeader>
-                <ModalFooter>
-                    <div className="flex justify-center gap-4">
-                        <Button onClick={handleCreateProgram} disabled={isPending} variant="primary" size="md">
-                            {isPending ? "Création en cours..." : "Créer"}
-                        </Button>
-                        <Button onClick={() => setOpen(false)} variant="secondary" size="md">
-                            Annuler
-                        </Button>
-                    </div>
-                </ModalFooter>
-            </Modal>
+            <div className="flex justify-end">
+                <Button onClick={openAddFlow} variant="primary" size="md">
+                    Ajouter un programme
+                </Button>
+            </div>
 
             {(Array.isArray(data) ? data : []).map((program: any) => (
-                <section key={program.id} className="bg-white shadow rounded p-4">
+                <section key={program.id ?? `program-${program.name}`} className="bg-white shadow rounded p-4">
                     <header className="mb-2">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold">{program.name}</h2>
                             {program.status === "ACTIVE" ? (
-                                <Badge className="badge badge-success">{program.status}</Badge>
+                                <Badge className="badge badge-success">
+                                    {program.status}
+                                </Badge>
                             ) : (
-                                <Badge className="badge badge-secondary">{program.status}</Badge>
+                                <Badge className="badge badge-secondary">
+                                    {program.status}
+                                </Badge>
                             )}
                         </div>
                         {program.description && <p className="text-sm text-gray-600">{program.description}</p>}
@@ -64,7 +115,7 @@ const Program = () => {
 
                     <div className="mt-3 space-y-3">
                         {(program.sessions ?? []).map((session: any) => (
-                            <article key={session.id} className="border rounded p-3">
+                            <article key={session.id ?? `session-${program.id}-${session.date}`} className="border rounded p-3">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <div className="font-semibold">
@@ -83,10 +134,8 @@ const Program = () => {
 
                                 <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
                                     {(session.exercices ?? []).map((ex: any) => (
-                                        <li key={ex.id}>
-                                            <span className="font-medium">
-                                                {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
-                                            </span>
+                                        <li key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}>
+                                            <span className="font-medium">{ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}</span>
                                             {ex.reps && ` — ${ex.reps} reps`}
                                             {ex.sets && ` • ${ex.sets} sets`}
                                         </li>
@@ -97,7 +146,129 @@ const Program = () => {
                     </div>
                 </section>
             ))}
-        </div>
+
+
+
+            <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <ModalHeader>
+                    <ModalTitle>Attention vous avez deja un programme actif !</ModalTitle>
+                </ModalHeader>
+                <div className="px-2 text-sm text-gray-700 m-auto">
+                    Si vous continuez, le programme actuel sera archivé et remplacé par le nouveau.
+                </div>
+                <ModalFooter>
+                    <div className="flex justify-end gap-3 m-auto">
+                        <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+                            Annuler
+                        </Button>
+                        <Button variant="primary" onClick={handleConfirmContinue}>
+                            Continuer
+                        </Button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+
+            <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)}>
+                <ModalHeader>
+                    <ModalTitle>Créer un programme</ModalTitle>
+                </ModalHeader>
+                <div className="px-2 text-sm text-gray-700">
+                    Choisissez si vous voulez que le programme soit généré automatiquement par l'IA ou créé manuellement.
+                </div>
+                <ModalFooter>
+                    <div className="flex justify-end gap-3 m-auto">
+                        <Button variant="ghost" onClick={handleCreateManual}>
+                            Créer manuellement
+                        </Button>
+                        <Button variant="primary" onClick={() => { setAutomaticOpen(true); setChoiceOpen(false); }} disabled={isPending}>
+                            {isPending ? "Création..." : "Générer automatiquement"}
+                        </Button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+
+            <Modal isOpen={automaticOpen} onClose={() => { setAutomaticOpen(false); setSelectedProfileId(""); }}>
+                <ModalHeader>
+                    <ModalTitle>Personnalisez votre programme</ModalTitle>
+                </ModalHeader>
+                <div className="px-2 text-sm text-gray-700 space-y-4">
+                    <div className="flex flex-col">
+                        <label htmlFor="program-name" className="mb-1 font-medium">Nom du programme</label>
+                        <input
+                            id="program-name"
+                            type="text"
+                            className="border rounded px-3 py-2"
+                            placeholder="Programme généré"
+                            onChange={(e) => (automaticProgramNameRef.current = e.target.value)}
+                            disabled={isGenerating}
+                        />
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label htmlFor="program-description" className="mb-1 font-medium">Description du programme</label>
+                        <textarea
+                            id="program-description"
+                            className="border rounded px-3 py-2"
+                            placeholder="Programme généré automatiquement"
+                            onChange={(e) => (automaticProgramDescriptionRef.current = e.target.value)}
+                            disabled={isGenerating}
+                        />
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="font-medium">Fitness Profil</label>
+
+                        <select
+                            className="border rounded px-3 py-2"
+                            value={selectedProfileId}
+                            onChange={(e) => setSelectedProfileId(e.target.value)}
+                            disabled={isGenerating}
+                            required
+                        >
+                            <option value="" disabled>Choisissez votre profil</option>
+
+                            {fitnessProfiles && (
+                                <option value={fitnessProfiles.id}>
+                                    {user?.name} – {fitnessProfiles.age} ans – {fitnessProfiles.weight} kg – {fitnessProfiles.height} cm
+                                </option>
+                            )}
+                        </select>
+                        {selectionError && <p className="text-xs text-red-600 mt-2">{selectionError}</p>}
+                    </div>
+
+                    {isGenerating && (
+                        <div className="mt-3 flex items-center gap-3">
+                            <div
+                                className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"
+                                aria-hidden
+                            />
+                            <p className="text-xs text-gray-500">Génération en cours…</p>
+                        </div>
+                    )}
+                </div>
+
+                <ModalFooter>
+                    <div className="flex justify-end gap-3 m-auto">
+                        <Button variant="secondary" onClick={() => setAutomaticOpen(false)} disabled={isGenerating}>
+                            Fermer
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={() =>
+                                handleConfirmAutomatic(
+                                    automaticProgramNameRef.current,
+                                    automaticProgramDescriptionRef.current
+                                )
+                            }
+                            disabled={isGenerating || !selectedProfileId}
+                        >
+                            {isGenerating ? "Génération…" : "Confirmer"}
+                        </Button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+
+        </div >
     );
 };
 

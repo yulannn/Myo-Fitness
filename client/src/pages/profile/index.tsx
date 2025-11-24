@@ -13,7 +13,7 @@ import { Plus } from "lucide-react"
 export default function FitnessProfiles() {
   const { user } = useAuth();
   const logout = useLogout();
-  const { data: profiles = [], isLoading } = useFitnessProfilesByUser();
+  const { data: profiles, isLoading } = useFitnessProfilesByUser();
   const createMutation = useCreateFitnessProfile();
   const deleteMutation = useDeleteFitnessProfile();
 
@@ -58,8 +58,8 @@ export default function FitnessProfiles() {
       />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">Mes profils fitness</h2>
-        {profiles.length === 0 && (
+        <h2 className="text-lg font-semibold text-slate-900">Mon profil fitness</h2>
+        {!profiles && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -72,7 +72,7 @@ export default function FitnessProfiles() {
       </div>
 
       <FitnessProfilesList
-        profiles={profiles}
+        profiles={profiles || undefined}
         isLoading={isLoading}
         onAddClick={() => setIsCreateModalOpen(true)}
         onDeleteClick={handleDelete}

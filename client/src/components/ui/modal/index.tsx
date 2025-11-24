@@ -41,7 +41,7 @@ export const ModalHeader = ({
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx("flex flex-col space-y-1.5 mb-3 text-indigo-500", className)} {...props} />
+    <div className={clsx("flex flex-col text-center space-y-1.5 mb-3 text-indigo-500 ", className)} {...props} />
 );
 
 export const ModalFooter = ({

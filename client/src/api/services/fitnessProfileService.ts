@@ -7,8 +7,8 @@ export const FitnessProfileFetchDataService = {
         return res.data;
     },
 
-    async getFitnessProfilesByUser(): Promise<FitnessProfile[]> {
-        const res = await api.get<FitnessProfile[]>('/fitness-profile');
+    async getFitnessProfilesByUser(): Promise<FitnessProfile> {
+        const res = await api.get<FitnessProfile>('/fitness-profile');
         return res.data;
     },
 
