@@ -1,11 +1,61 @@
+/* ...existing code... */
+
+/* IMPORT DE LA POLICE EN PREMIER */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 @import "tailwindcss";
 @plugin "daisyui";
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Global default */
+:root {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+html,
+body,
+#root {
+  font-family: var(--font-sans);
 }
+
+/* Utility classes for font weights */
+.montserrat-100 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 100;
+}
+
+.montserrat-200 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 200;
+}
+
+.montserrat-300 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 300;
+}
+
+.montserrat-400 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+.montserrat-500 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+}
+
+.montserrat-600 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+}
+
+.montserrat-700 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+}
+
+/* Example weight-specific utility classes (remplace <uniquifier> par un nom) */
+
+
+/* ...existing code... */

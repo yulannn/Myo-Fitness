@@ -39,12 +39,12 @@ export default function UserCard({ name, email, profilePictureUrl }: UserCardPro
   };
 
   return (
-    <div className="rounded-xl bg-gradient-to-br from-[#2F4858] to-[#1f3340] p-4 shadow-xl border border-[#2F4858]/30 flex items-center gap-5">
+    <div className="rounded-xl bg-black p-4 shadow-xl border border-[#112F2B]/50 flex items-center gap-5">
       <div className="relative">
         <img
           src={`http://localhost:3000${profilePictureUrl ?? '/uploads/profile-pictures/default.png'}`}
           alt={name}
-          className="h-20 w-20 rounded-full object-cover ring-4 ring-[#7CD8EE]/50 shadow-md"
+          className="h-20 w-20 rounded-full object-cover ring-4 ring-[#112F2B]/50 shadow-md"
         />
         <input
           ref={fileInputRef}
@@ -56,11 +56,7 @@ export default function UserCard({ name, email, profilePictureUrl }: UserCardPro
         <button
           type="button"
           onClick={handleOpenFilePicker}
-          className="
-            absolute bottom-0 right-0 h-6 w-6 rounded-full 
-            bg-[#642f00] text-white flex items-center justify-center shadow-lg 
-            hover:bg-[#8b4c00] transition
-          "
+          className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-[#112F2B] text-[#46E1D3] flex items-center justify-center shadow-lg hover:bg-[#134d41] transition"
           title="Changer la photo"
         >
           <Pencil size={12} />
@@ -68,14 +64,14 @@ export default function UserCard({ name, email, profilePictureUrl }: UserCardPro
 
         {isUploading && (
           <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#46E1D3] border-t-transparent"></div>
           </div>
         )}
       </div>
 
       <div>
-        <p className="text-xl font-bold text-white">{name}</p>
-        <p className="text-sm text-[#7CD8EE]">{email}</p>
+        <p className="text-xl font-bold text-[#ffffff]">{name}</p>
+        <p className="text-sm font-bold text-[#ffffff]">{email}</p>
       </div>
     </div>
   );

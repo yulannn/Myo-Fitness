@@ -13,6 +13,7 @@ export interface Session {
     notes?: string | null;
     exercices?: any[];
     trainingProgram?: any;
+    completed: boolean;
     createdAt?: string;
     updatedAt?: string;
 }

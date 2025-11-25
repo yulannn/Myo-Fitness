@@ -43,19 +43,19 @@ export default function FitnessProfiles() {
   };
 
   return (
-    <section className="min-h-screen bg-[#2F4858] px-4 pt-6 pb-28 max-w-3xl mx-auto space-y-8">
+    <section className="min-h-screen bg-black px-4 pt-6 pb-28 max-w-3xl mx-auto space-y-8">
 
+      {/* HEADER */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#7CD8EE]">Mon Profil</h1>
-        <button
-          onClick={logout}
-          className="rounded-xl bg-[#642f00] text-white px-4 py-2 font-semibold shadow-md hover:bg-[#8b4c00] transition active:scale-95"
-        >
-          Déconnexion
-        </button>
+        <h1 className="text-3xl text-[#FFFFFF] font-bold montserrat-500">
+          MON PROFIL FITNESS
+        </h1>
       </div>
 
-      <div className="bg-[#1f3340] p-4 rounded-xl shadow-xl">
+      <hr className="border-t border-gray-600/30" />
+
+      {/* USER CARD */}
+      <div className="bg-[#46E1D3]/60 backdrop-blur-sm p-1 rounded-2xl shadow-xl border border-[#46E1D3]/10">
         <UserCard
           name={user?.name || 'John Doe'}
           email={user?.email || 'email@example.com'}
@@ -63,7 +63,10 @@ export default function FitnessProfiles() {
         />
       </div>
 
-      <div className="bg-[#1f3340] p-4 rounded-xl shadow-xl">
+      <hr className="border-t border-gray-600/30 " />
+
+      {/* FITNESS PROFILES */}
+      <div className="bg-[#46E1D3]/60  p-1 rounded-2xl shadow-xl border border-[#46E1D3]/10">
         <FitnessProfilesList
           profiles={profiles || undefined}
           isLoading={isLoading}
@@ -72,6 +75,7 @@ export default function FitnessProfiles() {
         />
       </div>
 
+      {/* CREATE MODAL */}
       <CreateProfileModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -79,6 +83,7 @@ export default function FitnessProfiles() {
         isPending={createMutation.isPending}
       />
 
+      {/* EDIT MODAL */}
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => {

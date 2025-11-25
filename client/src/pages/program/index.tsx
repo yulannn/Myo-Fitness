@@ -7,6 +7,7 @@ import { Badge } from "../../components/ui/badge";
 import useFitnessProfilesByUser from "../../api/hooks/fitness-profile/useGetFitnessProfilesByUser";
 import { useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { SessionCard } from "../../components/ui/session";
 
 const Program = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -84,7 +85,8 @@ const Program = () => {
 
 
     return (
-        <div className="flex flex-col w-full h-full pb-8 space-y-6">
+        <div className="flex flex-col w-full h-full pb-8 space-y-6  ">
+            <h1 className=" text-2xl p-2">PROGRAMME D'ENTRAÎNEMENT</h1>
             <div className="flex justify-end">
                 <Button onClick={openAddFlow} variant="primary" size="md">
                     Ajouter un programme
@@ -112,35 +114,9 @@ const Program = () => {
                         </div>
                     </header>
 
-                    <div className="mt-3 space-y-3">
+                    <div className="mt-3 space-y-3 pb-12">
                         {(program.sessions ?? []).map((session: any) => (
-                            <article key={session.id ?? `session-${program.id}-${session.date}`} className="border rounded p-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="font-semibold">
-                                            {session.date ? new Date(session.date).toLocaleDateString() : "Date inconnue"}
-                                        </div>
-                                        <div className="text-sm text-gray-600">
-                                            Durée: {session.duration ?? "—"} min
-                                        </div>
-                                    </div>
-                                    <div className={`text-sm font-medium ${session.completed ? "text-green-600" : "text-yellow-600"}`}>
-                                        {session.completed ? "Terminée" : "Prévue"}
-                                    </div>
-                                </div>
-
-                                {session.notes && <p className="mt-2 text-sm text-gray-700">Notes: {session.notes}</p>}
-
-                                <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
-                                    {(session.exercices ?? []).map((ex: any) => (
-                                        <li key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}>
-                                            <span className="font-medium">{ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}</span>
-                                            {ex.reps && ` — ${ex.reps} reps`}
-                                            {ex.sets && ` • ${ex.sets} sets`}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </article>
+                            <SessionCard key={session.id ?? `session-${program.id}-${session.date}`} session={session} />
                         ))}
                     </div>
                 </section>

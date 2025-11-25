@@ -16,7 +16,7 @@ export default function FitnessProfilesList({
 }: FitnessProfilesListProps) {
   if (isLoading) {
     return (
-      <div className="text-center py-8 text-[#7CD8EE] animate-pulse font-medium text-lg">
+      <div className="text-center py-8 text-[#46E1D3] font-medium text-lg">
         Chargement des profils...
       </div>
     );
@@ -24,13 +24,13 @@ export default function FitnessProfilesList({
 
   if (!profiles) {
     return (
-      <div className="rounded-2xl bg-[#2F4858] p-10 text-center shadow-lg border border-[#7CD8EE]/20">
-        <p className="text-[#7CD8EE] text-base font-semibold mb-5">
+      <div className="rounded-2xl bg-black p-10 text-center shadow-lg border border-[#112F2B]/50">
+        <p className="text-[#46E1D3] text-base font-semibold mb-5">
           Aucun profil fitness créé pour le moment.
         </p>
         <button
           onClick={onAddClick}
-          className="rounded-xl bg-[#7CD8EE] px-5 py-2 text-[#2F4858] font-semibold shadow-md hover:bg-[#5FC0D9] transition active:scale-95"
+          className="rounded-xl bg-[#112F2B] px-5 py-2 text-[#46E1D3] font-semibold shadow-md hover:bg-[#134d41] transition active:scale-95"
         >
           Créer un profil
         </button>
@@ -44,33 +44,30 @@ export default function FitnessProfilesList({
         key={profiles.id}
         className="
           rounded-xl
-          bg-gradient-to-br from-[#2F4858] to-[#1f3340]
-          p-4 shadow-xl border border-[#2F4858]/30
+          bg-black
+          p-4 shadow-xl border border-[#112F2B]/50
           flex items-start justify-between gap-6
-          transition-transform hover:scale-[1.02] hover:shadow-3xl
+          transition-transform 
         "
       >
-        <div className="space-y-3 text-white">
+        <div className="space-y-3 text-[#FFFFFF] font-bold">
           <p className="font-bold text-xl tracking-tight flex items-center gap-2">
-            Profil #{profiles.id}
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#7CD8EE]/30 border border-[#7CD8EE]/50 text-[#2F4858]">
-              {new Date(profiles.createdAt || '').toLocaleDateString('fr-FR')}
-            </span>
+            FITNESS PROFILE
           </p>
 
           <div className="text-sm space-y-2 leading-relaxed opacity-90">
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Données physiques :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Données physiques :</span>{' '}
               {profiles.age} ans • {profiles.height} cm • {profiles.weight} kg
             </p>
 
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Séances / semaine :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Séances / semaine :</span>{' '}
               {profiles.trainingFrequency}
             </p>
 
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Niveau :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Niveau :</span>{' '}
               {profiles.experienceLevel === 'BEGINNER'
                 ? 'Débutant'
                 : profiles.experienceLevel === 'INTERMEDIATE'
@@ -79,7 +76,7 @@ export default function FitnessProfilesList({
             </p>
 
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Objectifs :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Objectifs :</span>{' '}
               {profiles.goals.length > 0
                 ? profiles.goals
                   .map(g => (g === 'MUSCLE_GAIN' ? 'Gain musculaire' : 'Perte de poids'))
@@ -88,7 +85,7 @@ export default function FitnessProfilesList({
             </p>
 
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Genre :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Genre :</span>{' '}
               {profiles.gender === 'MALE'
                 ? 'Homme'
                 : profiles.gender === 'FEMALE'
@@ -97,7 +94,7 @@ export default function FitnessProfilesList({
             </p>
 
             <p>
-              <span className="font-semibold text-[#7CD8EE]">Bodyweight :</span>{' '}
+              <span className="font-semibold text-[#46E1D3]">Bodyweight :</span>{' '}
               {profiles.bodyWeight ? 'Oui' : 'Non'}
             </p>
           </div>
@@ -108,8 +105,8 @@ export default function FitnessProfilesList({
           className="
             inline-flex items-center gap-1 rounded-xl 
             px-4 py-2 text-sm font-semibold
-            bg-[#7CD8EE] text-[#2F4858] 
-            shadow-md hover:bg-[#6acbe0] active:scale-95 transition
+            bg-[#112F2B] text-[#46E1D3] 
+            shadow-md hover:bg-[#134d41] active:scale-95 transition
           "
         >
           <Edit size={16} />
