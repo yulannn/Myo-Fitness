@@ -4,22 +4,23 @@ import { useAuth } from '../../context/AuthContext';
 import { useLogout } from '../../api/hooks/auth/useLogout';
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useCreateFitnessProfile } from '../../api/hooks/fitness-profile/useCreateFitnessProfile';
-import { useDeleteFitnessProfile } from '../../api/hooks/fitness-profile/useDeleteFitnessProfile';
+import { useUpdateFitnessProfile } from '../../api/hooks/fitness-profile/useUpdateFitnessProfile';
 import UserCard from '../../components/profile/UserCard';
 import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
 import CreateProfileModal from '../../components/profile/CreateProfileModal';
-import DeleteProfileModal from '../../components/profile/DeleteProfileModal';
-import { Plus } from "lucide-react";
+import EditProfileModal from '../../components/profile/EditProfileModal';
+import type { FitnessProfile } from '../../types/fitness-profile.type';
 
 export default function FitnessProfiles() {
   const { user } = useAuth();
   const logout = useLogout();
   const { data: profiles, isLoading } = useFitnessProfilesByUser();
   const createMutation = useCreateFitnessProfile();
-  const deleteMutation = useDeleteFitnessProfile();
+  const updateMutation = useUpdateFitnessProfile(profiles?.id);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [profileToDelete, setProfileToDelete] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [profileToEdit, setProfileToEdit] = useState<FitnessProfile | null>(null);
 
   const handleCreate = (form: any) => {
     createMutation.mutate(form, {
@@ -27,14 +28,18 @@ export default function FitnessProfiles() {
     });
   };
 
-  const handleDelete = (id: number) => setProfileToDelete(id);
+  const handleEdit = (profile: FitnessProfile) => {
+    setProfileToEdit(profile);
+    setIsEditModalOpen(true);
+  };
 
-  const confirmDelete = () => {
-    if (profileToDelete !== null) {
-      deleteMutation.mutate(profileToDelete, {
-        onSuccess: () => setProfileToDelete(null),
-      });
-    }
+  const handleUpdate = (form: any) => {
+    updateMutation.mutate(form, {
+      onSuccess: () => {
+        setIsEditModalOpen(false);
+        setProfileToEdit(null);
+      },
+    });
   };
 
   return (
@@ -63,7 +68,7 @@ export default function FitnessProfiles() {
           profiles={profiles || undefined}
           isLoading={isLoading}
           onAddClick={() => setIsCreateModalOpen(true)}
-          onDeleteClick={handleDelete}
+          onEditClick={handleEdit}
         />
       </div>
 
@@ -74,11 +79,15 @@ export default function FitnessProfiles() {
         isPending={createMutation.isPending}
       />
 
-      <DeleteProfileModal
-        isOpen={profileToDelete !== null}
-        onClose={() => setProfileToDelete(null)}
-        onConfirm={confirmDelete}
-        isPending={deleteMutation.isPending}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setProfileToEdit(null);
+        }}
+        onSubmit={handleUpdate}
+        isPending={updateMutation.isPending}
+        profile={profileToEdit}
       />
     </section>
   );

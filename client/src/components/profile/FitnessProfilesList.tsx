@@ -1,18 +1,18 @@
-import { Trash2 } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 
 interface FitnessProfilesListProps {
   profiles?: FitnessProfile;
   isLoading: boolean;
   onAddClick: () => void;
-  onDeleteClick: (id: number) => void;
+  onEditClick: (profile: FitnessProfile) => void;
 }
 
 export default function FitnessProfilesList({
   profiles,
   isLoading,
   onAddClick,
-  onDeleteClick,
+  onEditClick,
 }: FitnessProfilesListProps) {
   if (isLoading) {
     return (
@@ -104,16 +104,16 @@ export default function FitnessProfilesList({
         </div>
 
         <button
-          onClick={() => onDeleteClick(profiles.id)}
+          onClick={() => onEditClick(profiles)}
           className="
             inline-flex items-center gap-1 rounded-xl 
             px-4 py-2 text-sm font-semibold
-            bg-[#642f00] text-white 
-            shadow-md hover:bg-[#8b4c00] active:scale-95 transition
+            bg-[#7CD8EE] text-[#2F4858] 
+            shadow-md hover:bg-[#6acbe0] active:scale-95 transition
           "
         >
-          <Trash2 size={16} />
-          Supprimer
+          <Edit size={16} />
+          Modifier
         </button>
       </div>
     </div>
