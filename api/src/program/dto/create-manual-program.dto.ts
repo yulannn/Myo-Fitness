@@ -81,10 +81,12 @@ export class CreateManualProgramDto {
     @Type(() => CreateProgramDataDto)
     createProgramDto: CreateProgramDataDto;
 
-    @ApiProperty({ type: [SessionDataDto] })
+    @ApiProperty({
+        type: [SessionDataDto],
+        description: 'Liste des séances du programme'
+    })
+    @IsArray()
     @ValidateNested({ each: true })
     @Type(() => SessionDataDto)
-    sessionData: {
-        sessions: SessionDataDto[];
-    };
+    sessions: SessionDataDto[];
 }

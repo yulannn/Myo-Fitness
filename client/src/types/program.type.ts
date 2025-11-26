@@ -33,20 +33,17 @@ export interface CreateProgramPayload {
     fitnessProfileId: number;
 }
 
-
 export interface ManualProgramPayload {
     createProgramDto: CreateProgramPayload;
-    sessionData: {
-        sessions: Array<{
-            name?: string;
-            exercises?: Array<{
-                id: number;
-                sets?: number;
-                reps?: number;
-                weight?: number | null;
-            }>;
+    sessions: Array<{
+        name?: string;
+        exercises: Array<{
+            id: number;
+            sets?: number;
+            reps?: number;
+            weight?: number | null;
         }>;
-    };
+    }>;
 }
 
 export interface AddSessionPayload {

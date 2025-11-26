@@ -1,11 +1,13 @@
 import { useProgramsByUser } from "../../api/hooks/program/useGetProgramsByUser";
 import useCreateProgram from "../../api/hooks/program/useCreateProgram";
-import { useState, useMemo } from "react";
+import useCreateManualProgram from "../../api/hooks/program/useCreateManualProgram";
+import useExercicesByUser from "../../api/hooks/exercice/useGetExercicesByUser";
+import { useState, useMemo, useRef } from "react";
 import { Modal, ModalFooter, ModalHeader, ModalTitle } from "../../components/ui/modal";
+import { ManualProgramModal } from "../../components/ui/modal/ManualProgramModal";
 import Button from "../../components/ui/button/Button";
 import { Badge } from "../../components/ui/badge";
 import useFitnessProfilesByUser from "../../api/hooks/fitness-profile/useGetFitnessProfilesByUser";
-import { useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { SessionCard } from "../../components/ui/session";
 
@@ -13,13 +15,16 @@ const Program = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [choiceOpen, setChoiceOpen] = useState(false);
     const [automaticOpen, setAutomaticOpen] = useState(false);
+    const [manualOpen, setManualOpen] = useState(false);
     const [selectedProfileId, setSelectedProfileId] = useState<string>("");
     const [selectionError, setSelectionError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
     const { data: fitnessProfile } = useFitnessProfilesByUser();
     const { data, isLoading } = useProgramsByUser();
-    const { mutate, isPending, isSuccess, error: createError } = useCreateProgram();
+    const { data: exercices = [] } = useExercicesByUser();
+    const { mutate, isPending } = useCreateProgram();
+    const { mutate: mutateManual, isPending: isManualPending } = useCreateManualProgram();
 
     const programs = Array.isArray(data) ? data : [];
     const hasActiveProgram = useMemo(() => programs.some((p: any) => p.status === "ACTIVE"), [programs]);
@@ -68,6 +73,7 @@ const Program = () => {
             onSuccess: () => {
                 setIsGenerating(false);
                 setAutomaticOpen(false);
+                setSelectedProfileId("");
             },
             onError: () => {
                 setIsGenerating(false);
@@ -77,16 +83,26 @@ const Program = () => {
 
     const handleCreateManual = () => {
         setChoiceOpen(false);
+        setManualOpen(true);
     };
 
-
+    const handleManualProgramConfirm = (data: any) => {
+        mutateManual(data, {
+            onSuccess: () => {
+                setManualOpen(false);
+            },
+            onError: (error) => {
+                console.error('Error creating manual program:', error);
+                alert('Erreur lors de la création du programme. Veuillez réessayer.');
+            },
+        });
+    };
 
     if (isLoading) return <div>Loading...</div>;
 
-
     return (
-        <div className="flex flex-col w-full h-full pb-8 space-y-6  ">
-            <h1 className=" text-2xl p-2">PROGRAMME D'ENTRAÎNEMENT</h1>
+        <div className="flex flex-col w-full h-full pb-8 space-y-6">
+            <h1 className="text-2xl p-2">PROGRAMME D'ENTRAÎNEMENT</h1>
             <div className="flex justify-end">
                 <Button onClick={openAddFlow} variant="primary" size="md">
                     Ajouter un programme
@@ -122,8 +138,7 @@ const Program = () => {
                 </section>
             ))}
 
-
-
+            {/* Confirmation Modal for Active Program */}
             <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)}>
                 <ModalHeader>
                     <ModalTitle>Attention vous avez deja un programme actif !</ModalTitle>
@@ -143,13 +158,12 @@ const Program = () => {
                 </ModalFooter>
             </Modal>
 
+            {/* Choice Modal - Manual or Automatic */}
             <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)}>
                 <ModalHeader>
                     <ModalTitle>Créer un programme</ModalTitle>
                 </ModalHeader>
-                <div className="px-2 text-sm text-gray-700">
-                    Choisissez si vous voulez que le programme soit généré automatiquement par l'IA ou créé manuellement.
-                </div>
+
                 <ModalFooter>
                     <div className="flex justify-end gap-3 m-auto">
                         <Button variant="ghost" onClick={handleCreateManual}>
@@ -162,6 +176,7 @@ const Program = () => {
                 </ModalFooter>
             </Modal>
 
+            {/* Automatic Program Modal */}
             <Modal isOpen={automaticOpen} onClose={() => { setAutomaticOpen(false); setSelectedProfileId(""); }}>
                 <ModalHeader>
                     <ModalTitle>Personnalisez votre programme</ModalTitle>
@@ -224,7 +239,7 @@ const Program = () => {
 
                 <ModalFooter>
                     <div className="flex justify-end gap-3 m-auto">
-                        <Button variant="secondary" onClick={() => setAutomaticOpen(false)} disabled={isGenerating}>
+                        <Button variant="secondary" onClick={() => { setAutomaticOpen(false); setSelectedProfileId(""); }} disabled={isGenerating}>
                             Fermer
                         </Button>
                         <Button
@@ -243,7 +258,18 @@ const Program = () => {
                 </ModalFooter>
             </Modal>
 
-        </div >
+            {/* Manual Program Modal */}
+            {fitnessProfile && (
+                <ManualProgramModal
+                    isOpen={manualOpen}
+                    onClose={() => setManualOpen(false)}
+                    availableExercises={exercices}
+                    fitnessProfileId={fitnessProfile.id}
+                    onConfirm={handleManualProgramConfirm}
+                />
+            )}
+
+        </div>
     );
 };
 

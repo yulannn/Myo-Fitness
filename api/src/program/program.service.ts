@@ -125,7 +125,7 @@ export class ProgramService {
 
 
     async createManualProgram(body: CreateManualProgramDto, userId: number) {
-        const { createProgramDto, sessionData } = body;
+        const { createProgramDto, sessions } = body;
 
         await this.prisma.trainingProgram.updateMany({
             where: { fitnessProfileId: createProgramDto.fitnessProfileId },
@@ -144,7 +144,7 @@ export class ProgramService {
                 },
             });
 
-            for (const session of sessionData.sessions) {
+            for (const session of sessions) {
                 const createdSession = await prisma.trainingSession.create({
                     data: { programId: createdProgram.id, notes: session.name ?? '' },
                 });

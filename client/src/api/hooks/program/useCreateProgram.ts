@@ -8,7 +8,7 @@ export function useCreateProgram() {
   const mutation = useMutation<Program, unknown, CreateProgramPayload>({
     mutationFn: (payload: CreateProgramPayload) => ProgramService.createProgram(payload),
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['programs'] });
+      await qc.invalidateQueries({ queryKey: ['program'] });
     },
   });
   return mutation;

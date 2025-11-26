@@ -8,7 +8,7 @@ export function useCreateManualProgram() {
   const mutation = useMutation<Program, unknown, ManualProgramPayload>({
     mutationFn: (payload: ManualProgramPayload) => ProgramService.createManualProgram(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['programs'] });
+      qc.invalidateQueries({ queryKey: ['program'] });
     }
   });
   return mutation;
