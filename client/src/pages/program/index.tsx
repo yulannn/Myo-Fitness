@@ -98,6 +98,21 @@ const Program = () => {
         });
     };
 
+    // Fonction pour trier les sessions : sans date en premier, puis par date croissante
+    const sortSessions = (sessions: any[]) => {
+        if (!sessions || !Array.isArray(sessions)) return [];
+
+        return [...sessions].sort((a, b) => {
+            // Sessions sans date viennent en premier
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return -1;
+            if (!b.date) return 1;
+
+            // Ensuite trier par date (la plus proche en premier)
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+    };
+
     if (isLoading) return <div>Loading...</div>;
 
     return (
@@ -131,7 +146,7 @@ const Program = () => {
                     </header>
 
                     <div className="mt-3 space-y-3 pb-12">
-                        {(program.sessions ?? []).map((session: any) => (
+                        {sortSessions(program.sessions).map((session: any) => (
                             <SessionCard key={session.id ?? `session-${program.id}-${session.date}`} session={session} />
                         ))}
                     </div>

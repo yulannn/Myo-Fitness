@@ -13,7 +13,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8"
             role="dialog"
             aria-modal="true"
         >
@@ -25,9 +25,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 
             <div
                 className={clsx(
-                    "relative z-50 w-[92%] max-w-lg",
+                    "relative z-50 w-[92%] max-w-lg my-auto",
                     "rounded-2xl bg-white",
-                    "p-6 shadow-2xl ring-1 ring-black/5"
+                    "shadow-2xl ring-1 ring-black/5",
+                    "max-h-[calc(100vh-4rem)]",
+                    "flex flex-col"
                 )}
             >
                 {children}
@@ -41,14 +43,21 @@ export const ModalHeader = ({
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx("flex flex-col text-center space-y-1.5 mb-3 text-indigo-500 ", className)} {...props} />
+    <div className={clsx("flex flex-col text-center space-y-1.5 px-6 pt-6 pb-2 text-indigo-500 flex-shrink-0", className)} {...props} />
 );
 
 export const ModalFooter = ({
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx("mt-4 flex flex-col space-y-2 text-indigo-500", className)} {...props} />
+    <div className={clsx("px-6 pb-6 pt-4 flex flex-col space-y-2 text-indigo-500 flex-shrink-0", className)} {...props} />
+);
+
+export const ModalContent = ({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+    <div className={clsx("px-6 py-2 overflow-y-auto flex-1", className)} {...props} />
 );
 
 export const ModalTitle = React.forwardRef<

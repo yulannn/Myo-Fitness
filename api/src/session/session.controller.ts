@@ -1,4 +1,4 @@
-import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put } from '@nestjs/common';
+import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put, Get } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
 import {
@@ -15,6 +15,39 @@ import { ExerciseDataDto } from 'src/program/dto/session-data.dto';
 @Controller('api/v1/session')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) { }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id')
+  @ApiOperation({ summary: 'Récupérer une session par ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la session à récupérer',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session récupérée avec succès',
+  })
+  @ApiResponse({ status: 404, description: 'Session non trouvée' })
+  getSessionById(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.getSessionById(id, userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('user/all')
+  @ApiOperation({ summary: 'Récupérer toutes les sessions d\'un utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions récupérées avec succès',
+  })
+  getAllUserSessions(@Request() req) {
+    const userId = req.user.userId;
+    return this.sessionService.getAllUserSessions(userId);
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/date')

@@ -13,6 +13,55 @@ export class SessionService {
     private readonly programService: ProgramService,
   ) { }
 
+  async getSessionById(id: number, userId: number) {
+    const session = await this.prisma.trainingSession.findUnique({
+      where: { id },
+      include: {
+        exercices: {
+          include: {
+            exercice: true,
+          },
+        },
+        trainingProgram: {
+          include: {
+            fitnessProfile: true,
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+
+    this.programService.verifyPermissions(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+
+    return session;
+  }
+
+  async getAllUserSessions(userId: number) {
+    return this.prisma.trainingSession.findMany({
+      where: {
+        trainingProgram: {
+          fitnessProfile: {
+            userId,
+          },
+          status: 'ACTIVE', // Filtrer uniquement les programmes actifs
+        },
+      },
+      include: {
+        exercices: {
+          include: {
+            exercice: true,
+          },
+        },
+        trainingProgram: true,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+  }
 
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {
     const session = await this.prisma.trainingSession.findUnique({

@@ -2,6 +2,7 @@ import Home from "../pages/home";
 import FitnessProfiles from "../pages/profile";
 import Program from "../pages/program";
 import ComingSoon from "../pages/placeHolder";
+import Sessions from "../pages/sessions";
 import Login from "../pages/login";
 import Register from "../pages/register";
 import type { ReactNode } from "react";
@@ -47,7 +48,7 @@ export const routes: AppRouteConfig[] = [
     },
     {
         path: SESSIONS,
-        element: <ComingSoon />,
+        element: <Sessions />,
         protected: true
     },
     {

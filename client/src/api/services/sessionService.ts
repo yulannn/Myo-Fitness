@@ -2,6 +2,16 @@ import api from '../apiClient';
 import type { Session, UpdateSessionDatePayload, AddExerciseToSessionPayload } from '../../types/session.type';
 
 export const SessionFetchDataService = {
+    async getSessionById(sessionId: number): Promise<Session> {
+        const res = await api.get<Session>(`/session/${sessionId}`);
+        return res.data;
+    },
+
+    async getAllUserSessions(): Promise<Session[]> {
+        const res = await api.get<Session[]>('/session/user/all');
+        return res.data;
+    },
+
     async updateSessionDate(sessionId: number, payload: UpdateSessionDatePayload): Promise<Session> {
         const res = await api.patch<Session>(`/session/${sessionId}/date`, payload);
         return res.data;
