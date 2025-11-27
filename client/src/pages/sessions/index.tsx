@@ -11,10 +11,9 @@ export default function Sessions() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
     const { data: sessions, isLoading, error } = useGetAllUserSessions()
 
-    // Filtrer les sessions pour la date sélectionnée
     const getSessionsForDate = (date: Date | undefined): Session[] => {
         if (!date || !sessions) return []
-        return sessions.filter((session) => {
+        return sessions.filter((session: Session) => {
             if (!session.date) return false
             return isSameDay(new Date(session.date), date)
         })
@@ -22,12 +21,10 @@ export default function Sessions() {
 
     const sessionsForSelectedDate = getSessionsForDate(selectedDate)
 
-    // Récupérer toutes les dates ayant des sessions pour les mettre en évidence
     const datesWithSessions = sessions
-        ?.filter((session) => session.date)
-        .map((session) => new Date(session.date!)) || []
+        ?.filter((session: Session) => session.date)
+        .map((session: Session) => new Date(session.date!)) || []
 
-    // Custom CSS pour le calendrier avec couleurs de fond complètes
     const customStyles = `
     .rdp {
       --rdp-cell-size: 48px;
@@ -108,7 +105,6 @@ export default function Sessions() {
     /* Jours avec des sessions - fond coloré complet TRÈS VISIBLE */
     .session-day:not(.rdp-day_selected) {
       background: linear-gradient(135deg, rgba(124, 216, 238, 0.4) 0%, rgba(47, 72, 88, 0.25) 100%) !important;
-      border: 2.5px solid rgba(124, 216, 238, 0.8) !important;
       font-weight: 800;
       box-shadow: 0 3px 10px rgba(124, 216, 238, 0.3);
     }
@@ -175,9 +171,9 @@ export default function Sessions() {
                     <CalendarDaysIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-[#2F4858]">Mes Sessions</h1>
+                    <h1 className="text-2xl font-bold text-[#2F4858]">Mes Séances</h1>
                     <p className="text-sm text-[#2F4858]/60">
-                        {sessions?.length || 0} session{(sessions?.length || 0) > 1 ? 's' : ''} au total
+                        {sessions?.length || 0} séance{(sessions?.length || 0) > 1 ? 's' : ''} au total
                     </p>
                 </div>
             </div>
@@ -200,18 +196,18 @@ export default function Sessions() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-[#2F4858]">
-                            Sessions du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
+                            Séances du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
                         </h2>
                         <span className="px-4 py-2 rounded-full bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white font-semibold text-sm shadow-lg">
-                            {sessionsForSelectedDate.length} session{sessionsForSelectedDate.length > 1 ? 's' : ''}
+                            {sessionsForSelectedDate.length} séance{sessionsForSelectedDate.length > 1 ? 's' : ''}
                         </span>
                     </div>
 
                     {sessionsForSelectedDate.length === 0 ? (
                         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-8 text-center border border-gray-200">
                             <CalendarDaysIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 font-medium">Aucune session prévue pour cette date</p>
-                            <p className="text-gray-400 text-sm mt-1">Sélectionnez une autre date ou créez une nouvelle session</p>
+                            <p className="text-gray-500 font-medium">Aucune séance prévue pour cette date</p>
+                            <p className="text-gray-400 text-sm mt-1">Sélectionnez une autre date ou créez une nouvelle séance</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -226,10 +222,7 @@ export default function Sessions() {
                     <CalendarDaysIcon className="h-16 w-16 text-[#7CD8EE] mx-auto mb-4" />
                     <p className="text-[#2F4858] font-semibold text-lg">Sélectionnez une date</p>
                     <p className="text-[#2F4858]/60 text-sm mt-1">
-                        Cliquez sur une date du calendrier pour voir les sessions prévues
-                    </p>
-                    <p className="text-[#7CD8EE] text-xs mt-3 font-medium">
-                        💡 Les jours colorés contiennent des sessions planifiées
+                        Cliquez sur une date du calendrier pour voir les séances prévues
                     </p>
                 </div>
             )}
@@ -289,8 +282,8 @@ function SessionCard({ session }: { session: Session }) {
 
                     {/* Indicateur de status */}
                     <div className={`px-3 py-1 rounded-full text-xs font-semibold ${session.completed
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-orange-100 text-orange-700'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-orange-100 text-orange-700'
                         }`}>
                         {session.completed ? 'Complétée' : 'À venir'}
                     </div>

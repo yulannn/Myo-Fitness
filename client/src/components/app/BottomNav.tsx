@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   CalendarDaysIcon,
   HomeIcon,
-  SparklesIcon,
+  PlayIcon,
   UserCircleIcon,
   ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline'
@@ -11,7 +11,7 @@ const items = [
   { to: '/programs', icon: ClipboardDocumentCheckIcon },
   { to: '/sessions', icon: CalendarDaysIcon },
   { to: '/', icon: HomeIcon, end: true },
-  { to: '/coach', icon: SparklesIcon },
+  { to: '/active-session', icon: PlayIcon },
   { to: '/profiles', icon: UserCircleIcon },
 ]
 

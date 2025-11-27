@@ -1,11 +1,11 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
-import { CalendarIcon, ClockIcon } from "@heroicons/react/24/outline"
+import { CalendarIcon, ClockIcon, PlayIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
 import Button from "../button/Button"
 import { DayPicker } from 'react-day-picker'
-import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 
@@ -14,13 +14,13 @@ interface SessionProps {
 }
 
 export const SessionCard = ({ session }: SessionProps) => {
+    const navigate = useNavigate()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         session.date ? new Date(session.date) : undefined
     )
     const { mutate: updateDate, isPending } = useUpdateSessionDate(session.id)
 
-    // Obtenir la date d'aujourd'hui à minuit pour comparaison
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -38,6 +38,15 @@ export const SessionCard = ({ session }: SessionProps) => {
                 }
             )
         }
+    }
+
+    const handleStartSession = () => {
+        // Sauvegarder la session dans localStorage
+        localStorage.setItem('activeSession', JSON.stringify(session))
+        localStorage.setItem('sessionStartTime', Date.now().toString())
+
+        // Naviguer vers la page active session
+        navigate('/active-session')
     }
 
     const formatDisplayDate = (date: string | undefined) => {
@@ -156,10 +165,8 @@ export const SessionCard = ({ session }: SessionProps) => {
                     hover:scale-[1.01]
                 "
             >
-                {/* HEADER */}
                 <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
-                        {/* Date Display */}
                         <div className="mb-3">
                             {session.date ? (
                                 <div className="flex items-center gap-2">
@@ -183,25 +190,44 @@ export const SessionCard = ({ session }: SessionProps) => {
                             <span>Durée : {session.duration ?? "—"} min</span>
                         </div>
 
-                        {/* Bouton Planifier */}
                         {!session.completed && (
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="
-                                    mt-3 px-4 py-2 
-                                    rounded-xl
-                                    bg-gradient-to-r from-[#7CD8EE] to-[#7CD8EE]/80
-                                    hover:from-[#7CD8EE]/90 hover:to-[#7CD8EE]/70
-                                    text-[#2F4858] font-bold text-sm
-                                    shadow-lg hover:shadow-xl
-                                    transition-all duration-200
-                                    hover:scale-105
-                                    flex items-center gap-2
-                                "
-                            >
-                                <CalendarIcon className="h-4 w-4" />
-                                {session.date ? 'Modifier la date' : 'Planifier une date'}
-                            </button>
+                            <div className="mt-3 flex gap-2">
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="
+                                        flex-1 px-4 py-2 
+                                        rounded-xl
+                                        bg-gradient-to-r from-[#7CD8EE] to-[#7CD8EE]/80
+                                        hover:from-[#7CD8EE]/90 hover:to-[#7CD8EE]/70
+                                        text-[#2F4858] font-bold text-sm
+                                        shadow-lg hover:shadow-xl
+                                        transition-all duration200
+                                        hover:scale-105
+                                        flex items-center justify-center gap-2
+                                    "
+                                >
+                                    <CalendarIcon className="h-4 w-4" />
+                                    {session.date ? 'Modifier' : 'Planifier'}
+                                </button>
+
+                                <button
+                                    onClick={handleStartSession}
+                                    className="
+                                        flex-1 px-4 py-2 
+                                        rounded-xl
+                                        bg-gradient-to-r from-green-500 to-green-600
+                                        hover:from-green-600 hover:to-green-700
+                                        text-white font-bold text-sm
+                                        shadow-lg hover:shadow-xl
+                                        transition-all duration-200
+                                        hover:scale-105
+                                        flex items-center justify-center gap-2
+                                    "
+                                >
+                                    <PlayIcon className="h-4 w-4" />
+                                    Démarrer
+                                </button>
+                            </div>
                         )}
                     </div>
 
@@ -218,7 +244,6 @@ export const SessionCard = ({ session }: SessionProps) => {
                     </div>
                 </div>
 
-                {/* NOTES */}
                 {session.notes && (
                     <p
                         className="
@@ -231,7 +256,6 @@ export const SessionCard = ({ session }: SessionProps) => {
                     </p>
                 )}
 
-                {/* EXERCICES */}
                 <ul className="mt-5 space-y-3">
                     {(session.exercices ?? []).map((ex: any) => (
                         <li
@@ -267,7 +291,6 @@ export const SessionCard = ({ session }: SessionProps) => {
                 </ul>
             </article>
 
-            {/* Modal de sélection de date */}
             <Modal isOpen={isModalOpen} onClose={() => !isPending && setIsModalOpen(false)}  >
                 <ModalHeader>
                     <ModalTitle>
@@ -287,8 +310,8 @@ export const SessionCard = ({ session }: SessionProps) => {
                             locale={fr}
                             showOutsideDays
                             disabled={[
-                                { before: today }, // Bloquer toutes les dates avant aujourd'hui
-                                isPending ? { after: new Date(9999, 11, 31) } : false // Bloquer tout si en chargement
+                                { before: today },
+                                isPending ? { after: new Date(9999, 11, 31) } : false
                             ].filter(Boolean) as any}
                         />
                     </div>

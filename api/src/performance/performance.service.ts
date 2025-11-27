@@ -22,8 +22,8 @@ export class PerformanceService {
     });
 
 
-    var success = true
-    if (createPerformanceDto.reps_effectuees ?? 0 <= exerciceSession.reps) {
+    let success = true
+    if (createPerformanceDto.reps_effectuees && createPerformanceDto.reps_effectuees < exerciceSession.reps) {
       success = false;
     }
 
