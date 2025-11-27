@@ -1,24 +1,103 @@
 import { Injectable } from '@nestjs/common';
 import { CreateFriendDto } from './dto/create-friend.dto';
-import { UpdateFriendDto } from './dto/update-friend.dto';
 import { PrismaService } from 'prisma/prisma.service';
+import { ChatService } from '../chat/chat.service';
+import { ConversationType } from '@prisma/client';
 
 @Injectable()
 export class FriendService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private chatService: ChatService,
+  ) { }
+
+  async searchUsers(query: string, currentUserId: number) {
+    if (!query || query.length < 2) return [];
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+        NOT: { id: currentUserId },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profilePictureUrl: true,
+      },
+      take: 10,
+    });
+
+    // Ajouter le statut d'ami pour chaque utilisateur trouvé
+    const results = await Promise.all(
+      users.map(async (user) => {
+        const friend = await this.prisma.friend.findFirst({
+          where: {
+            OR: [
+              { userId: currentUserId, friendId: user.id },
+              { userId: user.id, friendId: currentUserId },
+            ],
+          },
+        });
+
+        const pendingRequest = await this.prisma.friendRequest.findFirst({
+          where: {
+            OR: [
+              { senderId: currentUserId, receiverId: user.id },
+              { senderId: user.id, receiverId: currentUserId },
+            ],
+            status: 'PENDING',
+          },
+        });
+
+        let status = 'NONE';
+        if (friend) status = 'FRIEND';
+        else if (pendingRequest) {
+          status = pendingRequest.senderId === currentUserId ? 'SENT' : 'RECEIVED';
+        }
+
+        return { ...user, status };
+      }),
+    );
+
+    return results;
+  }
 
   async sendFriendRequest(createFriendDto: CreateFriendDto, userId: number) {
     const { friendId } = createFriendDto;
+
+    if (userId === friendId) {
+      throw new Error("You cannot add yourself as a friend");
+    }
+
     const existingRequest = await this.prisma.friendRequest.findFirst({
       where: {
-        senderId: userId,
-        receiverId: friendId,
+        OR: [
+          { senderId: userId, receiverId: friendId },
+          { senderId: friendId, receiverId: userId }
+        ],
         status: 'PENDING',
       },
     });
 
     if (existingRequest) {
-      throw new Error('Friend request already sent');
+      throw new Error('Friend request already pending');
+    }
+
+    const existingFriend = await this.prisma.friend.findFirst({
+      where: {
+        OR: [
+          { userId: userId, friendId: friendId },
+          { userId: friendId, friendId: userId }
+        ]
+      }
+    });
+
+    if (existingFriend) {
+      throw new Error("You are already friends");
     }
 
     return this.prisma.friendRequest.create({
@@ -39,6 +118,7 @@ export class FriendService {
       throw new Error('Friend request not found');
     }
 
+    // Créer les relations d'amitié
     await this.prisma.friend.createMany({
       data: [
         { userId: request.senderId, friendId: request.receiverId },
@@ -51,9 +131,22 @@ export class FriendService {
       where: { id: requestId },
     });
 
+    // Créer automatiquement une conversation privée
+    try {
+      await this.chatService.createConversation(
+        {
+          type: ConversationType.PRIVATE,
+          participantIds: [request.senderId, request.receiverId],
+        },
+        request.senderId, // Initiateur (peu importe ici)
+      );
+    } catch (error) {
+      console.error('Error creating conversation after friend accept:', error);
+      // On ne bloque pas l'acceptation d'ami si la création de chat échoue
+    }
+
     return { message: 'Friend request accepted' };
   }
-
 
   async declineFriendRequest(requestId: string) {
     const request = await this.prisma.friendRequest.findUnique({
@@ -76,6 +169,15 @@ export class FriendService {
         receiverId: userId,
         status: 'PENDING',
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true
+          }
+        }
+      }
     });
 
     return requests;
@@ -85,14 +187,22 @@ export class FriendService {
     const friendList = await this.prisma.friend.findMany({
       where: {
         userId: userId
+      },
+      include: {
+        friend: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profilePictureUrl: true
+          }
+        }
       }
-    })
+    });
 
-    if (!friendList){
-      throw new Error("No friend found")
+    if (!friendList) {
+      return [];
     }
-    return friendList
+    return friendList;
   }
-
-
 }

@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { CreateFriendDto } from './dto/create-friend.dto';
@@ -18,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FriendEntity } from './entities/friend.entity';
 import { Throttle } from '@nestjs/throttler';
@@ -27,7 +29,15 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/friend')
 export class FriendController {
-  constructor(private readonly friendService: FriendService) {}
+  constructor(private readonly friendService: FriendService) { }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Rechercher des utilisateurs' })
+  @ApiQuery({ name: 'q', required: true, description: 'Terme de recherche (nom ou email)' })
+  searchUsers(@Query('q') query: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.searchUsers(query, userId);
+  }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()

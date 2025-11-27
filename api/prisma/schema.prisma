@@ -27,10 +27,10 @@ enum Gender {
 }
 
 enum ProgramStatus {
-  ACTIVE // Programme actuellement suivi par l'utilisateur
-  COMPLETED // Programme terminé
-  ARCHIVED // Programme archivé, non actif mais conservé pour l'historique
-  DRAFT // Programme créé mais pas encore commencé (par ex. généré par l'IA)
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  DRAFT
 }
 
 enum FriendStatus {
@@ -71,6 +71,18 @@ enum ProgramTemplate {
   CUSTOM
 }
 
+enum ConversationType {
+  PRIVATE
+  GROUP
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+}
+
 model User {
   id                Int      @id @default(autoincrement())
   name              String
@@ -92,6 +104,11 @@ model User {
   groups                FriendGroup[]        @relation("GroupMembers")
   sentGroupRequests     FriendGroupRequest[] @relation("SentGroupRequests")
   receivedGroupRequests FriendGroupRequest[] @relation("ReceivedGroupRequests")
+
+  // Relations chat
+  conversationParticipants ConversationParticipant[]
+  messages                 Message[]
+  messageReactions         MessageReaction[]
 
   sessionPhotos SessionPhoto[]
 }
@@ -285,7 +302,8 @@ model FriendGroup {
 
   members User[] @relation("GroupMembers")
 
-  joinRequests FriendGroupRequest[] @relation("GroupJoinRequests")
+  joinRequests  FriendGroupRequest[] @relation("GroupJoinRequests")
+  conversations Conversation[]
 }
 
 model FriendGroupRequest {
@@ -301,4 +319,68 @@ model FriendGroupRequest {
   receiver User        @relation("ReceivedGroupRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, groupId])
+}
+
+model Conversation {
+  id        String           @id @default(uuid())
+  type      ConversationType
+  groupId   Int?
+  name      String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+  group        FriendGroup?              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([groupId])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         Int
+  joinedAt       DateTime @default(now())
+  lastReadAt     DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String
+  senderId       Int
+  content        String      @db.Text
+  type           MessageType @default(TEXT)
+  mediaUrl       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  isEdited       Boolean     @default(false)
+  isDeleted      Boolean     @default(false)
+
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions    MessageReaction[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    Int
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }

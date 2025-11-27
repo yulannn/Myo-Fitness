@@ -1,0 +1,236 @@
+import {
+    WebSocketGateway,
+    WebSocketServer,
+    SubscribeMessage,
+    MessageBody,
+    ConnectedSocket,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { UseGuards } from '@nestjs/common';
+import { ChatService } from './chat.service';
+import { SendMessageDto } from './dto/send-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
+
+// Map pour stocker les connexions utilisateur -> socket
+const userSockets = new Map<number, Set<string>>();
+
+@WebSocketGateway({
+    cors: {
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        credentials: true,
+    },
+    namespace: '/chat',
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer()
+    server: Server;
+
+    constructor(private readonly chatService: ChatService) { }
+
+    handleConnection(client: Socket) {
+        console.log(`Client connected: ${client.id}`);
+
+        // Récupérer l'ID utilisateur depuis le handshake auth
+        const userId = client.handshake.auth?.userId;
+        if (userId) {
+            if (!userSockets.has(userId)) {
+                userSockets.set(userId, new Set());
+            }
+            userSockets.get(userId)?.add(client.id);
+            console.log(`User ${userId} connected with socket ${client.id}`);
+        }
+    }
+
+    handleDisconnect(client: Socket) {
+        console.log(`Client disconnected: ${client.id}`);
+
+        const userId = client.handshake.auth?.userId;
+        if (userId) {
+            userSockets.get(userId)?.delete(client.id);
+            if (userSockets.get(userId)?.size === 0) {
+                userSockets.delete(userId);
+            }
+        }
+    }
+
+    // ========== EVENTS ==========
+
+    @SubscribeMessage('message:send')
+    async handleSendMessage(
+        @MessageBody() data: { dto: SendMessageDto; userId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            const message = await this.chatService.sendMessage(data.dto, data.userId);
+
+            // Ré envoyer le message à tous les participants de la conversation
+            const conversation = await this.chatService.getConversation(
+                data.dto.conversationId,
+                data.userId,
+            );
+
+            conversation.participants.forEach((participant) => {
+                const socketIds = userSockets.get(participant.userId);
+                if (socketIds) {
+                    socketIds.forEach((socketId) => {
+                        this.server.to(socketId).emit('message:new', message);
+                    });
+                }
+            });
+
+            return { success: true, message };
+        } catch (error) {
+            client.emit('error', { message: error.message });
+            return { success: false, error: error.message };
+        }
+    }
+
+    @SubscribeMessage('message:edit')
+    async handleEditMessage(
+        @MessageBody()
+        data: { messageId: string; dto: UpdateMessageDto; userId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            const message = await this.chatService.updateMessage(
+                data.messageId,
+                data.dto,
+                data.userId,
+            );
+
+            // Notifier tous les participants
+            const messageWithConv = await this.chatService.getMessages(
+                message.conversationId,
+                data.userId,
+                0,
+                1,
+            );
+
+            if (messageWithConv.length > 0) {
+                const conversation = await this.chatService.getConversation(
+                    message.conversationId,
+                    data.userId,
+                );
+
+                conversation.participants.forEach((participant) => {
+                    const socketIds = userSockets.get(participant.userId);
+                    if (socketIds) {
+                        socketIds.forEach((socketId) => {
+                            this.server.to(socketId).emit('message:updated', message);
+                        });
+                    }
+                });
+            }
+
+            return { success: true, message };
+        } catch (error) {
+            client.emit('error', { message: error.message });
+            return { success: false, error: error.message };
+        }
+    }
+
+    @SubscribeMessage('message:delete')
+    async handleDeleteMessage(
+        @MessageBody() data: { messageId: string; userId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            const message = await this.chatService.deleteMessage(
+                data.messageId,
+                data.userId,
+            );
+
+            // Notifier tous les participants
+            const conversation = await this.chatService.getConversation(
+                message.conversationId,
+                data.userId,
+            );
+
+            conversation.participants.forEach((participant) => {
+                const socketIds = userSockets.get(participant.userId);
+                if (socketIds) {
+                    socketIds.forEach((socketId) => {
+                        this.server.to(socketId).emit('message:deleted', {
+                            messageId: data.messageId,
+                        });
+                    });
+                }
+            });
+
+            return { success: true };
+        } catch (error) {
+            client.emit('error', { message: error.message });
+            return { success: false, error: error.message };
+        }
+    }
+
+    @SubscribeMessage('typing:start')
+    async handleTypingStart(
+        @MessageBody() data: { conversationId: string; userId: number; userName: string },
+    ) {
+        const conversation = await this.chatService.getConversation(
+            data.conversationId,
+            data.userId,
+        );
+
+        conversation.participants.forEach((participant) => {
+            if (participant.userId !== data.userId) {
+                const socketIds = userSockets.get(participant.userId);
+                if (socketIds) {
+                    socketIds.forEach((socketId) => {
+                        this.server.to(socketId).emit('user:typing', {
+                            conversationId: data.conversationId,
+                            userId: data.userId,
+                            userName: data.userName,
+                        });
+                    });
+                }
+            }
+        });
+    }
+
+    @SubscribeMessage('typing:stop')
+    async handleTypingStop(
+        @MessageBody() data: { conversationId: string; userId: number },
+    ) {
+        const conversation = await this.chatService.getConversation(
+            data.conversationId,
+            data.userId,
+        );
+
+        conversation.participants.forEach((participant) => {
+            if (participant.userId !== data.userId) {
+                const socketIds = userSockets.get(participant.userId);
+                if (socketIds) {
+                    socketIds.forEach((socketId) => {
+                        this.server.to(socketId).emit('user:stopped-typing', {
+                            conversationId: data.conversationId,
+                            userId: data.userId,
+                        });
+                    });
+                }
+            }
+        });
+    }
+
+    // Helper pour joindre une room de conversation
+    @SubscribeMessage('conversation:join')
+    handleJoinConversation(
+        @MessageBody() data: { conversationId: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        client.join(`conversation:${data.conversationId}`);
+        return { success: true };
+    }
+
+    @SubscribeMessage('conversation:leave')
+    handleLeaveConversation(
+        @MessageBody() data: { conversationId: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        client.leave(`conversation:${data.conversationId}`);
+        return { success: true };
+    }
+}

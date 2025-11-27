@@ -5,7 +5,7 @@ import { CreateSessionPhotoDto } from './dto/create-session-photo.dto';
 
 @Injectable()
 export class SessionPhotoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(
     createDto: CreateSessionPhotoDto,
@@ -109,7 +109,7 @@ export class SessionPhotoService {
       return [];
     }
 
-    const friendIds = Array.from(
+    const friendIds: number[] = Array.from(
       new Set(
         friends.map((relation) =>
           relation.userId === userId ? relation.friendId : relation.userId,

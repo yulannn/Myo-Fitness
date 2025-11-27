@@ -66,7 +66,7 @@ export class ProgramService {
         return profile;
     }
 
-    private async validateExercisesExist(sessions: any[]) {
+    private async validateExercisesExist(sessions: any[]): Promise<number[]> {
 
         const allExerciseIds = new Set<number>();
         for (const s of sessions) for (const ex of s.exercises) allExerciseIds.add(typeof ex === 'number' ? ex : ex.id);
@@ -79,7 +79,7 @@ export class ProgramService {
             throw new BadRequestException(`Exercices manquants: ${missing.join(', ')}`);
         }
 
-        return [...foundIds];
+        return [...foundIds] as number[];
     }
 
     public verifyPermissions(entityUserId: number, userId: number, context: string) {

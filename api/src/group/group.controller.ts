@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Delete,
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -24,7 +25,7 @@ import { Throttle } from '@nestjs/throttler';
 @ApiTags('group')
 @Controller('api/v1/group')
 export class GroupController {
-  constructor(private readonly groupService: GroupService) {}
+  constructor(private readonly groupService: GroupService) { }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
@@ -122,5 +123,31 @@ export class GroupController {
   getUserGroups(@Request() req) {
     const userId = req.user.userId;
     return this.groupService.getGroupsList(userId);
+  }
+
+  @Patch(':groupId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mettre à jour le nom du groupe' })
+  @ApiParam({ name: 'groupId', type: Number })
+  @ApiBody({ schema: { example: { name: 'Nouveau nom' } } })
+  updateGroup(
+    @Param('groupId') groupId: number,
+    @Body() body: { name: string }
+  ) {
+    return this.groupService.updateGroup(groupId, body.name);
+  }
+
+  @Delete(':groupId/members/:userId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retirer un membre du groupe' })
+  @ApiParam({ name: 'groupId', type: Number })
+  @ApiParam({ name: 'userId', type: Number })
+  removeMember(
+    @Param('groupId') groupId: number,
+    @Param('userId') userId: number
+  ) {
+    return this.groupService.removeMember(groupId, userId);
   }
 }

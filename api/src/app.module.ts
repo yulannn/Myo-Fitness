@@ -19,6 +19,7 @@ import { SessionAdaptationModule } from './session-adaptation/session-adaptation
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { SessionPhotoModule } from './session-photo/session-photo.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { SessionPhotoModule } from './session-photo/session-photo.module';
       throttlers: [
         {
           ttl: 60000,
-          limit: 1000, 
+          limit: 1000,
         },
       ],
     }),
@@ -47,6 +48,7 @@ import { SessionPhotoModule } from './session-photo/session-photo.module';
     SessionAdaptationModule,
     GroupModule,
     SessionPhotoModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

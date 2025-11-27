@@ -36,6 +36,16 @@ export const GroupFetchDataService = {
         const res = await api.get<Group[]>('/group/mygroups');
         return res.data;
     },
+
+    async updateGroup(groupId: number, name: string): Promise<Group> {
+        const res = await api.patch<Group>(`/group/${groupId}`, { name });
+        return res.data;
+    },
+
+    async removeMember(groupId: number, userId: number): Promise<{ message: string }> {
+        const res = await api.delete<{ message: string }>(`/group/${groupId}/members/${userId}`);
+        return res.data;
+    },
 };
 
 export default GroupFetchDataService;

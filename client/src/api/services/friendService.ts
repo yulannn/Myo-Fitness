@@ -26,6 +26,11 @@ export const FriendFetchDataService = {
         const res = await api.get<Friend[]>('/friend/friendlist');
         return res.data;
     },
+
+    async searchUsers(query: string): Promise<any[]> {
+        const res = await api.get<any[]>('/friend/search', { params: { q: query } });
+        return res.data;
+    },
 };
 
 export default FriendFetchDataService;

@@ -3,6 +3,7 @@ import FitnessProfiles from "../pages/profile";
 import Program from "../pages/program";
 import Sessions from "../pages/sessions";
 import ActiveSession from "../pages/active-session";
+import SocialPage from "../pages/social";
 import Login from "../pages/login";
 import Register from "../pages/register";
 import type { ReactNode } from "react";
@@ -12,6 +13,7 @@ import {
     PROGRAMS,
     ACTIVE_SESSION,
     SESSIONS,
+    SOCIAL,
     LOGIN,
     REGISTER,
 } from "../utils/paths";
@@ -49,6 +51,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: SESSIONS,
         element: <Sessions />,
+        protected: true
+    },
+    {
+        path: SOCIAL,
+        element: <SocialPage />,
         protected: true
     },
     {
