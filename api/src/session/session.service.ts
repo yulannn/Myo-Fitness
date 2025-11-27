@@ -53,6 +53,7 @@ export class SessionService {
         exercices: {
           include: {
             exercice: true,
+            performances: true, // Inclure les performances pour afficher les données réelles
           },
         },
         trainingProgram: true,

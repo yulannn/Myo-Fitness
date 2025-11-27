@@ -18,7 +18,14 @@ export class ProgramService {
             include: {
                 sessions: {
                     where: { completed: false },
-                    include: { exercices: { include: { exercice: true } } },
+                    include: {
+                        exercices: {
+                            include: {
+                                exercice: true,
+                                performances: true // Inclure les performances pour afficher les données réelles
+                            }
+                        }
+                    },
                 },
             },
         });

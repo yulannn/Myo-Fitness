@@ -30,7 +30,6 @@ import {
 export class PerformanceController {
   constructor(private readonly performanceService: PerformanceService) { }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Créer une nouvelle série de performance' })
   @ApiBody({ type: CreatePerformanceDto })
@@ -67,7 +66,6 @@ export class PerformanceController {
     return this.performanceService.findOne(id);
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour une performance' })
   @ApiParam({ name: 'id', description: 'ID de la performance', example: 1 })
@@ -84,7 +82,6 @@ export class PerformanceController {
     return this.performanceService.update(Number(id), updatePerformanceDto);
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer une performance' })
   @ApiParam({ name: 'id', description: 'ID de la performance', example: 1 })

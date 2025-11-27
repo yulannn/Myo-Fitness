@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlayIcon, StopIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
 import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
+import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
+import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
+import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../../components/ui/modal'
+import Button from '../../components/ui/button/Button'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
@@ -10,9 +14,13 @@ export default function ActiveSession() {
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsedTime, setElapsedTime] = useState(0)
     const [performances, setPerformances] = useState<Record<string, any>>({})
+    const [savedPerformances, setSavedPerformances] = useState<Set<string>>(new Set())
+    const [showGenerationModal, setShowGenerationModal] = useState(false)
 
     const { mutate: createPerformance } = useCreatePerformance()
     const { mutate: updateCompletedSession } = useUpdateCompletedSession()
+    const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
+    const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
 
     useEffect(() => {
         const savedSession = localStorage.getItem('activeSession')
@@ -45,35 +53,78 @@ export default function ActiveSession() {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     }
 
-    const handleStopSession = () => {
-        // Sauvegarder les performances
-        Object.entries(performances).forEach(([_, perf]) => {
-            if (perf.reps_effectuees || perf.weight) {
-                const payload = {
-                    exerciceSessionId: perf.exerciceSessionId,
-                    reps_effectuees: perf.reps_effectuees,
-                    weight: perf.weight,
-                    rpe: perf.rpe
-                }
-                createPerformance(payload)
-            }
-        })
+    // Calculer le nombre total de séries et combien sont validées
+    const totalSets = useMemo(() => {
+        if (!activeSession?.exercices) return 0
+        return activeSession.exercices.reduce((total: number, ex: any) => total + ex.sets, 0)
+    }, [activeSession])
 
+    const validatedSets = useMemo(() => {
+        return Object.values(performances).filter((perf: any) => perf.success === true).length
+    }, [performances])
+
+    const allSetsValidated = totalSets > 0 && validatedSets === totalSets
+
+    const handleStopSession = () => {
         if (activeSession?.id) {
             updateCompletedSession(activeSession.id, {
                 onSuccess: () => {
-                    localStorage.removeItem('activeSession')
-                    localStorage.removeItem('sessionStartTime')
-                    navigate('/programs')
+                    setShowGenerationModal(true)
+                },
+                onError: (error) => {
+                    console.error('Erreur lors de la complétion de la session:', error)
+                    alert('Erreur lors de la finalisation de la séance. Veuillez réessayer.')
                 }
             })
         }
     }
 
+    const handleGenerateAdaptedSession = () => {
+        if (!activeSession?.id) return
+
+        createAdaptedSession(activeSession.id, {
+            onSuccess: () => {
+                setShowGenerationModal(false)
+                localStorage.removeItem('activeSession')
+                localStorage.removeItem('sessionStartTime')
+                navigate('/programs')
+            },
+            onError: (error) => {
+                console.error('Erreur création session adaptée:', error)
+                alert('Erreur lors de la génération. Peut-être pas assez de données de performance.')
+                setShowGenerationModal(false)
+                localStorage.removeItem('activeSession')
+                localStorage.removeItem('sessionStartTime')
+                navigate('/programs')
+            }
+        })
+    }
+
+    const handleGenerateSimilarSession = () => {
+        if (!activeSession?.id) return
+
+        createSimilarSession(activeSession.id, {
+            onSuccess: () => {
+                setShowGenerationModal(false)
+                localStorage.removeItem('activeSession')
+                localStorage.removeItem('sessionStartTime')
+                navigate('/programs')
+            },
+            onError: (error) => {
+                console.error('Erreur création session similaire:', error)
+                alert('Erreur lors de la génération de la session.')
+                setShowGenerationModal(false)
+                localStorage.removeItem('activeSession')
+                localStorage.removeItem('sessionStartTime')
+                navigate('/programs')
+            }
+        })
+    }
+
     const handlePerformanceChange = (
         exerciceSessionId: number,
         setIndex: number,
-        field: 'reps_effectuees' | 'weight' | 'success' | 'rpe',
+        field: 'reps_effectuees' | 'weight' | 'rpe',
         value: any
     ) => {
         const key = `${exerciceSessionId}-${setIndex}`
@@ -85,6 +136,64 @@ export default function ActiveSession() {
                 [field]: value,
             }
         }))
+    }
+
+    const handleValidateSet = (exerciceSessionId: number, setIndex: number) => {
+        const key = `${exerciceSessionId}-${setIndex}`
+        const perf = performances[key]
+        const newSuccessState = !(perf?.success)
+
+        // Mettre à jour l'état de validation
+        setPerformances(prev => ({
+            ...prev,
+            [key]: {
+                ...(prev[key] || {}),
+                exerciceSessionId: exerciceSessionId,
+                success: newSuccessState,
+            }
+        }))
+
+        // Sauvegarder si on valide et pas déjà sauvegardé
+        if (newSuccessState && !savedPerformances.has(key)) {
+            const updatedPerf = { ...perf, success: newSuccessState }
+
+            if (!updatedPerf.reps_effectuees && !updatedPerf.weight) {
+                alert('Veuillez entrer au moins les répétitions ou le poids.')
+                setPerformances(prev => ({
+                    ...prev,
+                    [key]: { ...(prev[key] || {}), success: false }
+                }))
+                return
+            }
+
+            const payload = {
+                exerciceSessionId: exerciceSessionId,
+                reps_effectuees: updatedPerf.reps_effectuees || 0,
+                weight: updatedPerf.weight || 0,
+                rpe: updatedPerf.rpe
+            }
+
+            setSavedPerformances(prev => new Set(prev).add(key))
+
+            createPerformance(payload, {
+                onSuccess: () => {
+                    console.log('✅ Performance sauvegardée:', key)
+                },
+                onError: (error) => {
+                    console.error('❌ Erreur:', error)
+                    alert('Erreur lors de la sauvegarde.')
+                    setSavedPerformances(prev => {
+                        const newSet = new Set(prev)
+                        newSet.delete(key)
+                        return newSet
+                    })
+                    setPerformances(prev => ({
+                        ...prev,
+                        [key]: { ...(prev[key] || {}), success: false }
+                    }))
+                }
+            })
+        }
     }
 
     if (!activeSession) {
@@ -223,14 +332,7 @@ export default function ActiveSession() {
 
                                             {/* Bouton de validation */}
                                             <button
-                                                onClick={() =>
-                                                    handlePerformanceChange(
-                                                        exerciceSession.id,
-                                                        setIndex,
-                                                        'success',
-                                                        !perf.success
-                                                    )
-                                                }
+                                                onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
                                                 className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${perf.success
                                                     ? 'bg-green-500 shadow-lg'
                                                     : 'bg-gray-200 hover:bg-green-100'
@@ -254,12 +356,63 @@ export default function ActiveSession() {
             <div className="fixed bottom-24 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
                 <button
                     onClick={handleStopSession}
-                    className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3"
+                    disabled={!allSetsValidated}
+                    className={`w-full font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 ${allSetsValidated
+                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
                 >
                     <StopIcon className="h-6 w-6" />
-                    Terminer la séance
+                    {allSetsValidated ? 'Terminer la séance' : `Validez toutes les séries (${validatedSets}/${totalSets})`}
                 </button>
             </div>
+
+            {/* Modale de génération de la prochaine session */}
+            <Modal isOpen={showGenerationModal} onClose={() => { }}>
+                <ModalHeader>
+                    <ModalTitle>Générer la prochaine séance</ModalTitle>
+                </ModalHeader>
+                <div className="px-6 py-4 space-y-4">
+                    <p className="text-[#2F4858]/80">
+                        Félicitations pour avoir terminé votre séance ! 🎉
+                    </p>
+                    <p className="text-[#2F4858]/80">
+                        Voulez-vous générer automatiquement votre prochaine séance ?
+                    </p>
+                    <div className="space-y-3 mt-4">
+                        <div className="bg-[#7CD8EE]/10 p-4 rounded-xl border border-[#7CD8EE]/30">
+                            <h4 className="font-semibold text-[#2F4858] mb-2">✨ Session adaptée</h4>
+                            <p className="text-sm text-[#2F4858]/70">
+                                La prochaine séance sera ajustée selon vos performances pour optimiser votre progression.
+                            </p>
+                        </div>
+                        <div className="bg-[#2F4858]/10 p-4 rounded-xl border border-[#2F4858]/30">
+                            <h4 className="font-semibold text-[#2F4858] mb-2">🔁 Session similaire</h4>
+                            <p className="text-sm text-[#2F4858]/70">
+                                La prochaine séance reprendra exactement les mêmes paramètres.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <ModalFooter>
+                    <div className="flex flex-col gap-3 w-full">
+                        <Button
+                            variant="primary"
+                            onClick={handleGenerateAdaptedSession}
+                            disabled={isAdaptingSession || isCreatingSimilar}
+                        >
+                            {isAdaptingSession ? 'Génération...' : '✨ Adapter selon performances'}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={handleGenerateSimilarSession}
+                            disabled={isAdaptingSession || isCreatingSimilar}
+                        >
+                            {isCreatingSimilar ? 'Génération...' : '🔁 Garder la même séance'}
+                        </Button>
+                    </div>
+                </ModalFooter>
+            </Modal>
         </section>
     )
 }

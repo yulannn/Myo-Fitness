@@ -295,43 +295,90 @@ function SessionCard({ session }: { session: Session }) {
                 <div className="border-t border-[#7CD8EE]/20 bg-gradient-to-br from-gray-50 to-white">
                     <div className="p-5 space-y-3">
                         <h4 className="text-sm font-bold text-[#2F4858] uppercase tracking-wide">
-                            Exercices
+                            {session.completed ? 'Performances réalisées' : 'Exercices planifiés'}
                         </h4>
                         <div className="space-y-2">
-                            {session.exercices.map((ex: any, index: number) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between p-3 bg-white rounded-xl border border-[#7CD8EE]/10 hover:border-[#7CD8EE]/30 transition-colors"
-                                >
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-[#2F4858]">
-                                            {ex.exercice?.name || `Exercice ${index + 1}`}
-                                        </p>
-                                        {ex.exercice?.muscleGroup && (
-                                            <p className="text-xs text-[#2F4858]/60 mt-0.5">
-                                                {ex.exercice.muscleGroup}
-                                            </p>
+                            {session.exercices.map((ex: any, index: number) => {
+                                // Si la session est complétée, afficher les performances
+                                const hasPerformances = session.completed && ex.performances && ex.performances.length > 0
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className="bg-white rounded-xl border border-[#7CD8EE]/10 hover:border-[#7CD8EE]/30 transition-colors overflow-hidden"
+                                    >
+                                        {/* Header exercice */}
+                                        <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-[#2F4858]">
+                                                    {ex.exercice?.name || `Exercice ${index + 1}`}
+                                                </p>
+                                                {ex.exercice?.muscleGroup && (
+                                                    <p className="text-xs text-[#2F4858]/60 mt-0.5">
+                                                        {ex.exercice.muscleGroup}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Affichage des données selon le statut */}
+                                            {!hasPerformances && (
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    {ex.sets && (
+                                                        <span className="px-2 py-1 rounded-lg bg-[#7CD8EE]/10 text-[#2F4858] font-semibold">
+                                                            {ex.sets} séries
+                                                        </span>
+                                                    )}
+                                                    {ex.reps && (
+                                                        <span className="px-2 py-1 rounded-lg bg-[#2F4858]/10 text-[#2F4858] font-semibold">
+                                                            {ex.reps} reps
+                                                        </span>
+                                                    )}
+                                                    {ex.weight && (
+                                                        <span className="px-2 py-1 rounded-lg bg-[#642F00]/10 text-[#642F00] font-semibold">
+                                                            {ex.weight} kg
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Détails des performances si session complétée */}
+                                        {hasPerformances && (
+                                            <div className="bg-gradient-to-br from-green-50 to-white p-3">
+                                                <div className="space-y-2">
+                                                    {ex.performances.map((perf: any, perfIndex: number) => (
+                                                        <div
+                                                            key={perfIndex}
+                                                            className="flex items-center justify-between p-2 bg-white rounded-lg border border-green-200/50"
+                                                        >
+                                                            <span className="text-xs font-semibold text-[#2F4858]/60">
+                                                                Série {perfIndex + 1}
+                                                            </span>
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                {perf.reps_effectuees && (
+                                                                    <span className="px-2 py-1 rounded-lg bg-green-100 text-green-700 font-semibold">
+                                                                        {perf.reps_effectuees} reps
+                                                                    </span>
+                                                                )}
+                                                                {perf.weight && (
+                                                                    <span className="px-2 py-1 rounded-lg bg-blue-100 text-blue-700 font-semibold">
+                                                                        {perf.weight} kg
+                                                                    </span>
+                                                                )}
+                                                                {perf.rpe && (
+                                                                    <span className="px-2 py-1 rounded-lg bg-orange-100 text-orange-700 font-semibold text-xs">
+                                                                        RPE: {perf.rpe}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm">
-                                        {ex.sets && (
-                                            <span className="px-2 py-1 rounded-lg bg-[#7CD8EE]/10 text-[#2F4858] font-semibold">
-                                                {ex.sets} séries
-                                            </span>
-                                        )}
-                                        {ex.reps && (
-                                            <span className="px-2 py-1 rounded-lg bg-[#2F4858]/10 text-[#2F4858] font-semibold">
-                                                {ex.reps} reps
-                                            </span>
-                                        )}
-                                        {ex.weight && (
-                                            <span className="px-2 py-1 rounded-lg bg-[#642F00]/10 text-[#642F00] font-semibold">
-                                                {ex.weight} kg
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </div>
                 </div>
