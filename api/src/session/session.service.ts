@@ -63,6 +63,25 @@ export class SessionService {
     });
   }
 
+  async completedSession(id: number) {
+    const session = await this.prisma.trainingSession.findUnique({
+      where: { id },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+
+    return this.prisma.trainingSession.update({
+      where: { id },
+      data: {
+        performedAt: new Date(),
+        completed: true
+      },
+    });
+
+  }
+
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {
     const session = await this.prisma.trainingSession.findUnique({
       where: { id },

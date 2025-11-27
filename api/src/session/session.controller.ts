@@ -49,6 +49,24 @@ export class SessionController {
     return this.sessionService.getAllUserSessions(userId);
   }
 
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/completed')
+  @ApiOperation({ summary: 'Marquer une session comme terminée' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la session à marquer comme terminée',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session marquée comme terminée avec succès',
+  })
+  @ApiResponse({ status: 404, description: 'Session non trouvée' })
+  completedSession(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionService.completedSession(id);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/date')
   @ApiOperation({ summary: 'Mettre à jour la date d’une session' })

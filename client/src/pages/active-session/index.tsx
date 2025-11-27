@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlayIcon, StopIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
+import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
@@ -11,12 +12,11 @@ export default function ActiveSession() {
     const [performances, setPerformances] = useState<Record<string, any>>({})
 
     const { mutate: createPerformance } = useCreatePerformance()
+    const { mutate: updateCompletedSession } = useUpdateCompletedSession()
 
-    // Charger la session active depuis localStorage
     useEffect(() => {
         const savedSession = localStorage.getItem('activeSession')
         const savedStartTime = localStorage.getItem('sessionStartTime')
-
         if (savedSession) {
             setActiveSession(JSON.parse(savedSession))
         }
@@ -26,7 +26,6 @@ export default function ActiveSession() {
         }
     }, [])
 
-    // Chronomètre en temps réel
     useEffect(() => {
         if (startTime) {
             const interval = setInterval(() => {
@@ -50,7 +49,6 @@ export default function ActiveSession() {
         // Sauvegarder les performances
         Object.entries(performances).forEach(([_, perf]) => {
             if (perf.reps_effectuees || perf.weight) {
-                // Envoyer uniquement les champs attendus par l'API
                 const payload = {
                     exerciceSessionId: perf.exerciceSessionId,
                     reps_effectuees: perf.reps_effectuees,
@@ -61,12 +59,15 @@ export default function ActiveSession() {
             }
         })
 
-        // Nettoyer localStorage
-        localStorage.removeItem('activeSession')
-        localStorage.removeItem('sessionStartTime')
-
-        // Rediriger vers les programmes
-        navigate('/programs')
+        if (activeSession?.id) {
+            updateCompletedSession(activeSession.id, {
+                onSuccess: () => {
+                    localStorage.removeItem('activeSession')
+                    localStorage.removeItem('sessionStartTime')
+                    navigate('/programs')
+                }
+            })
+        }
     }
 
     const handlePerformanceChange = (
@@ -231,8 +232,8 @@ export default function ActiveSession() {
                                                     )
                                                 }
                                                 className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${perf.success
-                                                        ? 'bg-green-500 shadow-lg'
-                                                        : 'bg-gray-200 hover:bg-green-100'
+                                                    ? 'bg-green-500 shadow-lg'
+                                                    : 'bg-gray-200 hover:bg-green-100'
                                                     }`}
                                             >
                                                 <CheckCircleIcon

@@ -11,6 +11,9 @@ export class TrainingSessionEntity {
   @ApiProperty({ description: 'Date et heure de la séance', example: '2025-10-22T15:00:00.000Z' })
   date: Date;
 
+  @ApiProperty({ description: 'Date et heure de la séance', example: '2025-10-22T15:00:00.000Z' })
+  performedAt: Date;
+
   @ApiPropertyOptional({ description: 'Durée de la séance en minutes', example: 60 })
   duration?: number;
 

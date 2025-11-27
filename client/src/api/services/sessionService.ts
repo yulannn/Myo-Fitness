@@ -31,6 +31,11 @@ export const SessionFetchDataService = {
         const res = await api.put<Session>(`/session/update-exercise/${sessionId}/${exerciceId}`, payload);
         return res.data;
     },
+
+    async completedSession(sessionId: number): Promise<Session> {
+        const res = await api.patch<Session>(`/session/${sessionId}/completed`);
+        return res.data;
+    },
 };
 
 export default SessionFetchDataService;
