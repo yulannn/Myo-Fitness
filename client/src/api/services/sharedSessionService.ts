@@ -1,4 +1,4 @@
-import api from '../api/apiClient';
+import api from '../apiClient';
 
 export interface CreateSharedSessionDto {
     title: string;
