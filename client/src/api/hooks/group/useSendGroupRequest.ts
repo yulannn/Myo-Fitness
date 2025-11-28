@@ -1,16 +1,26 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import GroupService from '../../services/groupService';
 import type { Group, SendGroupRequestPayload } from '../../../types/group.type';
 
-export function useSendGroupRequest(groupId?: number) {
+interface SendGroupRequestParams {
+    groupId: number;
+    payload: SendGroupRequestPayload;
+}
+
+export function useSendGroupRequest(options?: Partial<UseMutationOptions<Group, unknown, SendGroupRequestParams>>) {
     const qc = useQueryClient();
 
-    return useMutation<Group, unknown, SendGroupRequestPayload>({
-        mutationFn: (payload: SendGroupRequestPayload) => GroupService.sendGroupRequest(groupId as number, payload),
-        onSuccess: () => {
+    return useMutation<Group, unknown, SendGroupRequestParams>({
+        mutationFn: ({ groupId, payload }: SendGroupRequestParams) => GroupService.sendGroupRequest(groupId, payload),
+        onSuccess: async (...args) => {
             qc.invalidateQueries({ queryKey: ['groups'] });
             qc.invalidateQueries({ queryKey: ['groupRequests'] });
-        }
+            alert('Invitation envoyée');
+            if (options?.onSuccess) {
+                options.onSuccess(...args);
+            }
+        },
+        ...options,
     });
 }
 

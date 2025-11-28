@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     UserGroupIcon,
     ChatBubbleLeftRightIcon,
@@ -20,15 +20,30 @@ import { useMessages } from '../../api/hooks/chat/useMessages';
 import { useSendMessage, useMarkAsRead } from '../../api/hooks/chat/useSendMessage';
 import { useTypingIndicator } from '../../api/hooks/chat/useTypingIndicator';
 import { useConversationRoom } from '../../api/hooks/chat/useConversationRoom';
-import FriendService from '../../api/services/friendService';
-import GroupService from '../../api/services/groupService';
 import ChatService from '../../api/services/chatService';
 import { useAuth } from '../../context/AuthContext';
 import { useSessionNotifications } from '../../api/hooks/useSessionNotifications';
+// Friends hooks
+import useFriendsList from '../../api/hooks/friend/useGetFriendsList';
+import useGetPendingFriendRequests from '../../api/hooks/friend/useGetPendingFriendRequests';
+import useSearchUsers from '../../api/hooks/friend/useSearchUsers';
+import useSendFriendRequest from '../../api/hooks/friend/useSendFriendRequest';
+import useAcceptFriendRequest from '../../api/hooks/friend/useAcceptFriendRequest';
+import useDeclineFriendRequest from '../../api/hooks/friend/useDeclineFriendRequest';
+// Groups hooks
+import useGetUserGroups from '../../api/hooks/group/useGetUserGroups';
+import useGetPendingGroupRequests from '../../api/hooks/group/useGetPendingGroupRequests';
+import useGroupMembers from '../../api/hooks/group/useGetGroupMembers';
+import useCreateGroup from '../../api/hooks/group/useCreateGroup';
+import useAcceptGroupRequest from '../../api/hooks/group/useAcceptGroupRequest';
+import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
+import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
+import useRemoveMember from '../../api/hooks/group/useRemoveMember';
 
 export default function SocialPage() {
     const { user } = useAuth();
     const joinSession = useJoinSharedSession();
+    const queryClient = useQueryClient();
 
     // Activer les notifications de séances
     useSessionNotifications();
@@ -40,8 +55,6 @@ export default function SocialPage() {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [managingGroup, setManagingGroup] = useState<any | null>(null);
-
-    const queryClient = useQueryClient();
 
     // --- DATA FETCHING ---
     const { data: conversations = [], isLoading: loadingConvs } = useConversations();
@@ -55,115 +68,28 @@ export default function SocialPage() {
 
     const typingTimeoutRef = useRef<number | null>(null);
 
-    const { data: friends = [] } = useQuery({
-        queryKey: ['friends'],
-        queryFn: () => FriendService.getFriendsList(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: false,
-    });
+    // --- FRIENDS ---
+    const { data: friends = [] } = useFriendsList();
+    const { data: friendRequests = [] } = useGetPendingFriendRequests();
+    const { data: searchResults = [] } = useSearchUsers(searchQuery);
+    const sendFriendRequest = useSendFriendRequest();
+    const acceptFriend = useAcceptFriendRequest();
+    const declineFriend = useDeclineFriendRequest();
 
-    const { data: friendRequests = [] } = useQuery({
-        queryKey: ['friendRequests'],
-        queryFn: () => FriendService.getPendingFriendRequests(),
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        refetchOnWindowFocus: false,
-    });
-
-    const { data: searchResults = [] } = useQuery({
-        queryKey: ['users', searchQuery],
-        queryFn: () => FriendService.searchUsers(searchQuery),
-        enabled: searchQuery.length >= 2,
-        staleTime: 30 * 1000, // 30 secondes
-        refetchOnWindowFocus: false,
-    });
-
-    const { data: myGroups = [] } = useQuery({
-        queryKey: ['myGroups'],
-        queryFn: () => GroupService.getUserGroups(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: false,
-    });
-
-    const { data: groupRequests = [] } = useQuery({
-        queryKey: ['groupRequests'],
-        queryFn: () => GroupService.getPendingGroupRequests(),
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        refetchOnWindowFocus: false,
-    });
-
-    const { data: groupMembers = [] } = useQuery({
-        queryKey: ['groupMembers', managingGroup?.id],
-        queryFn: () => GroupService.getGroupMembers(managingGroup.id),
-        enabled: !!managingGroup,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: false,
-    });
-
-    // --- MUTATIONS ---
-    const sendFriendRequest = useMutation({
-        mutationFn: (friendId: number) => FriendService.sendFriendRequest({ friendId }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['users'] });
-            alert('Demande envoyée !');
-        },
-        onError: (err: any) => alert(err.response?.data?.message || 'Erreur'),
-    });
-
-    const acceptFriend = useMutation({
-        mutationFn: (requestId: number) => FriendService.acceptFriendRequest(requestId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
-            queryClient.invalidateQueries({ queryKey: ['friends'] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        },
-    });
-
-    const declineFriend = useMutation({
-        mutationFn: (requestId: number) => FriendService.declineFriendRequest(requestId),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['friendRequests'] }),
-    });
-
-    const createGroup = useMutation({
-        mutationFn: (name: string) => GroupService.createGroup({ name }),
+    // --- GROUPS ---
+    const { data: myGroups = [] } = useGetUserGroups();
+    const { data: groupRequests = [] } = useGetPendingGroupRequests();
+    const { data: groupMembers = [] } = useGroupMembers(managingGroup?.id);
+    const createGroup = useCreateGroup({
         onSuccess: () => {
             setIsCreatingGroup(false);
             setNewGroupName('');
-            queryClient.invalidateQueries({ queryKey: ['myGroups'] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        },
-    });
-
-    const acceptGroup = useMutation({
-        mutationFn: (requestId: number) => GroupService.acceptGroupRequest(requestId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['groupRequests'] });
-            queryClient.invalidateQueries({ queryKey: ['myGroups'] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
     });
-
-    const updateGroupMutation = useMutation({
-        mutationFn: ({ id, name }: { id: number, name: string }) => GroupService.updateGroup(id, name),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['myGroups'] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            alert('Groupe mis à jour');
-        }
-    });
-
-    const removeMemberMutation = useMutation({
-        mutationFn: ({ groupId, userId }: { groupId: number, userId: number }) => GroupService.removeMember(groupId, userId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['groupMembers'] });
-            queryClient.invalidateQueries({ queryKey: ['myGroups'] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-    });
-
-    const inviteMemberMutation = useMutation({
-        mutationFn: ({ groupId, userId }: { groupId: number, userId: number }) => GroupService.sendGroupRequest(groupId, { receiverId: userId }),
-        onSuccess: () => alert('Invitation envoyée')
-    });
+    const acceptGroup = useAcceptGroupRequest();
+    const updateGroupMutation = useUpdateGroup();
+    const removeMemberMutation = useRemoveMember();
+    const inviteMemberMutation = useSendGroupRequest();
 
     // --- HANDLERS ---
     const handleSendMessage = () => {
@@ -434,7 +360,7 @@ export default function SocialPage() {
                                         onChange={(e) => setNewGroupName(e.target.value)}
                                     />
                                     <button
-                                        onClick={() => createGroup.mutate(newGroupName)}
+                                        onClick={() => createGroup.mutate({ name: newGroupName })}
                                         disabled={!newGroupName.trim()}
                                         className="px-4 py-2 bg-[#7CD8EE] text-white rounded-lg font-semibold disabled:opacity-50"
                                     >
@@ -734,7 +660,7 @@ export default function SocialPage() {
                                         <div key={f.id} className="flex justify-between items-center">
                                             <span>{f.friend.name}</span>
                                             <button
-                                                onClick={() => inviteMemberMutation.mutate({ groupId: managingGroup.id, userId: f.friend.id })}
+                                                onClick={() => inviteMemberMutation.mutate({ groupId: managingGroup.id, payload: { receiverId: f.friend.id } })}
                                                 className="text-[#7CD8EE] font-semibold text-sm"
                                             >
                                                 Inviter
