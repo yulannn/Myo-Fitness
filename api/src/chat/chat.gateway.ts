@@ -233,4 +233,78 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.leave(`conversation:${data.conversationId}`);
         return { success: true };
     }
+
+    // ========== SHARED SESSIONS EVENTS ==========
+
+    /**
+     * Notifier les membres d'un groupe ou des amis spécifiques qu'une séance a été créée
+     */
+    notifySessionCreated(session: any, memberIds: number[]) {
+        console.log(`📧 Envoi d'invitations à ${memberIds.length} membres:`, memberIds);
+        memberIds.forEach((memberId) => {
+            const socketIds = userSockets.get(memberId);
+            console.log(`  - Utilisateur ${memberId}: ${socketIds ? socketIds.size + ' connexions' : 'NON CONNECTÉ'}`);
+            if (socketIds) {
+                socketIds.forEach((socketId) => {
+                    this.server.to(socketId).emit('session:invitation', {
+                        type: 'created',
+                        session,
+                    });
+                    console.log(`    ✓ Notification envoyée au socket ${socketId}`);
+                });
+            }
+        });
+    }
+
+    /**
+     * Notifier quand quelqu'un rejoint une séance
+     */
+    notifySessionJoined(sessionId: string, userId: number, userName: string, participantIds: number[]) {
+        participantIds.forEach((participantId) => {
+            const socketIds = userSockets.get(participantId);
+            if (socketIds) {
+                socketIds.forEach((socketId) => {
+                    this.server.to(socketId).emit('session:user-joined', {
+                        sessionId,
+                        userId,
+                        userName,
+                    });
+                });
+            }
+        });
+    }
+
+    /**
+     * Notifier quand quelqu'un quitte une séance
+     */
+    notifySessionLeft(sessionId: string, userId: number, userName: string, participantIds: number[]) {
+        participantIds.forEach((participantId) => {
+            const socketIds = userSockets.get(participantId);
+            if (socketIds) {
+                socketIds.forEach((socketId) => {
+                    this.server.to(socketId).emit('session:user-left', {
+                        sessionId,
+                        userId,
+                        userName,
+                    });
+                });
+            }
+        });
+    }
+
+    /**
+     * Notifier quand une séance est supprimée
+     */
+    notifySessionDeleted(sessionId: string, participantIds: number[]) {
+        participantIds.forEach((participantId) => {
+            const socketIds = userSockets.get(participantId);
+            if (socketIds) {
+                socketIds.forEach((socketId) => {
+                    this.server.to(socketId).emit('session:deleted', {
+                        sessionId,
+                    });
+                });
+            }
+        });
+    }
 }

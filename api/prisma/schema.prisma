@@ -111,6 +111,11 @@ model User {
   messageReactions         MessageReaction[]
 
   sessionPhotos SessionPhoto[]
+
+  // Relations Shared Sessions
+  organizedSessions     SharedSession[]            @relation("OrganizedSessions")
+  participatingSessions SharedSessionParticipant[]
+  SharedSession         SharedSession[]
 }
 
 model FitnessProfile {
@@ -170,7 +175,9 @@ model TrainingSession {
   exercices       ExerciceSession[]
   trainingProgram TrainingProgram   @relation(fields: [programId], references: [id], onDelete: Cascade)
 
-  sessionPhotos SessionPhoto[]
+  sessionPhotos            SessionPhoto[]
+  SharedSession            SharedSession[]
+  SharedSessionParticipant SharedSessionParticipant[]
 }
 
 model SessionPhoto {
@@ -302,8 +309,9 @@ model FriendGroup {
 
   members User[] @relation("GroupMembers")
 
-  joinRequests  FriendGroupRequest[] @relation("GroupJoinRequests")
-  conversations Conversation[]
+  joinRequests   FriendGroupRequest[] @relation("GroupJoinRequests")
+  conversations  Conversation[]
+  sharedSessions SharedSession[]
 }
 
 model FriendGroupRequest {
@@ -378,9 +386,50 @@ model MessageReaction {
   emoji     String
   createdAt DateTime @default(now())
 
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
+}
+
+model SharedSession {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  startTime       DateTime
+  location        String?  @default("Gym")
+  maxParticipants Int? // Null = illimité
+  organizerId     Int
+  groupId         Int? // Optionnel : si lié à un groupe spécifique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizer         User                       @relation("OrganizedSessions", fields: [organizerId], references: [id], onDelete: Cascade)
+  group             FriendGroup?               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  participants      SharedSessionParticipant[]
+  User              User?                      @relation(fields: [userId], references: [id])
+  userId            Int?
+  TrainingSession   TrainingSession?           @relation(fields: [trainingSessionId], references: [id])
+  trainingSessionId Int?
+
+  @@index([organizerId])
+  @@index([groupId])
+  @@index([startTime])
+}
+
+model SharedSessionParticipant {
+  id              String   @id @default(uuid())
+  sharedSessionId String
+  userId          Int
+  joinedAt        DateTime @default(now())
+
+  sharedSession     SharedSession    @relation(fields: [sharedSessionId], references: [id], onDelete: Cascade)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  TrainingSession   TrainingSession? @relation(fields: [trainingSessionId], references: [id])
+  trainingSessionId Int?
+
+  @@unique([sharedSessionId, userId])
+  @@index([userId])
 }

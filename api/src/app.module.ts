@@ -20,6 +20,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { SessionPhotoModule } from './session-photo/session-photo.module';
 import { ChatModule } from './chat/chat.module';
+import { SharedSessionModule } from './shared-session/shared-session.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ChatModule } from './chat/chat.module';
     GroupModule,
     SessionPhotoModule,
     ChatModule,
+    SharedSessionModule,
   ],
   controllers: [AppController],
   providers: [

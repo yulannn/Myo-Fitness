@@ -49,7 +49,7 @@ export class AuthService {
   async signIn(user: SafeUser): Promise<AuthResultDto> {
     const payload = this.buildJwtPayload(user);
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '1m' });
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
     const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);

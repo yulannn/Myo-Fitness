@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     UserGroupIcon,
@@ -10,20 +10,31 @@ import {
     MagnifyingGlassIcon,
     Cog6ToothIcon,
     TrashIcon,
-    ArrowRightOnRectangleIcon
+    ArrowRightOnRectangleIcon,
+    CalendarIcon
 } from '@heroicons/react/24/outline';
+import SharedSessionsList from '../../components/social/SharedSessionsList';
+import { useJoinSharedSession } from '../../api/hooks/useSharedSessions';
 import { useConversations } from '../../api/hooks/chat/useConversations';
 import { useMessages } from '../../api/hooks/chat/useMessages';
 import { useSendMessage, useMarkAsRead } from '../../api/hooks/chat/useSendMessage';
+import { useTypingIndicator } from '../../api/hooks/chat/useTypingIndicator';
+import { useConversationRoom } from '../../api/hooks/chat/useConversationRoom';
 import FriendService from '../../api/services/friendService';
 import GroupService from '../../api/services/groupService';
 import ChatService from '../../api/services/chatService';
 import { useAuth } from '../../context/AuthContext';
+import { useSessionNotifications } from '../../api/hooks/useSessionNotifications';
 
 export default function SocialPage() {
     const { user } = useAuth();
+    const joinSession = useJoinSharedSession();
+
+    // Activer les notifications de séances
+    useSessionNotifications();
     const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'messages'>('messages');
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+    const [showSessions, setShowSessions] = useState(false);
     const [messageInput, setMessageInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -38,36 +49,54 @@ export default function SocialPage() {
     const { mutate: sendMessage } = useSendMessage();
     const { mutate: markAsRead } = useMarkAsRead();
 
+    // --- WEBSOCKET FEATURES ---
+    const { typingUsers, startTyping, stopTyping } = useTypingIndicator(selectedConversation);
+    useConversationRoom(selectedConversation);
+
+    const typingTimeoutRef = useRef<number | null>(null);
+
     const { data: friends = [] } = useQuery({
         queryKey: ['friends'],
         queryFn: () => FriendService.getFriendsList(),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
     });
 
     const { data: friendRequests = [] } = useQuery({
         queryKey: ['friendRequests'],
         queryFn: () => FriendService.getPendingFriendRequests(),
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        refetchOnWindowFocus: false,
     });
 
     const { data: searchResults = [] } = useQuery({
         queryKey: ['users', searchQuery],
         queryFn: () => FriendService.searchUsers(searchQuery),
         enabled: searchQuery.length >= 2,
+        staleTime: 30 * 1000, // 30 secondes
+        refetchOnWindowFocus: false,
     });
 
     const { data: myGroups = [] } = useQuery({
         queryKey: ['myGroups'],
         queryFn: () => GroupService.getUserGroups(),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
     });
 
     const { data: groupRequests = [] } = useQuery({
         queryKey: ['groupRequests'],
         queryFn: () => GroupService.getPendingGroupRequests(),
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        refetchOnWindowFocus: false,
     });
 
     const { data: groupMembers = [] } = useQuery({
         queryKey: ['groupMembers', managingGroup?.id],
         queryFn: () => GroupService.getGroupMembers(managingGroup.id),
-        enabled: !!managingGroup
+        enabled: !!managingGroup,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
     });
 
     // --- MUTATIONS ---
@@ -139,9 +168,41 @@ export default function SocialPage() {
     // --- HANDLERS ---
     const handleSendMessage = () => {
         if (!selectedConversation || !messageInput.trim()) return;
+
+        // Arrêter l'indicateur de frappe
+        stopTyping();
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+        }
+
         sendMessage({ conversationId: selectedConversation, content: messageInput.trim() }, {
             onSuccess: () => setMessageInput(''),
         });
+    };
+
+    const handleMessageInputChange = (value: string) => {
+        setMessageInput(value);
+
+        // Démarrer l'indicateur de frappe
+        if (value.trim()) {
+            startTyping();
+
+            // Réinitialiser le timeout pour arrêter l'indicateur
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            typingTimeoutRef.current = window.setTimeout(() => {
+                stopTyping();
+            }, 3000); // Arrêter après 3s d'inactivité
+        } else {
+            stopTyping();
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = null;
+            }
+        }
     };
 
     const handleSelectConversation = (convId: string) => {
@@ -206,8 +267,8 @@ export default function SocialPage() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 font-semibold transition-all ${activeTab === tab.id
-                                ? 'text-[#7CD8EE] border-b-2 border-[#7CD8EE]'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'text-[#7CD8EE] border-b-2 border-[#7CD8EE]'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         <tab.icon className="h-5 w-5" />
@@ -217,6 +278,32 @@ export default function SocialPage() {
             </div>
 
             <div className="p-4 max-w-4xl mx-auto">
+                {/* Section Séances Planifiées */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => setShowSessions(!showSessions)}
+                        className="w-full bg-white rounded-xl shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+                    >
+                        <div className="flex items-center gap-3">
+                            <CalendarIcon className="h-6 w-6 text-[#7CD8EE]" />
+                            <div className="text-left">
+                                <h2 className="font-bold text-lg text-[#2F4858]">Séances Planifiées</h2>
+                                <p className="text-sm text-gray-500">Organisez et rejoignez des séances d'entraînement</p>
+                            </div>
+                        </div>
+                        <div className={`transform transition-transform ${showSessions ? 'rotate-180' : ''}`}>
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </button>
+                    {showSessions && (
+                        <div className="mt-4">
+                            <SharedSessionsList />
+                        </div>
+                    )}
+                </div>
+
                 {/* --- ONGLET AMIS --- */}
                 {activeTab === 'friends' && (
                     <div className="space-y-6">
@@ -478,32 +565,59 @@ export default function SocialPage() {
                                     {/* Messages */}
                                     <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col-reverse">
                                         <div className="flex flex-col space-y-4">
-                                            {messages.map((msg: any) => (
-                                                <div
-                                                    key={msg.id}
-                                                    className={`flex ${msg.sender?.id === user?.id
-                                                            ? 'justify-end'
-                                                            : 'justify-start'
-                                                        }`}
-                                                >
-                                                    <div
-                                                        className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.sender?.id === user?.id
-                                                                ? 'bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white'
-                                                                : 'bg-gray-100 text-gray-900'
-                                                            }`}
-                                                    >
-                                                        <p className={`text-xs font-bold mb-1 ${msg.sender?.id === user?.id ? 'text-white/80' : 'text-[#7CD8EE]'
-                                                            }`}>
-                                                            {msg.sender?.name}
-                                                        </p>
-                                                        <p>{msg.content}</p>
-                                                        <p className={`text-[10px] opacity-60 mt-1 text-right ${msg.sender?.id === user?.id ? 'text-white' : 'text-gray-500'
-                                                            }`}>
-                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
+                                            {/* Indicateur de frappe */}
+                                            {typingUsers.length > 0 && (
+                                                <div className="flex justify-start">
+                                                    <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-2xl text-sm italic">
+                                                        {typingUsers.join(', ')} {typingUsers.length === 1 ? 'est en train d\'écrire' : 'sont en train d\'écrire'}...
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )}
+
+                                            {messages.map((msg: any) => {
+                                                const isSessionInvitation = msg.content.includes('📅 INVITATION');
+                                                const sessionIdMatch = msg.content.match(/SESSION_ID:(\S+)/);
+                                                const sessionId = sessionIdMatch ? sessionIdMatch[1] : null;
+                                                const displayContent = isSessionInvitation ? msg.content.split('SESSION_ID:')[0] : msg.content;
+
+                                                return (
+                                                    <div
+                                                        key={msg.id}
+                                                        className={`flex ${msg.sender?.id === user?.id
+                                                            ? 'justify-end'
+                                                            : 'justify-start'
+                                                            }`}
+                                                    >
+                                                        <div
+                                                            className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.sender?.id === user?.id
+                                                                ? 'bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white'
+                                                                : 'bg-gray-100 text-gray-900'
+                                                                }`}
+                                                        >
+                                                            <p className={`text-xs font-bold mb-1 ${msg.sender?.id === user?.id ? 'text-white/80' : 'text-[#7CD8EE]'
+                                                                }`}>
+                                                                {msg.sender?.name}
+                                                            </p>
+                                                            <p className="whitespace-pre-wrap">{displayContent}</p>
+
+                                                            {isSessionInvitation && sessionId && msg.sender?.id !== user?.id && (
+                                                                <button
+                                                                    onClick={() => joinSession.mutate(sessionId)}
+                                                                    className="mt-3 w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                                                >
+                                                                    <CheckIcon className="h-4 w-4" />
+                                                                    Accepter l'invitation
+                                                                </button>
+                                                            )}
+
+                                                            <p className={`text-[10px] opacity-60 mt-1 text-right ${msg.sender?.id === user?.id ? 'text-white' : 'text-gray-500'
+                                                                }`}>
+                                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
@@ -513,7 +627,7 @@ export default function SocialPage() {
                                             <input
                                                 type="text"
                                                 value={messageInput}
-                                                onChange={(e) => setMessageInput(e.target.value)}
+                                                onChange={(e) => handleMessageInputChange(e.target.value)}
                                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                                 placeholder="Écrivez votre message..."
                                                 className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-[#7CD8EE] focus:outline-none"
@@ -536,6 +650,8 @@ export default function SocialPage() {
                         </div>
                     </div>
                 )}
+
+
             </div>
 
             {/* MODAL GESTION GROUPE */}

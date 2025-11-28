@@ -4,12 +4,23 @@ import { format, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
+import { useSharedSessions } from '../../api/hooks/useSharedSessions'
 import type { Session } from '../../types/session.type'
-import { CalendarDaysIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { CalendarDaysIcon, ClockIcon, CheckCircleIcon, UsersIcon, MapPinIcon } from '@heroicons/react/24/outline'
 
 export default function Sessions() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
     const { data: sessions, isLoading, error } = useGetAllUserSessions()
+    const { data: sharedSessions } = useSharedSessions()
+
+    // Récupérer les séances partagées pour une date
+    const getSharedSessionsForDate = (date: Date | undefined) => {
+        if (!date || !sharedSessions) return []
+        return sharedSessions.filter((session: any) => {
+            if (!session.startTime) return false
+            return isSameDay(new Date(session.startTime), date)
+        })
+    }
 
     const getSessionsForDate = (date: Date | undefined): Session[] => {
         if (!date || !sessions) return []
@@ -20,10 +31,16 @@ export default function Sessions() {
     }
 
     const sessionsForSelectedDate = getSessionsForDate(selectedDate)
+    const sharedSessionsForSelectedDate = getSharedSessionsForDate(selectedDate)
 
+    // Dates avec séances d'entraînement (training)
     const datesWithSessions = sessions
         ?.filter((session: Session) => session.date)
         .map((session: Session) => new Date(session.date!)) || []
+
+    // Dates avec séances partagées
+    const datesWithSharedSessions = sharedSessions
+        ?.map((session: any) => new Date(session.startTime)) || []
 
     const customStyles = `
     .rdp {
@@ -116,6 +133,20 @@ export default function Sessions() {
       box-shadow: 0 6px 16px rgba(124, 216, 238, 0.5);
     }
     
+    /* Jours avec des SÉANCES PARTAGÉES - violet/mauve */
+    .shared-session-day:not(.rdp-day_selected) {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(124, 58, 237, 0.25) 100%) !important;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(147, 51, 234, 0.3);
+    }
+    
+    .shared-session-day:not(.rdp-day_selected):hover {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.6) 0%, rgba(124, 58, 237, 0.35) 100%) !important;
+      border-color: rgba(147, 51, 234, 1) !important;
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
+    }
+    
     /* Jour avec session ET aujourd'hui */
     .session-day.rdp-day_today:not(.rdp-day_selected) {
       background: linear-gradient(135deg, rgba(124, 216, 238, 0.5) 0%, rgba(100, 47, 0, 0.2) 100%) !important;
@@ -129,14 +160,22 @@ export default function Sessions() {
       border: 3px solid #7CD8EE !important;
       box-shadow: 0 8px 20px rgba(124, 216, 238, 0.7);
     }
+    
+    .shared-session-day.rdp-day_selected {
+      background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%) !important;
+      border: 3px solid #9333EA !important;
+      box-shadow: 0 8px 20px rgba(147, 51, 234, 0.7);
+    }
   `
 
     const modifiers = {
         hasSession: datesWithSessions,
+        hasSharedSession: datesWithSharedSessions,
     }
 
     const modifiersClassNames = {
         hasSession: 'session-day',
+        hasSharedSession: 'shared-session-day',
     }
 
     if (isLoading) {
@@ -199,11 +238,11 @@ export default function Sessions() {
                             Séances du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
                         </h2>
                         <span className="px-4 py-2 rounded-full bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white font-semibold text-sm shadow-lg">
-                            {sessionsForSelectedDate.length} séance{sessionsForSelectedDate.length > 1 ? 's' : ''}
+                            {sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length} séance{(sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length) > 1 ? 's' : ''}
                         </span>
                     </div>
 
-                    {sessionsForSelectedDate.length === 0 ? (
+                    {sessionsForSelectedDate.length === 0 && sharedSessionsForSelectedDate.length === 0 ? (
                         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-8 text-center border border-gray-200">
                             <CalendarDaysIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500 font-medium">Aucune séance prévue pour cette date</p>
@@ -211,8 +250,14 @@ export default function Sessions() {
                         </div>
                     ) : (
                         <div className="space-y-4">
+                            {/* Séances d'entraînement */}
                             {sessionsForSelectedDate.map((session) => (
                                 <SessionCard key={session.id} session={session} />
+                            ))}
+
+                            {/* Séances partagées */}
+                            {sharedSessionsForSelectedDate.map((session: any) => (
+                                <SharedSessionCard key={session.id} session={session} />
                             ))}
                         </div>
                     )}
@@ -383,6 +428,74 @@ function SessionCard({ session }: { session: Session }) {
                     </div>
                 </div>
             )}
+        </div>
+    )
+}
+
+function SharedSessionCard({ session }: { session: any }) {
+    return (
+        <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-md border-2 border-purple-300/50 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
+            <div className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                        {/* Badge séance partagée */}
+                        <div className="flex items-center gap-2 mb-2">
+                            <UsersIcon className="h-5 w-5 text-purple-600" />
+                            <span className="text-xs font-bold text-purple-600 uppercase tracking-wide">Séance Partagée</span>
+                        </div>
+
+                        {/* Titre */}
+                        <h3 className="text-lg font-bold text-purple-900">{session.title}</h3>
+
+                        {/* Description */}
+                        {session.description && (
+                            <p className="text-sm text-purple-700/70 font-medium">{session.description}</p>
+                        )}
+
+                        {/* Informations */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs mt-3">
+                            <div className="flex items-center gap-1 text-purple-700/80">
+                                <ClockIcon className="h-4 w-4" />
+                                <span>{format(new Date(session.startTime), 'HH:mm', { locale: fr })}</span>
+                            </div>
+
+                            {session.location && (
+                                <div className="flex items-center gap-1 text-purple-700/80">
+                                    <MapPinIcon className="h-4 w-4" />
+                                    <span>{session.location}</span>
+                                </div>
+                            )}
+
+                            <div className="px-2 py-1 rounded-full bg-purple-600/20 text-purple-900 font-semibold">
+                                {session.participants?.length || 0} / {session.maxParticipants || '∞'} participants
+                            </div>
+
+                            {session.group && (
+                                <div className="px-2 py-1 rounded-full bg-blue-600/20 text-blue-900 font-semibold">
+                                    {session.group.name}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Organisateur */}
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-purple-200">
+                            <img
+                                src={session.organizer?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
+                                alt={session.organizer?.name}
+                                className="h-6 w-6 rounded-full"
+                            />
+                            <span className="text-xs text-purple-700">
+                                Organisé par <span className="font-semibold">{session.organizer?.name}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Badge */}
+                    <div className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+                        À venir
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

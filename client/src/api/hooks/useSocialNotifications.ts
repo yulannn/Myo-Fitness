@@ -7,18 +7,17 @@ export function useSocialNotifications() {
     const { data: friendRequests = [] } = useQuery({
         queryKey: ['friendRequests'],
         queryFn: () => FriendService.getPendingFriendRequests(),
-        refetchInterval: 10000, // Polling toutes les 10s pour être réactif
-        staleTime: 5000
+        staleTime: 2 * 60 * 1000,
+        refetchOnWindowFocus: false,
     });
 
     const { data: groupRequests = [] } = useQuery({
         queryKey: ['groupRequests'],
         queryFn: () => GroupService.getPendingGroupRequests(),
-        refetchInterval: 10000,
-        staleTime: 5000
+        staleTime: 2 * 60 * 1000,
+        refetchOnWindowFocus: false,
     });
 
-    // useConversations a déjà son propre polling ou invalidation
     const { data: conversations = [] } = useConversations();
 
     const unreadMessages = conversations.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0);
