@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import FriendService from '../services/friendService';
-import GroupService from '../services/groupService';
-import { useConversations } from './chat/useConversations';
+import FriendService from '../../services/friendService';
+import GroupService from '../../services/groupService';
+import { useConversations } from '../chat/useConversations';
 
 export function useSocialNotifications() {
     const { data: friendRequests = [] } = useQuery({

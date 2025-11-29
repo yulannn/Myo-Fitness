@@ -6,7 +6,7 @@ import {
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
-import { useSocialNotifications } from '../../api/hooks/useSocialNotifications'
+import { useSocialNotifications } from '../../api/hooks/social/useSocialNotifications'
 
 const items = [
   { to: '/programs', icon: ClipboardDocumentCheckIcon },

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useSharedSessions, useJoinSharedSession, useLeaveSharedSession, useDeleteSharedSession, useInviteGroupToSession, useInviteFriendToSession } from '../../api/hooks/useSharedSessions';
-import { useMyGroups } from '../../api/hooks/useGroups';
-import { useFriends } from '../../api/hooks/useFriendsHook';
+import { useSharedSessions, useJoinSharedSession, useLeaveSharedSession, useDeleteSharedSession, useInviteGroupToSession, useInviteFriendToSession } from '../../api/hooks/shared-session/useSharedSessions';
+import useUserGroups from '../../api/hooks/group/useGetUserGroups';
+import { useFriendsList } from '../../api/hooks/friend/useGetFriendsList';
 import { useAuth } from '../../context/AuthContext';
 import { Calendar, MapPin, Users, Plus, Trash2, LogOut, LogIn, UserPlus, X } from 'lucide-react';
 import CreateSharedSessionModal from './CreateSharedSessionModal';
@@ -11,8 +11,8 @@ import { fr } from 'date-fns/locale';
 const SharedSessionsList: React.FC = () => {
     const { user } = useAuth();
     const { data: sessions, isLoading } = useSharedSessions();
-    const { data: groups } = useMyGroups();
-    const { data: friends } = useFriends();
+    const { data: groups } = useUserGroups();
+    const { data: friends } = useFriendsList();
     const joinSession = useJoinSharedSession();
     const leaveSession = useLeaveSharedSession();
     const deleteSession = useDeleteSharedSession();

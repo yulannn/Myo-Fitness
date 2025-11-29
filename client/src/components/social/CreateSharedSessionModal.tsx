@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCreateSharedSession } from '../../api/hooks/useSharedSessions';
+import { useCreateSharedSession } from '../../api/hooks/shared-session/useSharedSessions';
 import { X } from 'lucide-react';
 
 interface CreateSharedSessionModalProps {

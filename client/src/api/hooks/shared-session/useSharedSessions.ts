@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import SharedSessionService, { type CreateSharedSessionDto } from '../services/sharedSessionService';
-import { useChatSocket } from '../../context/ChatSocketContext';
+import SharedSessionService, { type CreateSharedSessionDto } from '../../services/sharedSessionService';
+import { useChatSocket } from '../../../context/ChatSocketContext';
 import { useEffect } from 'react';
 
 export function useSharedSessions() {

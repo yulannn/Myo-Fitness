@@ -4,7 +4,7 @@ import { format, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
-import { useSharedSessions } from '../../api/hooks/useSharedSessions'
+import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
 import type { Session } from '../../types/session.type'
 import { CalendarDaysIcon, ClockIcon, CheckCircleIcon, UsersIcon, MapPinIcon } from '@heroicons/react/24/outline'
 

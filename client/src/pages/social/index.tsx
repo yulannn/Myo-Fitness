@@ -14,7 +14,7 @@ import {
     CalendarIcon
 } from '@heroicons/react/24/outline';
 import SharedSessionsList from '../../components/social/SharedSessionsList';
-import { useJoinSharedSession } from '../../api/hooks/useSharedSessions';
+import { useJoinSharedSession } from '../../api/hooks/shared-session/useSharedSessions';
 import { useConversations } from '../../api/hooks/chat/useConversations';
 import { useMessages } from '../../api/hooks/chat/useMessages';
 import { useSendMessage, useMarkAsRead } from '../../api/hooks/chat/useSendMessage';
@@ -22,7 +22,7 @@ import { useTypingIndicator } from '../../api/hooks/chat/useTypingIndicator';
 import { useConversationRoom } from '../../api/hooks/chat/useConversationRoom';
 import ChatService from '../../api/services/chatService';
 import { useAuth } from '../../context/AuthContext';
-import { useSessionNotifications } from '../../api/hooks/useSessionNotifications';
+import { useSessionNotifications } from '../../api/hooks/shared-session/useSessionNotifications';
 // Friends hooks
 import useFriendsList from '../../api/hooks/friend/useGetFriendsList';
 import useGetPendingFriendRequests from '../../api/hooks/friend/useGetPendingFriendRequests';

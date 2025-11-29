@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useChatSocket } from '../../context/ChatSocketContext';
+import { useChatSocket } from '../../../context/ChatSocketContext';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function useSessionNotifications() {
