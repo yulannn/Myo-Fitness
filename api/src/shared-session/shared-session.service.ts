@@ -321,11 +321,21 @@ export class SharedSessionService {
         const formattedDate = format(new Date(session.startTime), "d MMMM yyyy 'à' HH:mm", { locale: fr });
         const messageContent = `📅 INVITATION: ${session.organizer.name} propose une séance de groupe : "${session.title}" le ${formattedDate} à ${session.location || 'lieu non précisé'}. SESSION_ID:${sessionId}`;
 
-        await this.prisma.message.create({
+        const invitationMessage = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 senderId: userId,
                 content: messageContent,
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        name: true,
+                        profilePictureUrl: true,
+                    },
+                },
+                reactions: true,
             },
         });
 
@@ -335,6 +345,15 @@ export class SharedSessionService {
             .filter(id => id !== userId);
 
         this.chatGateway.notifySessionCreated(updatedSession, memberIds);
+
+        // Mettre à jour le timestamp de la conversation
+        await this.prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { updatedAt: new Date() },
+        });
+
+        // Émettre l'événement message:new pour mettre à jour les conversations en temps réel
+        await this.chatGateway.notifyNewMessage(invitationMessage, conversation.id);
 
         return updatedSession;
     }
@@ -387,11 +406,21 @@ export class SharedSessionService {
         const formattedDate = format(new Date(session.startTime), "d MMMM yyyy 'à' HH:mm", { locale: fr });
         const messageContent = `📅 INVITATION: ${session.organizer.name} vous invite à "${session.title}" le ${formattedDate} à ${session.location || 'lieu non précisé'}. SESSION_ID:${sessionId}`;
 
-        await this.prisma.message.create({
+        const invitationMessage = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 senderId: userId,
                 content: messageContent,
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        name: true,
+                        profilePictureUrl: true,
+                    },
+                },
+                reactions: true,
             },
         });
 
@@ -416,6 +445,15 @@ export class SharedSessionService {
         });
 
         this.chatGateway.notifySessionCreated(fullSession, [friendId]);
+
+        // Mettre à jour le timestamp de la conversation
+        await this.prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { updatedAt: new Date() },
+        });
+
+        // Émettre l'événement message:new pour mettre à jour les conversations en temps réel
+        await this.chatGateway.notifyNewMessage(invitationMessage, conversation.id);
 
         return { success: true };
     }

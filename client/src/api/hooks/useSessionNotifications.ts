@@ -15,6 +15,7 @@ export function useSessionNotifications() {
 
             // Invalider les queries pour mettre à jour la liste
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
             // Afficher une notification (peut être amélioré avec une bibliothèque de toasts)
             if (Notification.permission === 'granted') {

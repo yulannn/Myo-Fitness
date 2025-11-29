@@ -257,6 +257,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     /**
+     * Notifier un nouveau message dans une conversation (utilisé par d'autres services)
+     */
+    async notifyNewMessage(message: any, conversationId: string) {
+        console.log(`💬 Envoi du message dans la conversation ${conversationId}`);
+
+        // Récupérer tous les participants de la conversation
+        const conversation = await this.chatService.getConversation(conversationId, message.senderId);
+
+        // Envoyer le message à tous les participants (incluant l'expéditeur)
+        conversation.participants.forEach((participant) => {
+            const socketIds = userSockets.get(participant.userId);
+            if (socketIds) {
+                socketIds.forEach((socketId) => {
+                    this.server.to(socketId).emit('message:new', message);
+                    console.log(`    ✓ Message envoyé au socket ${socketId} (user ${participant.userId})`);
+                });
+            }
+        });
+    }
+
+
+    /**
      * Notifier quand quelqu'un rejoint une séance
      */
     notifySessionJoined(sessionId: string, userId: number, userName: string, participantIds: number[]) {
