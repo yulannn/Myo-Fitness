@@ -300,14 +300,7 @@ const Program = () => {
 
         <ModalFooter>
           <div className="flex justify-end gap-3 m-auto">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setAutomaticOpen(false);
-                setSelectedProfileId('');
-              }}
-              disabled={isGenerating}
-            >
+            <Button variant="secondary" onClick={() => { setAutomaticOpen(false); setSelectedProfileId(""); }} disabled={isGenerating}>
               Fermer
             </Button>
             <Button
@@ -315,12 +308,12 @@ const Program = () => {
               onClick={() =>
                 handleConfirmAutomatic(
                   automaticProgramNameRef.current,
-                  automaticProgramDescriptionRef.current,
+                  automaticProgramDescriptionRef.current
                 )
               }
               disabled={isGenerating || !selectedProfileId}
             >
-              {isGenerating ? 'Génération…' : 'Confirmer'}
+              {isGenerating ? "Génération…" : "Confirmer"}
             </Button>
           </div>
         </ModalFooter>
@@ -336,6 +329,7 @@ const Program = () => {
           onConfirm={handleManualProgramConfirm}
         />
       )}
+
     </div>
   );
 };

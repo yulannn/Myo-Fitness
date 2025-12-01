@@ -6,11 +6,11 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     size?: "sm" | "md" | "lg";
 };
 
-const base = "inline-flex items-center justify-center rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
+const base = "inline-flex items-center justify-center rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
 const variants: Record<string, string> = {
-    primary: "bg-indigo-500 text-white hover:bg-indigo-700 focus:ring-indigo-500",
-    secondary: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-indigo-500",
-    ghost: "bg-transparent text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500",
+    primary: "bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white shadow-md hover:shadow-lg transition-all active:scale-95",
+    secondary: "bg-white border border-gray-200 text-[#2F4858] hover:bg-gray-50 focus:ring-[#7CD8EE]",
+    ghost: "bg-transparent text-[#2F4858] hover:bg-[#7CD8EE]/10 focus:ring-[#7CD8EE]",
 };
 const sizes: Record<string, string> = {
     sm: "px-3 py-1.5 text-sm",

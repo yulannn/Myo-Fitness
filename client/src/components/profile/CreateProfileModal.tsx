@@ -1,6 +1,6 @@
 // src/components/CreateProfileModal.tsx
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { CreateFitnessProfilePayload } from '../../types/fitness-profile.type';
 
 interface CreateProfileModalProps {
@@ -74,132 +74,153 @@ export default function CreateProfileModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-[#1f3340] p-6 shadow-2xl border border-[#7CD8EE]/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-[#7CD8EE]/20 max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-[#7CD8EE]">
+          <h3 className="text-xl font-bold text-[#2F4858]">
             Créer un profil fitness
           </h3>
           <button
             onClick={onClose}
-            className="text-[#7CD8EE]/70 hover:text-[#7CD8EE]"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X size={22} />
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-white">
+        <form onSubmit={handleSubmit} className="space-y-4">
 
           {/*  Inputs grid */}
           <div className="grid grid-cols-2 gap-4">
-            <input
-              type="number"
-              name="age"
-              placeholder="Âge"
-              value={form.age || ''}
-              onChange={handleChange}
-              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE]"
-              required
-              min="13"
-            />
-            <input
-              type="number"
-              name="height"
-              placeholder="Taille (cm)"
-              value={form.height || ''}
-              onChange={handleChange}
-              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE]"
-              required
-              min="100"
-            />
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Âge</label>
+              <input
+                type="number"
+                name="age"
+                placeholder="Âge"
+                value={form.age || ''}
+                onChange={handleChange}
+                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                required
+                min="13"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Taille (cm)</label>
+              <input
+                type="number"
+                name="height"
+                placeholder="Taille"
+                value={form.height || ''}
+                onChange={handleChange}
+                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                required
+                min="100"
+              />
+            </div>
 
-            <input
-              type="number"
-              name="weight"
-              placeholder="Poids (kg)"
-              value={form.weight || ''}
-              onChange={handleChange}
-              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm placeholder-gray-300 text-white focus:ring-2 focus:ring-[#7CD8EE]"
-              required
-              min="30"
-            />
-            <input
-              type="number"
-              name="trainingFrequency"
-              placeholder="Séances / semaine"
-              value={form.trainingFrequency || ''}
-              onChange={handleChange}
-              className="rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white placeholder-gray-300 focus:ring-2 focus:ring-[#7CD8EE]"
-              required
-              min="0"
-              max="7"
-            />
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Poids (kg)</label>
+              <input
+                type="number"
+                name="weight"
+                placeholder="Poids"
+                value={form.weight || ''}
+                onChange={handleChange}
+                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                required
+                min="30"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Séances/semaine</label>
+              <input
+                type="number"
+                name="trainingFrequency"
+                placeholder="Fréquence"
+                value={form.trainingFrequency || ''}
+                onChange={handleChange}
+                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                required
+                min="0"
+                max="7"
+              />
+            </div>
           </div>
 
           {/* Experience level */}
-          <select
-            name="experienceLevel"
-            value={form.experienceLevel}
-            onChange={handleChange}
-            className="w-full rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#7CD8EE]"
-            required
-          >
-            <option value="">Niveau d’expérience</option>
-            <option value="BEGINNER">Débutant</option>
-            <option value="INTERMEDIATE">Intermédiaire</option>
-            <option value="ADVANCED">Avancé</option>
-          </select>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Niveau d'expérience</label>
+            <select
+              name="experienceLevel"
+              value={form.experienceLevel}
+              onChange={handleChange}
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+              required
+            >
+              <option value="">Sélectionner...</option>
+              <option value="BEGINNER">Débutant</option>
+              <option value="INTERMEDIATE">Intermédiaire</option>
+              <option value="ADVANCED">Avancé</option>
+            </select>
+          </div>
 
           {/* Goals */}
-          <div className="flex gap-6 text-sm text-white">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="MUSCLE_GAIN"
-                checked={form.goals.includes('MUSCLE_GAIN')}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
-              />
-              Gain musculaire
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="WEIGHT_LOSS"
-                checked={form.goals.includes('WEIGHT_LOSS')}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
-              />
-              Perte de poids
-            </label>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Objectifs</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                <input
+                  type="checkbox"
+                  name="MUSCLE_GAIN"
+                  checked={form.goals.includes('MUSCLE_GAIN')}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
+                />
+                <span className="text-sm text-[#2F4858]">Gain musculaire</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                <input
+                  type="checkbox"
+                  name="WEIGHT_LOSS"
+                  checked={form.goals.includes('WEIGHT_LOSS')}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
+                />
+                <span className="text-sm text-[#2F4858]">Perte de poids</span>
+              </label>
+            </div>
           </div>
 
           {/* Gender */}
-          <select
-            name="gender"
-            value={form.gender}
-            onChange={handleChange}
-            className="w-full rounded-xl bg-[#2F4858] border border-[#7CD8EE]/30 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#7CD8EE]"
-            required
-          >
-            <option value="">Genre</option>
-            <option value="MALE">Homme</option>
-            <option value="FEMALE">Femme</option>
-            <option value="OTHER">Autre</option>
-          </select>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Genre</label>
+            <select
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+              required
+            >
+              <option value="">Sélectionner...</option>
+              <option value="MALE">Homme</option>
+              <option value="FEMALE">Femme</option>
+              <option value="OTHER">Autre</option>
+            </select>
+          </div>
 
           {/* Bodyweight */}
-          <label className="flex items-center gap-2 text-sm text-white">
+          <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
             <input
               type="checkbox"
               name="bodyWeight"
               checked={form.bodyWeight}
               onChange={handleChange}
-              className="h-4 w-4 rounded border-[#7CD8EE]/40 bg-[#2F4858] text-[#7CD8EE] focus:ring-[#7CD8EE]"
+              className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
             />
-            Bodyweight uniquement
+            <span className="text-sm text-[#2F4858]">Bodyweight uniquement</span>
           </label>
 
           {/* Buttons */}
@@ -207,14 +228,14 @@ export default function CreateProfileModal({
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 rounded-xl bg-[#7CD8EE] px-4 py-2 text-sm font-semibold text-[#2F4858] shadow-md hover:bg-[#6acbe0] transition active:scale-95 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] px-4 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPending ? 'Création...' : 'Créer'}
+              {isPending ? 'Création...' : 'Créer le profil'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border border-[#7CD8EE]/40 bg-[#2F4858] px-4 py-2 text-sm font-semibold text-[#7CD8EE] shadow-sm hover:bg-[#3a5a6e] transition active:scale-95"
+              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm hover:bg-gray-50 transition active:scale-95"
             >
               Annuler
             </button>
