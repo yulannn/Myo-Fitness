@@ -2,19 +2,22 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
-import { CalendarIcon, ClockIcon, PlayIcon, CheckCircleIcon } from "@heroicons/react/24/outline"
+import { CalendarIcon, ClockIcon, PlayIcon, CheckCircleIcon, PencilSquareIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
+import { EditSessionModal } from "../modal/EditSessionModal"
 import { DayPicker } from 'react-day-picker'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 
 interface SessionProps {
     session: SessionType
+    availableExercises?: any[]
 }
 
-export const SessionCard = ({ session }: SessionProps) => {
+export const SessionCard = ({ session, availableExercises = [] }: SessionProps) => {
     const navigate = useNavigate()
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         session.date ? new Date(session.date) : undefined
     )
@@ -250,6 +253,23 @@ export const SessionCard = ({ session }: SessionProps) => {
                                 </button>
 
                                 <button
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="
+                                        flex-1 px-4 py-2.5 
+                                        rounded-xl
+                                        bg-[#252527] border border-yellow-500/20
+                                        hover:bg-yellow-500/10 hover:border-yellow-500/40
+                                        text-yellow-400 font-semibold text-sm
+                                        transition-all
+                                        active:scale-95
+                                        flex items-center justify-center gap-2
+                                    "
+                                >
+                                    <PencilSquareIcon className="h-4 w-4" />
+                                    <span>Modifier</span>
+                                </button>
+
+                                <button
                                     onClick={handleStartSession}
                                     className="
                                         flex-1 px-4 py-2.5 
@@ -382,6 +402,14 @@ export const SessionCard = ({ session }: SessionProps) => {
                     </div>
                 </ModalFooter>
             </Modal>
+
+            {/* Edit Session Modal */}
+            <EditSessionModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                session={session}
+                availableExercises={availableExercises}
+            />
         </>
     )
 }

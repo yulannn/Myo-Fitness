@@ -128,6 +128,7 @@ export class SessionService {
           exerciceId: exercice.id,
           sets: exerciseData.sets ?? 3,
           reps: exerciseData.reps ?? 8,
+          weight: exerciseData.weight ?? 0,
         },
       });
 

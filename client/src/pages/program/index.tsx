@@ -187,8 +187,8 @@ const Program = () => {
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="text-xl sm:text-2xl font-bold text-white flex-1 break-words">{program.name}</h2>
                       <div className={`px-3 py-1.5 rounded-xl font-semibold text-xs whitespace-nowrap ${program.status === 'ACTIVE'
-                          ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
-                          : 'bg-gray-700 text-gray-400 border border-gray-600'
+                        ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
+                        : 'bg-gray-700 text-gray-400 border border-gray-600'
                         }`}>
                         {program.status === 'ACTIVE' ? '✓ Actif' : program.status}
                       </div>
@@ -213,6 +213,7 @@ const Program = () => {
                         <SessionCard
                           key={session.id ?? `session-${program.id}-${session.date}`}
                           session={session}
+                          availableExercises={exercices}
                         />
                       ))}
                     </div>

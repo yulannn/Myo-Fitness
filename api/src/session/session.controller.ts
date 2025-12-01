@@ -143,7 +143,7 @@ export class SessionController {
     );
   }
 
-
+  @UseGuards(AuthGuard('jwt'))
   @Put('update-exercise/:sessionId/:exerciceId')
   @ApiOperation({ summary: 'Mettre à jour un exercice dans une session' })
   @ApiBody({
