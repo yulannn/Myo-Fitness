@@ -6,6 +6,7 @@ import { ApiError } from '../../types/auth.type';
 import { useRegister, type RegisterFormValues } from '../../api/hooks/auth/useRegister';
 import { ValidationError } from '../../api/hooks/errors';
 import { useAuth } from '../../context/AuthContext'
+import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
 
 const initialFormValues: RegisterFormValues = {
   firstName: '',
@@ -60,106 +61,197 @@ export default function Register() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl space-y-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-2 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-indigo-500">Inscription</p>
-        <h1 className="text-3xl font-bold text-slate-900">Bienvenue sur Myo Fitness</h1>
-        <p className="text-sm text-slate-500">
-          Rejoins la communauté et commence à suivre tes progrès, programmes et recommandations personnalisées.
-        </p>
-      </div>
-
-      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="text-sm text-slate-600">
-            Prénom
-            <input
-              name="firstName"
-              type="text"
-              autoComplete="given-name"
-              placeholder="Alicia"
-              value={formValues.firstName}
-              onChange={handleChange}
-              className={`mt-1 w-full rounded-2xl border px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${
-                fieldErrors.firstName ? 'border-red-300 focus:border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-indigo-300'
-              }`}
-            />
-            {fieldErrors.firstName && <p className="mt-1 text-xs text-red-500">{fieldErrors.firstName}</p>}
-          </label>
-
-          <label className="text-sm text-slate-600">
-            Nom
-            <input
-              name="lastName"
-              type="text"
-              autoComplete="family-name"
-              placeholder="Martin"
-              value={formValues.lastName}
-              onChange={handleChange}
-              className={`mt-1 w-full rounded-2xl border px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${
-                fieldErrors.lastName ? 'border-red-300 focus:border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-indigo-300'
-              }`}
-            />
-            {fieldErrors.lastName && <p className="mt-1 text-xs text-red-500">{fieldErrors.lastName}</p>}
-          </label>
+    <div className="min-h-screen bg-[#121214] flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#94fbdd] to-[#94fbdd]/70 bg-clip-text text-transparent mb-2">
+            Myo Fitness
+          </h1>
+          <p className="text-gray-400 text-sm">Rejoins la communauté et commence ta transformation</p>
         </div>
 
-        <label className="block text-sm text-slate-600">
-          Email
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@exemple.com"
-            value={formValues.email}
-            onChange={handleChange}
-            className={`mt-1 w-full rounded-2xl border px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${
-              fieldErrors.email ? 'border-red-300 focus:border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-indigo-300'
-            }`}
-          />
-          {fieldErrors.email && <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>}
-        </label>
-
-        <label className="block text-sm text-slate-600">
-          Mot de passe
-          <input
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="••••••••"
-            value={formValues.password}
-            onChange={handleChange}
-            className={`mt-1 w-full rounded-2xl border px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${
-              fieldErrors.password ? 'border-red-300 focus:border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-indigo-300'
-            }`}
-          />
-          <p className="mt-1 text-xs text-slate-400">Minimum 6 caractères, idéalement une combinaison de lettres et chiffres.</p>
-          {fieldErrors.password && <p className="mt-1 text-xs text-red-500">{fieldErrors.password}</p>}
-        </label>
-
-        {formError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" role="alert" aria-live="assertive">
-            {formError}
+        {/* Card */}
+        <div className="bg-[#252527] rounded-2xl shadow-2xl p-8 border border-[#94fbdd]/10">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Créer ton compte</h2>
+            <p className="text-gray-400 text-sm">Quelques informations pour personnaliser ton expérience</p>
           </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={registerMutation.isPending}
-          className={`w-full rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:ring-offset-2 ${
-            registerMutation.isPending ? 'cursor-not-allowed bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-500'
-          }`}
-        >
-          {submitLabel}
-        </button>
-      </form>
+          <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            {/* Name Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* First Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Prénom
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <UserIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <input
+                    name="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="Alicia"
+                    value={formValues.firstName}
+                    onChange={handleChange}
+                    className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.firstName
+                        ? 'border-red-500 focus:ring-red-500/50'
+                        : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                      }`}
+                  />
+                </div>
+                {fieldErrors.firstName && (
+                  <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 rounded-full bg-red-400"></span>
+                    {fieldErrors.firstName}
+                  </p>
+                )}
+              </div>
 
-      <p className="text-center text-sm text-slate-500">
-        Déjà inscrit ?{' '}
-        <Link to="/auth/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
-          Me connecter
-        </Link>
-      </p>
-    </section>
+              {/* Last Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Nom
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <UserIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <input
+                    name="lastName"
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Martin"
+                    value={formValues.lastName}
+                    onChange={handleChange}
+                    className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.lastName
+                        ? 'border-red-500 focus:ring-red-500/50'
+                        : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                      }`}
+                  />
+                </div>
+                {fieldErrors.lastName && (
+                  <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 rounded-full bg-red-400"></span>
+                    {fieldErrors.lastName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <EnvelopeIcon className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="ton@email.com"
+                  value={formValues.email}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.email
+                      ? 'border-red-500 focus:ring-red-500/50'
+                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                    }`}
+                />
+              </div>
+              {fieldErrors.email && (
+                <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 rounded-full bg-red-400"></span>
+                  {fieldErrors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Mot de passe
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <LockClosedIcon className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={formValues.password}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
+                      ? 'border-red-500 focus:ring-red-500/50'
+                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                    }`}
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Minimum 6 caractères, idéalement une combinaison de lettres et chiffres
+              </p>
+              {fieldErrors.password && (
+                <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 rounded-full bg-red-400"></span>
+                  {fieldErrors.password}
+                </p>
+              )}
+            </div>
+
+            {/* Error Message */}
+            {formError && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400" role="alert">
+                {formError}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={registerMutation.isPending}
+              className={`w-full py-3 px-4 rounded-xl font-semibold text-[#121214] bg-[#94fbdd] hover:bg-[#94fbdd]/90 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:ring-offset-2 focus:ring-offset-[#252527] transition-all flex items-center justify-center gap-2 group ${registerMutation.isPending ? 'opacity-70 cursor-not-allowed' : 'shadow-lg shadow-[#94fbdd]/20'
+                }`}
+            >
+              {registerMutation.isPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-[#121214]/30 border-t-[#121214] rounded-full animate-spin"></div>
+                  {submitLabel}
+                </>
+              ) : (
+                <>
+                  {submitLabel}
+                  <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Sign In Link */}
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <p className="text-center text-sm text-gray-400">
+              Déjà inscrit ?{' '}
+              <Link
+                to="/auth/login"
+                className="text-[#94fbdd] hover:text-[#94fbdd]/80 font-semibold transition-colors"
+              >
+                Me connecter
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-600 mt-6">
+          En créant un compte, tu acceptes nos conditions d'utilisation et notre politique de confidentialité
+        </p>
+      </div>
+    </div>
   )
 }

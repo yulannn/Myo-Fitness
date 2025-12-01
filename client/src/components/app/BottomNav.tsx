@@ -6,14 +6,21 @@ import {
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
+import {
+  CalendarDaysIcon as CalendarDaysIconSolid,
+  HomeIcon as HomeIconSolid,
+  UserCircleIcon as UserCircleIconSolid,
+  ClipboardDocumentCheckIcon as ClipboardDocumentCheckIconSolid,
+  ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
+} from '@heroicons/react/24/solid'
 import { useSocialNotifications } from '../../api/hooks/social/useSocialNotifications'
 
 const items = [
-  { to: '/programs', icon: ClipboardDocumentCheckIcon },
-  { to: '/sessions', icon: CalendarDaysIcon },
-  { to: '/', icon: HomeIcon, end: true },
-  { to: '/social', icon: ChatBubbleLeftRightIcon },
-  { to: '/profiles', icon: UserCircleIcon },
+  { to: '/programs', icon: ClipboardDocumentCheckIcon, iconSolid: ClipboardDocumentCheckIconSolid, label: 'Programme' },
+  { to: '/sessions', icon: CalendarDaysIcon, iconSolid: CalendarDaysIconSolid, label: 'Séances' },
+  { to: '/', icon: HomeIcon, iconSolid: HomeIconSolid, end: true, label: 'Accueil' },
+  { to: '/social', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid, label: 'Social' },
+  { to: '/profiles', icon: UserCircleIcon, iconSolid: UserCircleIconSolid, label: 'Profil' },
 ]
 
 export default function BottomNav() {
@@ -21,45 +28,68 @@ export default function BottomNav() {
   const { totalNotifications } = useSocialNotifications()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 rounded-t-md z-50 bg-[#2F4858]/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(0,0,0,0.15)] border-t border-[#7CD8EE]/20">
-      <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-        {items.map(({ to, icon: Icon, end }) => {
-          const isActive = location.pathname === to
+    <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#252527]/95 backdrop-blur-xl shadow-2xl border-t border-[#94fbdd]/10">
+      <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
+        {items.map(({ to, icon: Icon, iconSolid: IconSolid, end, label }) => {
+          const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
+          const ActiveIcon = isActive ? IconSolid : Icon
+
           return (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive: navIsActive }) =>
-                [
-                  'flex flex-1 flex-col items-center gap-1 px-2 py-1 text-xs font-semibold transition-transform duration-200 relative',
-                  navIsActive || isActive
-                    ? 'text-[#7CD8EE] scale-110'
-                    : 'text-[#7CD8EE]/60 hover:text-[#7CD8EE]/90',
-                ].join(' ')
-              }
+              className="relative flex flex-col items-center gap-1 px-3 py-2 min-w-[64px] group"
             >
+              {/* Icon Container */}
+              <div className="relative">
+                <div
+                  className={[
+                    'flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 relative',
+                    isActive
+                      ? 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/30 scale-110'
+                      : 'bg-[#121214] hover:bg-[#94fbdd]/10 hover:scale-105',
+                  ].join(' ')}
+                >
+                  <ActiveIcon
+                    className={[
+                      'h-6 w-6 transition-colors duration-300',
+                      isActive ? 'text-[#121214]' : 'text-gray-400 group-hover:text-[#94fbdd]'
+                    ].join(' ')}
+                  />
+
+                  {/* Badge de notification pour l'onglet Social */}
+                  {to === '/social' && totalNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-[#252527] shadow-lg animate-pulse">
+                      {totalNotifications > 99 ? '99+' : totalNotifications}
+                    </span>
+                  )}
+                </div>
+
+                {/* Active Indicator Dot */}
+                {isActive && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#94fbdd] rounded-full shadow-lg shadow-[#94fbdd]/50"></div>
+                )}
+              </div>
+
+              {/* Label */}
               <span
                 className={[
-                  'flex h-12 w-12 items-center justify-center rounded-2xl shadow-md transition-all duration-200 relative',
+                  'text-[10px] font-medium transition-all duration-300',
                   isActive
-                    ? '  border border-[#7CD8EE] shadow-lg'
-                    : 'bg-[#2F4858]/80 text-[#7CD8EE] hover:bg-[#7CD8EE]/20',
+                    ? 'text-[#94fbdd] font-semibold'
+                    : 'text-gray-500 group-hover:text-gray-400',
                 ].join(' ')}
               >
-                <Icon className="h-6 w-6" />
-
-                {/* Badge de notification pour l'onglet Social */}
-                {to === '/social' && totalNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-[#2F4858]">
-                    {totalNotifications > 99 ? '99+' : totalNotifications}
-                  </span>
-                )}
+                {label}
               </span>
             </NavLink>
           )
         })}
       </div>
+
+      {/* Bottom Safe Area for iOS */}
+      <div className="h-safe-area-inset-bottom bg-[#252527]"></div>
     </nav>
   )
 }

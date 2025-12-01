@@ -10,11 +10,10 @@ import {
   ModalTitle,
 } from '../../components/ui/modal';
 import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal';
-import Button from '../../components/ui/button/Button';
-import { Badge } from '../../components/ui/badge';
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useAuth } from '../../context/AuthContext';
 import { SessionCard } from '../../components/ui/session';
+import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const Program = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -108,114 +107,191 @@ const Program = () => {
     });
   };
 
-  // Fonction pour trier les sessions : sans date en premier, puis par date croissante
   const sortSessions = (sessions: any[]) => {
     if (!sessions || !Array.isArray(sessions)) return [];
 
     return [...sessions].sort((a, b) => {
-      // Sessions sans date viennent en premier
       if (!a.date && !b.date) return 0;
       if (!a.date) return -1;
       if (!b.date) return 1;
-
-      // Ensuite trier par date (la plus proche en premier)
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#121214]">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#94fbdd]/20 border-t-[#94fbdd]"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-[#94fbdd]/20 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col w-full h-full pb-8 space-y-6">
-      <h1 className="text-2xl p-2">PROGRAMME D'ENTRAÎNEMENT</h1>
-      <div className="flex justify-end">
-        <Button onClick={openAddFlow} variant="primary" size="md">
-          Ajouter un programme
-        </Button>
-      </div>
+    <div className="min-h-screen bg-[#121214] pb-24">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
+        {/* Header - Mobile Optimized */}
+        <div className="space-y-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Mes Programmes</h1>
+            <p className="text-sm text-gray-400 mt-1">Gérez vos programmes d'entraînement</p>
+          </div>
+          <button
+            onClick={openAddFlow}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
+          >
+            <PlusIcon className="h-5 w-5" />
+            Nouveau programme
+          </button>
+        </div>
 
-      {(Array.isArray(data) ? data : []).map((program: any) => (
-        <section
-          key={program.id ?? `program-${program.name}`}
-          className="bg-white shadow rounded p-4"
-        >
-          <header className="mb-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">{program.name}</h2>
-              {program.status === 'ACTIVE' ? (
-                <Badge className="badge badge-success">{program.status}</Badge>
-              ) : (
-                <Badge className="badge badge-secondary">
-                  {program.status}
-                </Badge>
-              )}
-            </div>
-            {program.description && (
-              <p className="text-sm text-gray-600">{program.description}</p>
-            )}
-            <div className="text-xs text-gray-500 mt-1">
-              Créé le:{' '}
-              {program.createdAt
-                ? new Date(program.createdAt).toLocaleString()
-                : '—'}
-            </div>
-          </header>
+        {/* Programs List */}
+        {programs.length === 0 ? (
+          <div className="relative bg-[#252527] rounded-3xl shadow-2xl p-8 sm:p-12 text-center border border-[#94fbdd]/10 overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
 
-          <div className="mt-3 space-y-3 pb-12">
-            {sortSessions(program.sessions).map((session: any) => (
-              <SessionCard
-                key={session.id ?? `session-${program.id}-${session.date}`}
-                session={session}
-              />
+            <div className="relative">
+              <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 rounded-3xl flex items-center justify-center mb-4 sm:mb-6 shadow-xl">
+                <ClipboardDocumentListIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Aucun programme actif</h3>
+              <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto px-4">
+                Créez votre premier programme pour commencer votre transformation.
+              </p>
+              <button
+                onClick={openAddFlow}
+                className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/30 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95 text-base sm:text-lg"
+              >
+                <PlusIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                Créer mon premier programme
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 sm:space-y-6">
+            {programs.map((program: any) => (
+              <div
+                key={program.id ?? `program-${program.name}`}
+                className="relative bg-[#252527] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#94fbdd]/10 overflow-hidden"
+              >
+                {/* Decorative Background */}
+                <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
+
+                {/* Header */}
+                <div className="relative p-4 sm:p-6 border-b border-[#94fbdd]/10">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-xl sm:text-2xl font-bold text-white flex-1 break-words">{program.name}</h2>
+                      <div className={`px-3 py-1.5 rounded-xl font-semibold text-xs whitespace-nowrap ${program.status === 'ACTIVE'
+                          ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
+                          : 'bg-gray-700 text-gray-400 border border-gray-600'
+                        }`}>
+                        {program.status === 'ACTIVE' ? '✓ Actif' : program.status}
+                      </div>
+                    </div>
+                    {program.description && (
+                      <p className="text-sm text-gray-400 break-words">{program.description}</p>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      Créé le {program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR') : '—'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sessions */}
+                <div className="relative p-4 sm:p-6 space-y-3 sm:space-y-4">
+                  <h3 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wide">
+                    Séances ({program.sessions?.length || 0})
+                  </h3>
+                  {program.sessions && program.sessions.length > 0 ? (
+                    <div className="space-y-3">
+                      {sortSessions(program.sessions).map((session: any) => (
+                        <SessionCard
+                          key={session.id ?? `session-${program.id}-${session.date}`}
+                          session={session}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic text-center py-6 sm:py-8">Aucune séance dans ce programme.</p>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-      ))}
+        )}
+      </div>
 
-      {/* Confirmation Modal for Active Program */}
+      {/* Modals */}
+      {/* Confirmation Modal */}
       <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <ModalHeader>
-          <ModalTitle>Attention vous avez deja un programme actif !</ModalTitle>
+          <div className="flex items-center gap-2 sm:gap-3 justify-center">
+            <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd]" />
+            <ModalTitle className="text-lg sm:text-2xl">Programme actif détecté</ModalTitle>
+          </div>
         </ModalHeader>
-        <div className="px-2 text-sm text-gray-700 m-auto">
-          Si vous continuez, le programme actuel sera archivé et remplacé par le
-          nouveau.
+        <div className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300 text-center">
+          Vous avez déjà un programme actif. Si vous continuez, le programme actuel sera archivé et remplacé par le nouveau.
         </div>
         <ModalFooter>
-          <div className="flex justify-end gap-3 m-auto">
-            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setConfirmOpen(false)}
+              className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all"
+            >
               Annuler
-            </Button>
-            <Button variant="primary" onClick={handleConfirmContinue}>
+            </button>
+            <button
+              onClick={handleConfirmContinue}
+              className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95"
+            >
               Continuer
-            </Button>
+            </button>
           </div>
         </ModalFooter>
       </Modal>
 
-      {/* Choice Modal - Manual or Automatic */}
+      {/* Choice Modal */}
       <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)}>
         <ModalHeader>
-          <ModalTitle>Créer un programme</ModalTitle>
+          <ModalTitle className="text-lg sm:text-2xl">Créer un programme</ModalTitle>
         </ModalHeader>
+        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3">
+          <button
+            onClick={() => {
+              setAutomaticOpen(true);
+              setChoiceOpen(false);
+            }}
+            disabled={isPending}
+            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-[#94fbdd]/30 bg-[#94fbdd]/5 hover:bg-[#94fbdd]/10 flex items-center gap-3 sm:gap-4 transition-all group"
+          >
+            <div className="p-2 sm:p-3 bg-[#94fbdd]/20 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
+              <SparklesIcon className="h-6 w-6 sm:h-7 sm:w-7 text-[#94fbdd]" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <h4 className="font-bold text-white text-base sm:text-lg">Générer automatiquement</h4>
+              <p className="text-xs sm:text-sm text-gray-400 break-words">L'IA crée un programme adapté à votre profil</p>
+            </div>
+          </button>
 
-        <ModalFooter>
-          <div className="flex justify-end gap-3 m-auto">
-            <Button variant="ghost" onClick={handleCreateManual}>
-              Créer manuellement
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setAutomaticOpen(true);
-                setChoiceOpen(false);
-              }}
-              disabled={isPending}
-            >
-              {isPending ? 'Création...' : 'Générer automatiquement'}
-            </Button>
-          </div>
-        </ModalFooter>
+          <button
+            onClick={handleCreateManual}
+            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-600 hover:border-gray-500 bg-[#121214] hover:bg-[#252527] flex items-center gap-3 sm:gap-4 transition-all group"
+          >
+            <div className="p-2 sm:p-3 bg-gray-700 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
+              <ClipboardDocumentListIcon className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <h4 className="font-bold text-white text-base sm:text-lg">Créer manuellement</h4>
+              <p className="text-xs sm:text-sm text-gray-400 break-words">Construisez votre programme exercice par exercice</p>
+            </div>
+          </button>
+        </div>
       </Modal>
 
       {/* Automatic Program Modal */}
@@ -227,18 +303,18 @@ const Program = () => {
         }}
       >
         <ModalHeader>
-          <ModalTitle>Personnalisez votre programme</ModalTitle>
+          <ModalTitle className="text-lg sm:text-2xl">Personnalisez votre programme</ModalTitle>
         </ModalHeader>
-        <div className="px-2 text-sm text-gray-700 space-y-4">
-          <div className="flex flex-col">
-            <label htmlFor="program-name" className="mb-1 font-medium">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="program-name" className="text-sm font-medium text-gray-300">
               Nom du programme
             </label>
             <input
               id="program-name"
               type="text"
-              className="border rounded px-3 py-2"
-              placeholder="Programme généré"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+              placeholder="Ex: Prise de masse estivale"
               onChange={(e) =>
                 (automaticProgramNameRef.current = e.target.value)
               }
@@ -246,14 +322,14 @@ const Program = () => {
             />
           </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="program-description" className="mb-1 font-medium">
-              Description du programme
+          <div className="space-y-2">
+            <label htmlFor="program-description" className="text-sm font-medium text-gray-300">
+              Description
             </label>
             <textarea
               id="program-description"
-              className="border rounded px-3 py-2"
-              placeholder="Programme généré automatiquement"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px]"
+              placeholder="Objectifs, focus particulier..."
               onChange={(e) =>
                 (automaticProgramDescriptionRef.current = e.target.value)
               }
@@ -261,50 +337,47 @@ const Program = () => {
             />
           </div>
 
-          <div className="flex flex-col">
-            <label className="font-medium">Fitness Profil</label>
-
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">Profil Fitness</label>
             <select
-              className="border rounded px-3 py-2"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
               value={selectedProfileId}
               onChange={(e) => setSelectedProfileId(e.target.value)}
               disabled={isGenerating}
               required
             >
               <option value="" disabled>
-                Choisissez votre profil
+                Choisir un profil...
               </option>
-
               {fitnessProfile && (
                 <option value={fitnessProfile.id}>
-                  {user?.name} – {fitnessProfile.age} ans –{' '}
-                  {fitnessProfile.weight} kg – {fitnessProfile.height} cm
+                  {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg
                 </option>
               )}
             </select>
             {selectionError && (
-              <p className="text-xs text-red-600 mt-2">{selectionError}</p>
+              <p className="text-xs text-red-400 mt-2">{selectionError}</p>
             )}
           </div>
 
           {isGenerating && (
-            <div className="mt-3 flex items-center gap-3">
-              <div
-                className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"
-                aria-hidden
-              />
-              <p className="text-xs text-gray-500">Génération en cours…</p>
+            <div className="p-3 sm:p-4 bg-[#94fbdd]/10 rounded-xl flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <p className="text-xs sm:text-sm text-[#94fbdd] font-medium">L'IA génère votre programme sur mesure...</p>
             </div>
           )}
         </div>
 
         <ModalFooter>
-          <div className="flex justify-end gap-3 m-auto">
-            <Button variant="secondary" onClick={() => { setAutomaticOpen(false); setSelectedProfileId(""); }} disabled={isGenerating}>
-              Fermer
-            </Button>
-            <Button
-              variant="primary"
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => { setAutomaticOpen(false); setSelectedProfileId(''); }}
+              disabled={isGenerating}
+              className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
+            >
+              Annuler
+            </button>
+            <button
               onClick={() =>
                 handleConfirmAutomatic(
                   automaticProgramNameRef.current,
@@ -312,9 +385,10 @@ const Program = () => {
                 )
               }
               disabled={isGenerating || !selectedProfileId}
+              className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isGenerating ? "Génération…" : "Confirmer"}
-            </Button>
+              {isGenerating ? 'Génération...' : 'Générer le programme'}
+            </button>
           </div>
         </ModalFooter>
       </Modal>
@@ -329,7 +403,6 @@ const Program = () => {
           onConfirm={handleManualProgramConfirm}
         />
       )}
-
     </div>
   );
 };

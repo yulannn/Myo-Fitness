@@ -1,68 +1,209 @@
-import { mockUser } from '../../data/mockData'
-import { SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import { useAuth } from '../../context/AuthContext'
+import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
+import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
+import {
+  SparklesIcon,
+  ArrowRightIcon,
+  FireIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  TrophyIcon,
+  ChartBarIcon,
+  BoltIcon
+} from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      {/* HEADER */}
-      <div className="bg-gradient-to-r from-[#2F4858] to-[#7CD8EE] text-white p-6 shadow-lg sticky top-0 z-20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Myo Fitness</h1>
-            <p className="text-white/80 text-sm">Bienvenue, {mockUser.name}</p>
-          </div>
-          <img
-            src={mockUser.avatarUrl}
-            alt={mockUser.name}
-            className="h-10 w-10 rounded-full border-2 border-white/30"
-          />
-        </div>
-      </div>
+  const { user } = useAuth()
+  const { data: programs } = useProgramsByUser()
+  const { data: sessions } = useGetAllUserSessions()
 
-      <div className="p-4 max-w-4xl mx-auto space-y-6 mt-4">
-        {/* Welcome Card */}
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-[#7CD8EE]/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#7CD8EE]/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+  // Calculer les stats
+  const stats = useMemo(() => {
+    const completedSessions = sessions?.filter((s: any) => s.completed).length || 0
+    const activeProgram = Array.isArray(programs)
+      ? programs.find((p: any) => p.status === 'ACTIVE')
+      : null
+    const upcomingSessions = sessions?.filter((s: any) => !s.completed && s.date).length || 0
+
+    return {
+      completedSessions,
+      activeProgram,
+      upcomingSessions,
+      totalSessions: sessions?.length || 0
+    }
+  }, [programs, sessions])
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Bonjour'
+    if (hour < 18) return 'Bon après-midi'
+    return 'Bonsoir'
+  }
+
+  return (
+    <div className="min-h-screen bg-[#121214] pb-24">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
+
+        {/* Welcome Section */}
+        <div className="relative bg-gradient-to-br from-[#252527] to-[#121214] rounded-3xl shadow-2xl overflow-hidden border border-[#94fbdd]/10 p-6 sm:p-8">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
 
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-2">
-              <SparklesIcon className="h-6 w-6 text-[#7CD8EE]" />
-              <h2 className="text-xl font-bold text-[#2F4858]">Prêt à vous dépasser ?</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
+                <SparklesIcon className="h-7 w-7 sm:h-8 sm:w-8 text-[#94fbdd]" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  {getGreeting()}, {user?.name?.split(' ')[0] || 'Champion'} !
+                </h1>
+                <p className="text-sm sm:text-base text-gray-400 mt-1">
+                  Prêt à repousser tes limites aujourd'hui ?
+                </p>
+              </div>
             </div>
-            <p className="text-[#2F4858]/70 mb-6 max-w-md">
-              Votre prochain entraînement vous attend. Consultez votre programme ou rejoignez une séance de groupe.
-            </p>
 
-            <div className="flex flex-wrap gap-3">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
               <Link
-                to="/program"
-                className="px-5 py-2.5 bg-[#2F4858] text-white rounded-xl font-semibold shadow-lg hover:bg-[#7CD8EE] hover:shadow-xl transition-all active:scale-95 flex items-center gap-2"
+                to="/programs"
+                className="group p-4 bg-[#94fbdd] rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
               >
-                Mon Programme
-                <ArrowRightIcon className="h-4 w-4" />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-[#121214] font-bold text-base sm:text-lg">Mon Programme</p>
+                    <p className="text-[#121214]/70 text-xs sm:text-sm mt-1">
+                      {stats.activeProgram ? stats.activeProgram.name : 'Créer un programme'}
+                    </p>
+                  </div>
+                  <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#121214] group-hover:translate-x-1 transition-transform" />
+                </div>
               </Link>
+
               <Link
                 to="/sessions"
-                className="px-5 py-2.5 bg-white text-[#2F4858] border border-[#2F4858]/20 rounded-xl font-semibold hover:bg-gray-50 transition-all active:scale-95"
+                className="group p-4 bg-[#252527] border border-[#94fbdd]/20 rounded-2xl hover:border-[#94fbdd]/40 transition-all active:scale-95"
               >
-                Voir l'agenda
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-white font-bold text-base sm:text-lg">Mes Séances</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                      {stats.upcomingSessions} à venir
+                    </p>
+                  </div>
+                  <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd] group-hover:translate-x-1 transition-transform" />
+                </div>
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats or Info could go here */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gradient-to-br from-[#7CD8EE] to-[#2F4858] rounded-2xl p-5 text-white shadow-lg">
-            <p className="text-white/80 text-xs font-bold uppercase mb-1">Séances terminées</p>
-            <p className="text-3xl font-bold">12</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Séances terminées */}
+          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+                <TrophyIcon className="h-5 w-5 text-[#94fbdd]" />
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.completedSessions}</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-medium">Séances terminées</p>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-[#7CD8EE]/20 shadow-sm">
-            <p className="text-[#2F4858]/60 text-xs font-bold uppercase mb-1">Cette semaine</p>
-            <p className="text-3xl font-bold text-[#2F4858]">3</p>
+
+          {/* Total séances */}
+          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+                <CalendarDaysIcon className="h-5 w-5 text-[#94fbdd]" />
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.totalSessions}</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-medium">Total séances</p>
+          </div>
+
+          {/* À venir */}
+          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+                <FireIcon className="h-5 w-5 text-[#94fbdd]" />
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.upcomingSessions}</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-medium">À venir</p>
+          </div>
+
+          {/* Programmes */}
+          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+                <ClipboardDocumentListIcon className="h-5 w-5 text-[#94fbdd]" />
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">
+              {Array.isArray(programs) ? programs.length : 0}
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400 font-medium">Programmes</p>
           </div>
         </div>
+
+        {/* Motivation Card */}
+        <div className="relative bg-gradient-to-br from-[#94fbdd]/10 to-[#252527] rounded-3xl p-6 sm:p-8 border border-[#94fbdd]/20 overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#94fbdd]/5 rounded-full blur-3xl"></div>
+
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-4 bg-[#94fbdd]/10 rounded-2xl">
+              <BoltIcon className="h-8 w-8 sm:h-10 sm:w-10 text-[#94fbdd]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+                Continue comme ça ! 💪
+              </h3>
+              <p className="text-sm sm:text-base text-gray-400">
+                {stats.completedSessions > 0
+                  ? `Tu as déjà complété ${stats.completedSessions} séance${stats.completedSessions > 1 ? 's' : ''}. Chaque entraînement te rapproche de tes objectifs !`
+                  : "Commence ton premier entraînement et lance ta transformation !"
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Link
+            to="/profiles"
+            className="group bg-[#252527] rounded-2xl p-5 sm:p-6 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all active:scale-95"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-[#94fbdd]/10 rounded-xl">
+                <ChartBarIcon className="h-6 w-6 text-[#94fbdd]" />
+              </div>
+              <ArrowRightIcon className="h-5 w-5 text-gray-600 group-hover:text-[#94fbdd] group-hover:translate-x-1 transition-all" />
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-white mb-1">Mon Profil</h3>
+            <p className="text-xs sm:text-sm text-gray-400">Gérer mes informations et objectifs</p>
+          </Link>
+
+          <Link
+            to="/social"
+            className="group bg-[#252527] rounded-2xl p-5 sm:p-6 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all active:scale-95"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-[#94fbdd]/10 rounded-xl">
+                <FireIcon className="h-6 w-6 text-[#94fbdd]" />
+              </div>
+              <ArrowRightIcon className="h-5 w-5 text-gray-600 group-hover:text-[#94fbdd] group-hover:translate-x-1 transition-all" />
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-white mb-1">Social</h3>
+            <p className="text-xs sm:text-sm text-gray-400">Rejoindre la communauté</p>
+          </Link>
+        </div>
+
       </div>
     </div>
   )

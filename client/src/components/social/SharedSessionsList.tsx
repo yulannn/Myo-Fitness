@@ -46,7 +46,7 @@ const SharedSessionsList: React.FC = () => {
                 <h2 className="text-xl font-bold text-white">Séances Partagées</h2>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 bg-[#94fbdd] hover:bg-[#94fbdd]/80 text-[#121214] px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                 >
                     <Plus size={18} />
                     Proposer une séance
@@ -55,11 +55,11 @@ const SharedSessionsList: React.FC = () => {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {sessions?.length === 0 && (
-                    <div className="col-span-full text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700 border-dashed">
+                    <div className="col-span-full text-center py-12 bg-[#252527] rounded-xl border border-gray-700 border-dashed">
                         <p className="text-gray-400">Aucune séance partagée prévue pour le moment.</p>
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="text-blue-400 hover:text-blue-300 mt-2 text-sm font-medium"
+                            className="text-[#121214] hover:text-[#94fbdd] mt-2 text-sm font-medium"
                         >
                             Soyez le premier à en proposer une !
                         </button>
@@ -78,7 +78,7 @@ const SharedSessionsList: React.FC = () => {
                                     <h3 className="font-bold text-lg text-white">{session.title}</h3>
                                     {session.group && (
                                         <div className="flex items-center gap-1 mt-1">
-                                            <span className="text-xs font-medium text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full">
+                                            <span className="text-xs font-medium text-[#121214] bg-[#121214]/10 px-2 py-0.5 rounded-full">
                                                 {session.group.name} • {(session.group as any).members?.length || 0} membres
                                             </span>
                                         </div>
@@ -89,7 +89,7 @@ const SharedSessionsList: React.FC = () => {
                                     {isOrganizer && (
                                         <button
                                             onClick={() => setInviteModalSessionId(session.id)}
-                                            className="text-purple-400 hover:text-purple-300 transition-colors"
+                                            className="text-[#121214] hover:text-[#121214]/80 transition-colors"
                                             title="Inviter des personnes"
                                         >
                                             <UserPlus size={18} />
@@ -111,15 +111,15 @@ const SharedSessionsList: React.FC = () => {
 
                             <div className="space-y-2 text-sm text-gray-300 mb-6">
                                 <div className="flex items-center gap-2">
-                                    <Calendar size={16} className="text-blue-400" />
+                                    <Calendar size={16} className="text-[#121214]" />
                                     <span>{format(new Date(session.startTime), "d MMMM yyyy 'à' HH:mm", { locale: fr })}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <MapPin size={16} className="text-red-400" />
+                                    <MapPin size={16} className="text-[#121214]" />
                                     <span>{session.location || 'Non spécifié'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Users size={16} className="text-green-400" />
+                                    <Users size={16} className="text-[#121214]" />
                                     <span>
                                         {session.participants.length} / {session.maxParticipants || '∞'} participants
                                     </span>

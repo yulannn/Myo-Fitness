@@ -43,7 +43,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-xl w-full max-w-md p-6 relative shadow-xl border border-gray-700">
+            <div className="bg-[#252527] rounded-xl w-full max-w-md p-6 relative shadow-xl border border-gray-700">
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -63,7 +63,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-[#121214] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             placeholder="Ex: Séance Jambes"
                             required
                         />
@@ -74,7 +74,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-[#121214] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             placeholder="Détails sur la séance..."
                             rows={3}
                         />
@@ -86,7 +86,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                             type="datetime-local"
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-[#121214] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             required
                         />
                     </div>
@@ -98,7 +98,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                                 type="text"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
-                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                                className="w-full bg-[#121214] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             />
                         </div>
                         <div>
@@ -108,7 +108,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                                 min="2"
                                 value={maxParticipants}
                                 onChange={(e) => setMaxParticipants(e.target.value === '' ? '' : Number(e.target.value))}
-                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                                className="w-full bg-[#121214] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                                 placeholder="Illimité"
                             />
                         </div>
@@ -117,7 +117,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                     <button
                         type="submit"
                         disabled={createSession.isPending}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-[#94fbdd] hover:bg-[#94fbdd]/80 text-[#121214] font-medium py-2 px-4 rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {createSession.isPending ? 'Création...' : 'Créer la séance'}
                     </button>

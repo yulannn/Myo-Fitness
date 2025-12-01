@@ -1,4 +1,3 @@
-// src/components/EditProfileModal.tsx
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { UpdateFitnessProfilePayload, FitnessProfile } from '../../types/fitness-profile.type';
@@ -77,75 +76,75 @@ export default function EditProfileModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-[#7CD8EE]/20 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-[#252527] p-6 shadow-2xl border border-[#94fbdd]/20 max-h-[90vh] overflow-y-auto">
 
                 {/* Header */}
-                <div className="mb-5 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-[#2F4858]">
+                <div className="mb-6 flex items-center justify-between">
+                    <h3 className="text-2xl font-bold text-white">
                         Modifier le profil fitness
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-[#121214] rounded-lg"
                     >
                         <XMarkIcon className="h-6 w-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
 
-                    {/*  Inputs grid */}
+                    {/* Inputs grid */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Âge</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Âge</label>
                             <input
                                 type="number"
                                 name="age"
-                                placeholder="Âge"
+                                placeholder="25"
                                 value={form.age || ''}
                                 onChange={handleChange}
-                                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                 required
                                 min="13"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Taille (cm)</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Taille (cm)</label>
                             <input
                                 type="number"
                                 name="height"
-                                placeholder="Taille"
+                                placeholder="175"
                                 value={form.height || ''}
                                 onChange={handleChange}
-                                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                 required
                                 min="100"
                             />
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Poids (kg)</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Poids (kg)</label>
                             <input
                                 type="number"
                                 name="weight"
-                                placeholder="Poids"
+                                placeholder="70"
                                 value={form.weight || ''}
                                 onChange={handleChange}
-                                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                 required
                                 min="30"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Séances/semaine</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Séances/semaine</label>
                             <input
                                 type="number"
                                 name="trainingFrequency"
-                                placeholder="Fréquence"
+                                placeholder="3"
                                 value={form.trainingFrequency || ''}
                                 onChange={handleChange}
-                                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                 required
                                 min="0"
                                 max="7"
@@ -154,13 +153,13 @@ export default function EditProfileModal({
                     </div>
 
                     {/* Experience level */}
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Niveau d'expérience</label>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Niveau d'expérience</label>
                         <select
                             name="experienceLevel"
                             value={form.experienceLevel}
                             onChange={handleChange}
-                            className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                             required
                         >
                             <option value="">Sélectionner...</option>
@@ -171,40 +170,40 @@ export default function EditProfileModal({
                     </div>
 
                     {/* Goals */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Objectifs</label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-gray-300">Objectifs</label>
+                        <div className="flex gap-3">
+                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 flex-1">
                                 <input
                                     type="checkbox"
                                     name="MUSCLE_GAIN"
                                     checked={(form.goals || []).includes('MUSCLE_GAIN')}
                                     onChange={handleChange}
-                                    className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
+                                    className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
                                 />
-                                <span className="text-sm text-[#2F4858]">Gain musculaire</span>
+                                <span className="text-sm text-white">💪 Gain musculaire</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 flex-1">
                                 <input
                                     type="checkbox"
                                     name="WEIGHT_LOSS"
                                     checked={(form.goals || []).includes('WEIGHT_LOSS')}
                                     onChange={handleChange}
-                                    className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
+                                    className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
                                 />
-                                <span className="text-sm text-[#2F4858]">Perte de poids</span>
+                                <span className="text-sm text-white">🔥 Perte de poids</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Gender */}
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-[#2F4858]/70 uppercase">Genre</label>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Genre</label>
                         <select
                             name="gender"
                             value={form.gender}
                             onChange={handleChange}
-                            className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] focus:border-[#7CD8EE] outline-none transition-all"
+                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                             required
                         >
                             <option value="">Sélectionner...</option>
@@ -215,32 +214,40 @@ export default function EditProfileModal({
                     </div>
 
                     {/* Bodyweight */}
-                    <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30">
                         <input
                             type="checkbox"
                             name="bodyWeight"
                             checked={form.bodyWeight || false}
                             onChange={handleChange}
-                            className="h-4 w-4 rounded border-gray-300 text-[#7CD8EE] focus:ring-[#7CD8EE]"
+                            className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
                         />
-                        <span className="text-sm text-[#2F4858]">Bodyweight uniquement</span>
+                        <span className="text-sm text-white">Bodyweight uniquement</span>
                     </label>
 
                     {/* Buttons */}
                     <div className="flex gap-3 pt-4">
                         <button
-                            type="submit"
-                            disabled={isPending}
-                            className="flex-1 rounded-xl bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] px-4 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isPending ? 'Modification...' : 'Modifier le profil'}
-                        </button>
-                        <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm hover:bg-gray-50 transition active:scale-95"
+                            className="flex-1 rounded-xl border border-[#94fbdd]/20 bg-transparent px-4 py-3 text-sm font-semibold text-gray-300 hover:bg-[#121214] transition-all"
                         >
                             Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold text-[#121214] bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 ${isPending ? 'opacity-70 cursor-not-allowed' : ''
+                                }`}
+                        >
+                            {isPending ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-[#121214]/30 border-t-[#121214] rounded-full animate-spin"></div>
+                                    Modification...
+                                </span>
+                            ) : (
+                                'Modifier le profil'
+                            )}
                         </button>
                     </div>
 

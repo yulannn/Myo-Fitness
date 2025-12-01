@@ -1,6 +1,6 @@
-// ...existing code...
 import * as React from "react";
 import { clsx } from "clsx";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
     isOpen: boolean;
@@ -13,25 +13,32 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
         >
             <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-xxs"
+                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                 onClick={onClose}
             />
 
-
             <div
                 className={clsx(
-                    "relative z-50 w-[92%] max-w-lg my-auto",
-                    "rounded-2xl bg-white",
-                    "shadow-2xl ring-1 ring-black/5",
-                    "max-h-[calc(100vh-4rem)]",
+                    "relative z-50 w-full max-w-lg",
+                    "rounded-3xl bg-[#252527]",
+                    "shadow-2xl border border-[#94fbdd]/10",
+                    "max-h-[90vh]",
                     "flex flex-col"
                 )}
             >
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors z-10"
+                >
+                    <XMarkIcon className="h-5 w-5" />
+                </button>
+
                 {children}
             </div>
         </div>
@@ -39,18 +46,17 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 };
 
 export const ModalHeader = ({
-
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx("flex flex-col text-center space-y-1.5 px-6 pt-6 pb-2 text-indigo-500 flex-shrink-0", className)} {...props} />
+    <div className={clsx("px-6 pt-6 pb-4 flex-shrink-0", className)} {...props} />
 );
 
 export const ModalFooter = ({
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div className={clsx("px-6 pb-6 pt-4 flex flex-col space-y-2 text-indigo-500 flex-shrink-0", className)} {...props} />
+    <div className={clsx("px-6 pb-6 pt-4 flex-shrink-0", className)} {...props} />
 );
 
 export const ModalContent = ({
@@ -66,7 +72,7 @@ export const ModalTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <h2
         ref={ref}
-        className={clsx("text-lg font-semibold text-indigo-500 m-auto", className)}
+        className={clsx("text-2xl font-bold text-white text-center", className)}
         {...props}
     />
 ));
@@ -77,7 +83,7 @@ export const ModalDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <p
         ref={ref}
-        className={clsx("text-sm text-indigo-500 dark:text-neutral-400", className)}
+        className={clsx("text-sm text-gray-400 text-center", className)}
         {...props}
     />
 ));
