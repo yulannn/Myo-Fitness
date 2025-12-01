@@ -1,6 +1,3 @@
-// src/components/DeleteProfileModal.tsx
-import { X } from 'lucide-react';
-
 interface DeleteProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,9 +16,12 @@ export default function DeleteProfileModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-slate-900">Confirmer la suppression</h3>
+        <h3 className="text-lg font-semibold text-slate-900">
+          Confirmer la suppression
+        </h3>
         <p className="mt-2 text-sm text-slate-600">
-          Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.
+          Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est
+          irréversible.
         </p>
         <div className="mt-5 flex gap-3">
           <button

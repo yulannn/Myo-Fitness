@@ -5,9 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mobile": "vite --host 0.0.0.0",
+    "dev:local": "vite --host localhost",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:init": "npx cap add android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:run": "npm run build && npx cap sync android && npx cap run android",
+    "ios:build": "npm run build && npx cap sync ios && npx cap open ios",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:run": "npx cap run ios --target='FDC71E7C-78CA-4B5E-8F01-C94E753AFA67'",
+    "ios:dev": "npm run build && npx cap sync ios && npx cap run ios --target='FDC71E7C-78CA-4B5E-8F01-C94E753AFA67'"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
