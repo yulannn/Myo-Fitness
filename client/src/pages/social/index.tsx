@@ -63,7 +63,6 @@ export default function SocialPage() {
     const { data: messages = [] } = useMessages(selectedConversation);
     const { mutate: sendMessage } = useSendMessage();
     const { mutate: markAsRead } = useMarkAsRead();
-
     // --- WEBSOCKET FEATURES ---
     const { typingUsers, startTyping, stopTyping } = useTypingIndicator(selectedConversation);
     useConversationRoom(selectedConversation);
@@ -319,7 +318,7 @@ export default function SocialPage() {
 
                                     {/* Messages Area */}
                                     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#121214]/20">
-                                        {messages.slice().reverse().map((msg: any) => {
+                                        {messages.slice().map((msg: any) => {
                                             const isMe = msg.sender?.id === user?.id;
                                             const isSessionInvitation = msg.content.includes('📅 INVITATION');
                                             const sessionIdMatch = msg.content.match(/SESSION_ID:(\S+)/);

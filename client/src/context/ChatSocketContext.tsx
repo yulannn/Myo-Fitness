@@ -39,7 +39,7 @@ export const ChatSocketProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         // Créer la connexion Socket.io
-        const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+        const SOCKET_URL = 'http://localhost:3000';
         const newSocket = io(`${SOCKET_URL}/chat`, {
             auth: {
                 userId: user.id,
