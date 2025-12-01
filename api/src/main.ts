@@ -28,8 +28,28 @@ async function bootstrap() {
     }),
   );
 
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://10.15.4.156:5173',
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+  ];
+
   app.enableCors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -37,20 +57,25 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  const host = '0.0.0.0'; 
+  
+  await app.listen(port, host);
+  
   console.log(
     '\x1b[36m%s\x1b[0m',
     '===============================================================',
   );
   console.log(
     '\x1b[32m🚀  Application running on:\x1b[0m',
-    `http://localhost:${process.env.PORT ?? 3000}`,
   );
+  console.log(`   - Local:   http://localhost:${port}`);
+  console.log(`   - Network: http://10.15.4.156:${port}`);
   console.log(
     '\x1b[34m📘  Swagger docs:\x1b[0m',
-    `http://localhost:${process.env.PORT ?? 3000}/api`,
   );
+  console.log(`   - Local:   http://localhost:${port}/api`);
+  console.log(`   - Network: http://10.15.4.156:${port}/api`);
   console.log(
     '\x1b[36m%s\x1b[0m',
     '===============================================================',

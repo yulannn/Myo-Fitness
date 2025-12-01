@@ -1,7 +1,5 @@
-// src/pages/FitnessProfiles.tsx
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useLogout } from '../../api/hooks/auth/useLogout';
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useCreateFitnessProfile } from '../../api/hooks/fitness-profile/useCreateFitnessProfile';
 import { useUpdateFitnessProfile } from '../../api/hooks/fitness-profile/useUpdateFitnessProfile';
@@ -13,14 +11,15 @@ import type { FitnessProfile } from '../../types/fitness-profile.type';
 
 export default function FitnessProfiles() {
   const { user } = useAuth();
-  const logout = useLogout();
   const { data: profiles, isLoading } = useFitnessProfilesByUser();
   const createMutation = useCreateFitnessProfile();
   const updateMutation = useUpdateFitnessProfile(profiles?.id);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [profileToEdit, setProfileToEdit] = useState<FitnessProfile | null>(null);
+  const [profileToEdit, setProfileToEdit] = useState<FitnessProfile | null>(
+    null,
+  );
 
   const handleCreate = (form: any) => {
     createMutation.mutate(form, {
@@ -44,7 +43,6 @@ export default function FitnessProfiles() {
 
   return (
     <section className="min-h-screen bg-black px-4 pt-6 pb-28 max-w-3xl mx-auto space-y-8">
-
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl text-[#FFFFFF] font-bold montserrat-500">
