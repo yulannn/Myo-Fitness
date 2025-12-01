@@ -264,7 +264,7 @@ export default function SocialPage() {
                                             </div>
                                             {user.status === 'NONE' && (
                                                 <button
-                                                    onClick={() => sendFriendRequest.mutate(user.id)}
+                                                    onClick={() => sendFriendRequest.mutate({ friendId: user.id })}
                                                     className="text-[#7CD8EE] hover:bg-[#7CD8EE]/10 p-2 rounded-full"
                                                 >
                                                     <PlusIcon className="h-6 w-6" />

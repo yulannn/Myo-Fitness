@@ -12,15 +12,15 @@ export function useConversations() {
 
         // Écouter les nouveaux messages pour mettre à jour la liste des conversations
         const handleNewMessage = () => {
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.refetchQueries({ queryKey: ['conversations'] });
         };
 
         const handleMessageUpdated = () => {
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.refetchQueries({ queryKey: ['conversations'] });
         };
 
         const handleMessageDeleted = () => {
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.refetchQueries({ queryKey: ['conversations'] });
         };
 
         socket.on('message:new', handleNewMessage);

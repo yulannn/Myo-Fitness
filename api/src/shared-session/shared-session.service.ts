@@ -379,13 +379,28 @@ export class SharedSessionService {
         let conversation = await this.prisma.conversation.findFirst({
             where: {
                 type: 'PRIVATE',
-                participants: {
-                    every: {
-                        userId: { in: [userId, friendId] }
+                AND: [
+                    {
+                        participants: {
+                            some: { userId: userId }
+                        }
+                    },
+                    {
+                        participants: {
+                            some: { userId: friendId }
+                        }
                     }
-                }
+                ]
             },
+            include: {
+                participants: true
+            }
         });
+
+        // Vérifier que la conversation trouvée a exactement 2 participants
+        if (conversation && conversation.participants.length !== 2) {
+            conversation = null;
+        }
 
         if (!conversation) {
             // Créer la conversation privée
@@ -399,6 +414,9 @@ export class SharedSessionService {
                         ],
                     },
                 },
+                include: {
+                    participants: true
+                }
             });
         }
 
