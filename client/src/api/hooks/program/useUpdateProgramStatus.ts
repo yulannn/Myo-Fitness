@@ -9,6 +9,7 @@ export const useUpdateProgramStatus = () => {
             ProgramFetchDataService.updateProgramStatus(programId, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['programs'] });
+            queryClient.invalidateQueries({ queryKey: ['program'] });
         },
     });
 };
