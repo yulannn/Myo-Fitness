@@ -184,7 +184,7 @@ export default function EditProfileModal({
                                     onChange={handleChange}
                                     className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
                                 />
-                                <span className="text-sm text-white">💪 Gain musculaire</span>
+                                <span className="text-sm text-white">Gain musculaire</span>
                             </label>
                             <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 flex-1">
                                 <input
@@ -194,7 +194,7 @@ export default function EditProfileModal({
                                     onChange={handleChange}
                                     className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
                                 />
-                                <span className="text-sm text-white">🔥 Perte de poids</span>
+                                <span className="text-sm text-white">Perte de poids</span>
                             </label>
                         </div>
                     </div>

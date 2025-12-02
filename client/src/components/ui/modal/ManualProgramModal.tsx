@@ -25,6 +25,7 @@ interface ManualProgramModalProps {
             name: string;
             description?: string;
             fitnessProfileId: number;
+            startDate?: string;
         };
         sessions: SessionData[];
     }) => void;
@@ -41,6 +42,7 @@ export const ManualProgramModal = ({
 }: ManualProgramModalProps) => {
     const [programName, setProgramName] = useState('');
     const [programDescription, setProgramDescription] = useState('');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [numberOfSessions, setNumberOfSessions] = useState(1);
     const [sessions, setSessions] = useState<SessionData[]>([]);
     const [currentStep, setCurrentStep] = useState<'info' | 'sessions'>('info');
@@ -111,6 +113,7 @@ export const ManualProgramModal = ({
                 name: programName,
                 description: programDescription || undefined,
                 fitnessProfileId,
+                startDate: startDate || new Date().toISOString(),
             },
             sessions,
         });
@@ -122,6 +125,7 @@ export const ManualProgramModal = ({
     const handleClose = () => {
         setProgramName('');
         setProgramDescription('');
+        setStartDate(new Date().toISOString().split('T')[0]);
         setNumberOfSessions(1);
         setSessions([]);
         setCurrentStep('info');
@@ -167,6 +171,20 @@ export const ManualProgramModal = ({
                                 rows={3}
                                 value={programDescription}
                                 onChange={(e) => setProgramDescription(e.target.value)}
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                            <label htmlFor="program-start-date" className="font-semibold text-[#2F4858] text-xs uppercase">
+                                Date de début
+                            </label>
+                            <input
+                                id="program-start-date"
+                                type="date"
+                                className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-[#2F4858] focus:ring-2 focus:ring-[#7CD8EE] outline-none"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
                                 disabled={isPending}
                             />
                         </div>

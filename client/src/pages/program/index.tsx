@@ -63,6 +63,7 @@ const Program = () => {
 
   const automaticProgramNameRef = useRef<string>('');
   const automaticProgramDescriptionRef = useRef<string>('');
+  const automaticProgramStartDateRef = useRef<string>(new Date().toISOString().split('T')[0]);
 
   const toggleProgramExpansion = (programId: number) => {
     setExpandedPrograms(prev => {
@@ -90,7 +91,7 @@ const Program = () => {
     setChoiceOpen(true);
   };
 
-  const handleConfirmAutomatic = (name?: string, description?: string) => {
+  const handleConfirmAutomatic = (name?: string, description?: string, startDate?: string) => {
     if (!selectedProfileId) {
       setSelectionError(
         'Veuillez sélectionner un profil fitness avant de continuer.',
@@ -110,6 +111,7 @@ const Program = () => {
       description: description || 'Programme généré automatiquement',
       fitnessProfileId: profileIdNumber,
       status: 'ACTIVE',
+      startDate: startDate || new Date().toISOString(),
     } as any;
 
     setIsGenerating(true);
@@ -363,6 +365,22 @@ const Program = () => {
           </div>
 
           <div className="space-y-2">
+            <label htmlFor="program-start-date" className="text-sm font-medium text-gray-300">
+              Date de début
+            </label>
+            <input
+              id="program-start-date"
+              type="date"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
+              defaultValue={new Date().toISOString().split('T')[0]}
+              onChange={(e) =>
+                (automaticProgramStartDateRef.current = e.target.value)
+              }
+              disabled={isGenerating}
+            />
+          </div>
+
+          <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Profil Fitness</label>
             <select
               className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
@@ -406,7 +424,8 @@ const Program = () => {
               onClick={() =>
                 handleConfirmAutomatic(
                   automaticProgramNameRef.current,
-                  automaticProgramDescriptionRef.current
+                  automaticProgramDescriptionRef.current,
+                  automaticProgramStartDateRef.current
                 )
               }
               disabled={isGenerating || !selectedProfileId}

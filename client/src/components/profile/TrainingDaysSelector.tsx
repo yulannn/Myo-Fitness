@@ -11,17 +11,16 @@ interface DayOption {
     value: WeekDay;
     label: string;
     shortLabel: string;
-    emoji: string;
 }
 
 const WEEK_DAYS: DayOption[] = [
-    { value: 'MONDAY', label: 'Lundi', shortLabel: 'Lun', emoji: '💪' },
-    { value: 'TUESDAY', label: 'Mardi', shortLabel: 'Mar', emoji: '🔥' },
-    { value: 'WEDNESDAY', label: 'Mercredi', shortLabel: 'Mer', emoji: '⚡' },
-    { value: 'THURSDAY', label: 'Jeudi', shortLabel: 'Jeu', emoji: '🎯' },
-    { value: 'FRIDAY', label: 'Vendredi', shortLabel: 'Ven', emoji: '💯' },
-    { value: 'SATURDAY', label: 'Samedi', shortLabel: 'Sam', emoji: '🏆' },
-    { value: 'SUNDAY', label: 'Dimanche', shortLabel: 'Dim', emoji: '✨' },
+    { value: 'MONDAY', label: 'Lundi', shortLabel: 'Lun' },
+    { value: 'TUESDAY', label: 'Mardi', shortLabel: 'Mar' },
+    { value: 'WEDNESDAY', label: 'Mercredi', shortLabel: 'Mer' },
+    { value: 'THURSDAY', label: 'Jeudi', shortLabel: 'Jeu' },
+    { value: 'FRIDAY', label: 'Vendredi', shortLabel: 'Ven' },
+    { value: 'SATURDAY', label: 'Samedi', shortLabel: 'Sam' },
+    { value: 'SUNDAY', label: 'Dimanche', shortLabel: 'Dim' },
 ];
 
 export default function TrainingDaysSelector({
@@ -111,11 +110,6 @@ export default function TrainingDaysSelector({
                             `}
                             title={isDisabled ? `Maximum ${maxSelections} jours atteint` : day.label}
                         >
-                            {/* Emoji */}
-                            <span className="text-xl mb-0.5">
-                                {day.emoji}
-                            </span>
-
                             {/* Label */}
                             <span
                                 className={`
@@ -168,47 +162,6 @@ export default function TrainingDaysSelector({
                 })}
             </div>
 
-            {/* Selected days summary */}
-            {selectedDays.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {selectedDays.map((dayValue) => {
-                        const day = WEEK_DAYS.find(d => d.value === dayValue);
-                        if (!day) return null;
-
-                        return (
-                            <div
-                                key={dayValue}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#94fbdd]/10 border border-[#94fbdd]/30"
-                            >
-                                <span className="text-sm">{day.emoji}</span>
-                                <span className="text-xs font-semibold text-[#94fbdd]">
-                                    {day.label}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDayToggle(dayValue)}
-                                    className="ml-1 text-[#94fbdd]/70 hover:text-[#94fbdd] transition-colors"
-                                >
-                                    <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
             {/* Clear all button */}
             {selectedDays.length > 0 && (
                 <button
@@ -216,7 +169,7 @@ export default function TrainingDaysSelector({
                     onClick={() => onChange([])}
                     className="w-full px-3 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-white bg-[#121214] hover:bg-[#94fbdd]/5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all"
                 >
-                    🗑️ Tout effacer (Planification manuelle)
+                    Tout effacer (Planification manuelle)
                 </button>
             )}
         </div>

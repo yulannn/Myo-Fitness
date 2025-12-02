@@ -15,6 +15,7 @@ export interface Session {
     exercices?: Exercise[];
     createdAt?: string;
     updatedAt?: string;
+    performedAt?: string;
 }
 
 export interface Program {
@@ -26,12 +27,14 @@ export interface Program {
     updatedAt?: string;
     fitnessProfileId?: number;
     sessions?: Session[];
+    startDate?: string;
 }
 
 export interface CreateProgramPayload {
     name: string;
     description?: string | null;
     fitnessProfileId: number;
+    startDate?: string;
 }
 
 export interface ManualProgramPayload {

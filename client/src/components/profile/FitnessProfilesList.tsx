@@ -149,7 +149,7 @@ export default function FitnessProfilesList({
                       key={index}
                       className="px-4 py-2 bg-[#94fbdd]/10 border border-[#94fbdd]/30 text-[#94fbdd] text-sm font-semibold rounded-xl hover:bg-[#94fbdd]/20 transition-all"
                     >
-                      {g === 'MUSCLE_GAIN' ? '💪 Gain musculaire' : '🔥 Perte de poids'}
+                      {g === 'MUSCLE_GAIN' ? 'Gain musculaire' : 'Perte de poids'}
                     </span>
                   ))
                 ) : (
