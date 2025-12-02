@@ -24,8 +24,10 @@ export default function Sessions() {
     const getSessionsForDate = (date: Date | undefined): Session[] => {
         if (!date || !sessions) return []
         return sessions.filter((session: Session) => {
-            if (!session.date) return false
-            return isSameDay(new Date(session.date), date)
+            // Utiliser performedAt si la séance est complétée, sinon utiliser date
+            const sessionDate = session.performedAt ? new Date(session.performedAt) : session.date ? new Date(session.date) : null
+            if (!sessionDate) return false
+            return isSameDay(sessionDate, date)
         })
     }
 
@@ -33,8 +35,11 @@ export default function Sessions() {
     const sharedSessionsForSelectedDate = getSharedSessionsForDate(selectedDate)
 
     const datesWithSessions = sessions
-        ?.filter((session: Session) => session.date)
-        .map((session: Session) => new Date(session.date!)) || []
+        ?.filter((session: Session) => session.date || session.performedAt)
+        .map((session: Session) => {
+            // Utiliser performedAt si disponible, sinon date
+            return session.performedAt ? new Date(session.performedAt) : new Date(session.date!)
+        }) || []
 
     const datesWithSharedSessions = sharedSessions
         ?.map((session: any) => new Date(session.startTime)) || []

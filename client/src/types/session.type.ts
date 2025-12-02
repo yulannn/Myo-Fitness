@@ -9,6 +9,7 @@ export interface Session {
     id: number;
     programId: number;
     date?: string;
+    performedAt?: string;
     duration?: number;
     notes?: string | null;
     exercices?: any[];
