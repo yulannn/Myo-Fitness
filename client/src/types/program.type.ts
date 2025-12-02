@@ -21,6 +21,7 @@ export interface Program {
     id: number;
     name: string;
     description?: string | null;
+    status?: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' | 'DRAFT';
     createdAt?: string;
     updatedAt?: string;
     fitnessProfileId?: number;

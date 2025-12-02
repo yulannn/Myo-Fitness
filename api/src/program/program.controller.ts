@@ -8,6 +8,7 @@ import {
   Param,
   Get,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { CreateTrainingProgramDto } from './dto/create-program.dto';
@@ -25,6 +26,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ExerciseDataDto, SessionDataWrapperDto } from './dto/session-data.dto';
 import { CreateManualProgramDto } from './dto/create-manual-program.dto';
 import { AddSessionToProgramDto } from './dto/add-session-program.dto';
+import { UpdateProgramStatusDto } from './dto/update-program-status.dto';
 
 @ApiTags('program')
 @ApiBearerAuth()
@@ -131,5 +133,20 @@ export class ProgramController {
     return this.programService.deleteSessionFromProgram(sessionId, userId);
   }
 
-
+  @Patch(':programId/status')
+  @ApiOperation({ summary: 'Mettre à jour le statut d\'un programme' })
+  @ApiBody({ type: UpdateProgramStatusDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Statut du programme mis à jour avec succès',
+    type: TrainingProgramEntity,
+  })
+  async updateProgramStatus(
+    @Param('programId', ParseIntPipe) programId: number,
+    @Body() updateStatusDto: UpdateProgramStatusDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.programService.updateProgramStatus(programId, updateStatusDto.status, userId);
+  }
 }

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
-import { CalendarIcon, ClockIcon, PlayIcon, CheckCircleIcon, PencilSquareIcon } from "@heroicons/react/24/outline"
+import { CalendarIcon, ClockIcon, PlayIcon, CheckCircleIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
 import { EditSessionModal } from "../modal/EditSessionModal"
 import { DayPicker } from 'react-day-picker'
@@ -12,16 +12,20 @@ import 'react-day-picker/dist/style.css'
 interface SessionProps {
     session: SessionType
     availableExercises?: any[]
+    programStatus?: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' | 'DRAFT'
 }
 
-export const SessionCard = ({ session, availableExercises = [] }: SessionProps) => {
+export const SessionCard = ({ session, availableExercises = [], programStatus }: SessionProps) => {
     const navigate = useNavigate()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isExpanded, setIsExpanded] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         session.date ? new Date(session.date) : undefined
     )
     const { mutate: updateDate, isPending } = useUpdateSessionDate(session.id)
+
+    const isArchived = programStatus === 'ARCHIVED'
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -42,7 +46,8 @@ export const SessionCard = ({ session, availableExercises = [] }: SessionProps) 
         }
     }
 
-    const handleStartSession = () => {
+    const handleStartSession = (e: React.MouseEvent) => {
+        e.stopPropagation()
         localStorage.setItem('activeSession', JSON.stringify(session))
         localStorage.setItem('sessionStartTime', Date.now().toString())
         navigate('/active-session')
@@ -198,157 +203,200 @@ export const SessionCard = ({ session, availableExercises = [] }: SessionProps) 
         <>
             <style>{customStyles}</style>
             <article
-                className="
-                    rounded-2xl p-4 sm:p-5 
+                className={`
+                    rounded-2xl 
                     bg-[#121214]
                     border border-[#94fbdd]/10 
                     shadow-lg
                     transition-all 
                     hover:shadow-xl
                     hover:border-[#94fbdd]/30
-                "
+                    overflow-hidden
+                `}
             >
-                <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-start sm:gap-4">
-                    <div className="flex-1 space-y-3">
-                        <div>
-                            {session.date ? (
-                                <div className="flex items-center gap-2">
-                                    <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#94fbdd] flex-shrink-0" />
-                                    <div className="text-sm sm:text-base font-semibold text-white capitalize break-words">
-                                        {formatDisplayDate(session.date)}
+                {/* Header cliquable */}
+                <div
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="p-4 sm:p-5 cursor-pointer hover:bg-[#94fbdd]/5 transition-colors"
+                >
+                    <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-start sm:gap-4">
+                        <div className="flex-1 space-y-1">
+                            <div>
+                                {session.date ? (
+                                    <div className="flex items-center gap-2">
+                                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#94fbdd] flex-shrink-0" />
+                                        <div className="text-sm sm:text-base font-semibold text-white capitalize break-words">
+                                            {formatDisplayDate(session.date)}
+                                        </div>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
-                                    <div className="text-sm sm:text-base font-semibold text-gray-500 italic">
-                                        Aucune date planifiée
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+                                        <div className="text-sm sm:text-base font-semibold text-gray-500 italic">
+                                            Aucune date planifiée
+                                        </div>
                                     </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-400">
+                                <div className="flex items-center gap-1.5">
+                                    <ClockIcon className="h-4 w-4 flex-shrink-0" />
+                                    <span>{session.duration ?? "—"} min</span>
                                 </div>
-                            )}
+                                <span>•</span>
+                                <span>{(session.exercices ?? []).length} exercice{(session.exercices ?? []).length > 1 ? 's' : ''}</span>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
-                            <ClockIcon className="h-4 w-4 flex-shrink-0" />
-                            <span>Durée : {session.duration ?? "—"} min</span>
-                        </div>
+                        <div className="flex items-center gap-3 justify-between sm:justify-end w-full sm:w-auto mt-3 sm:mt-0">
+                            <div
+                                className={`
+                                    px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0 flex items-center gap-1.5
+                                    ${session.completed
+                                        ? "bg-[#94fbdd]/10 text-[#94fbdd] border-[#94fbdd]/30"
+                                        : "bg-gray-700 text-gray-400 border-gray-600"
+                                    }
+                                `}
+                            >
+                                {session.completed && <CheckCircleIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                                <span className="whitespace-nowrap">{session.completed ? "Terminée" : "Prévue"}</span>
+                            </div>
 
-                        {!session.completed && (
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="p-1.5 rounded-lg bg-[#252527] text-gray-400">
+                                {isExpanded ? (
+                                    <ChevronUpIcon className="h-5 w-5" />
+                                ) : (
+                                    <ChevronDownIcon className="h-5 w-5" />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Contenu détaillé (Accordéon) */}
+                {isExpanded && (
+                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#94fbdd]/10 pt-4 animate-fadeIn">
+                        {!session.completed && !isArchived && (
+                            <div className="flex flex-col sm:flex-row gap-2 mb-4">
                                 <button
-                                    onClick={() => setIsModalOpen(true)}
-                                    className="
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isArchived) setIsModalOpen(true);
+                                    }}
+                                    disabled={isArchived}
+                                    className={`
                                         flex-1 px-4 py-2.5 
                                         rounded-xl
-                                        bg-[#252527] border border-[#94fbdd]/20
-                                        hover:bg-[#94fbdd]/10 hover:border-[#94fbdd]/40
-                                        text-[#94fbdd] font-semibold text-sm
+                                        ${isArchived
+                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+                                            : 'bg-[#252527] border border-[#94fbdd]/20 hover:bg-[#94fbdd]/10 hover:border-[#94fbdd]/40 text-[#94fbdd]'
+                                        }
+                                        font-semibold text-sm
                                         transition-all
-                                        active:scale-95
+                                        ${!isArchived && 'active:scale-95'}
                                         flex items-center justify-center gap-2
-                                    "
+                                    `}
                                 >
                                     <CalendarIcon className="h-4 w-4" />
-                                    <span>{session.date ? 'Modifier' : 'Planifier'}</span>
+                                    <span>{session.date ? 'Modifier date' : 'Planifier'}</span>
                                 </button>
 
                                 <button
-                                    onClick={() => setIsEditModalOpen(true)}
-                                    className="
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isArchived) setIsEditModalOpen(true);
+                                    }}
+                                    disabled={isArchived}
+                                    className={`
                                         flex-1 px-4 py-2.5 
                                         rounded-xl
-                                        bg-[#252527] border border-yellow-500/20
-                                        hover:bg-yellow-500/10 hover:border-yellow-500/40
-                                        text-yellow-400 font-semibold text-sm
+                                        ${isArchived
+                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+                                            : 'bg-[#252527] border border-yellow-500/20 hover:bg-yellow-500/10 hover:border-yellow-500/40 text-yellow-400'
+                                        }
+                                        font-semibold text-sm
                                         transition-all
-                                        active:scale-95
+                                        ${!isArchived && 'active:scale-95'}
                                         flex items-center justify-center gap-2
-                                    "
+                                    `}
                                 >
                                     <PencilSquareIcon className="h-4 w-4" />
                                     <span>Modifier</span>
                                 </button>
 
                                 <button
-                                    onClick={handleStartSession}
-                                    className="
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isArchived) handleStartSession(e);
+                                    }}
+                                    disabled={isArchived}
+                                    className={`
                                         flex-1 px-4 py-2.5 
                                         rounded-xl
-                                        bg-[#94fbdd]
-                                        hover:bg-[#94fbdd]/90
-                                        text-[#121214] font-bold text-sm
-                                        shadow-lg shadow-[#94fbdd]/20
-                                        hover:shadow-xl hover:shadow-[#94fbdd]/30
+                                        ${isArchived
+                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+                                            : 'bg-[#94fbdd] hover:bg-[#94fbdd]/90 text-[#121214] shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30'
+                                        }
+                                        font-bold text-sm
                                         transition-all
-                                        active:scale-95
+                                        ${!isArchived && 'active:scale-95'}
                                         flex items-center justify-center gap-2
-                                    "
+                                    `}
                                 >
                                     <PlayIcon className="h-4 w-4" />
                                     <span>Démarrer</span>
                                 </button>
                             </div>
                         )}
-                    </div>
 
-                    <div
-                        className={`
-                            px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0 flex items-center gap-1.5 self-start
-                            ${session.completed
-                                ? "bg-[#94fbdd]/10 text-[#94fbdd] border-[#94fbdd]/30"
-                                : "bg-gray-700 text-gray-400 border-gray-600"
-                            }
-                        `}
-                    >
-                        {session.completed && <CheckCircleIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                        <span className="whitespace-nowrap">{session.completed ? "Terminée" : "Prévue"}</span>
-                    </div>
-                </div>
+                        {session.notes && (
+                            <p
+                                className="
+                                    mb-4 p-3 rounded-xl text-xs sm:text-sm 
+                                    bg-[#252527] text-gray-300 
+                                    border border-[#94fbdd]/10
+                                    break-words
+                                "
+                            >
+                                <span className="font-medium text-[#94fbdd]">Notes :</span> {session.notes}
+                            </p>
+                        )}
 
-                {session.notes && (
-                    <p
-                        className="
-                            mt-4 p-3 rounded-xl text-xs sm:text-sm 
-                            bg-[#252527] text-gray-300 
-                            border border-[#94fbdd]/10
-                            break-words
-                        "
-                    >
-                        <span className="font-medium text-[#94fbdd]">Notes :</span> {session.notes}
-                    </p>
+                        <ul className="space-y-2">
+                            {(session.exercices ?? []).map((ex: any) => (
+                                <li
+                                    key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}
+                                    className="
+                                        flex items-start gap-2 sm:gap-3
+                                        p-3 rounded-xl
+                                        bg-[#252527]
+                                        border border-[#94fbdd]/10
+                                        hover:border-[#94fbdd]/30
+                                        transition
+                                    "
+                                >
+                                    <div
+                                        className="h-2 w-2 rounded-full mt-1.5 sm:mt-2 shrink-0 bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/50"
+                                    />
+
+                                    <div className="text-xs sm:text-sm flex-1 min-w-0">
+                                        <div className="font-semibold text-white break-words">
+                                            {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
+                                        </div>
+                                        <div className="text-gray-400 mt-0.5">
+                                            {ex.reps && `${ex.reps} reps`}
+                                            {ex.reps && ex.sets && " • "}
+                                            {ex.sets && `${ex.sets} sets`}
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
-
-                <ul className="mt-4 sm:mt-5 space-y-2">
-                    {(session.exercices ?? []).map((ex: any) => (
-                        <li
-                            key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}
-                            className="
-                                flex items-start gap-2 sm:gap-3
-                                p-3 rounded-xl
-                                bg-[#252527]
-                                border border-[#94fbdd]/10
-                                hover:border-[#94fbdd]/30
-                                transition
-                            "
-                        >
-                            <div
-                                className="h-2 w-2 rounded-full mt-1.5 sm:mt-2 shrink-0 bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/50"
-                            />
-
-                            <div className="text-xs sm:text-sm flex-1 min-w-0">
-                                <div className="font-semibold text-white break-words">
-                                    {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
-                                </div>
-                                <div className="text-gray-400 mt-0.5">
-                                    {ex.reps && `${ex.reps} reps`}
-                                    {ex.reps && ex.sets && " • "}
-                                    {ex.sets && `${ex.sets} sets`}
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
             </article>
+
 
             <Modal isOpen={isModalOpen} onClose={() => !isPending && setIsModalOpen(false)}>
                 <ModalHeader>

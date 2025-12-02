@@ -11,24 +11,25 @@ const MAX_SESSIONS_PER_PROGRAM = 7;
 export class ProgramService {
     constructor(private prisma: PrismaService, private iaService: IaService) { }
 
-    // Recupere tout les programmes d'un utilisateur avec sessions non complétées
+    // Recupere tout les programmes d'un utilisateur
     async getProgramsByUser(userId: number) {
-        return this.prisma.trainingProgram.findMany({
-            where: { status: 'ACTIVE', fitnessProfile: { userId }, sessions: { some: { completed: false } } },
-            include: {
-                sessions: {
-                    where: { completed: false },
-                    include: {
-                        exercices: {
-                            include: {
-                                exercice: true,
-                                performances: true // Inclure les performances pour afficher les données réelles
+        return this.prisma.trainingProgram.findMany(
+            {
+                where: { fitnessProfile: { userId } },
+                include: {
+                    sessions: {
+                        where: { completed: false },
+                        include: {
+                            exercices: {
+                                include: {
+                                    exercice: true,
+                                    performances: true // Inclure les performances pour afficher les données réelles
+                                }
                             }
-                        }
+                        },
                     },
                 },
-            },
-        });
+            });
     }
 
     async getProgramById(programId: number, userId: number) {
@@ -250,5 +251,35 @@ export class ProgramService {
         });
     }
 
+    async updateProgramStatus(programId: number, status: any, userId: number) {
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: { fitnessProfile: true },
+        });
+
+        if (!program) {
+            throw new BadRequestException('Programme introuvable');
+        }
+
+        this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
+
+        // Si on active un programme, on archive automatiquement tous les autres programmes actifs de l'utilisateur
+        if (status === 'ACTIVE') {
+            await this.prisma.trainingProgram.updateMany({
+                where: {
+                    fitnessProfile: { userId: userId },
+                    status: 'ACTIVE',
+                    id: { not: programId }
+                },
+                data: { status: 'ARCHIVED' }
+            });
+        }
+
+        return this.prisma.trainingProgram.update({
+            where: { id: programId },
+            data: { status },
+            include: { sessions: { include: { exercices: true } } },
+        });
+    }
 
 }

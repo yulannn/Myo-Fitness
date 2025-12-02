@@ -2,7 +2,7 @@ import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
 import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
 import useExercicesByUser from '../../api/hooks/exercice/useGetExercicesByUser';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Modal,
   ModalFooter,
@@ -13,7 +13,147 @@ import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useAuth } from '../../context/AuthContext';
 import { SessionCard } from '../../components/ui/session';
-import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
+import useUpdateProgramStatus from '../../api/hooks/program/useUpdateProgramStatus';
+import { ProgramStatusModal } from '../../components/ui/modal/ProgramStatusModal';
+
+// Composant ProgramCard minimaliste avec accordéon
+interface ProgramCardProps {
+  program: any;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  exercices: any[];
+  sortSessions: (sessions: any[]) => any[];
+  activeProgram?: any;
+}
+
+const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, sortSessions, activeProgram }: ProgramCardProps) => {
+  const hasSession = program.sessions && program.sessions.length > 0;
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateProgramStatus();
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+
+  const isActive = program.status === 'ACTIVE';
+  // Si le programme est actif, il est toujours considéré comme "étendu" pour l'affichage
+  const showSessions = hasSession && (isActive || isExpanded);
+
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusChange = () => {
+    const newStatus = program.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE';
+    updateStatus({ programId: program.id, status: newStatus }, {
+      onSuccess: () => setIsStatusModalOpen(false)
+    });
+  };
+
+  return (
+    <>
+      <div className="relative bg-[#252527] rounded-2xl shadow-xl border border-[#94fbdd]/10 overflow-hidden transition-all">
+        {/* Decorative Background */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-2xl"></div>
+
+        {/* Header */}
+        <div
+          onClick={isActive ? undefined : onToggleExpand}
+          className={`relative w-full p-4 sm:p-5 text-left transition-colors ${!isActive ? 'cursor-pointer hover:bg-[#94fbdd]/5' : ''}`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold text-white break-words">{program.name}</h2>
+                <div className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap ${isActive
+                  ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
+                  : 'bg-gray-700 text-gray-400 border border-gray-600'
+                  }`}>
+                  {isActive ? '✓ Actif' : program.status}
+                </div>
+              </div>
+
+              {program.description && (
+                <p className="text-xs sm:text-sm text-gray-400 line-clamp-1">{program.description}</p>
+              )}
+
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <span>{program.sessions?.length || 0} séance{(program.sessions?.length || 0) > 1 ? 's' : ''}</span>
+                <span>•</span>
+                <span>Créé le {program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 items-end">
+              <div
+                onClick={handleStatusClick}
+                className={`p-2 rounded-xl transition-colors cursor-pointer ${isActive
+                  ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                  : 'bg-[#94fbdd]/10 text-[#94fbdd] hover:bg-[#94fbdd]/20'
+                  }`}
+                title={isActive ? "Archiver le programme" : "Désarchiver le programme"}
+              >
+                {isUpdatingStatus ? (
+                  <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : isActive ? (
+                  <ArchiveBoxIcon className="h-5 w-5" />
+                ) : (
+                  <ArrowUturnLeftIcon className="h-5 w-5" />
+                )}
+              </div>
+
+              {hasSession && !isActive && (
+                <div className="flex-shrink-0 p-2 rounded-xl bg-[#94fbdd]/10 transition-transform">
+                  {isExpanded ? (
+                    <ChevronUpIcon className="h-5 w-5 text-[#94fbdd]" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-[#94fbdd]" />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Message pour programmes archivés */}
+        {!isActive && (
+          <div className="px-4 sm:px-5 py-2 bg-gray-800/50 border-y border-gray-700">
+            <p className="text-xs text-gray-400 text-center italic">
+              📦 Programme archivé - Lecture seule
+            </p>
+          </div>
+        )}
+
+        {/* Sessions */}
+        {showSessions && (
+          <div className="relative border-t border-[#94fbdd]/10 p-4 sm:p-5 space-y-3 animate-fadeIn">
+            {sortSessions(program.sessions).map((session: any) => (
+              <SessionCard
+                key={session.id ?? `session-${program.id}-${session.date}`}
+                session={session}
+                availableExercises={exercices}
+                programStatus={program.status}
+              />
+            ))}
+          </div>
+        )}
+
+        {!hasSession && (
+          <div className="relative border-t border-[#94fbdd]/10 p-4 text-center">
+            <p className="text-xs sm:text-sm text-gray-500 italic">Aucune séance dans ce programme.</p>
+          </div>
+        )}
+      </div>
+
+      <ProgramStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onConfirm={handleConfirmStatusChange}
+        program={program}
+        activeProgram={activeProgram}
+        isPending={isUpdatingStatus}
+      />
+    </>
+  );
+};
 
 const Program = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -23,6 +163,8 @@ const Program = () => {
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [expandedPrograms, setExpandedPrograms] = useState<Set<number>>(new Set());
 
   const { data: fitnessProfile } = useFitnessProfilesByUser();
   const { data, isLoading } = useProgramsByUser();
@@ -31,15 +173,49 @@ const Program = () => {
   const { mutate: mutateManual } = useCreateManualProgram();
 
   const programs = Array.isArray(data) ? data : [];
-  const hasActiveProgram = useMemo(
-    () => programs.some((p: any) => p.status === 'ACTIVE'),
-    [programs],
+  const { user } = useAuth();
+
+  // Séparer les programmes actifs et archivés
+  const activePrograms = useMemo(
+    () => programs.filter((p: any) => p.status === 'ACTIVE'),
+    [programs]
   );
+
+  const archivedPrograms = useMemo(
+    () => programs.filter((p: any) => p.status === 'ARCHIVED'),
+    [programs]
+  );
+
+  // Ouvrir automatiquement les programmes actifs par défaut
+  useEffect(() => {
+    if (activePrograms.length > 0) {
+      const activeIds = activePrograms.map((p: any) => p.id);
+      setExpandedPrograms(prev => {
+        const newSet = new Set(prev);
+        activeIds.forEach((id: number) => newSet.add(id));
+        return newSet;
+      });
+    }
+  }, [activePrograms]);
+
+  const hasActiveProgram = activePrograms.length > 0;
+  const activeProgram = activePrograms[0]; // Le premier programme actif (il ne devrait y en avoir qu'un)
 
   const automaticProgramNameRef = useRef<string>('');
   const automaticProgramDescriptionRef = useRef<string>('');
 
-  const { user } = useAuth();
+  const toggleProgramExpansion = (programId: number) => {
+    setExpandedPrograms(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(programId)) {
+        newSet.delete(programId);
+      } else {
+        newSet.add(programId);
+      }
+      return newSet;
+    });
+  };
+
 
   const openAddFlow = () => {
     if (hasActiveProgram) {
@@ -149,6 +325,30 @@ const Program = () => {
           </button>
         </div>
 
+        {/* Tabs - Actifs / Archivés */}
+        {programs.length > 0 && (
+          <div className="flex gap-2 sm:gap-3">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`flex-1 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all ${activeTab === 'active'
+                ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
+                : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+                }`}
+            >
+              Actifs ({activePrograms.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('archived')}
+              className={`flex-1 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all ${activeTab === 'archived'
+                ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
+                : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+                }`}
+            >
+              Archivés ({archivedPrograms.length})
+            </button>
+          </div>
+        )}
+
         {/* Programs List */}
         {programs.length === 0 ? (
           <div className="relative bg-[#252527] rounded-3xl shadow-2xl p-8 sm:p-12 text-center border border-[#94fbdd]/10 overflow-hidden">
@@ -156,79 +356,45 @@ const Program = () => {
 
             <div className="relative">
               <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 rounded-3xl flex items-center justify-center mb-4 sm:mb-6 shadow-xl">
-                <ClipboardDocumentListIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
+                <SparklesIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Aucun programme actif</h3>
-              <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto px-4">
-                Créez votre premier programme pour commencer votre transformation.
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Commencez votre voyage</h3>
+              <p className="text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
+                Créez votre premier programme personnalisé et transformez vos objectifs en réalité.
               </p>
               <button
                 onClick={openAddFlow}
-                className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/30 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95 text-base sm:text-lg"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#94fbdd]/90 transition-all active:scale-95 shadow-lg shadow-[#94fbdd]/20"
               >
-                <PlusIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                Créer mon premier programme
+                <PlusIcon className="h-5 w-5" />
+                Créer mon programme
               </button>
             </div>
           </div>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
-            {programs.map((program: any) => (
-              <div
-                key={program.id ?? `program-${program.name}`}
-                className="relative bg-[#252527] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#94fbdd]/10 overflow-hidden"
-              >
-                {/* Decorative Background */}
-                <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
-
-                {/* Header */}
-                <div className="relative p-4 sm:p-6 border-b border-[#94fbdd]/10">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-xl sm:text-2xl font-bold text-white flex-1 break-words">{program.name}</h2>
-                      <div className={`px-3 py-1.5 rounded-xl font-semibold text-xs whitespace-nowrap ${program.status === 'ACTIVE'
-                        ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
-                        : 'bg-gray-700 text-gray-400 border border-gray-600'
-                        }`}>
-                        {program.status === 'ACTIVE' ? '✓ Actif' : program.status}
-                      </div>
-                    </div>
-                    {program.description && (
-                      <p className="text-sm text-gray-400 break-words">{program.description}</p>
-                    )}
-                    <div className="text-xs text-gray-500">
-                      Créé le {program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR') : '—'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sessions */}
-                <div className="relative p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  <h3 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wide">
-                    Séances ({program.sessions?.length || 0})
-                  </h3>
-                  {program.sessions && program.sessions.length > 0 ? (
-                    <div className="space-y-3">
-                      {sortSessions(program.sessions).map((session: any) => (
-                        <SessionCard
-                          key={session.id ?? `session-${program.id}-${session.date}`}
-                          session={session}
-                          availableExercises={exercices}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic text-center py-6 sm:py-8">Aucune séance dans ce programme.</p>
-                  )}
-                </div>
-              </div>
+          <div className="space-y-6">
+            {(activeTab === 'active' ? activePrograms : archivedPrograms).map((program: any) => (
+              <ProgramCard
+                key={program.id}
+                program={program}
+                isExpanded={expandedPrograms.has(program.id)}
+                onToggleExpand={() => toggleProgramExpansion(program.id)}
+                exercices={exercices}
+                sortSessions={sortSessions}
+                activeProgram={activeProgram}
+              />
             ))}
+
+            {(activeTab === 'active' ? activePrograms : archivedPrograms).length === 0 && (
+              <div className="text-center py-12 bg-[#252527] rounded-2xl border border-dashed border-gray-700">
+                <p className="text-gray-400">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Modals */}
-      {/* Confirmation Modal */}
       <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <ModalHeader>
           <div className="flex items-center gap-2 sm:gap-3 justify-center">
@@ -257,7 +423,6 @@ const Program = () => {
         </ModalFooter>
       </Modal>
 
-      {/* Choice Modal */}
       <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)}>
         <ModalHeader>
           <ModalTitle className="text-lg sm:text-2xl">Créer un programme</ModalTitle>
@@ -295,7 +460,6 @@ const Program = () => {
         </div>
       </Modal>
 
-      {/* Automatic Program Modal */}
       <Modal
         isOpen={automaticOpen}
         onClose={() => {
@@ -394,14 +558,13 @@ const Program = () => {
         </ModalFooter>
       </Modal>
 
-      {/* Manual Program Modal */}
       {fitnessProfile && (
         <ManualProgramModal
           isOpen={manualOpen}
           onClose={() => setManualOpen(false)}
-          availableExercises={exercices}
-          fitnessProfileId={fitnessProfile.id}
           onConfirm={handleManualProgramConfirm}
+          fitnessProfileId={fitnessProfile.id}
+          availableExercises={exercices}
         />
       )}
     </div>

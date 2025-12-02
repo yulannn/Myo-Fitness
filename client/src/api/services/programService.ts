@@ -31,6 +31,11 @@ export const ProgramFetchDataService = {
         const res = await api.delete<Program>(`/program/delete-session/${sessionId}`);
         return res.data;
     },
+
+    async updateProgramStatus(programId: number, status: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' | 'DRAFT'): Promise<Program> {
+        const res = await api.patch<Program>(`/program/${programId}/status`, { status });
+        return res.data;
+    },
 };
 
 export default ProgramFetchDataService;
