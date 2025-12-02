@@ -1,6 +1,6 @@
-import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max } from 'class-validator';
+import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Gender, Goal, ExperienceLevel } from '@prisma/client';
+import { Gender, Goal, ExperienceLevel, WeekDay } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFitnessProfileDto {
@@ -81,4 +81,15 @@ export class CreateFitnessProfileDto {
   })
   @IsBoolean()
   bodyWeight: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Jours de la semaine pour les entraînements (tableau vide = planification manuelle)',
+    enum: WeekDay,
+    isArray: true,
+    example: [WeekDay.MONDAY, WeekDay.WEDNESDAY, WeekDay.FRIDAY],
+  })
+  @IsArray()
+  @IsEnum(WeekDay, { each: true })
+  @IsOptional()
+  trainingDays?: WeekDay[];
 }

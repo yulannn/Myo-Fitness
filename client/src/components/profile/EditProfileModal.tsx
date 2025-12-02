@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { UpdateFitnessProfilePayload, FitnessProfile } from '../../types/fitness-profile.type';
+import type { UpdateFitnessProfilePayload, FitnessProfile, WeekDay } from '../../types/fitness-profile.type';
+import TrainingDaysSelector from './TrainingDaysSelector';
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -26,6 +27,7 @@ export default function EditProfileModal({
         goals: [],
         gender: 'MALE',
         bodyWeight: false,
+        trainingDays: [],
     });
 
     useEffect(() => {
@@ -39,6 +41,7 @@ export default function EditProfileModal({
                 goals: profile.goals,
                 gender: profile.gender,
                 bodyWeight: profile.bodyWeight,
+                trainingDays: profile.trainingDays || [],
             });
         }
     }, [isOpen, profile]);
@@ -224,6 +227,13 @@ export default function EditProfileModal({
                         />
                         <span className="text-sm text-white">Bodyweight uniquement</span>
                     </label>
+
+                    {/* Training Days Selector */}
+                    <TrainingDaysSelector
+                        selectedDays={form.trainingDays || []}
+                        maxSelections={form.trainingFrequency || 0}
+                        onChange={(days: WeekDay[]) => setForm(prev => ({ ...prev, trainingDays: days }))}
+                    />
 
                     {/* Buttons */}
                     <div className="flex gap-3 pt-4">

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import { SessionSchedulingHelper } from 'src/program/session-scheduling.helper';
 
 enum PerformanceStatus {
     TOO_EASY = 'too_easy',
@@ -119,10 +120,33 @@ export class SessionAdaptationService {
 
         const originalSessionId = previousSession.originalSessionId || previousSession.id;
 
+        // Récupérer le profil fitness pour obtenir les trainingDays
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: previousSession.programId },
+            include: {
+                fitnessProfile: {
+                    select: { trainingDays: true },
+                },
+            },
+        });
+
+        const trainingDays = program?.fitnessProfile?.trainingDays || [];
+
+        // Calculer la prochaine date de session
+        const nextSessionDate = previousSession.performedAt
+            ? SessionSchedulingHelper.getNextSessionDate(
+                new Date(previousSession.performedAt),
+                trainingDays,
+            )
+            : SessionSchedulingHelper.getNextSessionDate(
+                new Date(),
+                trainingDays,
+            );
+
         const newSession = await this.prisma.trainingSession.create({
             data: {
                 programId: previousSession.programId,
-                date: null,
+                date: nextSessionDate, // null si trainingDays est vide
                 duration: null,
                 notes: `Session adaptée basée sur la session du ${previousSession.date
                     ? new Date(previousSession.date).toLocaleDateString()
@@ -170,10 +194,33 @@ export class SessionAdaptationService {
 
         const originalSessionId = oldSession.originalSessionId || oldSession.id;
 
+        // Récupérer le profil fitness pour obtenir les trainingDays
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: oldSession.programId },
+            include: {
+                fitnessProfile: {
+                    select: { trainingDays: true },
+                },
+            },
+        });
+
+        const trainingDays = program?.fitnessProfile?.trainingDays || [];
+
+        // Calculer la prochaine date de session
+        const nextSessionDate = oldSession.performedAt
+            ? SessionSchedulingHelper.getNextSessionDate(
+                new Date(oldSession.performedAt),
+                trainingDays,
+            )
+            : SessionSchedulingHelper.getNextSessionDate(
+                new Date(),
+                trainingDays,
+            );
+
         const newSession = await this.prisma.trainingSession.create({
             data: {
                 programId: oldSession.programId,
-                date: null,
+                date: nextSessionDate, // null si trainingDays est vide
                 duration: null,
                 notes: `Session adaptée basée sur la session du ${oldSession.date
                     ? new Date(oldSession.date).toLocaleDateString()

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsInt, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, IsNotEmpty, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProgramStatus, ProgramTemplate } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -36,4 +36,12 @@ export class CreateTrainingProgramDto {
   @IsEnum(ProgramStatus)
   @IsOptional()
   status?: ProgramStatus = ProgramStatus.ACTIVE;
+
+  @ApiPropertyOptional({
+    description: 'Date de début du programme (pour planification auto)',
+    example: '2025-12-05T00:00:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
 }

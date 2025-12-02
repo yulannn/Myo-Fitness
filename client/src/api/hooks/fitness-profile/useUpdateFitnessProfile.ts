@@ -2,14 +2,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import FitnessProfileService from '../../services/fitnessProfileService';
 import type { FitnessProfile, UpdateFitnessProfilePayload } from '../../../types/fitness-profile.type';
 
-export function useUpdateFitnessProfile(profileId?: number) {
+interface UpdatePayload extends UpdateFitnessProfilePayload {
+    id: number;
+}
+
+export function useUpdateFitnessProfile() {
     const qc = useQueryClient();
 
-    return useMutation<FitnessProfile, unknown, UpdateFitnessProfilePayload>({
-        mutationFn: (payload: UpdateFitnessProfilePayload) => FitnessProfileService.updateFitnessProfile(profileId as number, payload),
-        onSuccess: () => {
+    return useMutation<FitnessProfile, unknown, UpdatePayload>({
+        mutationFn: ({ id, ...payload }: UpdatePayload) =>
+            FitnessProfileService.updateFitnessProfile(id, payload),
+        onSuccess: (_, { id }) => {
             qc.invalidateQueries({ queryKey: ['fitnessProfiles'] });
-            if (profileId) qc.invalidateQueries({ queryKey: ['fitnessProfile', profileId] });
+            qc.invalidateQueries({ queryKey: ['fitnessProfile', id] });
         }
     });
 }

@@ -1,4 +1,4 @@
-import { FitnessProfile, Goal, Gender, ExperienceLevel } from '@prisma/client';
+import { FitnessProfile, Goal, Gender, ExperienceLevel, WeekDay } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FitnessProfileEntity implements FitnessProfile {
@@ -37,6 +37,14 @@ export class FitnessProfileEntity implements FitnessProfile {
     example: 4,
   })
   trainingFrequency: number;
+
+  @ApiProperty({
+    description: 'Jours de la semaine sur lesquels l’utilisateur effectue ses séances',
+    enum: WeekDay,
+    isArray: true,
+    example: [WeekDay.MONDAY, WeekDay.TUESDAY],
+  })
+  trainingDays: WeekDay[];
 
   @ApiProperty({
     description: 'Niveau d’expérience de l’utilisateur',

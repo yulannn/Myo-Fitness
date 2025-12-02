@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { CreateFitnessProfilePayload } from '../../types/fitness-profile.type';
+import type { CreateFitnessProfilePayload, WeekDay } from '../../types/fitness-profile.type';
+import TrainingDaysSelector from './TrainingDaysSelector';
 
 interface CreateProfileModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function CreateProfileModal({
     goals: [],
     gender: 'MALE',
     bodyWeight: false,
+    trainingDays: [],
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function CreateProfileModal({
         goals: [],
         gender: 'MALE',
         bodyWeight: false,
+        trainingDays: [],
       });
     }
   }, [isOpen]);
@@ -221,6 +224,13 @@ export default function CreateProfileModal({
             />
             <span className="text-sm text-white">Bodyweight uniquement</span>
           </label>
+
+          {/* Training Days Selector */}
+          <TrainingDaysSelector
+            selectedDays={form.trainingDays || []}
+            maxSelections={form.trainingFrequency || 0}
+            onChange={(days: WeekDay[]) => setForm(prev => ({ ...prev, trainingDays: days }))}
+          />
 
           {/* Buttons */}
           <div className="flex gap-3 pt-4">

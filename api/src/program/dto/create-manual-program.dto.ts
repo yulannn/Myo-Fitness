@@ -6,6 +6,7 @@ import {
     IsOptional,
     IsString,
     ValidateNested,
+    IsDateString,
 } from 'class-validator';
 
 // --- Exercices ---
@@ -72,6 +73,15 @@ export class CreateProgramDataDto {
     @ApiProperty({ example: 1, description: 'ID du profil fitness associé' })
     @IsNumber()
     fitnessProfileId: number;
+
+    @ApiProperty({
+        example: '2025-12-05T00:00:00.000Z',
+        description: 'Date de début du programme (pour planification auto)',
+        required: false,
+    })
+    @IsOptional()
+    @IsDateString()
+    startDate?: string;
 }
 
 // --- DTO combiné ---

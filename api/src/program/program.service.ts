@@ -5,6 +5,7 @@ import { IaService } from 'src/ia/ia.service';
 import type { ProgramTemplate } from '@prisma/client';
 import { CreateManualProgramDto } from './dto/create-manual-program.dto';
 import { AddSessionToProgramDto } from './dto/add-session-program.dto';
+import { SessionSchedulingHelper } from './session-scheduling.helper';
 const MAX_SESSIONS_PER_PROGRAM = 7;
 
 @Injectable()
@@ -97,6 +98,27 @@ export class ProgramService {
                 data: { status: 'ARCHIVED' },
             });
 
+            // Récupérer le profil fitness pour obtenir les trainingDays
+            const fitnessProfile = await prisma.fitnessProfile.findUnique({
+                where: { id: dto.fitnessProfileId },
+                select: { trainingDays: true },
+            });
+
+            const trainingDays = fitnessProfile?.trainingDays || [];
+
+            // Déterminer la startDate pour la planification
+            const startDate = SessionSchedulingHelper.determineStartDate(
+                dto.startDate,
+                trainingDays,
+            );
+
+            // Générer les dates pour toutes les sessions
+            const sessionDates = SessionSchedulingHelper.generateSessionDates(
+                startDate,
+                trainingDays,
+                program.sessions.length,
+            );
+
             const createdProgram = await prisma.trainingProgram.create({
                 data: {
                     name: dto.name,
@@ -104,12 +126,20 @@ export class ProgramService {
                     fitnessProfileId: dto.fitnessProfileId,
                     template: program.template as ProgramTemplate,
                     status: 'ACTIVE',
+                    startDate: startDate || new Date(),
                 },
             });
 
-            for (const session of program.sessions) {
+            for (let i = 0; i < program.sessions.length; i++) {
+                const session = program.sessions[i];
+                const sessionDate = sessionDates[i];
+
                 const createdSession = await prisma.trainingSession.create({
-                    data: { programId: createdProgram.id, notes: session.name },
+                    data: {
+                        programId: createdProgram.id,
+                        notes: session.name,
+                        date: sessionDate, // null si pas de planification auto
+                    },
                 });
 
                 for (const ex of session.exercises) {
@@ -142,6 +172,27 @@ export class ProgramService {
 
         await this.validateFitnessProfile(createProgramDto.fitnessProfileId, userId);
         return this.prisma.$transaction(async (prisma) => {
+            // Récupérer le profil fitness pour obtenir les trainingDays
+            const fitnessProfile = await prisma.fitnessProfile.findUnique({
+                where: { id: createProgramDto.fitnessProfileId },
+                select: { trainingDays: true },
+            });
+
+            const trainingDays = fitnessProfile?.trainingDays || [];
+
+            // Déterminer la startDate pour la planification
+            const startDate = SessionSchedulingHelper.determineStartDate(
+                createProgramDto.startDate,
+                trainingDays,
+            );
+
+            // Générer les dates pour toutes les sessions
+            const sessionDates = SessionSchedulingHelper.generateSessionDates(
+                startDate,
+                trainingDays,
+                sessions.length,
+            );
+
             const createdProgram = await prisma.trainingProgram.create({
                 data: {
                     name: createProgramDto.name,
@@ -149,12 +200,20 @@ export class ProgramService {
                     fitnessProfileId: createProgramDto.fitnessProfileId,
                     template: 'CUSTOM' as ProgramTemplate,
                     status: 'ACTIVE',
+                    startDate: startDate || new Date(),
                 },
             });
 
-            for (const session of sessions) {
+            for (let i = 0; i < sessions.length; i++) {
+                const session = sessions[i];
+                const sessionDate = sessionDates[i];
+
                 const createdSession = await prisma.trainingSession.create({
-                    data: { programId: createdProgram.id, notes: session.name ?? '' },
+                    data: {
+                        programId: createdProgram.id,
+                        notes: session.name ?? '',
+                        date: sessionDate, // null si pas de planification auto
+                    },
                 });
 
                 if (session.exercises && Array.isArray(session.exercises)) {
