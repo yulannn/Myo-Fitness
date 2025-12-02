@@ -1,6 +1,7 @@
 import { useLocation, matchPath } from "react-router-dom";
 import { AppRoutes } from "./routes/AppRoutes";
 import BottomNav from "./components/app/BottomNav";
+import ActiveSessionBubble from "./components/app/ActiveSessionBubble";
 import { routes } from "./routes/routes.config";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
         </main>
 
         {!shouldHideBottomNav && <BottomNav />}
+        <ActiveSessionBubble />
       </div>
     </div>
   );

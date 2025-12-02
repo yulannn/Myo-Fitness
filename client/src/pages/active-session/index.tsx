@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlayIcon, StopIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
+import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
+import useDeletePerformance from '../../api/hooks/performance/useDeletePerformance'
 import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
 import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
@@ -15,9 +16,13 @@ export default function ActiveSession() {
     const [elapsedTime, setElapsedTime] = useState(0)
     const [performances, setPerformances] = useState<Record<string, any>>({})
     const [savedPerformances, setSavedPerformances] = useState<Set<string>>(new Set())
+    const [savedPerformanceIds, setSavedPerformanceIds] = useState<number[]>([])
     const [showGenerationModal, setShowGenerationModal] = useState(false)
+    const [showCancelModal, setShowCancelModal] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
 
     const { mutate: createPerformance } = useCreatePerformance()
+    const { mutate: deletePerformance } = useDeletePerformance()
     const { mutate: updateCompletedSession } = useUpdateCompletedSession()
     const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
     const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
@@ -121,6 +126,48 @@ export default function ActiveSession() {
         })
     }
 
+    const handleCancelSession = async () => {
+        setIsCancelling(true)
+
+        // Supprimer toutes les performances enregistrées
+        if (savedPerformanceIds.length > 0) {
+            console.log('🗑️ Suppression de', savedPerformanceIds.length, 'performances')
+
+            // Supprimer chaque performance
+            const deletePromises = savedPerformanceIds.map(
+                (performanceId) =>
+                    new Promise((resolve, reject) => {
+                        deletePerformance(performanceId, {
+                            onSuccess: () => {
+                                console.log('✅ Performance supprimée:', performanceId)
+                                resolve(performanceId)
+                            },
+                            onError: (error) => {
+                                console.error('❌ Erreur suppression performance:', performanceId, error)
+                                reject(error)
+                            }
+                        })
+                    })
+            )
+
+            try {
+                await Promise.all(deletePromises)
+                console.log('✅ Toutes les performances ont été supprimées')
+            } catch (error) {
+                console.error('❌ Erreur lors de la suppression des performances:', error)
+                alert('Certaines performances n\'ont pas pu être supprimées.')
+            }
+        }
+
+        // Nettoyer le localStorage et rediriger
+        localStorage.removeItem('activeSession')
+        localStorage.removeItem('sessionStartTime')
+        setShowCancelModal(false)
+        setIsCancelling(false)
+        navigate('/programs')
+    }
+
+
     const handlePerformanceChange = (
         exerciceSessionId: number,
         setIndex: number,
@@ -176,8 +223,10 @@ export default function ActiveSession() {
             setSavedPerformances(prev => new Set(prev).add(key))
 
             createPerformance(payload, {
-                onSuccess: () => {
-                    console.log('✅ Performance sauvegardée:', key)
+                onSuccess: (data) => {
+                    console.log('✅ Performance sauvegardée:', key, 'ID:', data.id_set)
+                    // Sauvegarder l'ID de la performance pour pouvoir la supprimer plus tard
+                    setSavedPerformanceIds(prev => [...prev, data.id_set])
                 },
                 onError: (error) => {
                     console.error('❌ Erreur:', error)
@@ -196,199 +245,284 @@ export default function ActiveSession() {
         }
     }
 
+
     if (!activeSession) {
         return (
-            <section className="flex flex-col items-center justify-center min-h-[80vh] p-6">
-                <div className="text-center space-y-4">
-                    <PlayIcon className="h-24 w-24 text-[#7CD8EE]/30 mx-auto" />
-                    <h1 className="text-2xl font-bold text-[#2F4858]">Aucune séance active</h1>
-                    <p className="text-[#2F4858]/60">
-                        Démarrez une séance depuis la page Programmes pour commencer votre entraînement
-                    </p>
-                    <button
-                        onClick={() => navigate('/programs')}
-                        className="mt-4 px-6 py-3 bg-gradient-to-r from-[#7CD8EE] to-[#2F4858] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
-                    >
-                        Aller aux Programmes
-                    </button>
+            <div className="min-h-screen bg-[#121214] flex items-center justify-center p-4 sm:p-6">
+                <div className="relative max-w-md w-full bg-[#252527] rounded-3xl shadow-2xl p-8 sm:p-12 text-center border border-[#94fbdd]/10 overflow-hidden">
+                    {/* Decorative Background */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
+
+                    <div className="relative space-y-6">
+                        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 rounded-3xl flex items-center justify-center shadow-xl">
+                            <PlayIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">Aucune séance active</h1>
+                            <p className="text-sm sm:text-base text-gray-400 max-w-sm mx-auto">
+                                Démarrez une séance depuis la page Programmes pour commencer votre entraînement
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/programs')}
+                            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/30 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95"
+                        >
+                            Aller aux Programmes
+                        </button>
+                    </div>
                 </div>
-            </section>
+            </div>
         )
     }
 
+
     return (
-        <section className="space-y-6 pb-24 p-4">
-            {/* Header avec chrono */}
-            <div className="bg-gradient-to-br from-[#7CD8EE] to-[#2F4858] rounded-3xl p-6 shadow-xl text-white">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 className="text-2xl font-bold">Séance en cours</h1>
-                        <p className="text-white/80 text-sm mt-1">{activeSession.trainingProgram?.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-xl backdrop-blur-sm">
-                        <PlayIcon className="h-5 w-5 animate-pulse" />
-                        <span className="text-sm font-medium">EN COURS</span>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-[#121214] pb-24">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+                {/* Header avec chrono - Version moderne */}
+                <div className="relative bg-gradient-to-br from-[#252527] to-[#121214] rounded-3xl shadow-2xl overflow-hidden border border-[#94fbdd]/10 p-6 sm:p-8">
+                    {/* Decorative Background */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
 
-                {/* Chronomètre */}
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center">
-                    <p className="text-sm text-white/70 mb-2">Durée de la séance</p>
-                    <p className="text-5xl font-bold font-mono tracking-wider">{formatTime(elapsedTime)}</p>
-                </div>
-            </div>
-
-            {/* Notes de session */}
-            {activeSession.notes && (
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl">
-                    <p className="text-sm text-blue-700 font-medium">{activeSession.notes}</p>
-                </div>
-            )}
-
-            {/* Liste des exercices */}
-            <div className="space-y-4">
-                <h2 className="text-xl font-bold text-[#2F4858] px-2">Exercices</h2>
-
-                {activeSession.exercices?.map((exerciceSession: any, index: number) => (
-                    <div
-                        key={exerciceSession.id || index}
-                        className="bg-white rounded-2xl shadow-md border-2 border-[#7CD8EE]/20 p-5"
-                    >
-                        {/* Header exercice */}
-                        <div className="mb-4 pb-4 border-b border-gray-200">
-                            <h3 className="text-lg font-bold text-[#2F4858]">
-                                {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
-                            </h3>
-                            <p className="text-sm text-[#2F4858]/60 mt-1">
-                                {exerciceSession.sets} séries × {exerciceSession.reps} reps
-                                {exerciceSession.weight && ` • ${exerciceSession.weight} kg`}
-                            </p>
+                    <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <PlayIcon className="h-6 w-6 text-[#94fbdd] animate-pulse" />
+                                    <span className="text-xs sm:text-sm font-bold text-[#94fbdd] uppercase tracking-wide">En cours</span>
+                                </div>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Séance active</h1>
+                                {activeSession.trainingProgram?.name && (
+                                    <p className="text-sm text-gray-400">
+                                        {activeSession.trainingProgram.name}
+                                    </p>
+                                )}
+                            </div>
+                            {/* Bouton d'annulation */}
+                            <button
+                                onClick={() => setShowCancelModal(true)}
+                                className="flex-shrink-0 p-2 sm:p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all active:scale-95 group"
+                                title="Annuler la séance"
+                            >
+                                <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-400 group-hover:text-red-300 transition-colors" />
+                            </button>
                         </div>
 
-                        {/* Grille des séries */}
-                        <div className="space-y-3">
-                            {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
-                                const perfKey = `${exerciceSession.id}-${setIndex}`
-                                const perf = performances[perfKey] || {}
-
-                                return (
-                                    <div
-                                        key={setIndex}
-                                        className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            {/* Numéro de série */}
-                                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#7CD8EE] to-[#2F4858] rounded-xl flex items-center justify-center text-white font-bold">
-                                                {setIndex + 1}
-                                            </div>
-
-                                            {/* Inputs de performance */}
-                                            <div className="flex-1 grid grid-cols-2 gap-3">
-                                                {/* Reps effectuées */}
-                                                <div>
-                                                    <label className="text-xs text-gray-600 font-medium block mb-1">
-                                                        Reps réalisées
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        placeholder={exerciceSession.reps.toString()}
-                                                        value={perf.reps_effectuees || ''}
-                                                        onChange={(e) =>
-                                                            handlePerformanceChange(
-                                                                exerciceSession.id,
-                                                                setIndex,
-                                                                'reps_effectuees',
-                                                                parseInt(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        className="w-full px-3 py-2 border-2 border-[#7CD8EE]/30 rounded-lg focus:border-[#7CD8EE] focus:outline-none text-center font-semibold"
-                                                    />
-                                                </div>
-
-                                                {/* Poids utilisé */}
-                                                <div>
-                                                    <label className="text-xs text-gray-600 font-medium block mb-1">
-                                                        Poids (kg)
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.5"
-                                                        placeholder={exerciceSession.weight?.toString() || '0'}
-                                                        value={perf.weight || ''}
-                                                        onChange={(e) =>
-                                                            handlePerformanceChange(
-                                                                exerciceSession.id,
-                                                                setIndex,
-                                                                'weight',
-                                                                parseFloat(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        className="w-full px-3 py-2 border-2 border-[#7CD8EE]/30 rounded-lg focus:border-[#7CD8EE] focus:outline-none text-center font-semibold"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Bouton de validation */}
-                                            <button
-                                                onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
-                                                className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${perf.success
-                                                    ? 'bg-green-500 shadow-lg'
-                                                    : 'bg-gray-200 hover:bg-green-100'
-                                                    }`}
-                                            >
-                                                <CheckCircleIcon
-                                                    className={`h-6 w-6 ${perf.success ? 'text-white' : 'text-gray-400'
-                                                        }`}
-                                                />
-                                            </button>
-                                        </div>
+                        {/* Chronomètre moderne */}
+                        <div className="relative bg-[#121214]/40 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-[#94fbdd]/20">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-2xl"></div>
+                            <div className="relative text-center">
+                                <p className="text-xs sm:text-sm text-gray-400 mb-3 uppercase tracking-wide">Durée</p>
+                                <p className="text-5xl sm:text-6xl font-bold font-mono tracking-wider text-white">
+                                    {formatTime(elapsedTime)}
+                                </p>
+                                {/* Progress indicator */}
+                                <div className="mt-6 flex items-center justify-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-[#94fbdd] rounded-full animate-pulse"></div>
+                                        <span className="text-xs text-gray-400">
+                                            {validatedSets}/{totalSets} séries
+                                        </span>
                                     </div>
-                                )
-                            })}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                ))}
+                </div>
+
+                {/* Notes de session - Version moderne */}
+                {activeSession.notes && (
+                    <div className="relative bg-[#252527] rounded-2xl p-4 sm:p-5 border-l-4 border-[#94fbdd] overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#94fbdd]/5 rounded-full blur-2xl"></div>
+                        <p className="relative text-sm text-[#94fbdd] font-medium">{activeSession.notes}</p>
+                    </div>
+                )}
+
+                {/* Liste des exercices - Version moderne */}
+                <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                        <h2 className="text-xl sm:text-2xl font-bold text-white">Exercices</h2>
+                        <div className="px-3 py-1.5 bg-[#252527] rounded-xl border border-[#94fbdd]/20">
+                            <span className="text-xs font-bold text-[#94fbdd]">
+                                {validatedSets}/{totalSets}
+                            </span>
+                        </div>
+                    </div>
+
+                    {activeSession.exercices?.map((exerciceSession: any, index: number) => (
+                        <div
+                            key={exerciceSession.id || index}
+                            className="relative bg-[#252527] rounded-2xl sm:rounded-3xl shadow-xl border border-[#94fbdd]/10 overflow-hidden"
+                        >
+                            {/* Decorative gradient */}
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-2xl"></div>
+
+                            {/* Header exercice */}
+                            <div className="relative p-4 sm:p-5 border-b border-[#94fbdd]/10">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+                                    {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
+                                </h3>
+                                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-400">
+                                    <span className="font-medium">{exerciceSession.sets} séries</span>
+                                    <span className="text-[#94fbdd]/50">•</span>
+                                    <span className="font-medium">{exerciceSession.reps} reps</span>
+                                    {exerciceSession.weight && (
+                                        <>
+                                            <span className="text-[#94fbdd]/50">•</span>
+                                            <span className="font-medium">{exerciceSession.weight} kg</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Grille des séries */}
+                            <div className="relative p-4 sm:p-5 space-y-3">
+                                {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
+                                    const perfKey = `${exerciceSession.id}-${setIndex}`;
+                                    const perf = performances[perfKey] || {};
+
+                                    return (
+                                        <div
+                                            key={setIndex}
+                                            className={`relative bg-[#121214]/40 backdrop-blur-sm rounded-2xl p-4 border-2 transition-all ${perf.success
+                                                ? 'border-[#94fbdd]/50 bg-[#94fbdd]/5'
+                                                : 'border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                {/* Numéro de série - moderne */}
+                                                <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${perf.success
+                                                    ? 'bg-gradient-to-br from-[#94fbdd] to-[#72e8cc] text-[#121214] shadow-lg shadow-[#94fbdd]/30'
+                                                    : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/20'
+                                                    }`}>
+                                                    {setIndex + 1}
+                                                </div>
+
+                                                {/* Inputs de performance */}
+                                                <div className="flex-1 grid grid-cols-2 gap-3">
+                                                    {/* Reps effectuées */}
+                                                    <div>
+                                                        <label className="text-xs text-gray-400 font-medium block mb-1.5">
+                                                            Reps
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder={exerciceSession.reps.toString()}
+                                                            value={perf.reps_effectuees || ''}
+                                                            onChange={(e) =>
+                                                                handlePerformanceChange(
+                                                                    exerciceSession.id,
+                                                                    setIndex,
+                                                                    'reps_effectuees',
+                                                                    parseInt(e.target.value) || 0
+                                                                )
+                                                            }
+                                                            disabled={perf.success}
+                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all disabled:opacity-50"
+                                                        />
+                                                    </div>
+
+                                                    {/* Poids utilisé */}
+                                                    <div>
+                                                        <label className="text-xs text-gray-400 font-medium block mb-1.5">
+                                                            Poids (kg)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.5"
+                                                            placeholder={exerciceSession.weight?.toString() || '0'}
+                                                            value={perf.weight || ''}
+                                                            onChange={(e) =>
+                                                                handlePerformanceChange(
+                                                                    exerciceSession.id,
+                                                                    setIndex,
+                                                                    'weight',
+                                                                    parseFloat(e.target.value) || 0
+                                                                )
+                                                            }
+                                                            disabled={perf.success}
+                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all disabled:opacity-50"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Bouton de validation */}
+                                                <button
+                                                    onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
+                                                    className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-all ${perf.success
+                                                        ? 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/40 hover:shadow-xl hover:shadow-[#94fbdd]/50 active:scale-95'
+                                                        : 'bg-[#252527] border-2 border-[#94fbdd]/30 hover:bg-[#94fbdd]/10 hover:border-[#94fbdd]/50 active:scale-95'
+                                                        }`}
+                                                >
+                                                    <CheckCircleIcon
+                                                        className={`h-6 w-6 sm:h-7 sm:w-7 transition-colors ${perf.success ? 'text-[#121214]' : 'text-gray-400'
+                                                            }`}
+                                                    />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Bouton Terminer la séance - Sticky moderne */}
+                <div className="fixed bottom-24 left-0 right-0 p-4 sm:px-6 pointer-events-none">
+                    <div className="max-w-5xl mx-auto">
+                        <button
+                            onClick={handleStopSession}
+                            disabled={!allSetsValidated}
+                            className={`w-full font-bold py-4 sm:py-5 rounded-2xl shadow-2xl transition-all flex items-center justify-center gap-3 text-base sm:text-lg pointer-events-auto ${allSetsValidated
+                                ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-red-500/50 active:scale-95'
+                                : 'bg-[#252527] text-gray-500 border-2 border-[#94fbdd]/10 cursor-not-allowed'
+                                }`}
+                        >
+                            <StopIcon className="h-6 w-6" />
+                            {allSetsValidated
+                                ? 'Terminer la séance'
+                                : `Validez toutes les séries (${validatedSets}/${totalSets})`}
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            {/* Bouton Terminer la séance */}
-            <div className="fixed bottom-24 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
-                <button
-                    onClick={handleStopSession}
-                    disabled={!allSetsValidated}
-                    className={`w-full font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 ${allSetsValidated
-                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                >
-                    <StopIcon className="h-6 w-6" />
-                    {allSetsValidated ? 'Terminer la séance' : `Validez toutes les séries (${validatedSets}/${totalSets})`}
-                </button>
-            </div>
-
-            {/* Modale de génération de la prochaine session */}
+            {/* Modale de génération - Version moderne */}
             <Modal isOpen={showGenerationModal} onClose={() => { }}>
                 <ModalHeader>
-                    <ModalTitle>Générer la prochaine séance</ModalTitle>
+                    <div className="flex items-center gap-3 justify-center">
+                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
+                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
+                        </div>
+                        <ModalTitle className="text-xl sm:text-2xl">Séance terminée ! 🎉</ModalTitle>
+                    </div>
                 </ModalHeader>
-                <div className="px-6 py-4 space-y-4">
-                    <p className="text-[#2F4858]/80">
-                        Félicitations pour avoir terminé votre séance ! 🎉
+                <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
+                    <p className="text-sm sm:text-base text-gray-300 text-center">
+                        Félicitations pour avoir terminé votre séance !
                     </p>
-                    <p className="text-[#2F4858]/80">
+                    <p className="text-sm sm:text-base text-gray-300 text-center">
                         Voulez-vous générer automatiquement votre prochaine séance ?
                     </p>
                     <div className="space-y-3 mt-4">
-                        <div className="bg-[#7CD8EE]/10 p-4 rounded-xl border border-[#7CD8EE]/30">
-                            <h4 className="font-semibold text-[#2F4858] mb-2">✨ Session adaptée</h4>
-                            <p className="text-sm text-[#2F4858]/70">
+                        <div className="group bg-[#94fbdd]/5 hover:bg-[#94fbdd]/10 p-4 rounded-2xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all cursor-pointer">
+                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                <span className="text-lg">✨</span>
+                                Session adaptée
+                            </h4>
+                            <p className="text-xs sm:text-sm text-gray-400">
                                 La prochaine séance sera ajustée selon vos performances pour optimiser votre progression.
                             </p>
                         </div>
-                        <div className="bg-[#2F4858]/10 p-4 rounded-xl border border-[#2F4858]/30">
-                            <h4 className="font-semibold text-[#2F4858] mb-2">🔁 Session similaire</h4>
-                            <p className="text-sm text-[#2F4858]/70">
+                        <div className="group bg-[#252527]/50 hover:bg-[#252527] p-4 rounded-2xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/20 transition-all cursor-pointer">
+                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                <span className="text-lg">🔁</span>
+                                Session similaire
+                            </h4>
+                            <p className="text-xs sm:text-sm text-gray-400">
                                 La prochaine séance reprendra exactement les mêmes paramètres.
                             </p>
                         </div>
@@ -413,6 +547,60 @@ export default function ActiveSession() {
                     </div>
                 </ModalFooter>
             </Modal>
-        </section>
+
+            {/* Modale d'annulation de séance */}
+            <Modal isOpen={showCancelModal} onClose={() => !isCancelling && setShowCancelModal(false)}>
+                <ModalHeader>
+                    <div className="flex items-center gap-3 justify-center">
+                        <div className="p-3 bg-red-500/10 rounded-2xl">
+                            <XMarkIcon className="h-7 w-7 text-red-400" />
+                        </div>
+                        <ModalTitle className="text-xl sm:text-2xl">Annuler la séance ?</ModalTitle>
+                    </div>
+                </ModalHeader>
+                <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
+                    <p className="text-sm sm:text-base text-gray-300 text-center">
+                        Êtes-vous sûr de vouloir annuler cette séance ?
+                    </p>
+                    {savedPerformanceIds.length > 0 && (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+                            <p className="text-sm text-red-300 text-center">
+                                <strong>{savedPerformanceIds.length}</strong> performance{savedPerformanceIds.length > 1 ? 's' : ''}
+                                {' '}enregistrée{savedPerformanceIds.length > 1 ? 's' : ''} {savedPerformanceIds.length > 1 ? 'seront supprimées' : 'sera supprimée'}.
+                            </p>
+                        </div>
+                    )}
+                    <p className="text-xs sm:text-sm text-gray-400 text-center">
+                        Cette action est irréversible.
+                    </p>
+                </div>
+                <ModalFooter>
+                    <div className="flex flex-col gap-3 w-full">
+                        <button
+                            onClick={() => setShowCancelModal(false)}
+                            disabled={isCancelling}
+                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
+                        >
+                            Continuer la séance
+                        </button>
+                        <button
+                            onClick={handleCancelSession}
+                            disabled={isCancelling}
+                            className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isCancelling ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Annulation...
+                                </>
+                            ) : (
+                                'Annuler la séance'
+                            )}
+                        </button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+        </div>
     )
+
 }
