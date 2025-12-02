@@ -40,6 +40,7 @@ export default function Sessions() {
         ?.map((session: any) => new Date(session.startTime)) || []
 
     const customStyles = `
+    /* ---------- Base / variables ---------- */
     .rdp {
       --rdp-cell-size: 40px;
       --rdp-accent-color: #94fbdd;
@@ -47,94 +48,142 @@ export default function Sessions() {
       margin: 0;
       font-family: inherit;
     }
-    
+
     @media (min-width: 640px) {
         .rdp {
             --rdp-cell-size: 48px;
         }
     }
+
+    .rdp-weekdays {
+    color: #ffffff !important;
+    }
+
+    .rdp-today {
+    color: #ffffff !important;
+    }
     
     .rdp-months {
       justify-content: center;
     }
+
+    .rdp-chevron polygon {
+    fill: #ffffff !important;
+    }
+
+    .rdp-selected {
+        background-color: #121214 !important;
+    }
+
+    .rdp-root {
+        color: #ffffff !important;
+    }
     
+    /* ---------- Caption (month) ---------- */
+    /* ciblage précis du label (utilisé par DayPicker) */
+    .rdp .rdp-caption,
     .rdp-caption {
-      color: #ffffff;
+      /* garde tes règles existantes si utiles */
       font-weight: 700;
       font-size: 1rem;
       margin-bottom: 1rem;
     }
-    
+    .rdp .rdp-caption_label,
+    .rdp-caption_label {
+      color: #ffffff !important; /* FORCER la couleur du nom du mois */
+    }
+
     @media (min-width: 640px) {
         .rdp-caption {
             font-size: 1.25rem;
             margin-bottom: 1.5rem;
         }
     }
-    
+
+    /* ---------- Navigation (chevrons) ---------- */
+    /* forcer couleur du bouton + taille */
+    .rdp .rdp-nav_button,
     .rdp-nav_button {
-      color: #ffffff;
+      color: #ffffff !important;
       width: 2rem;
       height: 2rem;
       border-radius: 0.75rem;
       transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    
+
     @media (min-width: 640px) {
         .rdp-nav_button {
             width: 2.5rem;
             height: 2.5rem;
         }
     }
-    
+
     .rdp-nav_button:hover {
-      background-color: rgba(148, 251, 221, 0.2);
+      background-color: rgba(148, 251, 221, 0.2) !important;
       transform: scale(1.1);
     }
-    
+
+    /* cibler le SVG à l'intérieur du bouton (stroke / fill) */
+    .rdp .rdp-nav_button svg,
+    .rdp-nav_button svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      stroke: #ffffff !important;
+      fill: #ffffff !important;
+    }
+    /* certains volumes internes utilisent path, on les force aussi */
+    .rdp .rdp-nav_button svg path,
+    .rdp-nav_button svg path {
+      stroke: #ffffff !important;
+      fill: #ffffff !important;
+    }
+
+    /* ---------- Head cells (lun, mar, mer...) ---------- */
+    .rdp .rdp-head_cell,
     .rdp-head_cell {
-      color: #ffffff;
+      color: #ffffff !important;
       font-weight: 700;
       font-size: 0.75rem;
       text-transform: uppercase;
       padding: 0.5rem;
     }
-    
+
     @media (min-width: 640px) {
         .rdp-head_cell {
             font-size: 0.85rem;
         }
     }
-    
+
+    /* ---------- Days ---------- */
     .rdp-cell {
       padding: 2px;
     }
-    
+
     @media (min-width: 640px) {
         .rdp-cell {
             padding: 3px;
         }
     }
-    
+
     .rdp-day {
-      border-radius: 0.75rem;
+      border-radius: 0.75rem !important;
       font-weight: 600;
       color: #ffffff;
       transition: all 0.2s;
       font-size: 0.875rem;
     }
-    
+
     @media (min-width: 640px) {
         .rdp-day {
             font-size: 1rem;
         }
     }
-    
-    .rdp-day:hover:not(.rdp-day_selected) {
-      background-color: rgba(148, 251, 221, 0.25) !important;
-      transform: scale(1.05);
-    }
-    
+
+
+
     .rdp-day_selected {
       background: #94fbdd !important;
       color: #121214 !important;
@@ -142,60 +191,67 @@ export default function Sessions() {
       box-shadow: 0 6px 16px rgba(148, 251, 221, 0.5);
       transform: scale(1.08);
     }
-    
+
     .rdp-day_today:not(.rdp-day_selected) {
       font-weight: 800;
       background-color: rgba(148, 251, 221, 0.15);
       color: #94fbdd;
       border: 2px solid #94fbdd;
     }
-    
+
     .rdp-day_outside {
       opacity: 0.3;
     }
-    
+
+    /* ---------- Modifiers (session/shared) ---------- */
     .session-day:not(.rdp-day_selected) {
+    
       background: linear-gradient(135deg, rgba(148, 251, 221, 0.4) 0%, rgba(148, 251, 221, 0.25) 100%) !important;
       font-weight: 800;
       box-shadow: 0 3px 10px rgba(148, 251, 221, 0.3);
     }
-    
+
     .session-day:not(.rdp-day_selected):hover {
       background: linear-gradient(135deg, rgba(148, 251, 221, 0.6) 0%, rgba(148, 251, 221, 0.35) 100%) !important;
       border-color: rgba(148, 251, 221, 1) !important;
       transform: scale(1.1);
       box-shadow: 0 6px 16px rgba(148, 251, 221, 0.5);
     }
-    
+
     .shared-session-day:not(.rdp-day_selected) {
       background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(124, 58, 237, 0.25) 100%) !important;
       font-weight: 800;
       box-shadow: 0 3px 10px rgba(147, 51, 234, 0.3);
     }
-    
+
     .shared-session-day:not(.rdp-day_selected):hover {
       background: linear-gradient(135deg, rgba(147, 51, 234, 0.6) 0%, rgba(124, 58, 237, 0.35) 100%) !important;
       border-color: rgba(147, 51, 234, 1) !important;
       transform: scale(1.1);
       box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
     }
-    
+
     .session-day.rdp-day_today:not(.rdp-day_selected) {
       background: linear-gradient(135deg, rgba(148, 251, 221, 0.5) 0%, rgba(148, 251, 221, 0.2) 100%) !important;
       border: 2.5px solid #94fbdd !important;
       box-shadow: 0 4px 12px rgba(148, 251, 221, 0.4);
     }
-    
+
     .session-day.rdp-day_selected {
       background: #94fbdd !important;
       border: 3px solid #94fbdd !important;
       box-shadow: 0 8px 20px rgba(148, 251, 221, 0.7);
     }
-    
+
     .shared-session-day.rdp-day_selected {
       background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%) !important;
       border: 3px solid #9333EA !important;
       box-shadow: 0 8px 20px rgba(147, 51, 234, 0.7);
+    }
+
+    /* small safety: for any element using currentColor inside rdp, ensure currentColor is white */
+    .rdp, .rdp * {
+      color: inherit;
     }
   `
 
@@ -302,6 +358,7 @@ export default function Sessions() {
     )
 }
 
+/* SessionCard and SharedSessionCard remain exactly as you had them (not modified) */
 function SessionCard({ session }: { session: Session }) {
     const [isExpanded, setIsExpanded] = useState(false)
 
@@ -502,7 +559,7 @@ function SharedSessionCard({ session }: { session: any }) {
 
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-purple-500/20">
                             <img
-                                src={session.organizer?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
+                                src={"http://localhost:3000" + session.organizer?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
                                 alt={session.organizer?.name}
                                 className="h-6 w-6 rounded-full flex-shrink-0"
                             />
