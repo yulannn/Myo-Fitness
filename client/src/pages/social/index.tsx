@@ -41,6 +41,7 @@ import useDeclineGroupRequest from '../../api/hooks/group/useDeclineGroupRequest
 import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
+import { useFriendNotifications } from '../../api/hooks/friend/useFriendNotifications';
 
 export default function SocialPage() {
     const { user } = useAuth();
@@ -49,6 +50,8 @@ export default function SocialPage() {
 
     // Activer les notifications de séances
     useSessionNotifications();
+    // Activer les notifications de demandes d'ami en temps réel
+    useFriendNotifications();
     const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'messages'>('messages');
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
     const [showSessions, setShowSessions] = useState(false);
@@ -404,8 +407,8 @@ export default function SocialPage() {
                                                                 }}
                                                                 disabled={joinedSessions.includes(sessionId)}
                                                                 className={`mt-3 w-full px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${joinedSessions.includes(sessionId)
-                                                                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 cursor-default'
-                                                                        : 'bg-[#252527] hover:bg-[#121214] text-purple-400 border border-purple-500/30'
+                                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30 cursor-default'
+                                                                    : 'bg-[#252527] hover:bg-[#121214] text-purple-400 border border-purple-500/30'
                                                                     }`}
                                                             >
                                                                 {joinedSessions.includes(sessionId) ? (

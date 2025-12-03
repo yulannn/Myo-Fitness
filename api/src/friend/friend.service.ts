@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { ChatService } from '../chat/chat.service';
+import { ChatGateway } from '../chat/chat.gateway';
 import { ConversationType } from '@prisma/client';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class FriendService {
   constructor(
     private prisma: PrismaService,
     private chatService: ChatService,
+    private chatGateway: ChatGateway,
   ) { }
 
   async searchUsers(query: string, currentUserId: number) {
@@ -100,18 +102,41 @@ export class FriendService {
       throw new Error("You are already friends");
     }
 
-    return this.prisma.friendRequest.create({
+    const friendRequest = await this.prisma.friendRequest.create({
       data: {
         senderId: userId,
         receiverId: friendId,
         status: 'PENDING',
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
+
+    // Notifier le destinataire en temps réel via WebSocket
+    this.chatGateway.notifyFriendRequestReceived(friendId, friendRequest);
+
+    return friendRequest;
   }
 
   async acceptFriendRequest(requestId: string) {
     const request = await this.prisma.friendRequest.findUnique({
       where: { id: requestId },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
 
     if (!request) {
@@ -130,6 +155,9 @@ export class FriendService {
     await this.prisma.friendRequest.delete({
       where: { id: requestId },
     });
+
+    // Notifier l'expéditeur que sa demande a été acceptée
+    this.chatGateway.notifyFriendRequestAccepted(request.senderId, request.receiver);
 
     // Créer automatiquement une conversation privée
     try {
@@ -151,6 +179,15 @@ export class FriendService {
   async declineFriendRequest(requestId: string) {
     const request = await this.prisma.friendRequest.findUnique({
       where: { id: requestId },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
 
     if (!request) {
@@ -160,6 +197,10 @@ export class FriendService {
     await this.prisma.friendRequest.delete({
       where: { id: requestId },
     });
+
+    // Notifier l'expéditeur que sa demande a été refusée
+    this.chatGateway.notifyFriendRequestDeclined(request.senderId, request.receiver);
+
     return { message: 'Friend request declined' };
   }
 

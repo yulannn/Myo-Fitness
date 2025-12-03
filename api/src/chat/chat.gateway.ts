@@ -329,4 +329,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             }
         });
     }
+
+    // ========== FRIEND REQUEST EVENTS ==========
+
+    /**
+     * Notifier quand une demande d'ami est reçue
+     */
+    notifyFriendRequestReceived(receiverId: number, friendRequest: any) {
+        console.log(`👥 Envoi de notification de demande d'ami à l'utilisateur ${receiverId}`);
+        const socketIds = userSockets.get(receiverId);
+        if (socketIds) {
+            socketIds.forEach((socketId) => {
+                this.server.to(socketId).emit('friend:request-received', friendRequest);
+                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
+            });
+        } else {
+            console.log(`    ⚠ Utilisateur ${receiverId} non connecté`);
+        }
+    }
+
+    /**
+     * Notifier quand une demande d'ami est acceptée
+     */
+    notifyFriendRequestAccepted(senderId: number, acceptedBy: any) {
+        console.log(`✅ Notification d'acceptation de demande d'ami à l'utilisateur ${senderId}`);
+        const socketIds = userSockets.get(senderId);
+        if (socketIds) {
+            socketIds.forEach((socketId) => {
+                this.server.to(socketId).emit('friend:request-accepted', acceptedBy);
+                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
+            });
+        }
+    }
+
+    /**
+     * Notifier quand une demande d'ami est refusée
+     */
+    notifyFriendRequestDeclined(senderId: number, declinedBy: any) {
+        console.log(`❌ Notification de refus de demande d'ami à l'utilisateur ${senderId}`);
+        const socketIds = userSockets.get(senderId);
+        if (socketIds) {
+            socketIds.forEach((socketId) => {
+                this.server.to(socketId).emit('friend:request-declined', declinedBy);
+                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
+            });
+        }
+    }
 }
