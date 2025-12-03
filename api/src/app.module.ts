@@ -21,6 +21,7 @@ import { join } from 'path';
 import { SessionPhotoModule } from './session-photo/session-photo.module';
 import { ChatModule } from './chat/chat.module';
 import { SharedSessionModule } from './shared-session/shared-session.module';
+import { LevelModule } from './level/level.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { SharedSessionModule } from './shared-session/shared-session.module';
     SessionPhotoModule,
     ChatModule,
     SharedSessionModule,
+    LevelModule,
   ],
   controllers: [AppController],
   providers: [

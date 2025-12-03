@@ -5,12 +5,14 @@ import { UpdateSessionDateDto } from './dto/update-session.dto';
 import { BadRequestException } from '@nestjs/common/exceptions/bad-request.exception';
 import { ExerciseDataDto } from 'src/program/dto/add-session-program.dto';
 import { ProgramService } from 'src/program/program.service';
+import { LevelService } from 'src/level/level.service';
 
 @Injectable()
 export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly programService: ProgramService,
+    private readonly levelService: LevelService,
   ) { }
 
   async getSessionById(id: number, userId: number) {
@@ -64,16 +66,27 @@ export class SessionService {
     });
   }
 
-  async completedSession(id: number) {
+  async completedSession(id: number, userId: number) {
     const session = await this.prisma.trainingSession.findUnique({
       where: { id },
+      include: {
+        trainingProgram: {
+          include: {
+            fitnessProfile: true,
+          },
+        },
+      },
     });
 
     if (!session) {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
 
-    return this.prisma.trainingSession.update({
+    if (session.trainingProgram.fitnessProfile.userId !== userId) {
+      throw new BadRequestException('You do not have permission to complete this session');
+    }
+
+    const updatedSession = await this.prisma.trainingSession.update({
       where: { id },
       data: {
         performedAt: new Date(),
@@ -81,6 +94,14 @@ export class SessionService {
       },
     });
 
+    try {
+      await this.levelService.addExperienceFromSession(userId, id);
+    } catch (error) {
+      console.error('Error adding experience:', error);
+      
+    }
+
+    return updatedSession;
   }
 
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {

@@ -63,8 +63,9 @@ export class SessionController {
     description: 'Session marquée comme terminée avec succès',
   })
   @ApiResponse({ status: 404, description: 'Session non trouvée' })
-  completedSession(@Param('id', ParseIntPipe) id: number) {
-    return this.sessionService.completedSession(id);
+  completedSession(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.sessionService.completedSession(id, userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
