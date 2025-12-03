@@ -15,7 +15,6 @@ export function useSendGroupRequest(options?: Partial<UseMutationOptions<Group, 
         onSuccess: async (...args) => {
             qc.invalidateQueries({ queryKey: ['groups'] });
             qc.invalidateQueries({ queryKey: ['groupRequests'] });
-            alert('Invitation envoyée');
             if (options?.onSuccess) {
                 options.onSuccess(...args);
             }

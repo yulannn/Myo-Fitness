@@ -155,6 +155,9 @@ export class GroupService {
                     some: { id: userId },
                 },
             },
+            include: {
+                members: true,
+            },
         });
 
         return groups;

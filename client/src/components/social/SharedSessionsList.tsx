@@ -3,7 +3,7 @@ import { useSharedSessions, useJoinSharedSession, useLeaveSharedSession, useDele
 import useUserGroups from '../../api/hooks/group/useGetUserGroups';
 import { useFriendsList } from '../../api/hooks/friend/useGetFriendsList';
 import { useAuth } from '../../context/AuthContext';
-import { Calendar, MapPin, Users, Plus, Trash2, LogOut, LogIn, UserPlus, X, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Users, Plus, Trash2, LogOut, LogIn, UserPlus, X, ChevronDown, ChevronUp, AlertTriangle, Check } from 'lucide-react';
 import CreateSharedSessionModal from './CreateSharedSessionModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -23,6 +23,7 @@ const SharedSessionsList: React.FC = () => {
     const [inviteTab, setInviteTab] = useState<'groups' | 'friends'>('groups');
     const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
     const [deleteConfirmSessionId, setDeleteConfirmSessionId] = useState<string | null>(null);
+    const [invitedFriends, setInvitedFriends] = useState<number[]>([]);
 
     const toggleSessionExpansion = (sessionId: string) => {
         setExpandedSessions(prev => {
@@ -47,7 +48,7 @@ const SharedSessionsList: React.FC = () => {
     const handleInviteFriend = (sessionId: string, friendId: number) => {
         inviteFriend.mutate({ sessionId, friendId }, {
             onSuccess: () => {
-                setInviteModalSessionId(null);
+                setInvitedFriends(prev => [...prev, friendId]);
             }
         });
     };
@@ -130,7 +131,10 @@ const SharedSessionsList: React.FC = () => {
                                     {isOrganizer && (
                                         <>
                                             <button
-                                                onClick={() => setInviteModalSessionId(session.id)}
+                                                onClick={() => {
+                                                    setInviteModalSessionId(session.id);
+                                                    setInvitedFriends([]);
+                                                }}
                                                 className="p-2 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all"
                                                 title="Inviter des personnes"
                                             >
@@ -357,25 +361,41 @@ const SharedSessionsList: React.FC = () => {
                             ) : (
                                 // LISTE DES AMIS
                                 friends && friends.length > 0 ? (
-                                    friends.map((friend: any) => (
-                                        <button
-                                            key={friend.id}
-                                            onClick={() => handleInviteFriend(inviteModalSessionId, friend.id)}
-                                            className="w-full text-left p-4 bg-[#121214] hover:bg-[#121214]/80 rounded-xl transition-all border border-purple-500/20 hover:border-purple-500/50"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={friend.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=random`}
-                                                        alt={friend.name}
-                                                        className="w-10 h-10 rounded-full"
-                                                    />
-                                                    <p className="font-semibold text-white">{friend.name}</p>
+                                    friends.map((friendData: any) => {
+                                        const isInvited = invitedFriends.includes(friendData.friend.id);
+                                        return (
+                                            <button
+                                                key={friendData.id}
+                                                onClick={() => !isInvited && handleInviteFriend(inviteModalSessionId, friendData.friend.id)}
+                                                disabled={inviteFriend.isPending || isInvited}
+                                                className={`w-full text-left p-4 rounded-xl transition-all border ${isInvited
+                                                    ? 'bg-green-500/10 border-green-500/30 cursor-default'
+                                                    : 'bg-[#121214] hover:bg-[#121214]/80 border-purple-500/20 hover:border-purple-500/50'
+                                                    } disabled:opacity-50`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={friendData.friend.profilePictureUrl ? `http://localhost:3000${friendData.friend.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(friendData.friend.name)}&background=random`}
+                                                            alt={friendData.friend.name}
+                                                            className="w-10 h-10 rounded-full object-cover"
+                                                        />
+                                                        <p className={`font-semibold ${isInvited ? 'text-green-400' : 'text-white'}`}>
+                                                            {friendData.friend.name}
+                                                        </p>
+                                                    </div>
+                                                    {isInvited ? (
+                                                        <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                                                            <span>Invité</span>
+                                                            <Check size={20} />
+                                                        </div>
+                                                    ) : (
+                                                        <UserPlus size={20} className="text-purple-400" />
+                                                    )}
                                                 </div>
-                                                <UserPlus size={20} className="text-purple-400" />
-                                            </div>
-                                        </button>
-                                    ))
+                                            </button>
+                                        );
+                                    })
                                 ) : (
                                     <p className="text-center text-gray-400 py-8">
                                         Vous n'avez aucun ami.
