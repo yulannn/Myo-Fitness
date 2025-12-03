@@ -42,6 +42,7 @@ import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
 import { useFriendNotifications } from '../../api/hooks/friend/useFriendNotifications';
+import { useGlobalMessageListener } from '../../api/hooks/chat/useGlobalMessageListener';
 
 export default function SocialPage() {
     const { user } = useAuth();
@@ -52,6 +53,8 @@ export default function SocialPage() {
     useSessionNotifications();
     // Activer les notifications de demandes d'ami en temps réel
     useFriendNotifications();
+    // Activer l'écoute globale des messages (crucial pour recevoir les messages même hors conversation)
+    useGlobalMessageListener();
     const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'messages'>('messages');
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
     const [showSessions, setShowSessions] = useState(false);
