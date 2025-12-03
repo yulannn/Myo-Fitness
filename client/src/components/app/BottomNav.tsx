@@ -28,11 +28,12 @@ export default function BottomNav() {
   const { totalNotifications } = useSocialNotifications()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#252527]/95 backdrop-blur-xl shadow-2xl border-t border-[#94fbdd]/10">
+    <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#252527]/95 backdrop-blur-xl shadow-2xl border-t border-purple-500/10">
       <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
         {items.map(({ to, icon: Icon, iconSolid: IconSolid, end, label }) => {
           const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
           const ActiveIcon = isActive ? IconSolid : Icon
+          const isSocial = to === '/social'
 
           return (
             <NavLink
@@ -47,14 +48,22 @@ export default function BottomNav() {
                   className={[
                     'flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 relative',
                     isActive
-                      ? 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/30 scale-110'
-                      : 'bg-[#121214] hover:bg-[#94fbdd]/10 hover:scale-105',
+                      ? isSocial
+                        ? 'bg-purple-500 shadow-lg shadow-purple-500/30 scale-110'
+                        : 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/30 scale-110'
+                      : isSocial
+                        ? 'bg-[#121214] hover:bg-purple-500/10 hover:scale-105'
+                        : 'bg-[#121214] hover:bg-[#94fbdd]/10 hover:scale-105',
                   ].join(' ')}
                 >
                   <ActiveIcon
                     className={[
                       'h-6 w-6 transition-colors duration-300',
-                      isActive ? 'text-[#121214]' : 'text-gray-400 group-hover:text-[#94fbdd]'
+                      isActive
+                        ? 'text-white'
+                        : isSocial
+                          ? 'text-gray-400 group-hover:text-purple-400'
+                          : 'text-gray-400 group-hover:text-[#94fbdd]'
                     ].join(' ')}
                   />
 
@@ -68,7 +77,7 @@ export default function BottomNav() {
 
                 {/* Active Indicator Dot */}
                 {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#94fbdd] rounded-full shadow-lg shadow-[#94fbdd]/50"></div>
+                  <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full shadow-lg ${isSocial ? 'bg-purple-400 shadow-purple-400/50' : 'bg-[#94fbdd] shadow-[#94fbdd]/50'}`}></div>
                 )}
               </div>
 
@@ -77,7 +86,9 @@ export default function BottomNav() {
                 className={[
                   'text-[10px] font-medium transition-all duration-300',
                   isActive
-                    ? 'text-[#94fbdd] font-semibold'
+                    ? isSocial
+                      ? 'text-purple-400 font-semibold'
+                      : 'text-[#94fbdd] font-semibold'
                     : 'text-gray-500 group-hover:text-gray-400',
                 ].join(' ')}
               >

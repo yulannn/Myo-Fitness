@@ -79,8 +79,8 @@ export default function EditProfileModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-[#252527] p-6 shadow-2xl border border-[#94fbdd]/20 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-[#252527] p-6 shadow-2xl border border-[#94fbdd]/20 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
 
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
@@ -175,27 +175,40 @@ export default function EditProfileModal({
                     {/* Goals */}
                     <div className="space-y-3">
                         <label className="text-sm font-medium text-gray-300">Objectifs</label>
-                        <div className="flex gap-3">
-                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 flex-1">
-                                <input
-                                    type="checkbox"
-                                    name="MUSCLE_GAIN"
-                                    checked={(form.goals || []).includes('MUSCLE_GAIN')}
-                                    onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
-                                />
-                                <span className="text-sm text-white">Gain musculaire</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 flex-1">
-                                <input
-                                    type="checkbox"
-                                    name="WEIGHT_LOSS"
-                                    checked={(form.goals || []).includes('WEIGHT_LOSS')}
-                                    onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
-                                />
-                                <span className="text-sm text-white">Perte de poids</span>
-                            </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const currentGoals = form.goals || [];
+                                    const newGoals = currentGoals.includes('MUSCLE_GAIN')
+                                        ? currentGoals.filter(g => g !== 'MUSCLE_GAIN')
+                                        : [...currentGoals, 'MUSCLE_GAIN'];
+                                    setForm(prev => ({ ...prev, goals: newGoals as any }));
+                                }}
+                                className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('MUSCLE_GAIN')
+                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                    }`}
+                            >
+                                <span className="text-sm">Gain musculaire</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const currentGoals = form.goals || [];
+                                    const newGoals = currentGoals.includes('WEIGHT_LOSS')
+                                        ? currentGoals.filter(g => g !== 'WEIGHT_LOSS')
+                                        : [...currentGoals, 'WEIGHT_LOSS'];
+                                    setForm(prev => ({ ...prev, goals: newGoals as any }));
+                                }}
+                                className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('WEIGHT_LOSS')
+                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                    }`}
+                            >
+                                <span className="text-sm">Perte de poids</span>
+                            </button>
                         </div>
                     </div>
 
@@ -217,16 +230,20 @@ export default function EditProfileModal({
                     </div>
 
                     {/* Bodyweight */}
-                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#121214] transition-all border border-[#94fbdd]/10 hover:border-[#94fbdd]/30">
-                        <input
-                            type="checkbox"
-                            name="bodyWeight"
-                            checked={form.bodyWeight || false}
-                            onChange={handleChange}
-                            className="w-5 h-5 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
-                        />
-                        <span className="text-sm text-white">Bodyweight uniquement</span>
-                    </label>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#121214] border border-[#94fbdd]/10">
+                        <span className="text-sm font-medium text-gray-300">Bodyweight uniquement</span>
+                        <button
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, bodyWeight: !prev.bodyWeight }))}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#94fbdd] focus:ring-offset-2 focus:ring-offset-[#121214] ${form.bodyWeight ? 'bg-[#94fbdd]' : 'bg-gray-700'
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.bodyWeight ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                            />
+                        </button>
+                    </div>
 
                     {/* Training Days Selector */}
                     <TrainingDaysSelector

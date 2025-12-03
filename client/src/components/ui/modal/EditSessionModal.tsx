@@ -175,7 +175,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
             </ModalHeader>
 
             <ModalContent>
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1">
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
                     {/* Exercises List */}
                     {visibleExercises.map((exercise) => {
                         // Get the real index in the full exercises array
