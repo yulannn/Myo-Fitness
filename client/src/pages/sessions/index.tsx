@@ -449,9 +449,9 @@ function SessionCard({ session }: { session: Session }) {
                                                 <p className="font-semibold text-white break-words">
                                                     {ex.exercice?.name || `Exercice ${index + 1}`}
                                                 </p>
-                                                {ex.exercice?.muscleGroup && (
+                                                {ex.exercice?.groupes && ex.exercice.groupes.length > 0 && (
                                                     <p className="text-xs text-gray-500 mt-0.5">
-                                                        {ex.exercice.muscleGroup}
+                                                        {ex.exercice.groupes.map((g: any) => g.groupe.name).join(', ')}
                                                     </p>
                                                 )}
                                             </div>
