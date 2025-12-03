@@ -132,16 +132,32 @@ export class SessionAdaptationService {
 
         const trainingDays = program?.fitnessProfile?.trainingDays || [];
 
+        // Récupérer la dernière session planifiée pour ce programme
+        const lastScheduledSession = await this.prisma.trainingSession.findFirst({
+            where: {
+                programId: previousSession.programId,
+                date: { not: null }
+            },
+            orderBy: { date: 'desc' },
+        });
+
+        // La date de référence est la plus récente entre "maintenant" et la dernière session planifiée
+        // Cela garantit que la nouvelle session est planifiée APRÈS les sessions existantes
+        // et jamais dans le passé
+        let referenceDate = new Date();
+
+        if (lastScheduledSession?.date) {
+            const lastDate = new Date(lastScheduledSession.date);
+            if (lastDate > referenceDate) {
+                referenceDate = lastDate;
+            }
+        }
+
         // Calculer la prochaine date de session
-        const nextSessionDate = previousSession.performedAt
-            ? SessionSchedulingHelper.getNextSessionDate(
-                new Date(previousSession.performedAt),
-                trainingDays,
-            )
-            : SessionSchedulingHelper.getNextSessionDate(
-                new Date(),
-                trainingDays,
-            );
+        const nextSessionDate = SessionSchedulingHelper.getNextSessionDate(
+            referenceDate,
+            trainingDays,
+        );
 
         const newSession = await this.prisma.trainingSession.create({
             data: {
@@ -206,16 +222,30 @@ export class SessionAdaptationService {
 
         const trainingDays = program?.fitnessProfile?.trainingDays || [];
 
+        // Récupérer la dernière session planifiée pour ce programme
+        const lastScheduledSession = await this.prisma.trainingSession.findFirst({
+            where: {
+                programId: oldSession.programId,
+                date: { not: null }
+            },
+            orderBy: { date: 'desc' },
+        });
+
+        // La date de référence est la plus récente entre "maintenant" et la dernière session planifiée
+        let referenceDate = new Date();
+
+        if (lastScheduledSession?.date) {
+            const lastDate = new Date(lastScheduledSession.date);
+            if (lastDate > referenceDate) {
+                referenceDate = lastDate;
+            }
+        }
+
         // Calculer la prochaine date de session
-        const nextSessionDate = oldSession.performedAt
-            ? SessionSchedulingHelper.getNextSessionDate(
-                new Date(oldSession.performedAt),
-                trainingDays,
-            )
-            : SessionSchedulingHelper.getNextSessionDate(
-                new Date(),
-                trainingDays,
-            );
+        const nextSessionDate = SessionSchedulingHelper.getNextSessionDate(
+            referenceDate,
+            trainingDays,
+        );
 
         const newSession = await this.prisma.trainingSession.create({
             data: {

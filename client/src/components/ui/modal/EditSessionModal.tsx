@@ -86,7 +86,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
             await Promise.all(promises);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['programs'] });
+            queryClient.invalidateQueries({ queryKey: ['program'] });
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             onClose();
         },

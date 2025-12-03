@@ -13,6 +13,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
+import ProgressChart from '../../components/home/ProgressChart'
+import StreakTracker from '../../components/home/StreakTracker'
+import PersonalRecords from '../../components/home/PersonalRecords'
+import AIInsights from '../../components/home/AIInsights'
 
 export default function Home() {
   const { user } = useAuth()
@@ -34,6 +38,23 @@ export default function Home() {
       totalSessions: sessions?.length || 0
     }
   }, [programs, sessions])
+
+  // Generate mock weight data for chart demonstration
+  const weightData = useMemo(() => {
+    const data = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    for (let i = 0; i < 30; i += 3) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      data.push({
+        date: date.toISOString(),
+        value: 75 + Math.random() * 3 - 1.5 // Random weight between 73.5-76.5kg
+      });
+    }
+    return data;
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -171,6 +192,39 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Progress Dashboard Section - NEW! */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+              <ChartBarIcon className="h-6 w-6 text-[#94fbdd]" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Tableau de Progression</h2>
+              <p className="text-sm text-gray-400">Analyse détaillée de ta performance</p>
+            </div>
+          </div>
+
+          {/* Weight Progress Chart */}
+          <ProgressChart
+            data={weightData}
+            title="Évolution du poids"
+            unit="kg"
+            color="#94fbdd"
+          />
+
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Streak Tracker */}
+            <StreakTracker sessions={sessions || []} />
+
+            {/* AI Insights */}
+            <AIInsights sessions={sessions || []} programs={programs || []} />
+          </div>
+
+          {/* Personal Records */}
+          <PersonalRecords sessions={sessions || []} />
         </div>
 
         {/* Quick Links */}
