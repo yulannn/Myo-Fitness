@@ -917,7 +917,7 @@ async function main() {
       weight: 75.0,
       trainingFrequency: 4,
       experienceLevel: 'INTERMEDIATE',
-      goals: ['MUSCLE_GAIN', 'ENDURANCE'],
+      goals: ['MUSCLE_GAIN'],
       gender: 'MALE',
       bodyWeight: false, // Préfère la salle
     },
@@ -931,7 +931,7 @@ async function main() {
       weight: 60.0,
       trainingFrequency: 3,
       experienceLevel: 'BEGINNER',
-      goals: ['WEIGHT_LOSS', 'MAINTENANCE'],
+      goals: ['WEIGHT_LOSS'],
       gender: 'FEMALE',
       bodyWeight: true, // Préfère le poids du corps
     },
@@ -946,7 +946,7 @@ async function main() {
       name: 'Programme Intermédiaire 4x/semaine',
       description: 'Programme complet pour prise de masse',
       template: 'UPPER_LOWER',
-      status: 'DRAFT',
+      status: 'ACTIVE',
     },
   });
 
@@ -956,7 +956,7 @@ async function main() {
       name: 'Programme Débutant 3x/semaine',
       description: 'Programme poids du corps pour débuter',
       template: 'FULL_BODY',
-      status: 'DRAFT',
+      status: 'ACTIVE',
     },
   });
 
