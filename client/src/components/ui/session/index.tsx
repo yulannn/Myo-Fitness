@@ -217,6 +217,10 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
       transform: scale(1.08);
     }
 
+    .rdp-root {
+      --rdp-accent-color: transparent !important;
+    }
+      
     .rdp-day_today:not(.rdp-day_selected) {
       font-weight: 800;
       background-color: rgba(148, 251, 221, 0.15);

@@ -187,14 +187,16 @@ export default function Sessions() {
         }
     }
 
-
-
     .rdp-day_selected {
       background: #94fbdd !important;
       color: #121214 !important;
       font-weight: 800;
       box-shadow: 0 6px 16px rgba(148, 251, 221, 0.5);
       transform: scale(1.08);
+    }
+
+    .rdp-root {
+      --rdp-accent-color: transparent !important;
     }
 
     .rdp-day_today:not(.rdp-day_selected) {
@@ -210,62 +212,63 @@ export default function Sessions() {
 
     /* ---------- Modifiers (session/shared) ---------- */
     .session-day:not(.rdp-day_selected) {
-    
-      background: linear-gradient(135deg, rgba(148, 251, 221, 0.4) 0%, rgba(148, 251, 221, 0.25) 100%) !important;
+      background: rgba(148, 251, 221, 0.3) !important;
       font-weight: 800;
-      box-shadow: 0 3px 10px rgba(148, 251, 221, 0.3);
-    }
-
-    .session-day:not(.rdp-day_selected):hover {
-      background: linear-gradient(135deg, rgba(148, 251, 221, 0.6) 0%, rgba(148, 251, 221, 0.35) 100%) !important;
-      border-color: rgba(148, 251, 221, 1) !important;
-      transform: scale(1.1);
-      box-shadow: 0 6px 16px rgba(148, 251, 221, 0.5);
     }
 
     .shared-session-day:not(.rdp-day_selected) {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(124, 58, 237, 0.25) 100%) !important;
+      background: rgba(147, 51, 234, 0.3) !important;
       font-weight: 800;
-      box-shadow: 0 3px 10px rgba(147, 51, 234, 0.3);
-    }
-
-    .shared-session-day:not(.rdp-day_selected):hover {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.6) 0%, rgba(124, 58, 237, 0.35) 100%) !important;
-      border-color: rgba(147, 51, 234, 1) !important;
-      transform: scale(1.1);
-      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
     }
 
     .session-day.rdp-day_today:not(.rdp-day_selected) {
-      background: linear-gradient(135deg, rgba(148, 251, 221, 0.5) 0%, rgba(148, 251, 221, 0.2) 100%) !important;
+      background: rgba(148, 251, 221, 0.3) !important;
       border: 2.5px solid #94fbdd !important;
-      box-shadow: 0 4px 12px rgba(148, 251, 221, 0.4);
     }
 
     .session-day.rdp-day_selected {
       background: #94fbdd !important;
       border: 3px solid #94fbdd !important;
-      box-shadow: 0 8px 20px rgba(148, 251, 221, 0.7);
     }
 
     .shared-session-day.rdp-day_selected {
-      background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%) !important;
+      background: #9333EA !important;
       border: 3px solid #9333EA !important;
-      box-shadow: 0 8px 20px rgba(147, 51, 234, 0.7);
+    }
+
+    /* ---------- Both session types on same day ---------- */
+    .both-sessions-day:not(.rdp-day_selected) {
+      background: linear-gradient(135deg, rgba(148, 251, 221, 0.3) 0%, rgba(148, 251, 221, 0.3) 50%, rgba(147, 51, 234, 0.3) 50%, rgba(147, 51, 234, 0.3) 100%) !important;
+      font-weight: 800;
+    }
+
+    .both-sessions-day.rdp-day_selected {
+      background: linear-gradient(135deg, #94fbdd 0%, #94fbdd 50%, #9333EA 50%, #9333EA 100%) !important;
+      border: 3px solid #94fbdd !important;
     }
 
     /* small safety: for any element using currentColor inside rdp, ensure currentColor is white */
     .rdp, .rdp * {
       color: inherit;
     }
+
   `
 
+    // Detect days that have BOTH types of sessions
+    const datesWithBothSessions = datesWithSessions.filter(date =>
+        datesWithSharedSessions.some(sharedDate =>
+            isSameDay(date, sharedDate)
+        )
+    )
+
     const modifiers = {
+        hasBothSessions: datesWithBothSessions,
         hasSession: datesWithSessions,
         hasSharedSession: datesWithSharedSessions,
     }
 
     const modifiersClassNames = {
+        hasBothSessions: 'both-sessions-day',
         hasSession: 'session-day',
         hasSharedSession: 'shared-session-day',
     }
@@ -327,7 +330,12 @@ export default function Sessions() {
                             <h2 className="text-lg sm:text-xl font-bold text-white">
                                 {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
                             </h2>
-                            <span className="px-4 py-2 rounded-xl bg-[#94fbdd]/10 border border-[#94fbdd]/30 text-[#94fbdd] font-semibold text-sm w-fit">
+                            <span className={`px-4 py-2 rounded-xl font-semibold text-sm w-fit ${sessionsForSelectedDate.length > 0 && sharedSessionsForSelectedDate.length > 0
+                                ? 'bg-gradient-to-r from-[#94fbdd]/10 to-purple-500/10 border border-[#94fbdd]/30 text-white'
+                                : sharedSessionsForSelectedDate.length > 0
+                                    ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
+                                    : 'bg-[#94fbdd]/10 border border-[#94fbdd]/30 text-[#94fbdd]'
+                                }`}>
                                 {sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length} séance{(sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length) > 1 ? 's' : ''}
                             </span>
                         </div>
@@ -363,12 +371,12 @@ export default function Sessions() {
     )
 }
 
-/* SessionCard and SharedSessionCard remain exactly as you had them (not modified) */
+/* Unified design for session cards - both types share the same layout with their respective colors */
 function SessionCard({ session }: { session: Session }) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <div className="bg-[#252527] rounded-2xl shadow-xl border border-[#94fbdd]/10 overflow-hidden transition-all hover:shadow-2xl hover:border-[#94fbdd]/30">
+        <div className="bg-[#252527] rounded-2xl shadow-lg border border-[#94fbdd]/15 overflow-hidden transition-all hover:shadow-xl hover:border-[#94fbdd]/30">
             {/* Header */}
             <div
                 className="p-4 sm:p-5 cursor-pointer"
@@ -381,7 +389,7 @@ function SessionCard({ session }: { session: Session }) {
                                 {session.trainingProgram?.name || 'Programme'}
                             </h3>
                             {session.completed && (
-                                <CheckCircleIcon className="h-5 w-5 text-[#94fbdd] flex-shrink-0" />
+                                <CheckCircleIcon className="h-5 w-5 text-[#94fbdd]/80 flex-shrink-0" />
                             )}
                         </div>
 
@@ -398,19 +406,19 @@ function SessionCard({ session }: { session: Session }) {
                             )}
 
                             {session.duration && (
-                                <span className="text-gray-400 font-semibold">{session.duration} min</span>
+                                <span className="text-gray-400 font-medium">{session.duration} min</span>
                             )}
 
-                            <div className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-semibold whitespace-nowrap">
+                            <div className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
                                 {session.exercices?.length || 0} exercice{(session.exercices?.length || 0) > 1 ? 's' : ''}
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
-                        <div className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap ${session.completed
-                            ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
-                            : 'bg-gray-700 text-gray-400 border border-gray-600'
+                        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${session.completed
+                            ? 'bg-[#94fbdd]/10 text-[#94fbdd]/90 border border-[#94fbdd]/20'
+                            : 'bg-gray-700/50 text-gray-400 border border-gray-600/50'
                             }`}>
                             {session.completed ? 'Complétée' : 'À venir'}
                         </div>
@@ -442,7 +450,7 @@ function SessionCard({ session }: { session: Session }) {
                                 return (
                                     <div
                                         key={index}
-                                        className="bg-[#252527] rounded-xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-colors overflow-hidden"
+                                        className="bg-[#252527] rounded-xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/20 transition-colors overflow-hidden"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border-b border-[#94fbdd]/5">
                                             <div className="flex-1 min-w-0">
@@ -459,17 +467,17 @@ function SessionCard({ session }: { session: Session }) {
                                             {!hasPerformances && (
                                                 <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                                                     {ex.sets && (
-                                                        <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-semibold whitespace-nowrap">
+                                                        <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
                                                             {ex.sets} séries
                                                         </span>
                                                     )}
                                                     {ex.reps && (
-                                                        <span className="px-2 py-1 rounded-lg bg-gray-700 text-gray-300 font-semibold whitespace-nowrap">
+                                                        <span className="px-2 py-1 rounded-lg bg-gray-700/50 text-gray-300 font-medium whitespace-nowrap">
                                                             {ex.reps} reps
                                                         </span>
                                                     )}
                                                     {ex.weight && (
-                                                        <span className="px-2 py-1 rounded-lg bg-gray-600 text-white font-semibold whitespace-nowrap">
+                                                        <span className="px-2 py-1 rounded-lg bg-gray-600/50 text-gray-200 font-medium whitespace-nowrap">
                                                             {ex.weight} kg
                                                         </span>
                                                     )}
@@ -485,22 +493,22 @@ function SessionCard({ session }: { session: Session }) {
                                                             key={perfIndex}
                                                             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-[#252527] rounded-lg border border-[#94fbdd]/10"
                                                         >
-                                                            <span className="text-xs font-semibold text-gray-500">
+                                                            <span className="text-xs font-medium text-gray-500">
                                                                 Série {perfIndex + 1}
                                                             </span>
                                                             <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                                                                 {perf.reps_effectuees && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-semibold whitespace-nowrap">
+                                                                    <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
                                                                         {perf.reps_effectuees} reps
                                                                     </span>
                                                                 )}
                                                                 {perf.weight && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-gray-700 text-gray-300 font-semibold whitespace-nowrap">
+                                                                    <span className="px-2 py-1 rounded-lg bg-gray-700/50 text-gray-300 font-medium whitespace-nowrap">
                                                                         {perf.weight} kg
                                                                     </span>
                                                                 )}
                                                                 {perf.rpe && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-gray-600 text-white font-semibold text-xs whitespace-nowrap">
+                                                                    <span className="px-2 py-1 rounded-lg bg-gray-600/50 text-gray-200 font-medium text-xs whitespace-nowrap">
                                                                         RPE: {perf.rpe}
                                                                     </span>
                                                                 )}
@@ -511,7 +519,7 @@ function SessionCard({ session }: { session: Session }) {
                                             </div>
                                         )}
                                     </div>
-                                )
+                                );
                             })}
                         </div>
                     </div>
@@ -523,58 +531,56 @@ function SessionCard({ session }: { session: Session }) {
 
 function SharedSessionCard({ session }: { session: any }) {
     return (
-        <div className="bg-gradient-to-br from-purple-900/20 to-[#252527] rounded-2xl shadow-xl border-2 border-purple-500/30 overflow-hidden transition-all hover:shadow-2xl hover:border-purple-500/50">
+        <div className="bg-[#252527] rounded-2xl shadow-lg border border-purple-500/15 overflow-hidden transition-all hover:shadow-xl hover:border-purple-500/30">
             <div className="p-4 sm:p-5">
                 <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between sm:gap-4">
                     <div className="flex-1 space-y-2 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                            <UsersIcon className="h-5 w-5 text-purple-400 flex-shrink-0" />
-                            <span className="text-xs font-bold text-purple-400 uppercase tracking-wide">Séance Partagée</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <UsersIcon className="h-5 w-5 text-purple-400/80 flex-shrink-0" />
+                            <h3 className="text-base sm:text-lg font-bold text-white break-words">{session.title}</h3>
                         </div>
-
-                        <h3 className="text-base sm:text-lg font-bold text-white break-words">{session.title}</h3>
 
                         {session.description && (
                             <p className="text-sm text-gray-400 break-words">{session.description}</p>
                         )}
 
-                        <div className="flex flex-wrap items-center gap-2 text-xs mt-3">
-                            <div className="flex items-center gap-1 text-purple-300">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <div className="flex items-center gap-1 text-gray-400">
                                 <ClockIcon className="h-4 w-4 flex-shrink-0" />
                                 <span>{format(new Date(session.startTime), 'HH:mm', { locale: fr })}</span>
                             </div>
 
                             {session.location && (
-                                <div className="flex items-center gap-1 text-purple-300">
+                                <div className="flex items-center gap-1 text-gray-400">
                                     <MapPinIcon className="h-4 w-4 flex-shrink-0" />
                                     <span className="break-words">{session.location}</span>
                                 </div>
                             )}
 
-                            <div className="px-2 py-1 rounded-lg bg-purple-500/20 text-purple-300 font-semibold whitespace-nowrap">
+                            <div className="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400/90 font-medium whitespace-nowrap">
                                 {session.participants?.length || 0} / {session.maxParticipants || '∞'} participants
                             </div>
 
                             {session.group && (
-                                <div className="px-2 py-1 rounded-lg bg-blue-500/20 text-blue-300 font-semibold whitespace-nowrap">
+                                <div className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400/90 font-medium whitespace-nowrap">
                                     {session.group.name}
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-purple-500/20">
+                        <div className="flex items-center gap-2 pt-2 border-t border-purple-500/10">
                             <img
                                 src={"http://localhost:3000" + session.organizer?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
                                 alt={session.organizer?.name}
                                 className="h-6 w-6 rounded-full flex-shrink-0"
                             />
-                            <span className="text-xs text-purple-300 break-words">
-                                Organisé par <span className="font-semibold">{session.organizer?.name}</span>
+                            <span className="text-xs text-gray-400 break-words">
+                                Organisé par <span className="font-medium text-gray-300">{session.organizer?.name}</span>
                             </span>
                         </div>
                     </div>
 
-                    <div className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30 whitespace-nowrap self-start">
+                    <div className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/10 text-purple-400/90 border border-purple-500/20 whitespace-nowrap self-start">
                         À venir
                     </div>
                 </div>
@@ -582,3 +588,6 @@ function SharedSessionCard({ session }: { session: any }) {
         </div>
     )
 }
+
+
+
