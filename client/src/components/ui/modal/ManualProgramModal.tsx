@@ -300,11 +300,13 @@ export const ManualProgramModal = ({
                                                             </div>
 
                                                             {/* Muscle Group Badge */}
-                                                            {selectedExercise?.muscleGroup && (
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-xs px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-medium">
-                                                                        {selectedExercise.muscleGroup}
-                                                                    </span>
+                                                            {selectedExercise?.groupes && selectedExercise.groupes.length > 0 && (
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    {selectedExercise.groupes.map((g) => (
+                                                                        <span key={g.groupe.id} className="text-xs px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-medium">
+                                                                            {g.groupe.name}
+                                                                        </span>
+                                                                    ))}
                                                                 </div>
                                                             )}
 

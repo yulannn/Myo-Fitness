@@ -37,6 +37,7 @@ import useGetPendingGroupRequests from '../../api/hooks/group/useGetPendingGroup
 import useGroupMembers from '../../api/hooks/group/useGetGroupMembers';
 import useCreateGroup from '../../api/hooks/group/useCreateGroup';
 import useAcceptGroupRequest from '../../api/hooks/group/useAcceptGroupRequest';
+import useDeclineGroupRequest from '../../api/hooks/group/useDeclineGroupRequest';
 import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
@@ -56,6 +57,11 @@ export default function SocialPage() {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [managingGroup, setManagingGroup] = useState<any | null>(null);
+    const [friendRequestSent, setFriendRequestSent] = useState<number | null>(null);
+    const [groupInviteSent, setGroupInviteSent] = useState<number[]>([]);
+    const [showLeaveGroupConfirm, setShowLeaveGroupConfirm] = useState(false);
+    const [memberToRemove, setMemberToRemove] = useState<any | null>(null);
+    const [joinedSessions, setJoinedSessions] = useState<string[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // --- DATA FETCHING ---
@@ -88,6 +94,7 @@ export default function SocialPage() {
         }
     });
     const acceptGroup = useAcceptGroupRequest();
+    const declineGroup = useDeclineGroupRequest();
     const updateGroupMutation = useUpdateGroup();
     const removeMemberMutation = useRemoveMember();
     const inviteMemberMutation = useSendGroupRequest();
@@ -259,35 +266,79 @@ export default function SocialPage() {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-purple-500/5 overflow-y-auto flex-1">
-                                    {conversations.map((conv: any) => (
-                                        <button
-                                            key={conv.id}
-                                            onClick={() => handleSelectConversation(conv.id)}
-                                            className={`w-full p-4 text-left hover:bg-[#121214]/50 transition-colors ${selectedConversation === conv.id ? 'bg-purple-500/10 border-l-4 border-purple-500' : 'border-l-4 border-transparent'
-                                                }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className={`font-semibold truncate ${selectedConversation === conv.id ? 'text-purple-400' : 'text-white'}`}>
-                                                        {conv.name || conv.participants
-                                                            ?.filter((p: any) => p.user)
-                                                            .map((p: any) => p.user.name)
-                                                            .join(', ') || 'Conversation'}
-                                                    </h3>
-                                                    {conv.lastMessage && (
-                                                        <p className="text-sm text-gray-400 truncate mt-1">
-                                                            {conv.lastMessage.sender?.id === user?.id ? 'Vous: ' : ''}{conv.lastMessage.content}
-                                                        </p>
+                                    {conversations.map((conv: any) => {
+                                        // Déterminer si c'est un groupe ou une conversation privée
+                                        const isGroup = conv.type === 'GROUP' || conv.groupId;
+                                        const otherParticipant = conv.participants?.find((p: any) => p.user && p.user.id !== user?.id)?.user;
+
+                                        // Générer une couleur basée sur la première lettre
+                                        const getColorFromLetter = (letter: string) => {
+                                            const colors = [
+                                                'bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500',
+                                                'bg-pink-500', 'bg-indigo-500', 'bg-red-500', 'bg-teal-500'
+                                            ];
+                                            const index = letter.charCodeAt(0) % colors.length;
+                                            return colors[index];
+                                        };
+
+                                        const firstLetter = (conv.name || 'C')[0].toUpperCase();
+                                        const avatarColor = getColorFromLetter(firstLetter);
+
+                                        return (
+                                            <button
+                                                key={conv.id}
+                                                onClick={() => handleSelectConversation(conv.id)}
+                                                className={`w-full p-4 text-left hover:bg-[#121214]/50 transition-colors ${selectedConversation === conv.id ? 'bg-purple-500/10 border-l-4 border-purple-500' : 'border-l-4 border-transparent'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    {/* Avatar */}
+                                                    {isGroup ? (
+                                                        <div className={`w-12 h-12 rounded-full ${avatarColor} flex items-center justify-center flex-shrink-0`}>
+                                                            <span className="text-white font-bold text-lg">{firstLetter}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-[#252527] overflow-hidden border-2 border-purple-500/20 flex-shrink-0">
+                                                            {otherParticipant?.profilePictureUrl ? (
+                                                                <img
+                                                                    src={"http://localhost:3000" + otherParticipant.profilePictureUrl}
+                                                                    alt={otherParticipant.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500">
+                                                                    <span className="text-white font-bold text-lg">
+                                                                        {otherParticipant?.name?.[0]?.toUpperCase() || '?'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className={`font-semibold truncate ${selectedConversation === conv.id ? 'text-purple-400' : 'text-white'}`}>
+                                                            {conv.name || (() => {
+                                                                const otherParticipants = conv.participants
+                                                                    ?.filter((p: any) => p.user && p.user.id !== user?.id)
+                                                                    .map((p: any) => p.user.name.split(' ')[0]);
+                                                                return otherParticipants?.join(', ') || 'Conversation';
+                                                            })()}
+                                                        </h3>
+                                                        {conv.lastMessage && (
+                                                            <p className="text-sm text-gray-400 truncate mt-1">
+                                                                {conv.lastMessage.sender?.id === user?.id ? 'Vous: ' : ''}{conv.lastMessage.content}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    {conv.unreadCount > 0 && (
+                                                        <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center flex-shrink-0">
+                                                            {conv.unreadCount}
+                                                        </span>
                                                     )}
                                                 </div>
-                                                {conv.unreadCount > 0 && (
-                                                    <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                                                        {conv.unreadCount}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    ))}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -303,10 +354,12 @@ export default function SocialPage() {
                                         </button>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-white truncate">
-                                                {selectedConv?.name || selectedConv?.participants
-                                                    ?.filter((p: any) => p.user)
-                                                    .map((p: any) => p.user.name)
-                                                    .join(', ') || 'Conversation'}
+                                                {selectedConv?.name || (() => {
+                                                    const otherParticipants = selectedConv?.participants
+                                                        ?.filter((p: any) => p.user && p.user.id !== user?.id)
+                                                        .map((p: any) => p.user.name.split(' ')[0]);
+                                                    return otherParticipants?.join(', ') || 'Conversation';
+                                                })()}
                                             </h3>
                                             {typingUsers.length > 0 && (
                                                 <p className="text-xs text-purple-400 animate-pulse">
@@ -340,11 +393,32 @@ export default function SocialPage() {
 
                                                         {isSessionInvitation && sessionId && !isMe && (
                                                             <button
-                                                                onClick={() => joinSession.mutate(sessionId)}
-                                                                className="mt-3 w-full px-3 py-2 bg-[#252527] hover:bg-[#121214] text-purple-400 border border-purple-500/30 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                                                onClick={() => {
+                                                                    if (!joinedSessions.includes(sessionId)) {
+                                                                        joinSession.mutate(sessionId, {
+                                                                            onSuccess: () => {
+                                                                                setJoinedSessions(prev => [...prev, sessionId]);
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                disabled={joinedSessions.includes(sessionId)}
+                                                                className={`mt-3 w-full px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${joinedSessions.includes(sessionId)
+                                                                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 cursor-default'
+                                                                        : 'bg-[#252527] hover:bg-[#121214] text-purple-400 border border-purple-500/30'
+                                                                    }`}
                                                             >
-                                                                <CheckIcon className="h-4 w-4" />
-                                                                Accepter l'invitation
+                                                                {joinedSessions.includes(sessionId) ? (
+                                                                    <>
+                                                                        <CheckIcon className="h-4 w-4" />
+                                                                        Rejoint
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <CheckIcon className="h-4 w-4" />
+                                                                        Accepter l'invitation
+                                                                    </>
+                                                                )}
                                                             </button>
                                                         )}
 
@@ -424,15 +498,30 @@ export default function SocialPage() {
                                                     <p className="text-xs text-gray-500">{user.email}</p>
                                                 </div>
                                             </div>
-                                            {user.status === 'NONE' && (
+                                            {(user.status === 'NONE' || user.status === 'SENT') && (
                                                 <button
-                                                    onClick={() => sendFriendRequest.mutate({ friendId: user.id })}
-                                                    className="p-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors"
+                                                    onClick={() => {
+                                                        if (user.status === 'NONE') {
+                                                            sendFriendRequest.mutate({ friendId: user.id }, {
+                                                                onSuccess: () => {
+                                                                    setFriendRequestSent(user.id);
+                                                                }
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={user.status === 'SENT'}
+                                                    className={`p-2 rounded-lg transition-all duration-500 ease-in-out transform ${friendRequestSent === user.id || user.status === 'SENT'
+                                                        ? 'bg-green-500/20 text-green-400 scale-110 cursor-default'
+                                                        : 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:scale-105 cursor-pointer'
+                                                        }`}
                                                 >
-                                                    <PlusIcon className="h-5 w-5" />
+                                                    {friendRequestSent === user.id || user.status === 'SENT' ? (
+                                                        <CheckIcon className="h-5 w-5 animate-in zoom-in duration-300" />
+                                                    ) : (
+                                                        <PlusIcon className="h-5 w-5" />
+                                                    )}
                                                 </button>
                                             )}
-                                            {user.status === 'SENT' && <span className="text-xs text-gray-400 bg-[#252527] px-2 py-1 rounded-lg">Envoyé</span>}
                                             {user.status === 'FRIEND' && <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">Ami</span>}
                                         </div>
                                     ))}
@@ -565,12 +654,22 @@ export default function SocialPage() {
                                             <span className="text-gray-300 text-sm">
                                                 <strong className="text-white">{req.sender?.name}</strong> vous invite à rejoindre <strong className="text-purple-400">{req.group?.name}</strong>
                                             </span>
-                                            <button
-                                                onClick={() => acceptGroup.mutate(req.id)}
-                                                className="px-3 py-1.5 bg-purple-500/10 text-purple-400 rounded-lg text-sm font-bold hover:bg-purple-500/20 transition-colors"
-                                            >
-                                                Accepter
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => declineGroup.mutate(req.id)}
+                                                    className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                                                    title="Refuser"
+                                                >
+                                                    <XMarkIcon className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => acceptGroup.mutate(req.id)}
+                                                    className="p-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors"
+                                                    title="Accepter"
+                                                >
+                                                    <CheckIcon className="h-5 w-5" />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -663,25 +762,31 @@ export default function SocialPage() {
                                     <div key={member.id} className="flex justify-between items-center p-2 bg-[#121214] rounded-lg border border-purple-500/5">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-[#252527] rounded-full overflow-hidden border border-purple-500/20">
-                                                {member.profilePictureUrl ? <img src={member.profilePictureUrl} className="w-full h-full object-cover" /> : <UsersIcon className="h-4 w-4 m-2 text-gray-400" />}
+                                                {member.profilePictureUrl ? <img src={"http://localhost:3000" + member.profilePictureUrl} className="w-full h-full object-cover" /> : <UsersIcon className="h-4 w-4 m-2 text-gray-400" />}
                                             </div>
-                                            <span className="text-gray-200 text-sm">{member.name} {member.id === user?.id && <span className="text-purple-400 text-xs">(Moi)</span>}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-200 text-sm">
+                                                    {member.name} {member.id === user?.id && <span className="text-purple-400 text-xs">(Moi)</span>}
+                                                </span>
+                                                {groupMembers[0]?.id === member.id && (
+                                                    <span className="text-xs text-yellow-400 font-semibold">Créateur</span>
+                                                )}
+                                            </div>
                                         </div>
                                         {member.id !== user?.id ? (
-                                            <button
-                                                onClick={() => removeMemberMutation.mutate({ groupId: managingGroup.id, userId: member.id })}
-                                                className="text-red-400 p-1.5 hover:bg-red-400/10 rounded-lg transition-colors"
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
+                                            // Seul le créateur (premier membre) peut exclure
+                                            groupMembers[0]?.id === user?.id && (
+                                                <button
+                                                    onClick={() => setMemberToRemove(member)}
+                                                    className="text-red-400 p-1.5 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                    title="Exclure du groupe"
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </button>
+                                            )
                                         ) : (
                                             <button
-                                                onClick={() => {
-                                                    if (confirm('Voulez-vous vraiment quitter le groupe ?')) {
-                                                        removeMemberMutation.mutate({ groupId: managingGroup.id, userId: member.id });
-                                                        setManagingGroup(null);
-                                                    }
-                                                }}
+                                                onClick={() => setShowLeaveGroupConfirm(true)}
                                                 className="text-orange-400 p-1.5 hover:bg-orange-400/10 rounded-lg transition-colors"
                                                 title="Quitter le groupe"
                                             >
@@ -703,10 +808,27 @@ export default function SocialPage() {
                                         <div key={f.id} className="flex justify-between items-center p-2 bg-[#121214] rounded-lg border border-purple-500/5">
                                             <span className="text-gray-300 text-sm">{f.friend.name}</span>
                                             <button
-                                                onClick={() => inviteMemberMutation.mutate({ groupId: managingGroup.id, payload: { receiverId: f.friend.id } })}
-                                                className="text-purple-400 font-bold text-xs bg-purple-500/10 px-3 py-1.5 rounded-lg hover:bg-purple-500/20 transition-colors"
+                                                onClick={() => {
+                                                    inviteMemberMutation.mutate({ groupId: managingGroup.id, payload: { receiverId: f.friend.id } }, {
+                                                        onSuccess: () => {
+                                                            setGroupInviteSent(prev => [...prev, f.friend.id]);
+                                                        }
+                                                    });
+                                                }}
+                                                disabled={groupInviteSent.includes(f.friend.id)}
+                                                className={`flex items-center gap-1.5 font-bold text-xs px-3 py-1.5 rounded-lg transition-all duration-500 ease-in-out transform ${groupInviteSent.includes(f.friend.id)
+                                                    ? 'bg-green-500/20 text-green-400 scale-105 cursor-default'
+                                                    : 'text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:scale-105 cursor-pointer'
+                                                    }`}
                                             >
-                                                Inviter
+                                                {groupInviteSent.includes(f.friend.id) ? (
+                                                    <>
+                                                        <CheckIcon className="h-4 w-4 animate-in zoom-in duration-300" />
+                                                        Invité
+                                                    </>
+                                                ) : (
+                                                    'Inviter'
+                                                )}
                                             </button>
                                         </div>
                                     ))
@@ -717,6 +839,91 @@ export default function SocialPage() {
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            )}
+
+            {/* Modale de confirmation de sortie de groupe */}
+            {showLeaveGroupConfirm && managingGroup && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#252527] rounded-2xl border border-purple-500/20 max-w-md w-full p-6 shadow-2xl animate-in zoom-in duration-200">
+                        <div className="flex items-start gap-4 mb-6">
+                            <div className="p-3 bg-orange-500/10 rounded-xl">
+                                <ArrowRightOnRectangleIcon className="h-6 w-6 text-orange-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-white mb-2">
+                                    {groupMembers.length === 1 ? 'Supprimer le groupe ?' : 'Quitter le groupe ?'}
+                                </h3>
+                                <p className="text-gray-400 text-sm">
+                                    {groupMembers.length === 1
+                                        ? `Vous êtes le dernier membre de "${managingGroup.name}". Le groupe sera définitivement supprimé.`
+                                        : `Êtes-vous sûr de vouloir quitter "${managingGroup.name}" ? Vous pourrez être réinvité plus tard.`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLeaveGroupConfirm(false)}
+                                className="flex-1 px-4 py-3 bg-[#121214] text-gray-300 rounded-xl hover:bg-[#1a1a1c] transition-colors font-semibold"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const currentUserId = user?.id;
+                                    if (currentUserId) {
+                                        removeMemberMutation.mutate({ groupId: managingGroup.id, userId: currentUserId });
+                                        setManagingGroup(null);
+                                        setShowLeaveGroupConfirm(false);
+                                    }
+                                }}
+                                className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors font-semibold shadow-lg shadow-orange-500/20"
+                            >
+                                {groupMembers.length === 1 ? 'Supprimer' : 'Quitter'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modale de confirmation d'exclusion de membre */}
+            {memberToRemove && managingGroup && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#252527] rounded-2xl border border-purple-500/20 max-w-md w-full p-6 shadow-2xl animate-in zoom-in duration-200">
+                        <div className="flex items-start gap-4 mb-6">
+                            <div className="p-3 bg-red-500/10 rounded-xl">
+                                <TrashIcon className="h-6 w-6 text-red-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-white mb-2">
+                                    Exclure ce membre ?
+                                </h3>
+                                <p className="text-gray-400 text-sm">
+                                    Êtes-vous sûr de vouloir exclure <strong className="text-white">{memberToRemove.name}</strong> du groupe "<strong className="text-purple-400">{managingGroup.name}</strong>" ?
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setMemberToRemove(null)}
+                                className="flex-1 px-4 py-3 bg-[#121214] text-gray-300 rounded-xl hover:bg-[#1a1a1c] transition-colors font-semibold"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    removeMemberMutation.mutate({ groupId: managingGroup.id, userId: memberToRemove.id });
+                                    setMemberToRemove(null);
+                                }}
+                                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-semibold shadow-lg shadow-red-500/20"
+                            >
+                                Exclure
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

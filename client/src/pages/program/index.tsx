@@ -340,7 +340,7 @@ const Program = () => {
             <input
               id="program-name"
               type="text"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
               placeholder="Ex: Prise de masse estivale"
               onChange={(e) =>
                 (automaticProgramNameRef.current = e.target.value)
@@ -355,7 +355,7 @@ const Program = () => {
             </label>
             <textarea
               id="program-description"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px]"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px]"
               placeholder="Objectifs, focus particulier..."
               onChange={(e) =>
                 (automaticProgramDescriptionRef.current = e.target.value)
@@ -371,7 +371,7 @@ const Program = () => {
             <input
               id="program-start-date"
               type="date"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
               defaultValue={new Date().toISOString().split('T')[0]}
               onChange={(e) =>
                 (automaticProgramStartDateRef.current = e.target.value)
@@ -383,7 +383,7 @@ const Program = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Profil Fitness</label>
             <select
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-sm sm:text-base text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
               value={selectedProfileId}
               onChange={(e) => setSelectedProfileId(e.target.value)}
               disabled={isGenerating}

@@ -1,3 +1,14 @@
+export interface MuscleGroup {
+    id: number;
+    name: string;
+}
+
+export interface ExerciceMuscleGroup {
+    exerciceId: number;
+    groupeId: number;
+    groupe: MuscleGroup;
+}
+
 export interface Exercice {
     id: number;
     name: string;
@@ -11,6 +22,7 @@ export interface Exercice {
     createdByUserId?: number | null;
     createdAt?: string;
     updatedAt?: string;
+    groupes?: ExerciceMuscleGroup[];
 }
 
 export interface CreateExercicePayload {

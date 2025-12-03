@@ -94,6 +94,7 @@ export class SessionController {
   }
 
 
+  @UseGuards(AuthGuard('jwt'))
   @Delete('delete-exercise/:sessionId/:exerciceId')
   @ApiOperation({ summary: 'Supprimer un exercice d’une session' })
   @ApiResponse({
@@ -113,6 +114,7 @@ export class SessionController {
     );
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Post('add-exercise/:sessionId/:exerciceId')
   @ApiOperation({ summary: 'Ajouter un exercice à une session' })
   @ApiBody({

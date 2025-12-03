@@ -1,5 +1,7 @@
 import { PencilSquareIcon, PlusIcon, FireIcon, ChartBarIcon, UserIcon, ClockIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
+import TrainingDaysDisplay from './TrainingDaysDisplay';
+
 
 interface FitnessProfilesListProps {
   profiles?: FitnessProfile;
@@ -186,6 +188,11 @@ export default function FitnessProfilesList({
               </div>
             </div>
           </div>
+
+          {/* Training Days Section */}
+          {profiles.trainingDays && profiles.trainingDays.length > 0 && (
+            <TrainingDaysDisplay selectedDays={profiles.trainingDays} />
+          )}
 
           {/* Last Updated */}
           <div className="flex items-center justify-center gap-2 text-sm text-gray-500 pt-4 border-t border-[#94fbdd]/5">

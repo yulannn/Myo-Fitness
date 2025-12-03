@@ -13,7 +13,10 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen justify-center bg-slate-200/70">
-      <div className="relative flex min-h-screen w-full max-w-md flex-col bg-slate-50 text-slate-900 shadow-xl">
+      <div
+        className="relative flex min-h-screen w-full max-w-md flex-col bg-[#121214] text-white shadow-xl"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <main className="flex-1 overflow-y-auto ">
           <AppRoutes />
         </main>
