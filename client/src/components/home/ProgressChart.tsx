@@ -55,6 +55,29 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
     });
   }, [data]);
 
+  // Calculer les valeurs pour l'axe Y
+  const yAxisLabels = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    const { min, max } = chartStats;
+    const range = max - min;
+
+    // Si la différence est très petite, ajuster l'échelle
+    if (range < 1) {
+      return [
+        { value: max.toFixed(1), position: 0 },   // Max en haut
+        { value: ((min + max) / 2).toFixed(1), position: 50 },
+        { value: min.toFixed(1), position: 100 }, // Min en bas
+      ];
+    }
+
+    return [
+      { value: max.toFixed(1), position: 0 },   // Max en haut
+      { value: ((min + max) / 2).toFixed(1), position: 50 },
+      { value: min.toFixed(1), position: 100 }, // Min en bas
+    ];
+  }, [data, chartStats]);
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-[#252527] rounded-2xl p-6 border border-[#94fbdd]/10">
@@ -72,7 +95,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
   }
 
   return (
-    <div className="bg-[#252527] rounded-2xl p-6 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
+    <div className="bg-[#252527] rounded-2xl py-6 px-4  border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -100,17 +123,26 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
 
       {/* Chart Container with Labels */}
       <div className="relative">
-        {/* Y-Axis Label (Ordonnée) */}
-        <div className="absolute -left-2 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
+        {/* Y-Axis Label (Ordonnée) - Vertical */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
           <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
-            {unit}
+            Poids ({unit})
           </p>
         </div>
 
+        {/* Y-Axis Values */}
+        <div className="absolute left-12 top-0 h-48 flex flex-col justify-between text-right pr-2">
+          {yAxisLabels.map((label, index) => (
+            <div key={index} className="text-[10px] text-gray-400 font-medium">
+              {label.value}
+            </div>
+          ))}
+        </div>
+
         {/* Chart */}
-        <div className="relative h-48 mb-2 ml-6">
+        <div className="relative h-48 mb-2 ml-20">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {/* Grid lines */}
+            {/* Grid lines with values */}
             {[0, 25, 50, 75, 100].map((y) => (
               <line
                 key={y}
@@ -119,7 +151,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
                 x2="100"
                 y2={y}
                 stroke="#94fbdd"
-                strokeOpacity="0.05"
+                strokeOpacity="0.1"
                 strokeWidth="0.2"
               />
             ))}
@@ -193,7 +225,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
 
         {/* X-Axis Dates Labels */}
         {formattedDates.length > 0 && (
-          <div className="flex justify-between px-6 mb-2">
+          <div className="flex justify-between px-20 mb-2">
             <span className="text-[10px] text-gray-500">{formattedDates[0]}</span>
             {formattedDates.length > 2 && (
               <span className="text-[10px] text-gray-500">
