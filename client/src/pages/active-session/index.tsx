@@ -8,18 +8,28 @@ import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreat
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../../components/ui/modal'
 import Button from '../../components/ui/button/Button'
+import { usePerformanceStore } from '../../store/usePerformanceStore'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
     const [activeSession, setActiveSession] = useState<any>(null)
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsedTime, setElapsedTime] = useState(0)
-    const [performances, setPerformances] = useState<Record<string, any>>({})
-    const [savedPerformances, setSavedPerformances] = useState<Set<string>>(new Set())
-    const [savedPerformanceIds, setSavedPerformanceIds] = useState<number[]>([])
     const [showGenerationModal, setShowGenerationModal] = useState(false)
     const [showCancelModal, setShowCancelModal] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
+
+    // Zustand store
+    const {
+        performances,
+        sessionId,
+        setSessionId,
+        updatePerformance,
+        toggleSuccess,
+        markAsSaved,
+        clearSession,
+        getAllPerformances,
+    } = usePerformanceStore()
 
     const { mutate: createPerformance } = useCreatePerformance()
     const { mutate: deletePerformance } = useDeletePerformance()
@@ -27,18 +37,27 @@ export default function ActiveSession() {
     const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
     const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
 
+    // Charger la session active depuis localStorage au montage
     useEffect(() => {
         const savedSession = localStorage.getItem('activeSession')
         const savedStartTime = localStorage.getItem('sessionStartTime')
+
         if (savedSession) {
-            setActiveSession(JSON.parse(savedSession))
+            const session = JSON.parse(savedSession)
+            setActiveSession(session)
+
+            // Initialiser le sessionId dans le store
+            if (session.id && sessionId !== session.id) {
+                setSessionId(session.id)
+            }
         }
 
         if (savedStartTime) {
             setStartTime(parseInt(savedStartTime))
         }
-    }, [])
+    }, [sessionId, setSessionId])
 
+    // Chronomètre
     useEffect(() => {
         if (startTime) {
             const interval = setInterval(() => {
@@ -89,6 +108,8 @@ export default function ActiveSession() {
 
         createAdaptedSession(activeSession.id, {
             onSuccess: () => {
+                // Nettoyer tout
+                clearSession()
                 setShowGenerationModal(false)
                 localStorage.removeItem('activeSession')
                 localStorage.removeItem('sessionStartTime')
@@ -97,6 +118,7 @@ export default function ActiveSession() {
             onError: (error) => {
                 console.error('Erreur création session adaptée:', error)
                 alert('Erreur lors de la génération. Peut-être pas assez de données de performance.')
+                clearSession()
                 setShowGenerationModal(false)
                 localStorage.removeItem('activeSession')
                 localStorage.removeItem('sessionStartTime')
@@ -110,6 +132,7 @@ export default function ActiveSession() {
 
         createSimilarSession(activeSession.id, {
             onSuccess: () => {
+                clearSession()
                 setShowGenerationModal(false)
                 localStorage.removeItem('activeSession')
                 localStorage.removeItem('sessionStartTime')
@@ -118,6 +141,7 @@ export default function ActiveSession() {
             onError: (error) => {
                 console.error('Erreur création session similaire:', error)
                 alert('Erreur lors de la génération de la session.')
+                clearSession()
                 setShowGenerationModal(false)
                 localStorage.removeItem('activeSession')
                 localStorage.removeItem('sessionStartTime')
@@ -129,12 +153,15 @@ export default function ActiveSession() {
     const handleCancelSession = async () => {
         setIsCancelling(true)
 
-        // Supprimer toutes les performances enregistrées
-        if (savedPerformanceIds.length > 0) {
-            console.log('🗑️ Suppression de', savedPerformanceIds.length, 'performances')
+        // Supprimer toutes les performances sauvegardées en BDD
+        const performancesToDelete = getAllPerformances()
+            .filter(perf => perf.savedPerformanceId)
+            .map(perf => perf.savedPerformanceId!)
 
-            // Supprimer chaque performance
-            const deletePromises = savedPerformanceIds.map(
+        if (performancesToDelete.length > 0) {
+            console.log('🗑️ Suppression de', performancesToDelete.length, 'performances')
+
+            const deletePromises = performancesToDelete.map(
                 (performanceId) =>
                     new Promise((resolve, reject) => {
                         deletePerformance(performanceId, {
@@ -159,7 +186,8 @@ export default function ActiveSession() {
             }
         }
 
-        // Nettoyer le localStorage et rediriger
+        // Nettoyer tout
+        clearSession()
         localStorage.removeItem('activeSession')
         localStorage.removeItem('sessionStartTime')
         setShowCancelModal(false)
@@ -167,84 +195,56 @@ export default function ActiveSession() {
         navigate('/programs')
     }
 
-
     const handlePerformanceChange = (
         exerciceSessionId: number,
         setIndex: number,
         field: 'reps_effectuees' | 'weight' | 'rpe',
         value: any
     ) => {
-        const key = `${exerciceSessionId}-${setIndex}`
-        setPerformances(prev => ({
-            ...prev,
-            [key]: {
-                ...(prev[key] || {}),
-                exerciceSessionId: exerciceSessionId,
-                [field]: value,
-            }
-        }))
+        updatePerformance(exerciceSessionId, setIndex, { [field]: value })
     }
 
     const handleValidateSet = (exerciceSessionId: number, setIndex: number) => {
         const key = `${exerciceSessionId}-${setIndex}`
         const perf = performances[key]
-        const newSuccessState = !(perf?.success)
 
-        // Mettre à jour l'état de validation
-        setPerformances(prev => ({
-            ...prev,
-            [key]: {
-                ...(prev[key] || {}),
-                exerciceSessionId: exerciceSessionId,
-                success: newSuccessState,
-            }
-        }))
-
-        // Sauvegarder si on valide et pas déjà sauvegardé
-        if (newSuccessState && !savedPerformances.has(key)) {
-            const updatedPerf = { ...perf, success: newSuccessState }
-
-            if (!updatedPerf.reps_effectuees && !updatedPerf.weight) {
-                alert('Veuillez entrer au moins les répétitions ou le poids.')
-                setPerformances(prev => ({
-                    ...prev,
-                    [key]: { ...(prev[key] || {}), success: false }
-                }))
-                return
-            }
-
-            const payload = {
-                exerciceSessionId: exerciceSessionId,
-                reps_effectuees: updatedPerf.reps_effectuees || 0,
-                weight: updatedPerf.weight || 0,
-                rpe: updatedPerf.rpe
-            }
-
-            setSavedPerformances(prev => new Set(prev).add(key))
-
-            createPerformance(payload, {
-                onSuccess: (data) => {
-                    console.log('✅ Performance sauvegardée:', key, 'ID:', data.id_set)
-                    // Sauvegarder l'ID de la performance pour pouvoir la supprimer plus tard
-                    setSavedPerformanceIds(prev => [...prev, data.id_set])
-                },
-                onError: (error) => {
-                    console.error('❌ Erreur:', error)
-                    alert('Erreur lors de la sauvegarde.')
-                    setSavedPerformances(prev => {
-                        const newSet = new Set(prev)
-                        newSet.delete(key)
-                        return newSet
-                    })
-                    setPerformances(prev => ({
-                        ...prev,
-                        [key]: { ...(prev[key] || {}), success: false }
-                    }))
-                }
-            })
+        // Si déjà validé, on peut juste toggle (dévalider)
+        if (perf?.success) {
+            toggleSuccess(exerciceSessionId, setIndex)
+            return
         }
-    }
 
+        // Validation des données
+        if (!perf?.reps_effectuees && !perf?.weight) {
+            alert('Veuillez entrer au moins les répétitions ou le poids.')
+            return
+        }
+
+        // Marquer comme validé dans le store
+        toggleSuccess(exerciceSessionId, setIndex)
+
+        // Sauvegarder en BDD
+        const payload = {
+            exerciceSessionId: exerciceSessionId,
+            reps_effectuees: perf.reps_effectuees || 0,
+            weight: perf.weight || 0,
+            rpe: perf.rpe
+        }
+
+        createPerformance(payload, {
+            onSuccess: (data) => {
+                console.log('✅ Performance sauvegardée:', key, 'ID:', data.id_set)
+                // Marquer comme sauvegardé avec l'ID
+                markAsSaved(exerciceSessionId, setIndex, data.id_set)
+            },
+            onError: (error) => {
+                console.error('❌ Erreur:', error)
+                alert('Erreur lors de la sauvegarde.')
+                // Annuler la validation en cas d'erreur
+                toggleSuccess(exerciceSessionId, setIndex)
+            }
+        })
+    }
 
     if (!activeSession) {
         return (
@@ -275,13 +275,11 @@ export default function ActiveSession() {
         )
     }
 
-
     return (
         <div className="min-h-screen bg-[#121214] pb-24">
             <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
-                {/* Header avec chrono - Version moderne */}
+                {/* Header avec chrono */}
                 <div className="relative bg-gradient-to-br from-[#252527] to-[#121214] rounded-3xl shadow-2xl overflow-hidden border border-[#94fbdd]/10 p-6 sm:p-8">
-                    {/* Decorative Background */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
 
                     <div className="relative z-10">
@@ -298,7 +296,6 @@ export default function ActiveSession() {
                                     </p>
                                 )}
                             </div>
-                            {/* Bouton d'annulation */}
                             <button
                                 onClick={() => setShowCancelModal(true)}
                                 className="flex-shrink-0 p-2 sm:p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all active:scale-95 group"
@@ -308,7 +305,7 @@ export default function ActiveSession() {
                             </button>
                         </div>
 
-                        {/* Chronomètre moderne */}
+                        {/* Chronomètre */}
                         <div className="relative bg-[#121214]/40 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-[#94fbdd]/20">
                             <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-2xl"></div>
                             <div className="relative text-center">
@@ -316,7 +313,6 @@ export default function ActiveSession() {
                                 <p className="text-5xl sm:text-6xl font-bold font-mono tracking-wider text-white">
                                     {formatTime(elapsedTime)}
                                 </p>
-                                {/* Progress indicator */}
                                 <div className="mt-6 flex items-center justify-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-[#94fbdd] rounded-full animate-pulse"></div>
@@ -330,7 +326,7 @@ export default function ActiveSession() {
                     </div>
                 </div>
 
-                {/* Notes de session - Version moderne */}
+                {/* Notes */}
                 {activeSession.notes && (
                     <div className="relative bg-[#252527] rounded-2xl p-4 sm:p-5 border-l-4 border-[#94fbdd] overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#94fbdd]/5 rounded-full blur-2xl"></div>
@@ -338,7 +334,7 @@ export default function ActiveSession() {
                     </div>
                 )}
 
-                {/* Liste des exercices - Version moderne */}
+                {/* Liste des exercices */}
                 <div className="space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h2 className="text-xl sm:text-2xl font-bold text-white">Exercices</h2>
@@ -354,7 +350,6 @@ export default function ActiveSession() {
                             key={exerciceSession.id || index}
                             className="relative bg-[#252527] rounded-2xl sm:rounded-3xl shadow-xl border border-[#94fbdd]/10 overflow-hidden"
                         >
-                            {/* Decorative gradient */}
                             <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-2xl"></div>
 
                             {/* Header exercice */}
@@ -375,7 +370,7 @@ export default function ActiveSession() {
                                 </div>
                             </div>
 
-                            {/* Grille des séries */}
+                            {/* Séries */}
                             <div className="relative p-4 sm:p-5 space-y-3">
                                 {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
                                     const perfKey = `${exerciceSession.id}-${setIndex}`;
@@ -390,7 +385,7 @@ export default function ActiveSession() {
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                {/* Numéro de série - moderne */}
+                                                {/* Numéro */}
                                                 <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${perf.success
                                                     ? 'bg-gradient-to-br from-[#94fbdd] to-[#72e8cc] text-[#121214] shadow-lg shadow-[#94fbdd]/30'
                                                     : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/20'
@@ -398,9 +393,8 @@ export default function ActiveSession() {
                                                     {setIndex + 1}
                                                 </div>
 
-                                                {/* Inputs de performance */}
+                                                {/* Inputs */}
                                                 <div className="flex-1 grid grid-cols-2 gap-3">
-                                                    {/* Reps effectuées */}
                                                     <div>
                                                         <label className="text-xs text-gray-400 font-medium block mb-1.5">
                                                             Reps
@@ -418,12 +412,10 @@ export default function ActiveSession() {
                                                                     parseInt(e.target.value) || 0
                                                                 )
                                                             }
-                                                            disabled={perf.success}
-                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all disabled:opacity-50"
+                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                                         />
                                                     </div>
 
-                                                    {/* Poids utilisé */}
                                                     <div>
                                                         <label className="text-xs text-gray-400 font-medium block mb-1.5">
                                                             Poids (kg)
@@ -442,13 +434,12 @@ export default function ActiveSession() {
                                                                     parseFloat(e.target.value) || 0
                                                                 )
                                                             }
-                                                            disabled={perf.success}
-                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all disabled:opacity-50"
+                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
                                                         />
                                                     </div>
                                                 </div>
 
-                                                {/* Bouton de validation */}
+                                                {/* Bouton validation */}
                                                 <button
                                                     onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
                                                     className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-all ${perf.success
@@ -470,7 +461,7 @@ export default function ActiveSession() {
                     ))}
                 </div>
 
-                {/* Bouton Terminer la séance - Sticky moderne */}
+                {/* Bouton Terminer */}
                 <div className="fixed bottom-24 left-0 right-0 p-4 sm:px-6 pointer-events-none">
                     <div className="max-w-5xl mx-auto">
                         <button
@@ -490,7 +481,7 @@ export default function ActiveSession() {
                 </div>
             </div>
 
-            {/* Modale de génération - Version moderne */}
+            {/* Modal de génération */}
             <Modal isOpen={showGenerationModal} onClose={() => { }}>
                 <ModalHeader>
                     <div className="flex items-center gap-3 justify-center">
@@ -548,7 +539,7 @@ export default function ActiveSession() {
                 </ModalFooter>
             </Modal>
 
-            {/* Modale d'annulation de séance */}
+            {/* Modal d'annulation */}
             <Modal isOpen={showCancelModal} onClose={() => !isCancelling && setShowCancelModal(false)}>
                 <ModalHeader>
                     <div className="flex items-center gap-3 justify-center">
@@ -562,11 +553,11 @@ export default function ActiveSession() {
                     <p className="text-sm sm:text-base text-gray-300 text-center">
                         Êtes-vous sûr de vouloir annuler cette séance ?
                     </p>
-                    {savedPerformanceIds.length > 0 && (
+                    {getAllPerformances().filter(p => p.savedPerformanceId).length > 0 && (
                         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
                             <p className="text-sm text-red-300 text-center">
-                                <strong>{savedPerformanceIds.length}</strong> performance{savedPerformanceIds.length > 1 ? 's' : ''}
-                                {' '}enregistrée{savedPerformanceIds.length > 1 ? 's' : ''} {savedPerformanceIds.length > 1 ? 'seront supprimées' : 'sera supprimée'}.
+                                <strong>{getAllPerformances().filter(p => p.savedPerformanceId).length}</strong> performance{getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 's' : ''}
+                                {' '}enregistrée{getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 's' : ''} {getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 'seront supprimées' : 'sera supprimée'}.
                             </p>
                         </div>
                     )}
@@ -602,5 +593,4 @@ export default function ActiveSession() {
             </Modal>
         </div>
     )
-
 }
