@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from 'prisma/prisma.module';
@@ -22,9 +23,14 @@ import { SessionPhotoModule } from './session-photo/session-photo.module';
 import { ChatModule } from './chat/chat.module';
 import { SharedSessionModule } from './shared-session/shared-session.module';
 import { LevelModule } from './level/level.module';
+import { R2Module } from './r2/r2.module';
+import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -53,6 +59,7 @@ import { LevelModule } from './level/level.module';
     ChatModule,
     SharedSessionModule,
     LevelModule,
+    R2Module,
   ],
   controllers: [AppController],
   providers: [
@@ -60,6 +67,10 @@ import { LevelModule } from './level/level.module';
     {
       provide: APP_GUARD,
       useClass: RateLimiterGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: R2UrlInterceptor,
     },
   ],
 })

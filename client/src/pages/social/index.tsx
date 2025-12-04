@@ -43,6 +43,7 @@ import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
 import { useFriendNotifications } from '../../api/hooks/friend/useFriendNotifications';
 import { useGlobalMessageListener } from '../../api/hooks/chat/useGlobalMessageListener';
+import { getImageUrl } from '../../utils/imageUtils';
 
 export default function SocialPage() {
     const { user } = useAuth();
@@ -307,7 +308,7 @@ export default function SocialPage() {
                                                         <div className="w-12 h-12 rounded-full bg-[#252527] overflow-hidden border-2 border-purple-500/20 flex-shrink-0">
                                                             {otherParticipant?.profilePictureUrl ? (
                                                                 <img
-                                                                    src={"http://localhost:3000" + otherParticipant.profilePictureUrl}
+                                                                    src={getImageUrl(otherParticipant.profilePictureUrl)}
                                                                     alt={otherParticipant.name}
                                                                     className="w-full h-full object-cover"
                                                                 />
@@ -494,7 +495,7 @@ export default function SocialPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-[#252527] rounded-full overflow-hidden border border-purple-500/20">
                                                     {user.profilePictureUrl ? (
-                                                        <img src={user.profilePictureUrl} alt={user.name} className="w-full h-full object-cover" />
+                                                        <img src={getImageUrl(user.profilePictureUrl)} alt={user.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <UsersIcon className="w-5 h-5 m-2.5 text-gray-400" />
                                                     )}
@@ -548,7 +549,7 @@ export default function SocialPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-[#252527] rounded-full overflow-hidden border border-purple-500/20">
                                                     {req.sender?.profilePictureUrl ? (
-                                                        <img src={req.sender.profilePictureUrl} alt={req.sender.name} className="w-full h-full object-cover" />
+                                                        <img src={getImageUrl(req.sender.profilePictureUrl)} alt={req.sender.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <UsersIcon className="w-5 h-5 m-2.5 text-gray-400" />
                                                     )}
@@ -588,7 +589,7 @@ export default function SocialPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-[#252527] rounded-full overflow-hidden border border-purple-500/20">
                                                     {f.friend.profilePictureUrl ? (
-                                                        <img src={f.friend.profilePictureUrl} alt={f.friend.name} className="w-full h-full object-cover" />
+                                                        <img src={getImageUrl(f.friend.profilePictureUrl)} alt={f.friend.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <UsersIcon className="w-5 h-5 m-2.5 text-gray-400" />
                                                     )}
@@ -768,7 +769,7 @@ export default function SocialPage() {
                                     <div key={member.id} className="flex justify-between items-center p-2 bg-[#121214] rounded-lg border border-purple-500/5">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-[#252527] rounded-full overflow-hidden border border-purple-500/20">
-                                                {member.profilePictureUrl ? <img src={"http://localhost:3000" + member.profilePictureUrl} className="w-full h-full object-cover" /> : <UsersIcon className="h-4 w-4 m-2 text-gray-400" />}
+                                                {member.profilePictureUrl ? <img src={getImageUrl(member.profilePictureUrl)} className="w-full h-full object-cover" /> : <UsersIcon className="h-4 w-4 m-2 text-gray-400" />}
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-gray-200 text-sm">

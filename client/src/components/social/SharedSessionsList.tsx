@@ -7,6 +7,7 @@ import { Calendar, MapPin, Users, Plus, Trash2, LogOut, LogIn, UserPlus, X, Chev
 import CreateSharedSessionModal from './CreateSharedSessionModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const SharedSessionsList: React.FC = () => {
     const { user } = useAuth();
@@ -180,7 +181,7 @@ const SharedSessionsList: React.FC = () => {
                                                 <img
                                                     key={p.id}
                                                     className="inline-block h-8 w-8 rounded-full ring-2 ring-purple-900/50 object-cover"
-                                                    src={p.user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name)}&background=random`}
+                                                    src={getImageUrl(p.user.profilePictureUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name)}&background=random`}
                                                     alt={p.user.name}
                                                     title={p.user.name}
                                                 />
@@ -238,7 +239,7 @@ const SharedSessionsList: React.FC = () => {
                                                 <img
                                                     key={p.id}
                                                     className="inline-block h-6 w-6 rounded-full ring-2 ring-purple-900/50 object-cover"
-                                                    src={p.user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name)}&background=random`}
+                                                    src={getImageUrl(p.user.profilePictureUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name)}&background=random`}
                                                     alt={p.user.name}
                                                 />
                                             ))}
@@ -376,7 +377,7 @@ const SharedSessionsList: React.FC = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
                                                         <img
-                                                            src={friendData.friend.profilePictureUrl ? `http://localhost:3000${friendData.friend.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(friendData.friend.name)}&background=random`}
+                                                            src={getImageUrl(friendData.friend.profilePictureUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(friendData.friend.name)}&background=random`}
                                                             alt={friendData.friend.name}
                                                             className="w-10 h-10 rounded-full object-cover"
                                                         />

@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, UseInterceptors, Req, UploadedFile } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Body, Param, UseGuards, Req, Delete, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
   ApiTags,
@@ -7,25 +6,28 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { UserEntity } from './entities/users.entity';
 import { AuthGuard } from '@nestjs/passport';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { R2Service } from '../r2/r2.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(
+    private usersService: UsersService,
+    private r2Service: R2Service,
+  ) { }
 
 
   @Get('email/:email')
   @ApiOperation({ summary: 'Récupérer un utilisateur par email' })
   @ApiParam({
     name: 'email',
-    description: 'Email de l’utilisateur',
+    description: 'Email de l\'utilisateur',
     example: 'jean.dupont@example.com',
   })
   @ApiResponse({
@@ -39,7 +41,7 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un utilisateur par ID' })
-  @ApiParam({ name: 'id', description: 'ID de l’utilisateur', example: 1 })
+  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur', example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Utilisateur trouvé',
@@ -49,40 +51,151 @@ export class UsersController {
     return this.usersService.findUserById(id);
   }
 
-  @Post('me/profile-picture')
-  @UseInterceptors(
-    FileInterceptor('profilePicture', {
-      storage: diskStorage({
-        destination: './uploads/profile-pictures',
-        filename: (req, file, cb) => {
-          const userId = (req.user as any).id;
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${userId}-${randomName}${extname(file.originalname)}`);
+  @Post('me/profile-picture/presigned-url')
+  @ApiOperation({ summary: 'Générer une URL présignée pour uploader une photo de profil' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        fileExtension: {
+          type: 'string',
+          description: 'Extension du fichier (ex: .jpg, .png)',
+          example: '.jpg',
         },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-          return cb(new Error('Seules les images sont autorisées !'), false);
-        }
-        cb(null, true);
+        contentType: {
+          type: 'string',
+          description: 'Type MIME du fichier',
+          example: 'image/jpeg',
+        },
       },
-    }),
-  )
-  async uploadProfilePicture(
-    @UploadedFile() file: Express.Multer.File,
+      required: ['fileExtension', 'contentType'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'URL présignée générée avec succès',
+    schema: {
+      type: 'object',
+      properties: {
+        uploadUrl: { type: 'string', description: 'URL présignée pour upload' },
+        key: { type: 'string', description: 'Clé du fichier dans R2' },
+        publicUrl: { type: 'string', description: 'URL publique du fichier une fois uploadé' },
+      },
+    },
+  })
+  async generateProfilePictureUploadUrl(
+    @Body() body: { fileExtension: string; contentType: string },
     @Req() req,
   ) {
     const userId = req.user.userId;
-    const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
+    const { fileExtension, contentType } = body;
 
+    // Valider le type de fichier
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(contentType)) {
+      throw new BadRequestException('Seules les images sont autorisées (JPEG, PNG, GIF)');
+    }
+
+    // Valider l'extension
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+      throw new BadRequestException('Extension de fichier invalide');
+    }
+
+    // Générer la clé du fichier
+    const key = this.r2Service.generateProfilePictureKey(userId, fileExtension);
+
+    // Générer l'URL présignée (valide pendant 5 minutes)
+    const presignedData = await this.r2Service.generatePresignedUploadUrl(
+      key,
+      contentType,
+      300, // 5 minutes
+    );
+
+    return presignedData;
+  }
+
+  @Post('me/profile-picture/confirm')
+  @ApiOperation({ summary: 'Confirmer l\'upload et sauvegarder l\'URL de la photo de profil' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        publicUrl: {
+          type: 'string',
+          description: 'URL publique de la photo de profil uploadée',
+          example: 'https://bucket.accountid.r2.cloudflarestorage.com/profile-pictures/user-123.jpg',
+        },
+      },
+      required: ['publicUrl'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Photo de profil mise à jour avec succès',
+    schema: {
+      type: 'object',
+      properties: {
+        profilePictureUrl: { type: 'string' },
+      },
+    },
+  })
+  async confirmProfilePictureUpload(
+    @Body() body: { publicUrl: string },
+    @Req() req,
+  ) {
+    const userId = req.user.userId;
+    const { publicUrl } = body;
+
+    // Récupérer l'utilisateur actuel pour supprimer l'ancienne photo si elle existe
+    const user = await this.usersService.findUserById(userId);
+
+    // Si l'utilisateur avait déjà une photo de profil, la supprimer
+    if (user.profilePictureUrl) {
+      const oldKey = this.r2Service.extractKeyFromUrl(user.profilePictureUrl);
+      if (oldKey) {
+        try {
+          await this.r2Service.deleteFile(oldKey);
+        } catch (error) {
+          // Log l'erreur mais ne pas bloquer la mise à jour
+          console.error('Erreur lors de la suppression de l\'ancienne photo:', error);
+        }
+      }
+    }
+
+    // Mettre à jour l'URL de la photo de profil dans la base de données
     await this.usersService.updateUser(userId, {
-      profilePictureUrl,
+      profilePictureUrl: publicUrl,
     });
 
-    return { profilePictureUrl };
+    return { profilePictureUrl: publicUrl };
+  }
+
+  @Delete('me/profile-picture')
+  @ApiOperation({ summary: 'Supprimer la photo de profil' })
+  @ApiResponse({
+    status: 200,
+    description: 'Photo de profil supprimée avec succès',
+  })
+  async deleteProfilePicture(@Req() req) {
+    const userId = req.user.userId;
+
+    // Récupérer l'utilisateur actuel
+    const user = await this.usersService.findUserById(userId);
+
+    // Si l'utilisateur a une photo de profil, la supprimer de R2
+    if (user.profilePictureUrl) {
+      const key = this.r2Service.extractKeyFromUrl(user.profilePictureUrl);
+      if (key) {
+        await this.r2Service.deleteFile(key);
+      }
+    }
+
+    // Mettre à jour l'utilisateur pour retirer l'URL de la photo de profil
+    await this.usersService.updateUser(userId, {
+      profilePictureUrl: null,
+    });
+
+    return { message: 'Photo de profil supprimée avec succès' };
   }
 }

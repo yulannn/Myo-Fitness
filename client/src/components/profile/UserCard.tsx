@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useUploadProfilePicture } from '../../api/hooks/user/useUploadProfilePicture';
 import { CameraIcon, EnvelopeIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { getImageUrl, validateImageFile } from '../../utils/imageUtils';
 
 interface UserCardProps {
   name: string;
@@ -18,12 +19,11 @@ export default function UserCard({ name, email, profilePictureUrl }: UserCardPro
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image trop lourde (max 5 Mo)');
+
+    // Validation avec l'utilitaire
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      alert(validation.errorMessage);
       return;
     }
 
@@ -49,7 +49,7 @@ export default function UserCard({ name, email, profilePictureUrl }: UserCardPro
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd] to-[#94fbdd]/50 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
               <img
-                src={`http://localhost:3000${profilePictureUrl ?? '/uploads/profile-pictures/default.png'}`}
+                src={getImageUrl(profilePictureUrl)}
                 alt={name}
                 className="relative h-32 w-32 rounded-3xl object-cover ring-4 ring-[#94fbdd]/20 shadow-2xl"
               />

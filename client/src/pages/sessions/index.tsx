@@ -7,6 +7,7 @@ import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
 import type { Session } from '../../types/session.type'
 import { CalendarDaysIcon, ClockIcon, CheckCircleIcon, UsersIcon, MapPinIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { getImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
@@ -570,7 +571,7 @@ function SharedSessionCard({ session }: { session: any }) {
 
                         <div className="flex items-center gap-2 pt-2 border-t border-purple-500/10">
                             <img
-                                src={"http://localhost:3000" + session.organizer?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
+                                src={getImageUrl(session.organizer?.profilePictureUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
                                 alt={session.organizer?.name}
                                 className="h-6 w-6 rounded-full flex-shrink-0"
                             />
