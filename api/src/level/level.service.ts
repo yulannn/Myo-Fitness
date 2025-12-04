@@ -9,7 +9,7 @@ export class LevelService {
     private readonly XP_PER_SESSION = 50;
 
     async getLevelByUserId(userId: number) {
-        const leveling = await this.prisma.leveling.findUnique({
+        let leveling = await this.prisma.leveling.findUnique({
             where: { userId },
             include: {
                 user: {
@@ -24,7 +24,20 @@ export class LevelService {
         });
 
         if (!leveling) {
-            throw new NotFoundException(`Leveling data not found for user ${userId}`);
+            leveling = await this.initializeLeveling(userId);
+            leveling = await this.prisma.leveling.findUnique({
+                where: { userId },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePictureUrl: true,
+                        },
+                    },
+                },
+            });
         }
 
         return leveling;
@@ -56,6 +69,7 @@ export class LevelService {
             },
         });
     }
+
     async addExperienceFromSession(userId: number, sessionId: number) {
         const session = await this.prisma.trainingSession.findUnique({
             where: { id: sessionId },
@@ -91,7 +105,7 @@ export class LevelService {
         return this.addExperience(userId, this.XP_PER_SESSION);
     }
 
-    
+
     async addExperience(userId: number, xpAmount: number) {
         let leveling = await this.prisma.leveling.findUnique({
             where: { userId },

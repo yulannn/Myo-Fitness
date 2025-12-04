@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthResultDto } from './dto/auth-result.dto';
 import { UserEntity } from 'src/users/entities/users.entity';
+import { LevelService } from 'src/level/level.service';
 
 type SafeUser = Omit<UserEntity, 'password' | 'refreshToken'>;
 
@@ -13,6 +14,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private levelService: LevelService,
   ) { }
 
   /** Valide l'utilisateur pour le LocalStrategy */
@@ -66,6 +68,9 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
     const newUser = await this.usersService.createUser({ ...signUpDto, password: hashedPassword });
+
+    // Créer automatiquement le niveau 1 pour le nouvel utilisateur
+    await this.levelService.initializeLeveling(newUser.id);
 
     const { password, refreshToken, ...safeUser } = newUser;
 

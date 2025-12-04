@@ -11,11 +11,6 @@ export const LevelFetchDataService = {
         const res = await api.get<LevelStats>('/level/me/stats');
         return res.data;
     },
-
-    async initializeMyLeveling(): Promise<Level> {
-        const res = await api.post<Level>('/level/initialize');
-        return res.data;
-    },
 };
 
 export default LevelFetchDataService;
