@@ -42,7 +42,7 @@ export class R2UrlInterceptor implements NestInterceptor {
         if (typeof data === 'object') {
             const transformed = { ...data };
 
-            // Transformer profilePictureUrl si présent
+            // Cas 1: profilePictureUrl existe et est une URL R2
             if (transformed.profilePictureUrl && this.isR2Url(transformed.profilePictureUrl)) {
                 const presignedUrl = await this.r2Service.generatePresignedViewUrlFromPublicUrl(
                     transformed.profilePictureUrl,
@@ -50,6 +50,14 @@ export class R2UrlInterceptor implements NestInterceptor {
                 if (presignedUrl) {
                     transformed.profilePictureUrl = presignedUrl;
                 }
+            }
+            // Cas 2: profilePictureUrl est null ou undefined, mais la propriété existe (ex: objet User)
+            else if (
+                (transformed.profilePictureUrl === null || transformed.profilePictureUrl === undefined) &&
+                'profilePictureUrl' in transformed
+            ) {
+                // Injecter l'URL de l'image par défaut
+                transformed.profilePictureUrl = await this.r2Service.generateDefaultProfilePictureUrl();
             }
 
             // Traiter récursivement les propriétés imbriquées
@@ -73,6 +81,7 @@ export class R2UrlInterceptor implements NestInterceptor {
      * Vérifie si une URL est une URL R2
      */
     private isR2Url(url: string): boolean {
+        if (typeof url !== 'string') return false;
         return url.startsWith('https://') && url.includes('.r2.cloudflarestorage.com');
     }
 }

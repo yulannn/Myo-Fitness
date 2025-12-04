@@ -127,6 +127,14 @@ export class R2Service {
     }
 
     /**
+     * Génère une URL présignée pour l'image de profil par défaut
+     */
+    async generateDefaultProfilePictureUrl(expiresIn: number = 3600): Promise<string> {
+        // Le fichier est dans le dossier profile-pictures
+        return this.generatePresignedViewUrl('profile-pictures/default.jpg', expiresIn);
+    }
+
+    /**
      * Supprime un fichier du bucket R2
      */
     async deleteFile(key: string): Promise<void> {

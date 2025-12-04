@@ -60,7 +60,7 @@ export default function DetailedXPBar() {
                 <div className="bg-[#121214]/50 rounded-2xl p-5 sm:p-6 border border-[#94fbdd]/10">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                            <SparklesIcon className="h-5 w-5 text-[#94fbdd] animate-pulse" />
+                            <SparklesIcon className="h-5 w-5 text-[#94fbdd]" />
                             <span className="text-lg sm:text-xl font-bold text-white">
                                 Niveau {stats.level}
                             </span>
@@ -79,8 +79,6 @@ export default function DetailedXPBar() {
                             className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#94fbdd] via-[#7de5c8] to-[#6dd4b8] rounded-full transition-all duration-700 ease-out shadow-lg shadow-[#94fbdd]/50"
                             style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                         >
-                            {/* Animated shine effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                         </div>
 
                         {/* Percentage Text */}
@@ -104,7 +102,7 @@ export default function DetailedXPBar() {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     {/* Total Sessions */}
                     {stats.totalSessions !== undefined && (
                         <div className="bg-[#121214]/50 rounded-2xl p-4 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
@@ -130,52 +128,8 @@ export default function DetailedXPBar() {
                             <p className="text-xs text-gray-400 font-medium">XP Total</p>
                         </div>
                     )}
-
-                    {/* Current Level */}
-                    <div className="bg-[#121214]/50 rounded-2xl p-4 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all col-span-2 sm:col-span-1">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="p-2 bg-[#94fbdd]/10 rounded-lg">
-                                <StarIcon className="h-4 w-4 text-[#94fbdd]" />
-                            </div>
-                        </div>
-                        <p className="text-2xl font-bold text-white mb-1">{stats.level}</p>
-                        <p className="text-xs text-gray-400 font-medium">Niveau actuel</p>
-                    </div>
-                </div>
-
-                {/* Motivational Message */}
-                <div className="bg-gradient-to-r from-[#94fbdd]/10 to-transparent rounded-2xl p-4 border border-[#94fbdd]/20">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-[#94fbdd]/10 rounded-lg flex-shrink-0">
-                            <SparklesIcon className="h-5 w-5 text-[#94fbdd]" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-white mb-1">
-                                {progressPercentage >= 75
-                                    ? "Presque au niveau suivant ! 🔥"
-                                    : progressPercentage >= 50
-                                        ? "Tu es à mi-chemin ! Continue ! 💪"
-                                        : "Chaque séance te rapproche de ton objectif ! ⚡"
-                                }
-                            </p>
-                            <p className="text-xs text-gray-400">
-                                Complète des séances pour gagner de l'XP et débloquer de nouveaux niveaux.
-                            </p>
-                        </div>
-                    </div>
                 </div>
             </div>
-
-            {/* CSS for shimmer animation */}
-            <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
         </div>
     );
 }
