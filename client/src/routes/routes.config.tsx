@@ -1,5 +1,6 @@
 import Home from "../pages/home";
-import FitnessProfiles from "../pages/profile";
+import MyProfile from "../pages/my-profile";
+import Settings from "../pages/settings";
 import Program from "../pages/program";
 import Sessions from "../pages/sessions";
 import ActiveSession from "../pages/active-session";
@@ -12,7 +13,9 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import type { ReactNode } from "react";
 import {
     HOME,
-    PROFILES,
+
+    SETTINGS,
+    MY_PROFILE,
     PROGRAMS,
     ACTIVE_SESSION,
     SESSIONS,
@@ -40,8 +43,13 @@ export const routes: AppRouteConfig[] = [
         protected: true
     },
     {
-        path: PROFILES,
-        element: <FitnessProfiles />,
+        path: SETTINGS,
+        element: <Settings />,
+        protected: true
+    },
+    {
+        path: MY_PROFILE,
+        element: <MyProfile />,
         protected: true
     },
     {

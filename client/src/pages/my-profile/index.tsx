@@ -8,10 +8,12 @@ import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
 import CreateProfileModal from '../../components/profile/CreateProfileModal';
 import EditProfileModal from '../../components/profile/EditProfileModal';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
 
 export default function FitnessProfiles() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: profiles, isLoading } = useFitnessProfilesByUser();
 
   const createMutation = useCreateFitnessProfile();
@@ -49,12 +51,13 @@ export default function FitnessProfiles() {
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
       {/* Logout Button - Floating */}
+      {/* Back Button - Floating */}
       <button
-        onClick={logout}
-        className="fixed top-6 right-6 z-30 p-3 bg-[#252527] hover:bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-xl transition-all group shadow-lg"
-        title="Se déconnecter"
+        onClick={() => navigate('/settings')}
+        className="fixed top-6 left-6 z-30 p-3 bg-[#252527] hover:bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-xl transition-all group shadow-lg"
+        title="Retour aux paramètres"
       >
-        <ArrowRightOnRectangleIcon className="h-5 w-5 text-gray-400 group-hover:text-[#94fbdd] transition-colors" />
+        <ArrowLeftIcon className="h-5 w-5 text-gray-400 group-hover:text-[#94fbdd] transition-colors" />
       </button>
 
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-8">
