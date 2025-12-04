@@ -7,6 +7,7 @@ import UserCard from '../../components/profile/UserCard';
 import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
 import CreateProfileModal from '../../components/profile/CreateProfileModal';
 import EditProfileModal from '../../components/profile/EditProfileModal';
+import DetailedXPBar from '../../components/level/DetailedXPBar';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
@@ -66,6 +67,11 @@ export default function FitnessProfiles() {
             email={user?.email || 'email@example.com'}
             profilePictureUrl={user?.profilePictureUrl || undefined}
           />
+        </section>
+
+        {/* XP BAR - Detailed Version */}
+        <section className="relative">
+          <DetailedXPBar />
         </section>
 
         {/* FITNESS PROFILES - Main Content */}

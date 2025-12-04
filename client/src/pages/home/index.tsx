@@ -1,8 +1,6 @@
-import { useAuth } from '../../context/AuthContext'
 import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
 import {
-  SparklesIcon,
   ArrowRightIcon,
   FireIcon,
   CalendarDaysIcon,
@@ -17,9 +15,9 @@ import ProgressChart from '../../components/home/ProgressChart'
 import StreakTracker from '../../components/home/StreakTracker'
 import PersonalRecords from '../../components/home/PersonalRecords'
 import AIInsights from '../../components/home/AIInsights'
+import HomeHeader from '../../components/home/HomeHeader'
 
 export default function Home() {
-  const { user } = useAuth()
   const { data: programs } = useProgramsByUser()
   const { data: sessions } = useGetAllUserSessions()
 
@@ -56,71 +54,44 @@ export default function Home() {
     return data;
   }, []);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Bonjour'
-    if (hour < 18) return 'Bon après-midi'
-    return 'Bonsoir'
-  }
-
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
 
-        {/* Welcome Section */}
-        <div className="relative bg-gradient-to-br from-[#252527] to-[#121214] rounded-3xl shadow-2xl overflow-hidden border border-[#94fbdd]/10 p-6 sm:p-8">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
+        {/* Minimal Header with XP */}
+        <HomeHeader />
 
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
-                <SparklesIcon className="h-7 w-7 sm:h-8 sm:w-8 text-[#94fbdd]" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                  {getGreeting()}, {user?.name?.split(' ')[0] || 'Champion'} !
-                </h1>
-                <p className="text-sm sm:text-base text-gray-400 mt-1">
-                  Prêt à repousser tes limites aujourd'hui ?
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            to="/programs"
+            className="group p-4 bg-[#94fbdd] rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-[#121214] font-bold text-base sm:text-lg">Mon Programme</p>
+                <p className="text-[#121214]/70 text-xs sm:text-sm mt-1">
+                  {stats.activeProgram ? stats.activeProgram.name : 'Créer un programme'}
                 </p>
               </div>
+              <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#121214] group-hover:translate-x-1 transition-transform" />
             </div>
+          </Link>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-              <Link
-                to="/programs"
-                className="group p-4 bg-[#94fbdd] rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-[#121214] font-bold text-base sm:text-lg">Mon Programme</p>
-                    <p className="text-[#121214]/70 text-xs sm:text-sm mt-1">
-                      {stats.activeProgram ? stats.activeProgram.name : 'Créer un programme'}
-                    </p>
-                  </div>
-                  <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#121214] group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
-
-              <Link
-                to="/sessions"
-                className="group p-4 bg-[#252527] border border-[#94fbdd]/20 rounded-2xl hover:border-[#94fbdd]/40 transition-all active:scale-95"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-white font-bold text-base sm:text-lg">Mes Séances</p>
-                    <p className="text-gray-400 text-xs sm:text-sm mt-1">
-                      {stats.upcomingSessions} à venir
-                    </p>
-                  </div>
-                  <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd] group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
+          <Link
+            to="/sessions"
+            className="group p-4 bg-[#252527] border border-[#94fbdd]/20 rounded-2xl hover:border-[#94fbdd]/40 transition-all active:scale-95"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-white font-bold text-base sm:text-lg">Mes Séances</p>
+                <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                  {stats.upcomingSessions} à venir
+                </p>
+              </div>
+              <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd] group-hover:translate-x-1 transition-transform" />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Stats Grid */}
@@ -194,7 +165,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Progress Dashboard Section - NEW! */}
+        {/* Progress Dashboard Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
