@@ -5,14 +5,12 @@ import { UpdateSessionDateDto } from './dto/update-session.dto';
 import { BadRequestException } from '@nestjs/common/exceptions/bad-request.exception';
 import { ExerciseDataDto } from 'src/program/dto/add-session-program.dto';
 import { ProgramService } from 'src/program/program.service';
-import { LevelService } from 'src/level/level.service';
 
 @Injectable()
 export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly programService: ProgramService,
-    private readonly levelService: LevelService,
   ) { }
 
   async getSessionById(id: number, userId: number) {
@@ -93,13 +91,6 @@ export class SessionService {
         completed: true
       },
     });
-
-    try {
-      await this.levelService.addExperienceFromSession(userId, id);
-    } catch (error) {
-      console.error('Error adding experience:', error);
-      
-    }
 
     return updatedSession;
   }

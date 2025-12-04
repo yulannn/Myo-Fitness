@@ -22,10 +22,10 @@ import { join } from 'path';
 import { SessionPhotoModule } from './session-photo/session-photo.module';
 import { ChatModule } from './chat/chat.module';
 import { SharedSessionModule } from './shared-session/shared-session.module';
-import { LevelModule } from './level/level.module';
 import { R2Module } from './r2/r2.module';
 import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 import { EmailModule } from './email/email.module';
+import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
 
 @Module({
   imports: [
@@ -59,7 +59,6 @@ import { EmailModule } from './email/email.module';
     SessionPhotoModule,
     ChatModule,
     SharedSessionModule,
-    LevelModule,
     R2Module,
     EmailModule,
   ],
@@ -73,6 +72,10 @@ import { EmailModule } from './email/email.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: R2UrlInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DateSerializationInterceptor,
     },
   ],
 })
