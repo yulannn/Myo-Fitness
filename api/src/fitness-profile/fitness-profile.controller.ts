@@ -86,6 +86,33 @@ export class FitnessProfileController {
     return this.fitnessProfileService.update(+id, updateFitnessProfileDto, userId);
   }
 
+  @Get('weight-history/me')
+  @ApiOperation({ summary: 'Récupérer l\'historique du poids de l\'utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Historique du poids récupéré avec succès',
+    schema: {
+      example: [
+        {
+          id: 1,
+          fitnessProfileId: 1,
+          weight: 75.5,
+          date: '2025-11-01T00:00:00.000Z',
+        },
+        {
+          id: 2,
+          fitnessProfileId: 1,
+          weight: 74.8,
+          date: '2025-11-15T00:00:00.000Z',
+        },
+      ],
+    },
+  })
+  getWeightHistory(@Request() req) {
+    const userId = req.user.userId;
+    return this.fitnessProfileService.getWeightHistory(userId);
+  }
+
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un profil fitness' })

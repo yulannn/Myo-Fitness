@@ -98,4 +98,27 @@ export class FitnessProfileService {
             where: { id: Number(id) },
         });
     }
+
+    async getWeightHistory(userId: number) {
+        // Trouver le profil fitness de l'utilisateur
+        const profile = await this.prisma.fitnessProfile.findUnique({
+            where: { userId },
+        });
+
+        if (!profile) {
+            throw new NotFoundException('Fitness profile not found');
+        }
+
+        // Récupérer l'historique du poids trié par date
+        const weightHistory = await this.prisma.weightHistory.findMany({
+            where: {
+                fitnessProfileId: profile.id,
+            },
+            orderBy: {
+                date: 'asc',
+            },
+        });
+
+        return weightHistory;
+    }
 }

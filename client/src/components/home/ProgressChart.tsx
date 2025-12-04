@@ -45,6 +45,16 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
     }));
   }, [data, chartStats]);
 
+  // Formater les dates pour l'affichage
+  const formattedDates = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    return data.map(point => {
+      const date = new Date(point.date);
+      return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    });
+  }, [data]);
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-[#252527] rounded-2xl p-6 border border-[#94fbdd]/10">
@@ -88,92 +98,122 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="relative h-48 mb-6">
-        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          {/* Grid lines */}
-          {[0, 25, 50, 75, 100].map((y) => (
-            <line
-              key={y}
-              x1="0"
-              y1={y}
-              x2="100"
-              y2={y}
-              stroke="#94fbdd"
-              strokeOpacity="0.05"
-              strokeWidth="0.2"
-            />
-          ))}
+      {/* Chart Container with Labels */}
+      <div className="relative">
+        {/* Y-Axis Label (Ordonnée) */}
+        <div className="absolute -left-2 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
+          <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
+            {unit}
+          </p>
+        </div>
 
-          {/* Area gradient */}
-          <defs>
-            <linearGradient id={`gradient-${title}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-              <stop offset="100%" stopColor={color} stopOpacity="0.05" />
-            </linearGradient>
-          </defs>
+        {/* Chart */}
+        <div className="relative h-48 mb-2 ml-6">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {/* Grid lines */}
+            {[0, 25, 50, 75, 100].map((y) => (
+              <line
+                key={y}
+                x1="0"
+                y1={y}
+                x2="100"
+                y2={y}
+                stroke="#94fbdd"
+                strokeOpacity="0.05"
+                strokeWidth="0.2"
+              />
+            ))}
 
-          {/* Area path */}
-          {normalizedData.length > 0 && (
-            <path
-              d={`
+            {/* Area gradient */}
+            <defs>
+              <linearGradient id={`gradient-${title}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+                <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+
+            {/* Area path */}
+            {normalizedData.length > 0 && (
+              <path
+                d={`
                 M 0,100
                 ${normalizedData.map((point, i) => {
-                const x = (i / (normalizedData.length - 1)) * 100;
-                const y = 100 - point.normalized;
-                return `L ${x},${y}`;
-              }).join(' ')}
+                  const x = (i / (normalizedData.length - 1)) * 100;
+                  const y = 100 - point.normalized;
+                  return `L ${x},${y}`;
+                }).join(' ')}
                 L 100,100
                 Z
               `}
-              fill={`url(#gradient-${title})`}
-            />
-          )}
+                fill={`url(#gradient-${title})`}
+              />
+            )}
 
-          {/* Line path */}
-          {normalizedData.length > 0 && (
-            <path
-              d={normalizedData.map((point, i) => {
-                const x = (i / (normalizedData.length - 1)) * 100;
-                const y = 100 - point.normalized;
-                return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
-              }).join(' ')}
-              fill="none"
-              stroke={color}
-              strokeWidth="0.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="drop-shadow-lg"
-            />
-          )}
+            {/* Line path */}
+            {normalizedData.length > 0 && (
+              <path
+                d={normalizedData.map((point, i) => {
+                  const x = (i / (normalizedData.length - 1)) * 100;
+                  const y = 100 - point.normalized;
+                  return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+                }).join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="0.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="drop-shadow-lg"
+              />
+            )}
 
-          {/* Data points */}
-          {normalizedData.map((point, i) => {
-            const x = (i / (normalizedData.length - 1)) * 100;
-            const y = 100 - point.normalized;
-            return (
-              <g key={i}>
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="1"
-                  fill={color}
-                  className="drop-shadow-md"
-                />
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="0.5"
-                  fill="white"
-                />
-              </g>
-            );
-          })}
-        </svg>
+            {/* Data points */}
+            {normalizedData.map((point, i) => {
+              const x = (i / (normalizedData.length - 1)) * 100;
+              const y = 100 - point.normalized;
+              return (
+                <g key={i}>
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r="1"
+                    fill={color}
+                    className="drop-shadow-md"
+                  />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r="0.5"
+                    fill="white"
+                  />
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* X-Axis Dates Labels */}
+        {formattedDates.length > 0 && (
+          <div className="flex justify-between px-6 mb-2">
+            <span className="text-[10px] text-gray-500">{formattedDates[0]}</span>
+            {formattedDates.length > 2 && (
+              <span className="text-[10px] text-gray-500">
+                {formattedDates[Math.floor(formattedDates.length / 2)]}
+              </span>
+            )}
+            <span className="text-[10px] text-gray-500">
+              {formattedDates[formattedDates.length - 1]}
+            </span>
+          </div>
+        )}
+
+        {/* X-Axis Label (Abscisse) */}
+        <div className="text-center">
+          <p className="text-xs font-medium text-gray-400">Date</p>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#94fbdd]/10">
+      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#94fbdd]/10 mt-4">
         <div>
           <p className="text-xs text-gray-500 mb-1">Min</p>
           <p className="text-base font-bold text-white">

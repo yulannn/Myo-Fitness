@@ -1,5 +1,6 @@
 import api from '../apiClient';
 import type { FitnessProfile, CreateFitnessProfilePayload, UpdateFitnessProfilePayload } from '../../types/fitness-profile.type';
+import type { WeightHistory } from '../../types/weight-history.type';
 
 export const FitnessProfileFetchDataService = {
     async createFitnessProfile(payload: CreateFitnessProfilePayload): Promise<FitnessProfile> {
@@ -24,6 +25,11 @@ export const FitnessProfileFetchDataService = {
 
     async deleteFitnessProfile(profileId: number): Promise<{ message: string }> {
         const res = await api.delete<{ message: string }>(`/fitness-profile/${profileId}`);
+        return res.data;
+    },
+
+    async getWeightHistory(): Promise<WeightHistory[]> {
+        const res = await api.get<WeightHistory[]>('/fitness-profile/weight-history/me');
         return res.data;
     },
 };

@@ -1,11 +1,8 @@
 import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
+import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
 import {
   ArrowRightIcon,
-  FireIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
-  TrophyIcon,
   ChartBarIcon,
   BoltIcon
 } from '@heroicons/react/24/outline'
@@ -20,6 +17,7 @@ import HomeHeader from '../../components/home/HomeHeader'
 export default function Home() {
   const { data: programs } = useProgramsByUser()
   const { data: sessions } = useGetAllUserSessions()
+  const { data: weightHistory } = useWeightHistory()
 
   // Calculer les stats
   const stats = useMemo(() => {
@@ -37,22 +35,33 @@ export default function Home() {
     }
   }, [programs, sessions])
 
-  // Generate mock weight data for chart demonstration
+  // Transform weight history data for the chart
+  // Limiter aux 90 derniers jours pour éviter la surcharge visuelle
   const weightData = useMemo(() => {
-    const data = [];
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-
-    for (let i = 0; i < 30; i += 3) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      data.push({
-        date: date.toISOString(),
-        value: 75 + Math.random() * 3 - 1.5 // Random weight between 73.5-76.5kg
-      });
+    if (!weightHistory || weightHistory.length === 0) {
+      return [];
     }
-    return data;
-  }, []);
+
+    // Calculer la date il y a 90 jours
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    // Filtrer et transformer les données
+    const filteredData = weightHistory
+      .filter(entry => new Date(entry.date) >= ninetyDaysAgo)
+      .map(entry => ({
+        date: entry.date,
+        value: entry.weight
+      }));
+
+    // Si on a plus de 30 points, échantillonner pour éviter la surcharge
+    if (filteredData.length > 30) {
+      const step = Math.ceil(filteredData.length / 30);
+      return filteredData.filter((_, index) => index % step === 0 || index === filteredData.length - 1);
+    }
+
+    return filteredData;
+  }, [weightHistory]);
 
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
@@ -94,54 +103,6 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          {/* Séances terminées */}
-          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                <TrophyIcon className="h-5 w-5 text-[#94fbdd]" />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.completedSessions}</p>
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">Séances terminées</p>
-          </div>
-
-          {/* Total séances */}
-          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                <CalendarDaysIcon className="h-5 w-5 text-[#94fbdd]" />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.totalSessions}</p>
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">Total séances</p>
-          </div>
-
-          {/* À venir */}
-          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                <FireIcon className="h-5 w-5 text-[#94fbdd]" />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stats.upcomingSessions}</p>
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">À venir</p>
-          </div>
-
-          {/* Programmes */}
-          <div className="bg-[#252527] rounded-2xl p-4 sm:p-5 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                <ClipboardDocumentListIcon className="h-5 w-5 text-[#94fbdd]" />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-1">
-              {Array.isArray(programs) ? programs.length : 0}
-            </p>
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">Programmes</p>
-          </div>
-        </div>
 
         {/* Motivation Card */}
         <div className="relative bg-gradient-to-br from-[#94fbdd]/10 to-[#252527] rounded-3xl p-6 sm:p-8 border border-[#94fbdd]/20 overflow-hidden">
@@ -173,7 +134,7 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Tableau de Progression</h2>
-              <p className="text-sm text-gray-400">Analyse détaillée de ta performance</p>
+              <p className="text-sm text-gray-400">Analyse détaillée de ta performance (90 derniers jours)</p>
             </div>
           </div>
 
@@ -196,37 +157,6 @@ export default function Home() {
 
           {/* Personal Records */}
           <PersonalRecords sessions={sessions || []} />
-        </div>
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <Link
-            to="/profiles"
-            className="group bg-[#252527] rounded-2xl p-5 sm:p-6 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all active:scale-95"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-3 bg-[#94fbdd]/10 rounded-xl">
-                <ChartBarIcon className="h-6 w-6 text-[#94fbdd]" />
-              </div>
-              <ArrowRightIcon className="h-5 w-5 text-gray-600 group-hover:text-[#94fbdd] group-hover:translate-x-1 transition-all" />
-            </div>
-            <h3 className="text-base sm:text-lg font-bold text-white mb-1">Mon Profil</h3>
-            <p className="text-xs sm:text-sm text-gray-400">Gérer mes informations et objectifs</p>
-          </Link>
-
-          <Link
-            to="/social"
-            className="group bg-[#252527] rounded-2xl p-5 sm:p-6 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all active:scale-95"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-3 bg-[#94fbdd]/10 rounded-xl">
-                <FireIcon className="h-6 w-6 text-[#94fbdd]" />
-              </div>
-              <ArrowRightIcon className="h-5 w-5 text-gray-600 group-hover:text-[#94fbdd] group-hover:translate-x-1 transition-all" />
-            </div>
-            <h3 className="text-base sm:text-lg font-bold text-white mb-1">Social</h3>
-            <p className="text-xs sm:text-sm text-gray-400">Rejoindre la communauté</p>
-          </Link>
         </div>
 
       </div>
