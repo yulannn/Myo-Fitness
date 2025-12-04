@@ -23,8 +23,10 @@ export class LevelService {
             },
         });
 
+        // Si l'utilisateur n'a pas de niveau, on le crée automatiquement
         if (!leveling) {
-            leveling = await this.initializeLeveling(userId);
+            await this.initializeLeveling(userId);
+            // Recharger avec les relations
             leveling = await this.prisma.leveling.findUnique({
                 where: { userId },
                 include: {
@@ -40,7 +42,7 @@ export class LevelService {
             });
         }
 
-        return leveling;
+        return leveling!;
     }
 
     async initializeLeveling(userId: number) {
