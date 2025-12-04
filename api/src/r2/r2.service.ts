@@ -162,7 +162,12 @@ export class R2Service {
     extractKeyFromUrl(url: string): string | null {
         try {
             const urlObj = new URL(url);
-            return urlObj.pathname.substring(1);
+            // Enlever le premier slash et nettoyer les doubles slashes
+            let pathname = urlObj.pathname.substring(1);
+            // Nettoyer les doubles slashes éventuels
+            pathname = pathname.replace(/\/+/g, '/');
+            // S'assurer que la clé ne commence pas par un slash
+            return pathname.startsWith('/') ? pathname.substring(1) : pathname;
         } catch {
             return null;
         }

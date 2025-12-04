@@ -5,6 +5,19 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
+ * Décode les entités HTML dans une chaîne de caractères
+ * Utilisé pour nettoyer les URLs qui peuvent contenir &amp; au lieu de &
+ * 
+ * @param str - Chaîne à décoder
+ * @returns Chaîne décodée
+ */
+function decodeHtmlEntities(str: string): string {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
+}
+
+/**
  * Détermine l'URL complète d'une image en fonction de son format
  * Supporte à la fois les URLs R2 (https://...) et les chemins locaux (/uploads/...)
  * 
@@ -21,13 +34,16 @@ export function getImageUrl(
         return `${API_BASE_URL}${fallbackPath}`;
     }
 
+    // Décoder les entités HTML (&amp; -> &, etc.)
+    const decodedUrl = decodeHtmlEntities(imageUrl);
+
     // Si l'URL commence par http(s), c'est une URL complète (probablement R2)
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
+    if (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://')) {
+        return decodedUrl;
     }
 
     // Sinon, c'est un chemin local, ajouter l'URL de base
-    return `${API_BASE_URL}${imageUrl}`;
+    return `${API_BASE_URL}${decodedUrl}`;
 }
 
 /**
