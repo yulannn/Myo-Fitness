@@ -104,6 +104,8 @@ export const usePerformanceStore = create<PerformanceStore>()(
 
             clearSession: () => {
                 set({ performances: {}, sessionId: null });
+                // Nettoyer aussi le localStorage de Zustand
+                localStorage.removeItem('performance-storage');
             },
 
             getAllPerformances: () => {

@@ -89,6 +89,13 @@ export default function ActiveSession() {
 
     const allSetsValidated = totalSets > 0 && validatedSets === totalSets
 
+    // Helper pour nettoyer complètement la session (dans tous les cas)
+    const cleanupSession = () => {
+        clearSession() // Nettoie le store Zustand + localStorage 'performance-storage'
+        localStorage.removeItem('activeSession')
+        localStorage.removeItem('sessionStartTime')
+    }
+
     const handleStopSession = () => {
         if (activeSession?.id) {
             updateCompletedSession(activeSession.id, {
@@ -108,20 +115,15 @@ export default function ActiveSession() {
 
         createAdaptedSession(activeSession.id, {
             onSuccess: () => {
-                // Nettoyer tout
-                clearSession()
+                cleanupSession()
                 setShowGenerationModal(false)
-                localStorage.removeItem('activeSession')
-                localStorage.removeItem('sessionStartTime')
                 navigate('/programs')
             },
             onError: (error) => {
                 console.error('Erreur création session adaptée:', error)
                 alert('Erreur lors de la génération. Peut-être pas assez de données de performance.')
-                clearSession()
+                cleanupSession()
                 setShowGenerationModal(false)
-                localStorage.removeItem('activeSession')
-                localStorage.removeItem('sessionStartTime')
                 navigate('/programs')
             }
         })
@@ -132,19 +134,15 @@ export default function ActiveSession() {
 
         createSimilarSession(activeSession.id, {
             onSuccess: () => {
-                clearSession()
+                cleanupSession()
                 setShowGenerationModal(false)
-                localStorage.removeItem('activeSession')
-                localStorage.removeItem('sessionStartTime')
                 navigate('/programs')
             },
             onError: (error) => {
                 console.error('Erreur création session similaire:', error)
                 alert('Erreur lors de la génération de la session.')
-                clearSession()
+                cleanupSession()
                 setShowGenerationModal(false)
-                localStorage.removeItem('activeSession')
-                localStorage.removeItem('sessionStartTime')
                 navigate('/programs')
             }
         })
@@ -187,9 +185,7 @@ export default function ActiveSession() {
         }
 
         // Nettoyer tout
-        clearSession()
-        localStorage.removeItem('activeSession')
-        localStorage.removeItem('sessionStartTime')
+        cleanupSession()
         setShowCancelModal(false)
         setIsCancelling(false)
         navigate('/programs')
