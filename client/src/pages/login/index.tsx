@@ -105,8 +105,8 @@ export default function Login() {
                   value={formValues.email}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.email
-                      ? 'border-red-500 focus:ring-red-500/50'
-                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                    ? 'border-red-500 focus:ring-red-500/50'
+                    : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                     }`}
                 />
               </div>
@@ -135,8 +135,8 @@ export default function Login() {
                   value={formValues.password}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
-                      ? 'border-red-500 focus:ring-red-500/50'
-                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                    ? 'border-red-500 focus:ring-red-500/50'
+                    : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                     }`}
                 />
               </div>
@@ -161,7 +161,7 @@ export default function Login() {
                 <span className="group-hover:text-gray-300 transition-colors">Se souvenir de moi</span>
               </label>
               <Link
-                to="#"
+                to="/forgot-password"
                 className="text-[#94fbdd] hover:text-[#94fbdd]/80 font-medium transition-colors"
               >
                 Mot de passe oublié ?

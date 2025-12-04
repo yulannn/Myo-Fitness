@@ -6,6 +6,9 @@ import ActiveSession from "../pages/active-session";
 import SocialPage from "../pages/social";
 import Login from "../pages/login";
 import Register from "../pages/register";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import VerifyCode from "../pages/auth/VerifyCode";
+import ResetPassword from "../pages/auth/ResetPassword";
 import type { ReactNode } from "react";
 import {
     HOME,
@@ -16,6 +19,9 @@ import {
     SOCIAL,
     LOGIN,
     REGISTER,
+    FORGOT_PASSWORD,
+    VERIFY_CODE,
+    RESET_PASSWORD,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -67,6 +73,24 @@ export const routes: AppRouteConfig[] = [
     {
         path: REGISTER,
         element: <Register />,
+        redirectIfAuthenticated: true,
+        hideBottomNav: true
+    },
+    {
+        path: FORGOT_PASSWORD,
+        element: <ForgotPassword />,
+        redirectIfAuthenticated: true,
+        hideBottomNav: true
+    },
+    {
+        path: VERIFY_CODE,
+        element: <VerifyCode />,
+        redirectIfAuthenticated: true,
+        hideBottomNav: true
+    },
+    {
+        path: RESET_PASSWORD,
+        element: <ResetPassword />,
         redirectIfAuthenticated: true,
         hideBottomNav: true
     },

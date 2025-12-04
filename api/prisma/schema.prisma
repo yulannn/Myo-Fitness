@@ -92,6 +92,8 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
   refreshToken      String?
+  resetPasswordCode    String?
+  resetPasswordExpires DateTime?
 
   fitnessProfiles  FitnessProfile[]
   exercicesCreated Exercice[]       @relation("ExerciceCreatedBy")

@@ -6,3 +6,6 @@ export const SESSIONS = "/sessions";
 export const SOCIAL = "/social";
 export const LOGIN = "/auth/login";
 export const REGISTER = "/auth/register";
+export const FORGOT_PASSWORD = "/forgot-password";
+export const VERIFY_CODE = "/verify-code";
+export const RESET_PASSWORD = "/reset-password";

@@ -91,6 +91,24 @@ export const AuthFetchDataService = {
             }),
         );
     },
+
+    async forgotPassword(email: string): Promise<{ message: string }> {
+        return requestApi<{ message: string }>(
+            api.post('/auth/forgot-password', { email }),
+        );
+    },
+
+    async verifyCode(email: string, code: string): Promise<{ valid: boolean }> {
+        return requestApi<{ valid: boolean }>(
+            api.post('/auth/verify-code', { email, code }),
+        );
+    },
+
+    async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+        return requestApi<{ message: string }>(
+            api.post('/auth/reset-password', { email, code, newPassword }),
+        );
+    },
 };
 
 export default AuthFetchDataService;

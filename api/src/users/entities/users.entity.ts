@@ -2,16 +2,16 @@ import { Exclude } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UserEntity {
-  @ApiProperty({ description: 'ID de l’utilisateur', example: 1 })
+  @ApiProperty({ description: 'ID de l\'utilisateur', example: 1 })
   id: number;
 
   @ApiProperty({
-    description: 'Email de l’utilisateur',
+    description: 'Email de l\'utilisateur',
     example: 'jean.dupont@example.com',
   })
   email: string;
 
-  @ApiProperty({ description: 'Nom de l’utilisateur', example: 'Jean' })
+  @ApiProperty({ description: 'Nom de l\'utilisateur', example: 'Jean' })
   name: string;
 
   @ApiPropertyOptional({
@@ -36,8 +36,14 @@ export class UserEntity {
   updatedAt: Date;
 
   @ApiPropertyOptional({
-    description: 'Refresh token de l’utilisateur',
+    description: 'Refresh token de l\'utilisateur',
     example: null,
   })
   refreshToken?: string | null;
+
+  @Exclude()
+  resetPasswordCode?: string | null;
+
+  @Exclude()
+  resetPasswordExpires?: Date | null;
 }

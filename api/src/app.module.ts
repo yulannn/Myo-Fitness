@@ -25,6 +25,7 @@ import { SharedSessionModule } from './shared-session/shared-session.module';
 import { LevelModule } from './level/level.module';
 import { R2Module } from './r2/r2.module';
 import { R2UrlInterceptor } from './r2/r2-url.interceptor';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { R2UrlInterceptor } from './r2/r2-url.interceptor';
     SharedSessionModule,
     LevelModule,
     R2Module,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [

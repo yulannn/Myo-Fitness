@@ -104,4 +104,86 @@ export class AuthController {
 
         return { accessToken };
     }
+
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
+    @Post('forgot-password')
+    @HttpCode(200)
+    @ApiOperation({ summary: 'Demander un code de réinitialisation de mot de passe' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string', example: 'user@example.com' },
+            },
+            required: ['email'],
+        },
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Code envoyé si l\'email existe',
+        schema: {
+            example: { message: 'Si cet email existe, un code de réinitialisation a été envoyé.' },
+        },
+    })
+    async requestPasswordReset(@Body('email') email: string) {
+        return this.authService.requestPasswordReset(email);
+    }
+
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @Post('verify-code')
+    @HttpCode(200)
+    @ApiOperation({ summary: 'Vérifier le code de réinitialisation' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string', example: 'user@example.com' },
+                code: { type: 'string', example: '123456' },
+            },
+            required: ['email', 'code'],
+        },
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Code valide',
+        schema: {
+            example: { valid: true },
+        },
+    })
+    async verifyCode(
+        @Body('email') email: string,
+        @Body('code') code: string,
+    ) {
+        return this.authService.verifyResetCode(email, code);
+    }
+
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
+    @Post('reset-password')
+    @HttpCode(200)
+    @ApiOperation({ summary: 'Réinitialiser le mot de passe avec le code reçu' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string', example: 'user@example.com' },
+                code: { type: 'string', example: '123456' },
+                newPassword: { type: 'string', example: 'NouveauMotDePasse123!' },
+            },
+            required: ['email', 'code', 'newPassword'],
+        },
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Mot de passe réinitialisé',
+        schema: {
+            example: { message: 'Votre mot de passe a été réinitialisé avec succès.' },
+        },
+    })
+    async resetPassword(
+        @Body('email') email: string,
+        @Body('code') code: string,
+        @Body('newPassword') newPassword: string,
+    ) {
+        return this.authService.resetPassword(email, code, newPassword);
+    }
 }

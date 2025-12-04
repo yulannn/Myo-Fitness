@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -6,6 +6,7 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { AuthResultDto } from './dto/auth-result.dto';
 import { UserEntity } from 'src/users/entities/users.entity';
 import { LevelService } from 'src/level/level.service';
+import { EmailService } from 'src/email/email.service';
 
 type SafeUser = Omit<UserEntity, 'password' | 'refreshToken'>;
 
@@ -15,6 +16,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private levelService: LevelService,
+    private emailService: EmailService,
   ) { }
 
   /** Valide l'utilisateur pour le LocalStrategy */
@@ -123,5 +125,100 @@ export class AuthService {
       console.error(err);
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  /**
+   * Génère un code de réinitialisation et l'envoie par email
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findUserByEmail(email);
+
+    // Ne pas révéler si l'email existe ou non (sécurité)
+    if (!user) {
+      return { message: 'Si cet email existe, un code de réinitialisation a été envoyé.' };
+    }
+
+    // Générer un code à 6 chiffres
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Le code expire dans 15 minutes
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    // Sauvegarder le code et son expiration
+    await this.usersService.updateUser(user.id, {
+      resetPasswordCode: code,
+      resetPasswordExpires: expiresAt,
+    });
+
+    // Envoyer l'email
+    await this.emailService.sendPasswordResetEmail(user.email, code, user.name);
+
+    return { message: 'Si cet email existe, un code de réinitialisation a été envoyé.' };
+  }
+
+  /**
+   * Vérifie uniquement si le code est valide (sans changer le mot de passe)
+   */
+  async verifyResetCode(email: string, code: string): Promise<{ valid: boolean }> {
+    const user = await this.usersService.findUserByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier si le code existe et n'est pas expiré
+    if (!user.resetPasswordCode || !user.resetPasswordExpires) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier si le code a expiré
+    if (new Date() > user.resetPasswordExpires) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier que le code correspond
+    if (user.resetPasswordCode !== code) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Vérifie le code et réinitialise le mot de passe
+   */
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.usersService.findUserByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier si le code existe et n'est pas expiré
+    if (!user.resetPasswordCode || !user.resetPasswordExpires) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier si le code a expiré
+    if (new Date() > user.resetPasswordExpires) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Vérifier que le code correspond
+    if (user.resetPasswordCode !== code) {
+      throw new BadRequestException('Code invalide ou expiré');
+    }
+
+    // Hasher le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Mettre à jour le mot de passe et supprimer le code de reset
+    await this.usersService.updateUser(user.id, {
+      password: hashedPassword,
+      resetPasswordCode: null,
+      resetPasswordExpires: null,
+    });
+
+    return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
   }
 }
