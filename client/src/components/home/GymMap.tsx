@@ -1,24 +1,12 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Icon } from 'leaflet'
 import { MapPinIcon, ListBulletIcon, MapIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useNearbyGyms } from '../../api/hooks/gym/useNearbyGyms'
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 
-// Types
-interface Gym {
-  id: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  distance?: number
-}
 
-interface UserLocation {
-  lat: number
-  lng: number
-}
 
 // Icône pour les marqueurs
 const gymIcon = new Icon({
@@ -47,19 +35,15 @@ const GymCardSkeleton = () => (
 )
 
 export default function GymMap() {
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
-  const [gyms, setGyms] = useState<Gym[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const debounceTimerRef = useRef<number | null>(null)
-  const hasLoadedRef = useRef(false) // Protection contre les doubles appels
 
-  const { data: fitnessProfile, isLoading: isLoadingProfile } = useFitnessProfilesByUser()
+  const { data: fitnessProfile } = useFitnessProfilesByUser()
+  const { data: gyms = [], isLoading, error } = useNearbyGyms()
 
-  // Debounce de la recherche pour optimiser les performances
+  // Debounce de la recherche
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
@@ -76,187 +60,16 @@ export default function GymMap() {
     }
   }, [searchQuery])
 
-  const geocodeCity = useCallback(async (cityName: string): Promise<UserLocation | null> => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityName)}&format=json&limit=1`
-      )
-
-      if (!response.ok) throw new Error('Erreur lors du géocodage de la ville')
-
-      const data = await response.json()
-
-      if (data && data.length > 0) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
-        }
-      }
-
-      return null
-    } catch (err) {
-      console.error('Erreur lors du géocodage:', err)
-      return null
+  // Centre de la carte
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (gyms.length > 0) {
+      return [gyms[0].lat, gyms[0].lng]
     }
-  }, [])
+    // Fallback sur Paris
+    return [48.8566, 2.3522]
+  }, [gyms])
 
-  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371
-    const dLat = (lat2 - lat1) * Math.PI / 180
-    const dLon = (lon2 - lon1) * Math.PI / 180
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    return R * c
-  }, [])
-
-  const fetchNearbyGyms = useCallback(async (location: UserLocation) => {
-    setLoading(true)
-    try {
-      const radius = 5000
-      const query = `
-        [out:json][timeout:25];
-        (
-          node["leisure"="fitness_centre"](around:${radius},${location.lat},${location.lng});
-          way["leisure"="fitness_centre"](around:${radius},${location.lat},${location.lng});
-          node["leisure"="sports_centre"](around:${radius},${location.lat},${location.lng});
-          way["leisure"="sports_centre"](around:${radius},${location.lat},${location.lng});
-        );
-        out center;
-      `
-
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        body: query,
-      })
-
-      if (!response.ok) throw new Error('Erreur lors de la récupération des données')
-
-      const data = await response.json()
-
-      // Liste des sports/activités à exclure (pas des salles de fitness)
-      const excludedSports = [
-        'swimming', 'piscine', 'natation',
-        'bowling',
-        'sailing', 'voile',
-        'tennis',
-        'golf',
-        'equestrian', 'équitation',
-        'ice_skating', 'patinoire',
-        'climbing', 'escalade',
-        'soccer', 'football',
-        'basketball',
-        'volleyball',
-        'baseball',
-        'rugby',
-        'hockey',
-        'skating',
-        'martial_arts',
-        'archery',
-        'shooting',
-        'cycling'
-      ]
-
-      // Mots-clés positifs pour identifier les vraies salles de fitness
-      const fitnessKeywords = [
-        'fitness', 'gym', 'musculation', 'crossfit', 'sport',
-        'training', 'bodybuilding', 'coach', 'wellness'
-      ]
-
-      const gymsData: Gym[] = data.elements
-        .map((element: any) => {
-          const lat = element.lat || element.center?.lat
-          const lng = element.lon || element.center?.lon
-          const distance = calculateDistance(location.lat, location.lng, lat, lng)
-          const name = element.tags?.name || 'Salle de sport'
-          const sport = element.tags?.sport || ''
-          const leisure = element.tags?.leisure || ''
-
-          return {
-            id: element.id.toString(),
-            name,
-            address: element.tags?.['addr:street']
-              ? `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street']}`.trim()
-              : 'Adresse non disponible',
-            lat,
-            lng,
-            distance: Math.round(distance * 10) / 10,
-            sport,
-            leisure,
-          }
-        })
-        .filter((gym: any) => {
-          // Vérifier que lat/lng existent
-          if (!gym.lat || !gym.lng) return false
-
-          // Si c'est explicitement un fitness_centre, on garde
-          if (gym.leisure === 'fitness_centre') return true
-
-          const nameAndSport = `${gym.name} ${gym.sport}`.toLowerCase()
-
-          // Exclure si contient un sport non-fitness
-          const hasExcludedSport = excludedSports.some(sport =>
-            nameAndSport.includes(sport)
-          )
-          if (hasExcludedSport) return false
-
-          // Si c'est un sports_centre, vérifier qu'il a des mots-clés fitness
-          if (gym.leisure === 'sports_centre') {
-            return fitnessKeywords.some(keyword =>
-              nameAndSport.includes(keyword)
-            )
-          }
-
-          return true
-        })
-        .map(({ sport, leisure, ...gym }: any) => gym) // Retirer les champs temporaires
-
-      gymsData.sort((a, b) => (a.distance || 0) - (b.distance || 0))
-
-      setGyms(gymsData)
-      setLoading(false)
-    } catch (err) {
-      console.error('Erreur lors de la récupération des salles de sport:', err)
-      setError('Impossible de charger les salles de sport à proximité.')
-      setLoading(false)
-    }
-  }, [calculateDistance])
-
-  useEffect(() => {
-    // Éviter les doubles appels en développement (React Strict Mode)
-    if (hasLoadedRef.current) return
-
-    const loadLocation = async () => {
-      if (isLoadingProfile) return
-
-      hasLoadedRef.current = true // Marquer comme chargé
-
-      if (fitnessProfile?.city) {
-        const location = await geocodeCity(fitnessProfile.city)
-
-        if (location) {
-          setUserLocation(location)
-          fetchNearbyGyms(location)
-        } else {
-          const defaultLoc = { lat: 48.8566, lng: 2.3522 }
-          setUserLocation(defaultLoc)
-          setError(`Impossible de localiser la ville "${fitnessProfile.city}". Affichage de Paris par défaut.`)
-          fetchNearbyGyms(defaultLoc)
-        }
-      } else {
-        const defaultLoc = { lat: 48.8566, lng: 2.3522 }
-        setUserLocation(defaultLoc)
-        setError('Veuillez ajouter une ville à votre profil fitness. Affichage de Paris par défaut.')
-        fetchNearbyGyms(defaultLoc)
-      }
-    }
-
-    loadLocation()
-  }, [fitnessProfile, isLoadingProfile, geocodeCity, fetchNearbyGyms])
-
-  // Filtrer les salles selon la recherche debouncée
+  // Filtrer les salles selon la recherche
   const filteredGyms = useMemo(() => {
     if (!debouncedSearch.trim()) return gyms
 
@@ -269,12 +82,7 @@ export default function GymMap() {
 
   // Salles à afficher selon le mode et la recherche
   const displayedGyms = useMemo(() => {
-    // En mode carte, toujours afficher toutes les salles filtrées
     if (viewMode === 'map') return filteredGyms
-
-    // En mode liste :
-    // - Si recherche active : afficher toutes les salles correspondantes
-    // - Sinon : limiter à 5 salles
     return debouncedSearch.trim() ? filteredGyms : filteredGyms.slice(0, 5)
   }, [filteredGyms, viewMode, debouncedSearch])
 
@@ -320,12 +128,12 @@ export default function GymMap() {
       {/* Erreur */}
       {error && (
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-3">
-          <p className="text-yellow-400 text-xs">{error}</p>
+          <p className="text-yellow-400 text-xs">Impossible de charger les salles de sport</p>
         </div>
       )}
 
       {/* Recherche */}
-      {!loading && gyms.length > 0 && (
+      {!isLoading && gyms.length > 0 && (
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -346,7 +154,7 @@ export default function GymMap() {
       )}
 
       {/* Contenu */}
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
             <GymCardSkeleton key={i} />
@@ -412,10 +220,10 @@ export default function GymMap() {
             </div>
           )}
         </div>
-      ) : userLocation ? (
+      ) : (
         <div className="bg-[#252527] rounded-2xl border border-[#94fbdd]/20 overflow-hidden h-[500px]">
           <MapContainer
-            center={[userLocation.lat, userLocation.lng]}
+            center={mapCenter}
             zoom={13}
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={false}
@@ -442,7 +250,7 @@ export default function GymMap() {
             ))}
           </MapContainer>
         </div>
-      ) : null}
+      )}
 
       <style>{`
         @keyframes fadeInUp {

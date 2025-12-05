@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDateString, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsInt, Min, IsNumber } from 'class-validator';
 
 export class CreateSharedSessionDto {
     @IsString()
@@ -23,4 +23,21 @@ export class CreateSharedSessionDto {
     @IsInt()
     @IsOptional()
     groupId?: number;
+
+    // Champs pour la salle de sport
+    @IsString()
+    @IsOptional()
+    gymName?: string;
+
+    @IsString()
+    @IsOptional()
+    gymAddress?: string;
+
+    @IsNumber()
+    @IsOptional()
+    gymLat?: number;
+
+    @IsNumber()
+    @IsOptional()
+    gymLng?: number;
 }

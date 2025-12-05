@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useCreateSharedSession } from '../../api/hooks/shared-session/useSharedSessions';
+import { useNearbyGyms } from '../../api/hooks/gym/useNearbyGyms';
 import { XMarkIcon, UsersIcon, MapPinIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import GymSelector from '../shared/GymSelector';
+
+interface Gym {
+    id: string;
+    name: string;
+    address: string;
+    lat: number;
+    lng: number;
+    distance?: number;
+}
 
 interface CreateSharedSessionModalProps {
     isOpen: boolean;
@@ -13,8 +24,10 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
     const [startTime, setStartTime] = useState('');
     const [location, setLocation] = useState('');
     const [maxParticipants, setMaxParticipants] = useState<number | ''>('');
+    const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
 
     const createSession = useCreateSharedSession();
+    const { data: gyms = [], isLoading: isLoadingGyms } = useNearbyGyms(); // ✨ Hook optimisé !
 
     if (!isOpen) return null;
 
@@ -28,15 +41,13 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
             startTime: new Date(startTime).toISOString(),
             location,
             maxParticipants: maxParticipants === '' ? undefined : Number(maxParticipants),
+            gymName: selectedGym?.name,
+            gymAddress: selectedGym?.address,
+            gymLat: selectedGym?.lat,
+            gymLng: selectedGym?.lng,
         }, {
             onSuccess: () => {
-                onClose();
-                // Reset form
-                setTitle('');
-                setDescription('');
-                setStartTime('');
-                setLocation('');
-                setMaxParticipants('');
+                handleClose();
             }
         });
     };
@@ -47,6 +58,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
         setStartTime('');
         setLocation('');
         setMaxParticipants('');
+        setSelectedGym(null);
         onClose();
     };
 
@@ -121,6 +133,14 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
                             required
                         />
                     </div>
+
+                    {/* Gym Selector */}
+                    <GymSelector
+                        gyms={gyms}
+                        selectedGym={selectedGym}
+                        onSelectGym={setSelectedGym}
+                        isLoading={isLoadingGyms}
+                    />
 
                     {/* Location and Max Participants */}
                     <div className="grid grid-cols-2 gap-4">

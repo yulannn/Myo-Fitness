@@ -428,6 +428,12 @@ model SharedSession {
   organizerId     Int
   groupId         Int? // Optionnel : si lié à un groupe spécifique
 
+  // Informations sur la salle de sport
+  gymName    String?
+  gymAddress String?
+  gymLat     Float?
+  gymLng     Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

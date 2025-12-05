@@ -7,6 +7,10 @@ export interface CreateSharedSessionDto {
     location?: string;
     maxParticipants?: number;
     groupId?: number;
+    gymName?: string;
+    gymAddress?: string;
+    gymLat?: number;
+    gymLng?: number;
 }
 
 export interface SharedSession {
@@ -18,6 +22,10 @@ export interface SharedSession {
     maxParticipants?: number;
     organizerId: number;
     groupId?: number;
+    gymName?: string;
+    gymAddress?: string;
+    gymLat?: number;
+    gymLng?: number;
     createdAt: string;
     updatedAt: string;
     organizer: {
