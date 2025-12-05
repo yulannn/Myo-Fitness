@@ -55,6 +55,7 @@ export default function GymMap() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const debounceTimerRef = useRef<number | null>(null)
+  const hasLoadedRef = useRef(false) // Protection contre les doubles appels
 
   const { data: fitnessProfile, isLoading: isLoadingProfile } = useFitnessProfilesByUser()
 
@@ -224,8 +225,13 @@ export default function GymMap() {
   }, [calculateDistance])
 
   useEffect(() => {
+    // Éviter les doubles appels en développement (React Strict Mode)
+    if (hasLoadedRef.current) return
+
     const loadLocation = async () => {
       if (isLoadingProfile) return
+
+      hasLoadedRef.current = true // Marquer comme chargé
 
       if (fitnessProfile?.city) {
         const location = await geocodeCity(fitnessProfile.city)
