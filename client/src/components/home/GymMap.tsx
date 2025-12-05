@@ -135,22 +135,82 @@ export default function GymMap() {
 
       const data = await response.json()
 
-      const gymsData: Gym[] = data.elements.map((element: any) => {
-        const lat = element.lat || element.center?.lat
-        const lng = element.lon || element.center?.lon
-        const distance = calculateDistance(location.lat, location.lng, lat, lng)
+      // Liste des sports/activités à exclure (pas des salles de fitness)
+      const excludedSports = [
+        'swimming', 'piscine', 'natation',
+        'bowling',
+        'sailing', 'voile',
+        'tennis',
+        'golf',
+        'equestrian', 'équitation',
+        'ice_skating', 'patinoire',
+        'climbing', 'escalade',
+        'soccer', 'football',
+        'basketball',
+        'volleyball',
+        'baseball',
+        'rugby',
+        'hockey',
+        'skating',
+        'martial_arts',
+        'archery',
+        'shooting',
+        'cycling'
+      ]
 
-        return {
-          id: element.id.toString(),
-          name: element.tags?.name || 'Salle de sport',
-          address: element.tags?.['addr:street']
-            ? `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street']}`.trim()
-            : 'Adresse non disponible',
-          lat,
-          lng,
-          distance: Math.round(distance * 10) / 10,
-        }
-      }).filter((gym: Gym) => gym.lat && gym.lng)
+      // Mots-clés positifs pour identifier les vraies salles de fitness
+      const fitnessKeywords = [
+        'fitness', 'gym', 'musculation', 'crossfit', 'sport',
+        'training', 'bodybuilding', 'coach', 'wellness'
+      ]
+
+      const gymsData: Gym[] = data.elements
+        .map((element: any) => {
+          const lat = element.lat || element.center?.lat
+          const lng = element.lon || element.center?.lon
+          const distance = calculateDistance(location.lat, location.lng, lat, lng)
+          const name = element.tags?.name || 'Salle de sport'
+          const sport = element.tags?.sport || ''
+          const leisure = element.tags?.leisure || ''
+
+          return {
+            id: element.id.toString(),
+            name,
+            address: element.tags?.['addr:street']
+              ? `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street']}`.trim()
+              : 'Adresse non disponible',
+            lat,
+            lng,
+            distance: Math.round(distance * 10) / 10,
+            sport,
+            leisure,
+          }
+        })
+        .filter((gym: any) => {
+          // Vérifier que lat/lng existent
+          if (!gym.lat || !gym.lng) return false
+
+          // Si c'est explicitement un fitness_centre, on garde
+          if (gym.leisure === 'fitness_centre') return true
+
+          const nameAndSport = `${gym.name} ${gym.sport}`.toLowerCase()
+
+          // Exclure si contient un sport non-fitness
+          const hasExcludedSport = excludedSports.some(sport =>
+            nameAndSport.includes(sport)
+          )
+          if (hasExcludedSport) return false
+
+          // Si c'est un sports_centre, vérifier qu'il a des mots-clés fitness
+          if (gym.leisure === 'sports_centre') {
+            return fitnessKeywords.some(keyword =>
+              nameAndSport.includes(keyword)
+            )
+          }
+
+          return true
+        })
+        .map(({ sport, leisure, ...gym }: any) => gym) // Retirer les champs temporaires
 
       gymsData.sort((a, b) => (a.distance || 0) - (b.distance || 0))
 
