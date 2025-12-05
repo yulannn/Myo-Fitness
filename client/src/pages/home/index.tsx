@@ -13,6 +13,7 @@ import StreakTracker from '../../components/home/StreakTracker'
 import PersonalRecords from '../../components/home/PersonalRecords'
 import AIInsights from '../../components/home/AIInsights'
 import HomeHeader from '../../components/home/HomeHeader'
+import MuscleHeatmap from '../../components/home/MuscleHeatmap'
 
 export default function Home() {
   const { data: programs } = useProgramsByUser()
@@ -145,6 +146,9 @@ export default function Home() {
             unit="kg"
             color="#94fbdd"
           />
+
+          {/* Muscle Heatmap - Anatomical Body Map */}
+          <MuscleHeatmap sessions={sessions || []} />
 
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
