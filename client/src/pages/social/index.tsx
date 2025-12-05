@@ -206,8 +206,8 @@ export default function SocialPage() {
     const selectedConv = conversations.find((c: any) => c.id === selectedConversation);
 
     return (
-        <div className="min-h-screen bg-[#121214] pb-24">
-            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
+        <div className="min-h-screen bg-[#121214] pb-20">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-4 sm:space-y-6">
 
                 {/* Header */}
                 <div>
@@ -264,7 +264,7 @@ export default function SocialPage() {
 
                 {/* --- ONGLET MESSAGES --- */}
                 {activeTab === 'messages' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-280px)] min-h-[500px]">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-350px)] min-h-[500px]">
                         {/* Liste Conversations */}
                         <div className={`bg-[#252527] rounded-2xl border border-purple-500/10 overflow-hidden flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-4 border-b border-purple-500/10 bg-[#121214]/30">
