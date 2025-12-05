@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import { Icon, LatLng } from 'leaflet'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPinIcon } from '@heroicons/react/24/outline'
+import { Icon } from 'leaflet'
+import { MapPinIcon, ListBulletIcon, MapIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 
 // Types
@@ -20,18 +20,7 @@ interface UserLocation {
   lng: number
 }
 
-// Composant pour recentrer la carte sur la position de l'utilisateur
-function MapController({ center }: { center: LatLng }) {
-  const map = useMap()
-
-  useEffect(() => {
-    map.setView(center, 13)
-  }, [center, map])
-
-  return null
-}
-
-// Icône personnalisée pour les marqueurs de gym
+// Icône pour les marqueurs
 const gymIcon = new Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#94fbdd" width="32" height="32">
@@ -43,35 +32,56 @@ const gymIcon = new Icon({
   popupAnchor: [0, -32],
 })
 
-// Icône pour la position de l'utilisateur
-const userIcon = new Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3b82f6" width="24" height="24">
-      <circle cx="12" cy="12" r="8" fill="#3b82f6" stroke="white" stroke-width="2"/>
-    </svg>
-  `),
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -12],
-})
+// Skeleton loader
+const GymCardSkeleton = () => (
+  <div className="bg-[#1a1a1c] rounded-2xl p-4 border border-[#94fbdd]/10 animate-pulse">
+    <div className="flex items-start gap-3">
+      <div className="w-12 h-12 bg-[#94fbdd]/10 rounded-xl"></div>
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-[#94fbdd]/10 rounded w-3/4"></div>
+        <div className="h-3 bg-[#94fbdd]/5 rounded w-full"></div>
+        <div className="h-3 bg-[#94fbdd]/5 rounded w-1/2"></div>
+      </div>
+    </div>
+  </div>
+)
 
 export default function GymMap() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
   const [gyms, setGyms] = useState<Gym[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceTimerRef = useRef<number | null>(null)
+
   const { data: fitnessProfile, isLoading: isLoadingProfile } = useFitnessProfilesByUser()
 
-  // Fonction pour géocoder la ville et obtenir les coordonnées
-  const geocodeCity = async (cityName: string): Promise<UserLocation | null> => {
+  // Debounce de la recherche pour optimiser les performances
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [searchQuery])
+
+  const geocodeCity = useCallback(async (cityName: string): Promise<UserLocation | null> => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityName)}&format=json&limit=1`
       )
 
-      if (!response.ok) {
-        throw new Error('Erreur lors du géocodage de la ville')
-      }
+      if (!response.ok) throw new Error('Erreur lors du géocodage de la ville')
 
       const data = await response.json()
 
@@ -87,42 +97,10 @@ export default function GymMap() {
       console.error('Erreur lors du géocodage:', err)
       return null
     }
-  }
+  }, [])
 
-  // Obtenir la position de l'utilisateur depuis sa ville
-  useEffect(() => {
-    const loadLocation = async () => {
-      if (isLoadingProfile) return
-
-      // Vérifier si l'utilisateur a une ville dans son profil fitness
-      if (fitnessProfile?.city) {
-        const location = await geocodeCity(fitnessProfile.city)
-
-        if (location) {
-          setUserLocation(location)
-          fetchNearbyGyms(location)
-        } else {
-          // Si le géocodage échoue, utiliser Paris par défaut
-          const defaultLoc = { lat: 48.8566, lng: 2.3522 }
-          setUserLocation(defaultLoc)
-          setError(`Impossible de localiser la ville "${fitnessProfile.city}". Affichage de Paris par défaut.`)
-          fetchNearbyGyms(defaultLoc)
-        }
-      } else {
-        // Si pas de ville dans le profil, utiliser Paris par défaut
-        const defaultLoc = { lat: 48.8566, lng: 2.3522 }
-        setUserLocation(defaultLoc)
-        setError('Veuillez ajouter une ville à votre profil fitness. Affichage de Paris par défaut.')
-        fetchNearbyGyms(defaultLoc)
-      }
-    }
-
-    loadLocation()
-  }, [fitnessProfile, isLoadingProfile])
-
-  // Fonction pour calculer la distance entre deux points (formule de Haversine)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371 // Rayon de la Terre en km
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371
     const dLat = (lat2 - lat1) * Math.PI / 180
     const dLon = (lon2 - lon1) * Math.PI / 180
     const a =
@@ -131,14 +109,12 @@ export default function GymMap() {
       Math.sin(dLon / 2) * Math.sin(dLon / 2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     return R * c
-  }
+  }, [])
 
-  // Récupérer les salles de sport à proximité via Overpass API (OpenStreetMap)
-  const fetchNearbyGyms = async (location: UserLocation) => {
+  const fetchNearbyGyms = useCallback(async (location: UserLocation) => {
     setLoading(true)
     try {
-      // Requête Overpass pour trouver les salles de sport dans un rayon de 5km
-      const radius = 5000 // 5km en mètres
+      const radius = 5000
       const query = `
         [out:json][timeout:25];
         (
@@ -155,13 +131,10 @@ export default function GymMap() {
         body: query,
       })
 
-      if (!response.ok) {
-        throw new Error('Erreur lors de la récupération des données')
-      }
+      if (!response.ok) throw new Error('Erreur lors de la récupération des données')
 
       const data = await response.json()
 
-      // Transformer les données en format utilisable
       const gymsData: Gym[] = data.elements.map((element: any) => {
         const lat = element.lat || element.center?.lat
         const lng = element.lon || element.center?.lon
@@ -175,11 +148,10 @@ export default function GymMap() {
             : 'Adresse non disponible',
           lat,
           lng,
-          distance: Math.round(distance * 10) / 10, // Arrondir à 1 décimale
+          distance: Math.round(distance * 10) / 10,
         }
       }).filter((gym: Gym) => gym.lat && gym.lng)
 
-      // Trier par distance
       gymsData.sort((a, b) => (a.distance || 0) - (b.distance || 0))
 
       setGyms(gymsData)
@@ -189,94 +161,213 @@ export default function GymMap() {
       setError('Impossible de charger les salles de sport à proximité.')
       setLoading(false)
     }
-  }
+  }, [calculateDistance])
 
-  if (loading) {
-    return (
-      <div className="bg-[#252527] rounded-3xl border border-[#94fbdd]/20 p-8 h-[600px] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#94fbdd]/20 border-t-[#94fbdd] mx-auto"></div>
-          <p className="text-gray-400">Chargement de la carte...</p>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    const loadLocation = async () => {
+      if (isLoadingProfile) return
 
-  if (!userLocation) {
-    return (
-      <div className="bg-[#252527] rounded-3xl border border-red-500/20 p-8 h-[600px] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <MapPinIcon className="h-12 w-12 text-red-500 mx-auto" />
-          <p className="text-red-400">Impossible de récupérer votre position</p>
-          {error && <p className="text-sm text-gray-400">{error}</p>}
-        </div>
-      </div>
+      if (fitnessProfile?.city) {
+        const location = await geocodeCity(fitnessProfile.city)
+
+        if (location) {
+          setUserLocation(location)
+          fetchNearbyGyms(location)
+        } else {
+          const defaultLoc = { lat: 48.8566, lng: 2.3522 }
+          setUserLocation(defaultLoc)
+          setError(`Impossible de localiser la ville "${fitnessProfile.city}". Affichage de Paris par défaut.`)
+          fetchNearbyGyms(defaultLoc)
+        }
+      } else {
+        const defaultLoc = { lat: 48.8566, lng: 2.3522 }
+        setUserLocation(defaultLoc)
+        setError('Veuillez ajouter une ville à votre profil fitness. Affichage de Paris par défaut.')
+        fetchNearbyGyms(defaultLoc)
+      }
+    }
+
+    loadLocation()
+  }, [fitnessProfile, isLoadingProfile, geocodeCity, fetchNearbyGyms])
+
+  // Filtrer les salles selon la recherche debouncée
+  const filteredGyms = useMemo(() => {
+    if (!debouncedSearch.trim()) return gyms
+
+    const query = debouncedSearch.toLowerCase()
+    return gyms.filter(gym =>
+      gym.name.toLowerCase().includes(query) ||
+      gym.address.toLowerCase().includes(query)
     )
-  }
+  }, [gyms, debouncedSearch])
+
+  // Salles à afficher selon le mode et la recherche
+  const displayedGyms = useMemo(() => {
+    // En mode carte, toujours afficher toutes les salles filtrées
+    if (viewMode === 'map') return filteredGyms
+
+    // En mode liste :
+    // - Si recherche active : afficher toutes les salles correspondantes
+    // - Sinon : limiter à 5 salles
+    return debouncedSearch.trim() ? filteredGyms : filteredGyms.slice(0, 5)
+  }, [filteredGyms, viewMode, debouncedSearch])
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-          <MapPinIcon className="h-6 w-6 text-[#94fbdd]" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
+            <MapPinIcon className="h-6 w-6 text-[#94fbdd]" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-white">
+              Salles de sport {fitnessProfile?.city ? `à ${fitnessProfile.city}` : ''}
+            </h2>
+            <p className="text-xs text-gray-400">
+              {filteredGyms.length} salle{filteredGyms.length > 1 ? 's' : ''} trouvée{filteredGyms.length > 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-white">
-            Salles de sport {fitnessProfile?.city ? `à ${fitnessProfile.city}` : 'à proximité'}
-          </h2>
-          <p className="text-sm text-gray-400">
-            {gyms.length} salle{gyms.length > 1 ? 's' : ''} trouvée{gyms.length > 1 ? 's' : ''} dans un rayon de 5km
-          </p>
+
+        {/* Toggle */}
+        <div className="flex bg-[#1a1a1c] rounded-xl p-1 border border-[#94fbdd]/10">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#94fbdd]/10 text-[#94fbdd]' : 'text-gray-400 hover:text-white'
+              }`}
+            aria-label="Voir en liste"
+          >
+            <ListBulletIcon className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setViewMode('map')}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'map' ? 'bg-[#94fbdd]/10 text-[#94fbdd]' : 'text-gray-400 hover:text-white'
+              }`}
+            aria-label="Voir sur la carte"
+          >
+            <MapIcon className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* Erreur */}
       {error && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-          <p className="text-yellow-400 text-sm">{error}</p>
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-3">
+          <p className="text-yellow-400 text-xs">{error}</p>
         </div>
       )}
 
-      {/* Map Container */}
-      <div className="bg-[#252527] rounded-3xl border border-[#94fbdd]/20 overflow-hidden shadow-xl shadow-[#94fbdd]/5">
-        <div className="h-[600px] relative">
+      {/* Recherche */}
+      {!loading && gyms.length > 0 && (
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher une salle..."
+            className="w-full rounded-xl bg-[#1a1a1c] border border-[#94fbdd]/10 pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all text-sm"
+          />
+          {debouncedSearch !== searchQuery && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="w-4 h-4 border-2 border-[#94fbdd]/30 border-t-[#94fbdd] rounded-full animate-spin"></div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Contenu */}
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <GymCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredGyms.length === 0 ? (
+        <div className="bg-[#252527] rounded-2xl p-12 border border-[#94fbdd]/10 text-center">
+          <MapPinIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+          <p className="text-gray-400 text-sm">
+            {debouncedSearch ? 'Aucune salle ne correspond à votre recherche' : 'Aucune salle trouvée'}
+          </p>
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="space-y-3">
+          {displayedGyms.map((gym, index) => (
+            <div
+              key={gym.id}
+              className="bg-[#252527] rounded-2xl p-4 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group cursor-pointer"
+              style={{ animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both` }}
+            >
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-[#94fbdd]/10 rounded-xl flex items-center justify-center group-hover:bg-[#94fbdd]/20 transition-colors">
+                    <span className="text-[#94fbdd] font-bold text-lg">#{index + 1}</span>
+                  </div>
+                  {gym.distance && gym.distance < 1 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#252527]"></div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-white mb-1 truncate group-hover:text-[#94fbdd] transition-colors">
+                    {gym.name}
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-2 line-clamp-1">
+                    {gym.address}
+                  </p>
+
+                  {gym.distance !== undefined && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#94fbdd]/10 border border-[#94fbdd]/20">
+                      <MapPinIcon className="h-3.5 w-3.5 text-[#94fbdd]" />
+                      <span className="text-xs font-semibold text-[#94fbdd]">
+                        {gym.distance < 1 ? `${Math.round(gym.distance * 1000)}m` : `${gym.distance.toFixed(1)}km`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-gray-600 group-hover:text-[#94fbdd] transition-all group-hover:translate-x-1">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!debouncedSearch && filteredGyms.length > 5 && (
+            <div className="text-center py-3">
+              <p className="text-xs text-gray-500">
+                +{filteredGyms.length - 5} autre{filteredGyms.length - 5 > 1 ? 's' : ''} salle{filteredGyms.length - 5 > 1 ? 's' : ''}.
+                <span className="text-[#94fbdd] ml-1">Recherchez pour voir plus</span>
+              </p>
+            </div>
+          )}
+        </div>
+      ) : userLocation ? (
+        <div className="bg-[#252527] rounded-2xl border border-[#94fbdd]/20 overflow-hidden h-[500px]">
           <MapContainer
             center={[userLocation.lat, userLocation.lng]}
             zoom={13}
             style={{ height: '100%', width: '100%' }}
-            className="z-0"
+            scrollWheelZoom={false}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <MapController center={new LatLng(userLocation.lat, userLocation.lng)} />
-
-            {/* Marqueur de l'utilisateur */}
-            <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-              <Popup>
-                <div className="text-center">
-                  <p className="font-bold text-sm">Vous êtes ici</p>
-                </div>
-              </Popup>
-            </Marker>
-
-            {/* Marqueurs des salles de sport */}
-            {gyms.map((gym) => (
-              <Marker
-                key={gym.id}
-                position={[gym.lat, gym.lng]}
-                icon={gymIcon}
-              >
+            {displayedGyms.map((gym) => (
+              <Marker key={gym.id} position={[gym.lat, gym.lng]} icon={gymIcon}>
                 <Popup>
-                  <div className="space-y-2 min-w-[200px]">
-                    <h3 className="font-bold text-base text-[#121214]">{gym.name}</h3>
-                    <p className="text-sm text-gray-600">{gym.address}</p>
+                  <div className="space-y-2 min-w-[180px]">
+                    <h3 className="font-bold text-sm">{gym.name}</h3>
+                    <p className="text-xs text-gray-600">{gym.address}</p>
                     {gym.distance && (
-                      <p className="text-sm font-semibold text-[#94fbdd]">
-                        📍 {gym.distance} km
+                      <p className="text-xs font-semibold text-[#94fbdd]">
+                        📍 {gym.distance}km
                       </p>
                     )}
                   </div>
@@ -285,30 +376,14 @@ export default function GymMap() {
             ))}
           </MapContainer>
         </div>
+      ) : null}
 
-        {/* Liste des salles en dessous */}
-        {gyms.length > 0 && (
-          <div className="p-6 bg-[#1a1a1c] border-t border-[#94fbdd]/10">
-            <h3 className="text-lg font-bold text-white mb-4">Liste des salles</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar">
-              {gyms.slice(0, 9).map((gym) => (
-                <div
-                  key={gym.id}
-                  className="bg-[#252527] rounded-xl p-4 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all"
-                >
-                  <h4 className="font-semibold text-white text-sm mb-1">{gym.name}</h4>
-                  <p className="text-xs text-gray-400 mb-2">{gym.address}</p>
-                  {gym.distance && (
-                    <p className="text-xs font-semibold text-[#94fbdd]">
-                      {gym.distance} km
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
