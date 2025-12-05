@@ -340,7 +340,7 @@ export default function GymMap() {
           {!debouncedSearch && filteredGyms.length > 5 && (
             <div className="text-center py-3">
               <p className="text-xs text-gray-500">
-                +{filteredGyms.length - 5} autre{filteredGyms.length - 5 > 1 ? 's' : ''} salle{filteredGyms.length - 5 > 1 ? 's' : ''}.
+                +{filteredGyms.length - 5} autre{filteredGyms.length - 5 > 1 ? 's' : ''} salle{filteredGyms.length - 5 > 1 ? 's' : ''} à {fitnessProfile?.city}.
                 <span className="text-[#94fbdd] ml-1">Recherchez pour voir plus</span>
               </p>
             </div>
@@ -382,6 +382,18 @@ export default function GymMap() {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Forcer le z-index de la carte Leaflet pour qu'elle reste sous la navbar */
+        .leaflet-container,
+        .leaflet-pane,
+        .leaflet-map-pane {
+          z-index: 1 !important;
+        }
+        
+        /* Les contrôles de la carte doivent rester visibles mais sous la navbar */
+        .leaflet-control-container {
+          z-index: 10 !important;
         }
       `}</style>
     </div>
