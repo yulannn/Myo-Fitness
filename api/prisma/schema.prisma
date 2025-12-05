@@ -94,6 +94,11 @@ model User {
   refreshToken      String?
   resetPasswordCode    String?
   resetPasswordExpires DateTime?
+  
+  // Email verification
+  emailVerified             Boolean   @default(false)
+  emailVerificationCode     String?
+  emailVerificationExpires  DateTime?
 
   fitnessProfiles  FitnessProfile[]
   exercicesCreated Exercice[]       @relation("ExerciceCreatedBy")

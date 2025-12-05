@@ -25,6 +25,11 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return null;
 
+    // Vérifier si l'email est vérifié
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte de réception.');
+    }
+
     const { password: _, refreshToken, ...safeUser } = user;
     return safeUser;
   }
@@ -62,24 +67,35 @@ export class AuthService {
 
 
   /** Inscription */
-  async register(signUpDto: SignUpDto): Promise<AuthResultDto> {
+  async register(signUpDto: SignUpDto): Promise<{ message: string; email: string }> {
     const existingUser = await this.usersService.findUserByEmail(signUpDto.email);
     if (existingUser) throw new BadRequestException('Cet email est déjà utilisé. Si c\'est votre compte, veuillez vous connecter.');
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
-    const newUser = await this.usersService.createUser({ ...signUpDto, password: hashedPassword });
+    const newUser = await this.usersService.createUser({
+      ...signUpDto,
+      password: hashedPassword,
+    });
 
-    const { password, refreshToken, ...safeUser } = newUser;
+    // Générer un code de vérification à 6 chiffres
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const payload = this.buildJwtPayload(safeUser);
+    // Le code expire dans 24 heures
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-    const refreshTokenToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+    // Sauvegarder le code de vérification
+    await this.usersService.updateUser(newUser.id, {
+      emailVerificationCode: code,
+      emailVerificationExpires: expiresAt,
+    });
 
-    const hashedRefreshToken = await bcrypt.hash(refreshTokenToken, 10);
-    await this.usersService.updateUser(safeUser.id, { refreshToken: hashedRefreshToken });
+    // Envoyer l'email de vérification
+    await this.emailService.sendEmailVerification(newUser.email, code, newUser.name);
 
-    return { accessToken, refreshToken: refreshTokenToken, user: safeUser };
+    return {
+      message: 'Compte créé avec succès. Consultez votre email pour le code de vérification.',
+      email: newUser.email,
+    };
   }
 
   /** Déconnexion */
@@ -103,6 +119,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         profilePictureUrl: user.profilePictureUrl ?? null,
+        emailVerified: user.emailVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       };
@@ -258,5 +275,74 @@ export class AuthService {
     await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
     return { message: 'Votre mot de passe a été modifié avec succès.' };
+  }
+
+  /**
+   * Vérifie l'email d'un utilisateur avec le code
+   */
+  async verifyEmail(email: string, code: string): Promise<{ message: string }> {
+    const user = await this.usersService.findUserByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur non trouvé');
+    }
+
+    if (user.emailVerified) {
+      return { message: 'Votre email est déjà vérifié. Vous pouvez vous connecter.' };
+    }
+
+    if (!user.emailVerificationCode || !user.emailVerificationExpires) {
+      throw new BadRequestException('Code de vérification invalide ou expiré');
+    }
+
+    // Vérifier si le code a expiré
+    if (new Date() > user.emailVerificationExpires) {
+      throw new BadRequestException('Le code de vérification a expiré. Demandez un nouveau code.');
+    }
+
+    // Vérifier que le code correspond
+    if (user.emailVerificationCode !== code) {
+      throw new BadRequestException('Code de vérification incorrect');
+    }
+
+    // Marquer l'email comme vérifié
+    await this.usersService.updateUser(user.id, {
+      emailVerified: true,
+      emailVerificationCode: null,
+      emailVerificationExpires: null,
+    });
+
+    return { message: 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.' };
+  }
+
+  /**
+   * Renvoie un code de vérification d'email
+   */
+  async resendEmailVerification(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findUserByEmail(email);
+
+    if (!user) {
+      // Ne pas révéler si l'email existe ou non
+      return { message: 'Si cet email existe et n\'est pas vérifié, un nouveau code a été envoyé.' };
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Cet email est déjà vérifié');
+    }
+
+    // Générer un nouveau code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Sauvegarder le nouveau code
+    await this.usersService.updateUser(user.id, {
+      emailVerificationCode: code,
+      emailVerificationExpires: expiresAt,
+    });
+
+    // Envoyer l'email
+    await this.emailService.sendEmailVerification(user.email, code, user.name);
+
+    return { message: 'Un nouveau code de vérification a été envoyé à votre email.' };
   }
 }

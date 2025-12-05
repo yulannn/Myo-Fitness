@@ -11,10 +11,10 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyCode from "../pages/auth/VerifyCode";
 import ResetPassword from "../pages/auth/ResetPassword";
 import ChangePassword from "../pages/change-password";
+import VerifyEmail from "../pages/verify-email";
 import type { ReactNode } from "react";
 import {
     HOME,
-
     SETTINGS,
     MY_PROFILE,
     PROGRAMS,
@@ -27,18 +27,18 @@ import {
     VERIFY_CODE,
     RESET_PASSWORD,
     CHANGE_PASSWORD,
+    VERIFY_EMAIL,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
     path: string;
     element: ReactNode;
     protected?: boolean;
-    redirectIfAuthenticated?: boolean;
+    redirectIfAuth?: boolean;
     hideBottomNav?: boolean;
 }
 
 export const routes: AppRouteConfig[] = [
-
     {
         path: HOME,
         element: <Home />,
@@ -82,31 +82,36 @@ export const routes: AppRouteConfig[] = [
     {
         path: LOGIN,
         element: <Login />,
-        redirectIfAuthenticated: true,
+        redirectIfAuth: true,
         hideBottomNav: true
     },
     {
         path: REGISTER,
         element: <Register />,
-        redirectIfAuthenticated: true,
+        redirectIfAuth: true,
+        hideBottomNav: true
+    },
+    {
+        path: VERIFY_EMAIL,
+        element: <VerifyEmail />,
         hideBottomNav: true
     },
     {
         path: FORGOT_PASSWORD,
         element: <ForgotPassword />,
-        redirectIfAuthenticated: true,
+        redirectIfAuth: true,
         hideBottomNav: true
     },
     {
         path: VERIFY_CODE,
         element: <VerifyCode />,
-        redirectIfAuthenticated: true,
+        redirectIfAuth: true,
         hideBottomNav: true
     },
     {
         path: RESET_PASSWORD,
         element: <ResetPassword />,
-        redirectIfAuthenticated: true,
+        redirectIfAuth: true,
         hideBottomNav: true
     },
     {
@@ -114,5 +119,4 @@ export const routes: AppRouteConfig[] = [
         element: <Home />,
         protected: true
     }
-
 ];

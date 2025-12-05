@@ -319,4 +319,142 @@ export class EmailService {
       // On log juste l'erreur
     }
   }
+
+  /**
+   * Envoie un email de vérification avec le code
+   */
+  async sendEmailVerification(email: string, code: string, userName: string): Promise<void> {
+    try {
+      const mailOptions = {
+        from: `"Myo Fitness" <${this.configService.get<string>('SMTP_USER')}>`,
+        to: email,
+        subject: 'Vérifiez votre adresse email - Myo Fitness',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                background-color: #121214;
+                color: #ffffff;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 40px 20px;
+              }
+              .header {
+                text-align: center;
+                padding-bottom: 30px;
+              }
+              .logo {
+                font-size: 32px;
+                font-weight: bold;
+                background: linear-gradient(to right, #94fbdd, #6dd4b8);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              }
+              .content {
+                background-color: #252527;
+                border-radius: 16px;
+                padding: 40px;
+                border: 1px solid rgba(148, 251, 221, 0.2);
+              }
+              .greeting {
+                font-size: 24px;
+                margin-bottom: 20px;
+                color: #ffffff;
+              }
+              .message {
+                color: #a0a0a0;
+                line-height: 1.6;
+                margin-bottom: 30px;
+              }
+              .code-container {
+                background: linear-gradient(to right, rgba(148, 251, 221, 0.1), rgba(109, 212, 184, 0.1));
+                border: 2px solid #94fbdd;
+                border-radius: 12px;
+                padding: 20px;
+                text-align: center;
+                margin: 30px 0;
+              }
+              .code {
+                font-size: 36px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                color: #94fbdd;
+                font-family: 'Courier New', monospace;
+              }
+              .validity {
+                color: #a0a0a0;
+                font-size: 14px;
+                margin-top: 10px;
+              }
+              .info-box {
+                background-color: rgba(148, 251, 221, 0.05);
+                border-left: 4px solid #94fbdd;
+                padding: 15px;
+                margin-top: 30px;
+                border-radius: 4px;
+              }
+              .info-text {
+                color: #a0a0a0;
+                font-size: 14px;
+                margin: 0;
+              }
+              .footer {
+                text align: center;
+                margin-top: 40px;
+                color: #666;
+                font-size: 12px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <div class="logo">MYO FITNESS</div>
+              </div>
+              <div class="content">
+                <h1 class="greeting">Bienvenue ${userName} 👋</h1>
+                <p class="message">
+                  Merci de t'être inscrit sur Myo Fitness ! Pour activer ton compte, utilise le code de vérification ci-dessous :
+                </p>
+                
+                <div class="code-container">
+                  <div class="code">${code}</div>
+                  <div class="validity">Valide pendant 24 heures</div>
+                </div>
+
+                <p class="message">
+                  Entre ce code sur la page de vérification pour commencer ton aventure fitness avec nous !
+                </p>
+
+                <div class="info-box">
+                  <p class="info-text">
+                    💪 Une fois ton email vérifié, tu auras accès à toutes les fonctionnalités de Myo Fitness.
+                  </p>
+                </div>
+              </div>
+              
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Myo Fitness. Tous droits réservés.</p>
+                <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Email verification sent to ${email}`);
+    } catch (error: any) {
+      this.logger.error(`Failed to send email verification to ${email}: ${error.message}`);
+      throw new Error('Impossible d\'envoyer l\'email de vérification');
+    }
+  }
 }

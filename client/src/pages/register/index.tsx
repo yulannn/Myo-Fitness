@@ -41,9 +41,10 @@ export default function Register() {
 
     try {
       const result = await registerMutation.mutateAsync(formValues)
-      applyAuthResult(result)
+
+      // Ne plus connecter automatiquement, rediriger vers la vérification d'email
       setFormValues(initialFormValues)
-      navigate('/', { replace: true })
+      navigate(`/verify-email?email=${encodeURIComponent(formValues.email)}`, { replace: true })
     } catch (error) {
       if (error instanceof ValidationError) {
         setFieldErrors(error.fieldErrors)

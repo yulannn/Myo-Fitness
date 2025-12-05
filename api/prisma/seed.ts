@@ -14,6 +14,7 @@ async function main() {
       name: 'Jean Dupont',
       email: 'jean.dupont@example.com',
       password: hashedPassword,
+      emailVerified: true, // ✅ Email vérifié par défaut pour le dev
     },
   });
 
@@ -22,6 +23,7 @@ async function main() {
       name: 'Marie Martin',
       email: 'marie.martin@example.com',
       password: hashedPassword,
+      emailVerified: true, // ✅ Email vérifié par défaut pour le dev
     },
   });
 

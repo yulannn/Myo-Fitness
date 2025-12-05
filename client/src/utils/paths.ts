@@ -12,3 +12,4 @@ export const REGISTER = "/auth/register";
 export const FORGOT_PASSWORD = "/forgot-password";
 export const VERIFY_CODE = "/verify-code";
 export const RESET_PASSWORD = "/reset-password";
+export const VERIFY_EMAIL = "/verify-email";

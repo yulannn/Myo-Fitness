@@ -46,4 +46,16 @@ export class UserEntity {
 
   @Exclude()
   resetPasswordExpires?: Date | null;
+
+  @ApiProperty({
+    description: 'Indique si l\'email a été vérifié',
+    example: true,
+  })
+  emailVerified: boolean;
+
+  @Exclude()
+  emailVerificationCode?: string | null;
+
+  @Exclude()
+  emailVerificationExpires?: Date | null;
 }

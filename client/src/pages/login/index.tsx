@@ -51,6 +51,17 @@ export default function Login() {
 
       if (error instanceof ApiError) {
         setFieldErrors(error.fieldErrors ?? {})
+
+        // Vérifier si c'est une erreur de vérification d'email
+        if (error.message?.includes('vérifier votre email') || error.message?.includes('verify')) {
+          setFormError(error.message)
+          // Rediriger vers la page de vérification après 2 secondes
+          setTimeout(() => {
+            navigate(`/verify-email?email=${encodeURIComponent(formValues.email)}`)
+          }, 2000)
+          return
+        }
+
         setFormError(error.message)
         return
       }
