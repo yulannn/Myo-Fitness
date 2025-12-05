@@ -4,7 +4,8 @@ import {
     UserCircleIcon,
     BellIcon,
     ChatBubbleLeftRightIcon,
-    ArrowRightOnRectangleIcon
+    ArrowRightOnRectangleIcon,
+    KeyIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingButtonProps {
@@ -43,6 +44,10 @@ export default function Settings() {
         navigate('/my-profile');
     };
 
+    const handleChangePassword = () => {
+        navigate('/change-password');
+    };
+
     const handleNotifications = () => {
         // Pas de logique pour le moment
         console.log('Notifications clicked');
@@ -69,6 +74,12 @@ export default function Settings() {
                         icon={<UserCircleIcon className="h-6 w-6" />}
                         label="Mon profil"
                         onClick={handleMyProfile}
+                    />
+
+                    <SettingButton
+                        icon={<KeyIcon className="h-6 w-6" />}
+                        label="Modifier mon mot de passe"
+                        onClick={handleChangePassword}
                     />
 
                     <SettingButton

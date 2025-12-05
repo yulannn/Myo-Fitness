@@ -10,6 +10,7 @@ import Register from "../pages/register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyCode from "../pages/auth/VerifyCode";
 import ResetPassword from "../pages/auth/ResetPassword";
+import ChangePassword from "../pages/change-password";
 import type { ReactNode } from "react";
 import {
     HOME,
@@ -25,6 +26,7 @@ import {
     FORGOT_PASSWORD,
     VERIFY_CODE,
     RESET_PASSWORD,
+    CHANGE_PASSWORD,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -65,6 +67,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: SESSIONS,
         element: <Sessions />,
+        protected: true
+    },
+    {
+        path: CHANGE_PASSWORD,
+        element: <ChangePassword />,
         protected: true
     },
     {

@@ -219,4 +219,44 @@ export class AuthService {
 
     return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
   }
+
+  /**
+   * Change le mot de passe d'un utilisateur après vérification de l'ancien
+   */
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.usersService.findUserById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    // Vérifier que le mot de passe actuel est correct
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Le mot de passe actuel est incorrect');
+    }
+
+    // Vérifier que le nouveau mot de passe est différent de l'ancien
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestException('Le nouveau mot de passe doit être différent de l\'ancien');
+    }
+
+    // Hasher le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Mettre à jour le mot de passe
+    await this.usersService.updateUser(user.id, {
+      password: hashedPassword,
+    });
+
+    // Envoyer un email de confirmation
+    await this.emailService.sendPasswordChangedEmail(user.email, user.name);
+
+    return { message: 'Votre mot de passe a été modifié avec succès.' };
+  }
 }

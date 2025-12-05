@@ -11,6 +11,7 @@ import {
 import { UserEntity } from './entities/users.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { R2Service } from '../r2/r2.service';
+import { AuthService } from '../auth/auth.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -20,6 +21,7 @@ export class UsersController {
   constructor(
     private usersService: UsersService,
     private r2Service: R2Service,
+    private authService: AuthService,
   ) { }
 
 
@@ -197,5 +199,53 @@ export class UsersController {
     });
 
     return { message: 'Photo de profil supprimée avec succès' };
+  }
+
+  @Post('me/change-password')
+  @ApiOperation({ summary: 'Modifier le mot de passe de l\'utilisateur connecté' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        currentPassword: {
+          type: 'string',
+          description: 'Mot de passe actuel',
+          example: 'AncienMotDePasse123!',
+        },
+        newPassword: {
+          type: 'string',
+          description: 'Nouveau mot de passe',
+          example: 'NouveauMotDePasse123!',
+        },
+      },
+      required: ['currentPassword', 'newPassword'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Mot de passe modifié avec succès',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Mot de passe actuel incorrect',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Le nouveau mot de passe doit être différent de l\'ancien',
+  })
+  async changePassword(
+    @Body() body: { currentPassword: string; newPassword: string },
+    @Req() req,
+  ) {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = body;
+
+    return this.authService.changePassword(userId, currentPassword, newPassword);
   }
 }
