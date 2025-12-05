@@ -13,6 +13,7 @@ import StreakTracker from '../../components/home/StreakTracker'
 import PersonalRecords from '../../components/home/PersonalRecords'
 import AIInsights from '../../components/home/AIInsights'
 import HomeHeader from '../../components/home/HomeHeader'
+import GymMap from '../../components/home/GymMap'
 
 export default function Home() {
   const { data: programs } = useProgramsByUser()
@@ -125,6 +126,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Gym Map - Nouveau Composant */}
+        <GymMap />
 
         {/* Progress Dashboard Section */}
         <div className="space-y-4">
