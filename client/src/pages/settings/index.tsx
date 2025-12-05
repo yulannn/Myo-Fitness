@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -5,7 +6,9 @@ import {
     BellIcon,
     ChatBubbleLeftRightIcon,
     ArrowRightOnRectangleIcon,
-    KeyIcon
+    KeyIcon,
+    ExclamationTriangleIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingButtonProps {
@@ -39,6 +42,8 @@ function SettingButton({ icon, label, onClick, variant = 'default' }: SettingBut
 export default function Settings() {
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleMyProfile = () => {
         navigate('/my-profile');
@@ -58,8 +63,19 @@ export default function Settings() {
         console.log('Feedback clicked');
     };
 
-    const handleLogout = async () => {
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
+
+    const handleConfirmLogout = async () => {
+        setIsLoggingOut(true);
         await logout();
+        setIsLoggingOut(false);
+        setShowLogoutModal(false);
+    };
+
+    const handleCancelLogout = () => {
+        setShowLogoutModal(false);
     };
 
     return (
@@ -97,11 +113,73 @@ export default function Settings() {
                     <SettingButton
                         icon={<ArrowRightOnRectangleIcon className="h-6 w-6" />}
                         label="Se déconnecter"
-                        onClick={handleLogout}
+                        onClick={handleLogoutClick}
                         variant="danger"
                     />
                 </section>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#252527] rounded-2xl shadow-2xl border border-[#94fbdd]/10 max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+                        {/* Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                                <ExclamationTriangleIcon className="h-8 w-8 text-red-400" />
+                            </div>
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-xl font-bold text-white text-center mb-2">
+                            Se déconnecter ?
+                        </h2>
+
+                        {/* Message */}
+                        <p className="text-gray-400 text-center mb-6">
+                            Es-tu sûr de vouloir te déconnecter ? Tu devras te reconnecter pour accéder à ton compte.
+                        </p>
+
+                        {/* Actions */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleCancelLogout}
+                                disabled={isLoggingOut}
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-gray-300 bg-[#121214] hover:bg-[#1a1a1c] border border-gray-700 hover:border-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleConfirmLogout}
+                                disabled={isLoggingOut}
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                            >
+                                {isLoggingOut ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Déconnexion...
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                                        Déconnexion
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Close button (X) */}
+                        <button
+                            onClick={handleCancelLogout}
+                            disabled={isLoggingOut}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                            aria-label="Fermer"
+                        >
+                            <XMarkIcon className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
