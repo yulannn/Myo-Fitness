@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Icon, LatLng } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapPinIcon } from '@heroicons/react/24/outline'
+import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 
 // Types
 interface Gym {
@@ -59,35 +60,65 @@ export default function GymMap() {
   const [gyms, setGyms] = useState<Gym[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { data: fitnessProfile, isLoading: isLoadingProfile } = useFitnessProfilesByUser()
 
-  // Obtenir la position de l'utilisateur
+  // Fonction pour géocoder la ville et obtenir les coordonnées
+  const geocodeCity = async (cityName: string): Promise<UserLocation | null> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityName)}&format=json&limit=1`
+      )
+
+      if (!response.ok) {
+        throw new Error('Erreur lors du géocodage de la ville')
+      }
+
+      const data = await response.json()
+
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+        }
+      }
+
+      return null
+    } catch (err) {
+      console.error('Erreur lors du géocodage:', err)
+      return null
+    }
+  }
+
+  // Obtenir la position de l'utilisateur depuis sa ville
   useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLoc = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          }
-          setUserLocation(userLoc)
-          fetchNearbyGyms(userLoc)
-        },
-        (err) => {
-          console.error('Erreur de géolocalisation:', err)
-          // Position par défaut (Paris) si l'utilisateur refuse la géolocalisation
+    const loadLocation = async () => {
+      if (isLoadingProfile) return
+
+      // Vérifier si l'utilisateur a une ville dans son profil fitness
+      if (fitnessProfile?.city) {
+        const location = await geocodeCity(fitnessProfile.city)
+
+        if (location) {
+          setUserLocation(location)
+          fetchNearbyGyms(location)
+        } else {
+          // Si le géocodage échoue, utiliser Paris par défaut
           const defaultLoc = { lat: 48.8566, lng: 2.3522 }
           setUserLocation(defaultLoc)
-          setError('Impossible de récupérer votre position. Affichage de Paris par défaut.')
+          setError(`Impossible de localiser la ville "${fitnessProfile.city}". Affichage de Paris par défaut.`)
           fetchNearbyGyms(defaultLoc)
         }
-      )
-    } else {
-      setError('La géolocalisation n\'est pas supportée par votre navigateur.')
-      const defaultLoc = { lat: 48.8566, lng: 2.3522 }
-      setUserLocation(defaultLoc)
-      fetchNearbyGyms(defaultLoc)
+      } else {
+        // Si pas de ville dans le profil, utiliser Paris par défaut
+        const defaultLoc = { lat: 48.8566, lng: 2.3522 }
+        setUserLocation(defaultLoc)
+        setError('Veuillez ajouter une ville à votre profil fitness. Affichage de Paris par défaut.')
+        fetchNearbyGyms(defaultLoc)
+      }
     }
-  }, [])
+
+    loadLocation()
+  }, [fitnessProfile, isLoadingProfile])
 
   // Fonction pour calculer la distance entre deux points (formule de Haversine)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -191,7 +222,9 @@ export default function GymMap() {
           <MapPinIcon className="h-6 w-6 text-[#94fbdd]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Salles de sport à proximité</h2>
+          <h2 className="text-2xl font-bold text-white">
+            Salles de sport {fitnessProfile?.city ? `à ${fitnessProfile.city}` : 'à proximité'}
+          </h2>
           <p className="text-sm text-gray-400">
             {gyms.length} salle{gyms.length > 1 ? 's' : ''} trouvée{gyms.length > 1 ? 's' : ''} dans un rayon de 5km
           </p>

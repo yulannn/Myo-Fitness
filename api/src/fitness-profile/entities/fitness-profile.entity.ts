@@ -32,6 +32,12 @@ export class FitnessProfileEntity implements FitnessProfile {
   })
   weight: number;
 
+  @ApiPropertyOptional({
+    description: 'Ville de l’utilisateur',
+    example: 'Paris',
+  })
+  city: string | null;
+
   @ApiProperty({
     description: 'Nombre de séances par semaine',
     example: 4,

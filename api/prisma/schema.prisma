@@ -84,21 +84,21 @@ enum MessageType {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  name              String
-  email             String   @unique
-  password          String
-  profilePictureUrl String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt
-  refreshToken      String?
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  email                String    @unique
+  password             String
+  profilePictureUrl    String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @default(now()) @updatedAt
+  refreshToken         String?
   resetPasswordCode    String?
   resetPasswordExpires DateTime?
-  
+
   // Email verification
-  emailVerified             Boolean   @default(false)
-  emailVerificationCode     String?
-  emailVerificationExpires  DateTime?
+  emailVerified            Boolean   @default(false)
+  emailVerificationCode    String?
+  emailVerificationExpires DateTime?
 
   fitnessProfiles  FitnessProfile[]
   exercicesCreated Exercice[]       @relation("ExerciceCreatedBy")
@@ -144,6 +144,7 @@ model FitnessProfile {
   height            Float
   weight            Float
   trainingFrequency Int
+  city              String?
   experienceLevel   ExperienceLevel
   goals             Goal[]
   gender            Gender
@@ -326,7 +327,7 @@ model FriendRequest {
 model FriendGroup {
   id        Int      @id @default(autoincrement())
   name      String
-  adminId   Int?     
+  adminId   Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

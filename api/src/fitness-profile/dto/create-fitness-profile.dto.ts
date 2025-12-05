@@ -1,11 +1,11 @@
-import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max, IsOptional } from 'class-validator';
+import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Gender, Goal, ExperienceLevel, WeekDay } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFitnessProfileDto {
   @ApiProperty({
-    description: 'Âge de l’utilisateur',
+    description: 'Âge de l utilisateur',
     example: 28,
   })
   @IsInt()
@@ -48,8 +48,16 @@ export class CreateFitnessProfileDto {
   @Max(7)
   trainingFrequency: number;
 
+  @ApiPropertyOptional({
+    description: 'Ville de l utilisateur',
+    example: 'Paris',
+  })
+  @IsOptional()
+  @IsString()
+  city?: string | null;
+
   @ApiProperty({
-    description: 'Niveau d’expérience',
+    description: 'Niveau d expérience',
     enum: ExperienceLevel,
     example: ExperienceLevel.INTERMEDIATE,
   })
@@ -57,7 +65,7 @@ export class CreateFitnessProfileDto {
   experienceLevel: ExperienceLevel;
 
   @ApiProperty({
-    description: 'Objectifs de l’utilisateur',
+    description: 'Objectifs de l utilisateur',
     enum: Goal,
     isArray: true,
     example: [Goal.MUSCLE_GAIN, Goal.WEIGHT_LOSS],
@@ -68,7 +76,7 @@ export class CreateFitnessProfileDto {
   goals: Goal[];
 
   @ApiProperty({
-    description: 'Genre de l’utilisateur',
+    description: 'Genre de l utilisateur',
     enum: Gender,
     example: Gender.MALE,
   })
@@ -76,7 +84,7 @@ export class CreateFitnessProfileDto {
   gender: Gender;
 
   @ApiProperty({
-    description: 'Indique si l’utilisateur souhaite uniquement des exercices au poids du corps',
+    description: 'Indique si l utilisateur souhaite uniquement des exercices au poids du corps',
     example: true,
   })
   @IsBoolean()

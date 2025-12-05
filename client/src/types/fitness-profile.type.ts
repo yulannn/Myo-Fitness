@@ -9,6 +9,7 @@ export interface FitnessProfile {
     age: number;
     height: number;
     weight: number;
+    city: string | null;
     trainingFrequency: number;
     experienceLevel: ExperienceLevel;
     goals: Goal[];
@@ -23,6 +24,7 @@ export interface CreateFitnessProfilePayload {
     age: number;
     height: number;
     weight: number;
+    city: string | null;
     trainingFrequency: number;
     experienceLevel: ExperienceLevel;
     goals: Goal[];
@@ -35,6 +37,7 @@ export interface UpdateFitnessProfilePayload {
     age?: number;
     height?: number;
     weight?: number;
+    city?: string | null;
     trainingFrequency?: number;
     experienceLevel?: ExperienceLevel;
     goals?: Goal[];

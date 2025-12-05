@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { CreateFitnessProfilePayload, WeekDay } from '../../types/fitness-profile.type';
 import TrainingDaysSelector from './TrainingDaysSelector';
+import CityAutocomplete from './CityAutocomplete';
 
 interface CreateProfileModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function CreateProfileModal({
     age: 0,
     height: 0,
     weight: 0,
+    city: null,
     trainingFrequency: 0,
     experienceLevel: 'BEGINNER',
     goals: [],
@@ -34,6 +36,7 @@ export default function CreateProfileModal({
         age: 0,
         height: 0,
         weight: 0,
+        city: null,
         trainingFrequency: 0,
         experienceLevel: 'BEGINNER',
         goals: [],
@@ -241,6 +244,13 @@ export default function CreateProfileModal({
               />
             </button>
           </div>
+
+          {/* City Autocomplete */}
+          <CityAutocomplete
+            value={form.city}
+            onChange={(city) => setForm(prev => ({ ...prev, city }))}
+            placeholder="Paris, Lyon, Marseille..."
+          />
 
           {/* Training Days Selector */}
           <TrainingDaysSelector
