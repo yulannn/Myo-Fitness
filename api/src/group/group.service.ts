@@ -16,6 +16,7 @@ export class GroupService {
         const group = await this.prisma.friendGroup.create({
             data: {
                 name: createGroupDto.name,
+                adminId: userId,
                 members: {
                     connect: { id: userId },
                 },
@@ -138,14 +139,24 @@ export class GroupService {
     async getGroupMembers(groupId: number) {
         const group = await this.prisma.friendGroup.findUnique({
             where: { id: groupId },
-            include: { members: true },
+            include: {
+                members: true,
+                admin: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profilePictureUrl: true
+                    }
+                }
+            },
         });
 
         if (!group) {
             throw new NotFoundException('Group not found');
         }
 
-        return group.members;
+        return group;
     }
 
     async getGroupsList(userId: number) {
@@ -157,6 +168,14 @@ export class GroupService {
             },
             include: {
                 members: true,
+                admin: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profilePictureUrl: true
+                    }
+                }
             },
         });
 
@@ -222,4 +241,19 @@ export class GroupService {
         return { message: 'Member removed successfully' };
     }
 
+    async deleteGroup(groupId: number) {
+        const group = await this.prisma.friendGroup.findUnique({
+            where: { id: groupId },
+        });
+
+        if (!group) {
+            throw new NotFoundException('Group not found');
+        }
+
+        await this.prisma.friendGroup.delete({
+            where: { id: groupId },
+        });
+
+        return { message: 'Group deleted successfully' };
+    }
 }

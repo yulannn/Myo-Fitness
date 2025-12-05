@@ -109,6 +109,7 @@ model User {
   sentRequests          FriendRequest[]      @relation("SentRequests")
   receivedRequests      FriendRequest[]      @relation("ReceivedRequests")
   groups                FriendGroup[]        @relation("GroupMembers")
+  adminOfGroups         FriendGroup[]        @relation("GroupAdmin")
   sentGroupRequests     FriendGroupRequest[] @relation("SentGroupRequests")
   receivedGroupRequests FriendGroupRequest[] @relation("ReceivedGroupRequests")
 
@@ -325,10 +326,12 @@ model FriendRequest {
 model FriendGroup {
   id        Int      @id @default(autoincrement())
   name      String
+  adminId   Int?     
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   members User[] @relation("GroupMembers")
+  admin   User?  @relation("GroupAdmin", fields: [adminId], references: [id])
 
   joinRequests   FriendGroupRequest[] @relation("GroupJoinRequests")
   conversations  Conversation[]

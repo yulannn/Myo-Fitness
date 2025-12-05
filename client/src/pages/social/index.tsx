@@ -41,6 +41,7 @@ import useDeclineGroupRequest from '../../api/hooks/group/useDeclineGroupRequest
 import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
+import useDeleteGroup from '../../api/hooks/group/useDeleteGroup';
 import { useFriendNotifications } from '../../api/hooks/friend/useFriendNotifications';
 import { useGlobalMessageListener } from '../../api/hooks/chat/useGlobalMessageListener';
 import { getImageUrl } from '../../utils/imageUtils';
@@ -93,7 +94,8 @@ export default function SocialPage() {
     // --- GROUPS ---
     const { data: myGroups = [] } = useGetUserGroups();
     const { data: groupRequests = [] } = useGetPendingGroupRequests();
-    const { data: groupMembers = [] } = useGroupMembers(managingGroup?.id);
+    const { data: groupMembersData } = useGroupMembers(managingGroup?.id);
+    const groupMembers = groupMembersData?.members || [];
     const createGroup = useCreateGroup({
         onSuccess: () => {
             setIsCreatingGroup(false);
@@ -104,6 +106,7 @@ export default function SocialPage() {
     const declineGroup = useDeclineGroupRequest();
     const updateGroupMutation = useUpdateGroup();
     const removeMemberMutation = useRemoveMember();
+    const deleteGroupMutation = useDeleteGroup();
     const inviteMemberMutation = useSendGroupRequest();
 
     // Scroll to bottom of messages
@@ -112,6 +115,13 @@ export default function SocialPage() {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, typingUsers]);
+
+    // Rafraîchir les membres quand on ouvre la gestion d'un groupe
+    useEffect(() => {
+        if (managingGroup?.id) {
+            queryClient.invalidateQueries({ queryKey: ['groupMembers', managingGroup.id] });
+        }
+    }, [managingGroup?.id, queryClient]);
 
     // --- HANDLERS ---
     const handleSendMessage = () => {
@@ -775,29 +785,18 @@ export default function SocialPage() {
                                                 <span className="text-gray-200 text-sm">
                                                     {member.name} {member.id === user?.id && <span className="text-purple-400 text-xs">(Moi)</span>}
                                                 </span>
-                                                {groupMembers[0]?.id === member.id && (
+                                                {groupMembersData?.adminId === member.id && (
                                                     <span className="text-xs text-yellow-400 font-semibold">Créateur</span>
                                                 )}
                                             </div>
                                         </div>
-                                        {member.id !== user?.id ? (
-                                            // Seul le créateur (premier membre) peut exclure
-                                            groupMembers[0]?.id === user?.id && (
-                                                <button
-                                                    onClick={() => setMemberToRemove(member)}
-                                                    className="text-red-400 p-1.5 hover:bg-red-400/10 rounded-lg transition-colors"
-                                                    title="Exclure du groupe"
-                                                >
-                                                    <TrashIcon className="h-4 w-4" />
-                                                </button>
-                                            )
-                                        ) : (
+                                        {member.id !== user?.id && groupMembersData?.adminId === user?.id && (
                                             <button
-                                                onClick={() => setShowLeaveGroupConfirm(true)}
-                                                className="text-orange-400 p-1.5 hover:bg-orange-400/10 rounded-lg transition-colors"
-                                                title="Quitter le groupe"
+                                                onClick={() => setMemberToRemove(member)}
+                                                className="text-red-400 p-1.5 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                title="Exclure du groupe"
                                             >
-                                                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                                                <TrashIcon className="h-4 w-4" />
                                             </button>
                                         )}
                                     </div>
@@ -846,25 +845,49 @@ export default function SocialPage() {
                             </div>
                         </div>
 
+                        {/* Bouton Quitter/Supprimer */}
+                        <div className="pt-4 border-t border-purple-500/10">
+                            <button
+                                onClick={() => setShowLeaveGroupConfirm(true)}
+                                className="w-full py-3 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                            >
+                                {groupMembersData?.adminId === user?.id ? (
+                                    <>
+                                        <TrashIcon className="h-5 w-5" />
+                                        Supprimer le groupe
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                                        Quitter le groupe
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             )}
 
-            {/* Modale de confirmation de sortie de groupe */}
+            {/* Modale de confirmation de sortie/suppression */}
             {showLeaveGroupConfirm && managingGroup && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-[#252527] rounded-2xl border border-purple-500/20 max-w-md w-full p-6 shadow-2xl animate-in zoom-in duration-200">
                         <div className="flex items-start gap-4 mb-6">
-                            <div className="p-3 bg-orange-500/10 rounded-xl">
-                                <ArrowRightOnRectangleIcon className="h-6 w-6 text-orange-400" />
+                            <div className="p-3 bg-red-500/10 rounded-xl">
+                                {groupMembersData?.adminId === user?.id ? (
+                                    <TrashIcon className="h-6 w-6 text-red-400" />
+                                ) : (
+                                    <ArrowRightOnRectangleIcon className="h-6 w-6 text-red-400" />
+                                )}
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-xl font-bold text-white mb-2">
-                                    {groupMembers.length === 1 ? 'Supprimer le groupe ?' : 'Quitter le groupe ?'}
+                                    {groupMembersData?.adminId === user?.id ? 'Supprimer le groupe ?' : 'Quitter le groupe ?'}
                                 </h3>
                                 <p className="text-gray-400 text-sm">
-                                    {groupMembers.length === 1
-                                        ? `Vous êtes le dernier membre de "${managingGroup.name}". Le groupe sera définitivement supprimé.`
+                                    {groupMembersData?.adminId === user?.id
+                                        ? `Vous êtes sur le point de supprimer définitivement le groupe "${managingGroup.name}". Cette action est irréversible.`
                                         : `Êtes-vous sûr de vouloir quitter "${managingGroup.name}" ? Vous pourrez être réinvité plus tard.`
                                     }
                                 </p>
@@ -880,16 +903,20 @@ export default function SocialPage() {
                             </button>
                             <button
                                 onClick={() => {
-                                    const currentUserId = user?.id;
-                                    if (currentUserId) {
-                                        removeMemberMutation.mutate({ groupId: managingGroup.id, userId: currentUserId });
-                                        setManagingGroup(null);
-                                        setShowLeaveGroupConfirm(false);
+                                    if (groupMembersData?.adminId === user?.id) {
+                                        deleteGroupMutation.mutate(managingGroup.id);
+                                    } else {
+                                        const currentUserId = user?.id;
+                                        if (currentUserId) {
+                                            removeMemberMutation.mutate({ groupId: managingGroup.id, userId: currentUserId });
+                                        }
                                     }
+                                    setManagingGroup(null);
+                                    setShowLeaveGroupConfirm(false);
                                 }}
-                                className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors font-semibold shadow-lg shadow-orange-500/20"
+                                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-semibold shadow-lg shadow-red-500/20"
                             >
-                                {groupMembers.length === 1 ? 'Supprimer' : 'Quitter'}
+                                {groupMembersData?.adminId === user?.id ? 'Supprimer' : 'Quitter'}
                             </button>
                         </div>
                     </div>

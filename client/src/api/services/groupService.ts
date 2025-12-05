@@ -1,5 +1,6 @@
 import api from '../apiClient';
 import type { Group, CreateGroupPayload, SendGroupRequestPayload } from '../../types/group.type';
+import type { GroupMembersData } from '../hooks/group/useGetGroupMembers';
 
 export const GroupFetchDataService = {
     async createGroup(payload: CreateGroupPayload): Promise<Group> {
@@ -27,8 +28,8 @@ export const GroupFetchDataService = {
         return res.data;
     },
 
-    async getGroupMembers(groupId: number): Promise<any[]> {
-        const res = await api.get<any[]>(`/group/groupmembers/${groupId}`);
+    async getGroupMembers(groupId: number): Promise<GroupMembersData> {
+        const res = await api.get<GroupMembersData>(`/group/groupmembers/${groupId}`);
         return res.data;
     },
 
@@ -44,6 +45,11 @@ export const GroupFetchDataService = {
 
     async removeMember(groupId: number, userId: number): Promise<{ message: string }> {
         const res = await api.delete<{ message: string }>(`/group/${groupId}/members/${userId}`);
+        return res.data;
+    },
+
+    async deleteGroup(groupId: number): Promise<{ message: string }> {
+        const res = await api.delete<{ message: string }>(`/group/${groupId}`);
         return res.data;
     },
 };

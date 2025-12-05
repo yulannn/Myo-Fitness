@@ -150,4 +150,13 @@ export class GroupController {
   ) {
     return this.groupService.removeMember(groupId, userId);
   }
+
+  @Delete(':groupId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Supprimer un groupe' })
+  @ApiParam({ name: 'groupId', type: Number })
+  deleteGroup(@Param('groupId') groupId: number) {
+    return this.groupService.deleteGroup(groupId);
+  }
 }
