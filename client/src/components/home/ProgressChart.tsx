@@ -37,7 +37,15 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
     if (!data || data.length === 0) return [];
 
     const { min, max } = chartStats;
-    const range = max - min || 1;
+    const range = max - min;
+
+    // Si toutes les valeurs sont identiques (range = 0), les placer au milieu du graphique
+    if (range === 0) {
+      return data.map(point => ({
+        ...point,
+        normalized: 50 // Milieu du graphique
+      }));
+    }
 
     return data.map(point => ({
       ...point,
@@ -170,7 +178,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
                 d={`
                 M 0,100
                 ${normalizedData.map((point, i) => {
-                  const x = (i / (normalizedData.length - 1)) * 100;
+                  const x = normalizedData.length === 1 ? 50 : (i / (normalizedData.length - 1)) * 100;
                   const y = 100 - point.normalized;
                   return `L ${x},${y}`;
                 }).join(' ')}
@@ -185,7 +193,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
             {normalizedData.length > 0 && (
               <path
                 d={normalizedData.map((point, i) => {
-                  const x = (i / (normalizedData.length - 1)) * 100;
+                  const x = normalizedData.length === 1 ? 50 : (i / (normalizedData.length - 1)) * 100;
                   const y = 100 - point.normalized;
                   return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
                 }).join(' ')}
@@ -200,7 +208,7 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
 
             {/* Data points */}
             {normalizedData.map((point, i) => {
-              const x = (i / (normalizedData.length - 1)) * 100;
+              const x = normalizedData.length === 1 ? 50 : (i / (normalizedData.length - 1)) * 100;
               const y = 100 - point.normalized;
               return (
                 <g key={i}>
