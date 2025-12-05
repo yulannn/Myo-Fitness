@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { HOME } from "../utils/paths";
 
 export const AppRoutes = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
 
     return (
         <Routes>
@@ -22,7 +22,8 @@ export const AppRoutes = () => {
                 }
 
                 // 2️ Cas : route publique qui ne doit pas être visible si user connecté (login/register)
-                if (redirectIfAuthenticated && isAuthenticated) {
+                // ⚠️ Ne pas rediriger pendant le chargement pour éviter les boucles
+                if (redirectIfAuthenticated && isAuthenticated && !loading) {
                     return (
                         <Route
                             key={path}

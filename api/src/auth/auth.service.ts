@@ -64,7 +64,7 @@ export class AuthService {
   /** Inscription */
   async register(signUpDto: SignUpDto): Promise<AuthResultDto> {
     const existingUser = await this.usersService.findUserByEmail(signUpDto.email);
-    if (existingUser) throw new UnauthorizedException('Email already in use');
+    if (existingUser) throw new BadRequestException('Cet email est déjà utilisé. Si c\'est votre compte, veuillez vous connecter.');
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
     const newUser = await this.usersService.createUser({ ...signUpDto, password: hashedPassword });
@@ -213,6 +213,9 @@ export class AuthService {
       resetPasswordCode: null,
       resetPasswordExpires: null,
     });
+
+    // Envoyer un email de confirmation
+    await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
     return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
   }

@@ -39,11 +39,17 @@ const refreshToken = async (): Promise<string> => {
                 if (typeof window !== 'undefined') {
                     window.localStorage.removeItem('myo.auth.accessToken');
 
-                    setTimeout(() => {
-                        if (typeof window !== 'undefined') {
-                            window.location.href = '/auth/login';
-                        }
-                    }, 500);
+                    // Ne rediriger que si on n'est pas déjà sur une page d'authentification
+                    // Pour éviter les boucles de redirection infinies
+                    const isOnAuthPage = window.location.pathname.startsWith('/auth');
+
+                    if (!isOnAuthPage) {
+                        setTimeout(() => {
+                            if (typeof window !== 'undefined') {
+                                window.location.href = '/auth/login';
+                            }
+                        }, 500);
+                    }
                 }
 
                 throw error;

@@ -38,10 +38,17 @@ function buildApiError(status: number, body: unknown): ApiError {
         const message =
             (Array.isArray(payload.message) ? payload.message.join(' ') : String(payload.message ?? payload.error ?? 'Erreur inconnue')) || 'Erreur inconnue';
 
+        const fieldErrors = normaliseFieldErrors(payload.message);
+
+        // Si le message parle d'email déjà utilisé, on l'associe au champ email
+        if (message.toLowerCase().includes('email') && (message.toLowerCase().includes('déjà') || message.toLowerCase().includes('utilisé'))) {
+            fieldErrors.email = message;
+        }
+
         return new ApiError({
             status,
             message,
-            fieldErrors: normaliseFieldErrors(payload.message),
+            fieldErrors,
             details: body,
         });
     }

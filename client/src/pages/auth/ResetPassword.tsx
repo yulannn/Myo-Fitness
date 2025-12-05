@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { KeyIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { KeyIcon, CheckCircleIcon, ArrowLeftIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthFetchDataService from '../../api/services/authService';
 
 export default function ResetPassword() {
@@ -14,6 +14,8 @@ export default function ResetPassword() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
         if (!emailFromUrl || !codeFromUrl) {
@@ -64,8 +66,11 @@ export default function ResetPassword() {
                         <h2 className="text-2xl font-bold text-white mb-2">
                             Mot de passe réinitialisé !
                         </h2>
-                        <p className="text-gray-400 mb-6">
-                            Votre mot de passe a été modifié avec succès. Vous allez être redirigé vers la page de connexion...
+                        <p className="text-gray-400 mb-2">
+                            Votre mot de passe a été modifié avec succès.
+                        </p>
+                        <p className="text-gray-500 text-sm mb-6">
+                            📧 Un email de confirmation vient de vous être envoyé. Redirection vers la page de connexion...
                         </p>
                         <div className="w-16 h-1 bg-gradient-to-r from-[#94fbdd] to-[#6dd4b8] mx-auto rounded-full"></div>
                     </div>
@@ -112,15 +117,27 @@ export default function ResetPassword() {
                                 <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input
                                     id="newPassword"
-                                    type="password"
+                                    type={showNewPassword ? "text" : "password"}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     required
                                     minLength={8}
                                     autoFocus
-                                    className="w-full pl-11 pr-4 py-3 bg-[#121214] border border-[#94fbdd]/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#94fbdd] transition-colors"
+                                    className="w-full pl-11 pr-12 py-3 bg-[#121214] border border-[#94fbdd]/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#94fbdd] transition-colors"
                                     placeholder="Minimum 8 caractères"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#94fbdd] transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showNewPassword ? (
+                                        <EyeSlashIcon className="h-5 w-5" />
+                                    ) : (
+                                        <EyeIcon className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                         </div>
 
@@ -133,14 +150,26 @@ export default function ResetPassword() {
                                 <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input
                                     id="confirmPassword"
-                                    type="password"
+                                    type={showConfirmPassword ? "text" : "password"}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
                                     minLength={8}
-                                    className="w-full pl-11 pr-4 py-3 bg-[#121214] border border-[#94fbdd]/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#94fbdd] transition-colors"
+                                    className="w-full pl-11 pr-12 py-3 bg-[#121214] border border-[#94fbdd]/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#94fbdd] transition-colors"
                                     placeholder="Retapez votre mot de passe"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#94fbdd] transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeSlashIcon className="h-5 w-5" />
+                                    ) : (
+                                        <EyeIcon className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                         </div>
 

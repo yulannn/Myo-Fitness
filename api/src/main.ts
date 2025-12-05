@@ -39,11 +39,11 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      
+
       if (process.env.NODE_ENV !== 'production') {
         return callback(null, true);
       }
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -58,10 +58,10 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const port = process.env.PORT ?? 3000;
-  const host = '0.0.0.0'; 
-  
+  const host = '0.0.0.0';
+
   await app.listen(port, host);
-  
+
   console.log(
     '\x1b[36m%s\x1b[0m',
     '===============================================================',

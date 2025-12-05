@@ -6,7 +6,7 @@ import { ApiError } from '../../types/auth.type';
 import { useRegister, type RegisterFormValues } from '../../api/hooks/auth/useRegister';
 import { ValidationError } from '../../api/hooks/errors';
 import { useAuth } from '../../context/AuthContext'
-import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 const initialFormValues: RegisterFormValues = {
   firstName: '',
@@ -22,6 +22,7 @@ export default function Register() {
   const [formValues, setFormValues] = useState(initialFormValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const submitLabel = useMemo(() => (registerMutation.isPending ? 'Création en cours...' : 'Créer mon compte'), [registerMutation.isPending])
 
@@ -98,8 +99,8 @@ export default function Register() {
                     value={formValues.firstName}
                     onChange={handleChange}
                     className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.firstName
-                        ? 'border-red-500 focus:ring-red-500/50'
-                        : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                      ? 'border-red-500 focus:ring-red-500/50'
+                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                       }`}
                   />
                 </div>
@@ -128,8 +129,8 @@ export default function Register() {
                     value={formValues.lastName}
                     onChange={handleChange}
                     className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.lastName
-                        ? 'border-red-500 focus:ring-red-500/50'
-                        : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                      ? 'border-red-500 focus:ring-red-500/50'
+                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                       }`}
                   />
                 </div>
@@ -159,8 +160,8 @@ export default function Register() {
                   value={formValues.email}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.email
-                      ? 'border-red-500 focus:ring-red-500/50'
-                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                    ? 'border-red-500 focus:ring-red-500/50'
+                    : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                     }`}
                 />
               </div>
@@ -183,16 +184,28 @@ export default function Register() {
                 </div>
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="••••••••"
                   value={formValues.password}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
-                      ? 'border-red-500 focus:ring-red-500/50'
-                      : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
+                  className={`w-full pl-12 pr-12 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
+                    ? 'border-red-500 focus:ring-red-500/50'
+                    : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                     }`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#94fbdd] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
               <p className="mt-2 text-xs text-gray-500">
                 Minimum 6 caractères, idéalement une combinaison de lettres et chiffres

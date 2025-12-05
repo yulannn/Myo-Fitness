@@ -6,16 +6,11 @@ import { ApiError } from '../../types/auth.type';
 import { useLogin, type LoginFormValues } from '../../api/hooks/auth/useLogin';
 import { ValidationError } from '../../api/hooks/errors';
 import { useAuth } from '../../context/AuthContext'
-import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
-interface LoginFormState extends LoginFormValues {
-  rememberMe: boolean
-}
-
-const initialValues: LoginFormState = {
+const initialValues: LoginFormValues = {
   email: '',
   password: '',
-  rememberMe: false,
 }
 
 export default function Login() {
@@ -25,6 +20,7 @@ export default function Login() {
   const [formValues, setFormValues] = useState(initialValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = event.target
@@ -41,16 +37,10 @@ export default function Login() {
     setFieldErrors({})
     setFormError(null)
 
-    const { rememberMe, ...credentials } = formValues
-
     try {
-      const result = await loginMutation.mutateAsync(credentials)
+      const result = await loginMutation.mutateAsync(formValues)
       applyAuthResult(result)
-
-      if (!rememberMe) {
-        setFormValues(initialValues)
-      }
-
+      setFormValues(initialValues)
       navigate('/', { replace: true })
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -129,16 +119,28 @@ export default function Login() {
                 </div>
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   value={formValues.password}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-4 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
+                  className={`w-full pl-12 pr-12 py-3 bg-[#121214] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${fieldErrors.password
                     ? 'border-red-500 focus:ring-red-500/50'
                     : 'border-[#94fbdd]/20 focus:border-[#94fbdd] focus:ring-[#94fbdd]/30'
                     }`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#94fbdd] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
               {fieldErrors.password && (
                 <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
@@ -148,18 +150,8 @@ export default function Login() {
               )}
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-gray-400 cursor-pointer group">
-                <input
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formValues.rememberMe}
-                  onChange={handleChange}
-                  className="w-4 h-4 rounded border-gray-600 bg-[#121214] text-[#94fbdd] focus:ring-[#94fbdd]/30 focus:ring-offset-0"
-                />
-                <span className="group-hover:text-gray-300 transition-colors">Se souvenir de moi</span>
-              </label>
+            {/* Forgot Password */}
+            <div className="flex justify-center text-sm">
               <Link
                 to="/forgot-password"
                 className="text-[#94fbdd] hover:text-[#94fbdd]/80 font-medium transition-colors"
