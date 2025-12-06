@@ -6,6 +6,7 @@ import GymSelector from '../shared/GymSelector';
 
 interface Gym {
     id: string;
+    osmId?: string;
     name: string;
     address: string;
     lat: number;
@@ -41,6 +42,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
             startTime: new Date(startTime).toISOString(),
             location,
             maxParticipants: maxParticipants === '' ? undefined : Number(maxParticipants),
+            osmId: selectedGym?.osmId || selectedGym?.id, // OSM ID pour créer la salle en DB
             gymName: selectedGym?.name,
             gymAddress: selectedGym?.address,
             gymLat: selectedGym?.lat,

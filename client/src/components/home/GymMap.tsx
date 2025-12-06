@@ -5,6 +5,8 @@ import { Icon } from 'leaflet'
 import { MapPinIcon, ListBulletIcon, MapIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useNearbyGyms } from '../../api/hooks/gym/useNearbyGyms'
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
+import GymDetailsModal from './GymDetailsModal'
+import { useFindOrCreateGym } from '../../api/hooks/gym/useFindOrCreateGym'
 
 
 
@@ -38,10 +40,14 @@ export default function GymMap() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedGymId, setSelectedGymId] = useState<number | null>(null)
+  const [selectedGymName, setSelectedGymName] = useState<string>('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const debounceTimerRef = useRef<number | null>(null)
 
   const { data: fitnessProfile } = useFitnessProfilesByUser()
   const { data: gyms = [], isLoading, error } = useNearbyGyms()
+  const findOrCreateGym = useFindOrCreateGym()
 
   // Debounce de la recherche
   useEffect(() => {
@@ -85,6 +91,28 @@ export default function GymMap() {
     if (viewMode === 'map') return filteredGyms
     return debouncedSearch.trim() ? filteredGyms : filteredGyms.slice(0, 5)
   }, [filteredGyms, viewMode, debouncedSearch])
+
+  // Gestionnaire de clic sur une salle
+  const handleGymClick = async (gym: typeof gyms[0]) => {
+    try {
+      // Créer ou trouver la salle en DB
+      const gymData = await findOrCreateGym.mutateAsync({
+        osmId: gym.osmId || gym.id,
+        name: gym.name,
+        address: gym.address,
+        city: fitnessProfile?.city || undefined,
+        lat: gym.lat,
+        lng: gym.lng,
+      })
+
+      // Ouvrir le modal avec l'ID de la salle
+      setSelectedGymId(gymData.id)
+      setSelectedGymName(gym.name)
+      setIsModalOpen(true)
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la salle:', error)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -172,6 +200,7 @@ export default function GymMap() {
           {displayedGyms.map((gym, index) => (
             <div
               key={gym.id}
+              onClick={() => handleGymClick(gym)}
               className="bg-[#252527] rounded-2xl p-4 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group cursor-pointer"
               style={{ animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both` }}
             >
@@ -244,6 +273,12 @@ export default function GymMap() {
                         📍 {gym.distance}km
                       </p>
                     )}
+                    <button
+                      onClick={() => handleGymClick(gym)}
+                      className="w-full mt-2 px-3 py-2 bg-[#94fbdd] hover:bg-[#7CD8EE] text-black rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Voir les détails
+                    </button>
                   </div>
                 </Popup>
               </Marker>
@@ -251,6 +286,14 @@ export default function GymMap() {
           </MapContainer>
         </div>
       )}
+
+      {/* Modal des détails de la salle */}
+      <GymDetailsModal
+        gymId={selectedGymId}
+        gymName={selectedGymName}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
       <style>{`
         @keyframes fadeInUp {

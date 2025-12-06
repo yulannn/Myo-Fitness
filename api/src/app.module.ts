@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -26,12 +27,14 @@ import { R2Module } from './r2/r2.module';
 import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 import { EmailModule } from './email/email.module';
 import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
+import { GymModule } from './gym/gym.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -61,6 +64,7 @@ import { DateSerializationInterceptor } from './common/interceptors/date-seriali
     SharedSessionModule,
     R2Module,
     EmailModule,
+    GymModule,
   ],
   controllers: [AppController],
   providers: [

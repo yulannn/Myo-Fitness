@@ -151,10 +151,12 @@ model FitnessProfile {
   bodyWeight        Boolean         @default(true)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @default(now()) @updatedAt
+  gymId             Int?
 
   weightHistory    WeightHistory[]
   trainingPrograms TrainingProgram[]
   trainingDays     WeekDay[]
+  gym              Gym?              @relation(fields: [gymId], references: [id], onDelete: SetNull)
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -194,9 +196,11 @@ model TrainingSession {
   completed         Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @default(now()) @updatedAt
+  gymId             Int?
 
   exercices       ExerciceSession[]
   trainingProgram TrainingProgram   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  gym             Gym?              @relation(fields: [gymId], references: [id], onDelete: SetNull)
 
   sessionPhotos            SessionPhoto[]
   SharedSession            SharedSession[]
@@ -427,8 +431,9 @@ model SharedSession {
   maxParticipants Int? // Null = illimité
   organizerId     Int
   groupId         Int? // Optionnel : si lié à un groupe spécifique
+  gymId           Int? // Référence vers la salle de sport
 
-  // Informations sur la salle de sport
+  // Informations sur la salle de sport (pour affichage rapide sans join)
   gymName    String?
   gymAddress String?
   gymLat     Float?
@@ -439,6 +444,7 @@ model SharedSession {
 
   organizer         User                       @relation("OrganizedSessions", fields: [organizerId], references: [id], onDelete: Cascade)
   group             FriendGroup?               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  gym               Gym?                       @relation(fields: [gymId], references: [id], onDelete: SetNull)
   participants      SharedSessionParticipant[]
   User              User?                      @relation(fields: [userId], references: [id])
   userId            Int?
@@ -463,4 +469,24 @@ model SharedSessionParticipant {
 
   @@unique([sharedSessionId, userId])
   @@index([userId])
+}
+
+model Gym {
+  id        Int      @id @default(autoincrement())
+  osmId     String   @unique // OpenStreetMap ID
+  name      String
+  address   String
+  city      String?
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // Relations
+  fitnessProfiles  FitnessProfile[]
+  trainingSessions TrainingSession[]
+  SharedSession    SharedSession[]
+
+  @@index([osmId])
+  @@index([lat, lng])
 }

@@ -3,6 +3,7 @@ import { useFitnessProfilesByUser } from '../fitness-profile/useGetFitnessProfil
 
 interface Gym {
     id: string
+    osmId: string
     name: string
     address: string
     lat: number
@@ -96,6 +97,7 @@ const fetchNearbyGyms = async (cityName: string): Promise<Gym[]> => {
 
             return {
                 id: element.id.toString(),
+                osmId: element.id.toString(), // OSM ID pour la liaison avec la DB
                 name,
                 address: element.tags?.['addr:street']
                     ? `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street']}`.trim()

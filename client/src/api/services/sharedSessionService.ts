@@ -7,6 +7,7 @@ export interface CreateSharedSessionDto {
     location?: string;
     maxParticipants?: number;
     groupId?: number;
+    osmId?: string; // OSM ID pour créer/lier la salle
     gymName?: string;
     gymAddress?: string;
     gymLat?: number;

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef 
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateSharedSessionDto } from './dto/create-shared-session.dto';
 import { ChatGateway } from '../chat/chat.gateway';
+import { GymService } from '../gym/gym.service';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -11,6 +12,7 @@ export class SharedSessionService {
         private prisma: PrismaService,
         @Inject(forwardRef(() => ChatGateway))
         private chatGateway: ChatGateway,
+        private gymService: GymService,
     ) { }
 
     async create(userId: number, dto: CreateSharedSessionDto) {
@@ -30,6 +32,22 @@ export class SharedSessionService {
             }
         }
 
+        // Gérer la salle de sport
+        let gymId = dto.gymId;
+
+        // Si une salle est spécifiée via OSM ou données complètes, créer/trouver la salle
+        if (!gymId && dto.osmId && dto.gymName && dto.gymLat && dto.gymLng) {
+            const gym = await this.gymService.findOrCreate({
+                osmId: dto.osmId,
+                name: dto.gymName,
+                address: dto.gymAddress || '',
+                city: undefined,
+                lat: dto.gymLat,
+                lng: dto.gymLng,
+            });
+            gymId = gym.id;
+        }
+
         const session = await this.prisma.sharedSession.create({
             data: {
                 title: dto.title,
@@ -39,6 +57,11 @@ export class SharedSessionService {
                 maxParticipants: dto.maxParticipants,
                 organizerId: userId,
                 groupId: dto.groupId,
+                gymId: gymId, // Lier à la salle
+                gymName: dto.gymName,
+                gymAddress: dto.gymAddress,
+                gymLat: dto.gymLat,
+                gymLng: dto.gymLng,
                 participants: {
                     create: {
                         userId: userId, // L'organisateur participe automatiquement
