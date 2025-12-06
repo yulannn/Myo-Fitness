@@ -38,11 +38,6 @@ export class FitnessProfileEntity implements FitnessProfile {
   })
   city: string | null;
 
-  @ApiPropertyOptional({
-    description: 'ID de la gym auquel appartient le profil',
-    example: 2,
-  })
-  gymId: number | null;
 
   @ApiProperty({
     description: 'Nombre de séances par semaine',
