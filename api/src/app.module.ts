@@ -27,7 +27,6 @@ import { R2Module } from './r2/r2.module';
 import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 import { EmailModule } from './email/email.module';
 import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
-import { GymModule } from './gym/gym.module';
 
 @Module({
   imports: [
@@ -64,7 +63,6 @@ import { GymModule } from './gym/gym.module';
     SharedSessionModule,
     R2Module,
     EmailModule,
-    GymModule,
   ],
   controllers: [AppController],
   providers: [
