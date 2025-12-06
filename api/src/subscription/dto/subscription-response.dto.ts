@@ -12,6 +12,7 @@ export class SubscriptionResponseDto {
     trialEndDate: Date | null;
 
     autoRenew: boolean;
+    externalPaymentId?: string | null;
 
     // Informations calculées
     isPremium: boolean;

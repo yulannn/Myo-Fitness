@@ -28,6 +28,7 @@ import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 import { EmailModule } from './email/email.module';
 import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
     R2Module,
     EmailModule,
     SubscriptionModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [

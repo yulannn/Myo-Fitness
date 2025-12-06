@@ -31,9 +31,15 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         data: premiumStatus,
         isLoading: isPremiumLoading,
         isError: isPremiumError,
+        refetch: refetchPremium,
     } = useIsPremium();
 
     const isPremium = premiumStatus?.isPremium ?? false;
+
+    const handleRefetch = () => {
+        refetchSubscription();
+        refetchPremium();
+    };
 
     const value: PremiumContextValue = {
         subscription,
@@ -42,7 +48,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         isPremium,
         isPremiumLoading,
         isPremiumError,
-        refetchSubscription,
+        refetchSubscription: handleRefetch,
     };
 
     return (

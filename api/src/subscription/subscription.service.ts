@@ -319,6 +319,7 @@ export class SubscriptionService {
             trialStartDate: subscription.trialStartDate,
             trialEndDate: subscription.trialEndDate,
             autoRenew: subscription.autoRenew,
+            externalPaymentId: subscription.externalPaymentId,
             isPremium: entity.isPremium(),
             isActive: entity.isActive(),
             isTrial: entity.isTrial(),
