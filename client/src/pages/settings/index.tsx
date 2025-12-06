@@ -8,7 +8,8 @@ import {
     ArrowRightOnRectangleIcon,
     KeyIcon,
     ExclamationTriangleIcon,
-    XMarkIcon
+    XMarkIcon,
+    SparklesIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingButtonProps {
@@ -53,6 +54,10 @@ export default function Settings() {
         navigate('/change-password');
     };
 
+    const handlePremium = () => {
+        navigate('/premium');
+    };
+
     const handleNotifications = () => {
         // Pas de logique pour le moment
         console.log('Notifications clicked');
@@ -90,6 +95,12 @@ export default function Settings() {
                         icon={<UserCircleIcon className="h-6 w-6" />}
                         label="Mon profil"
                         onClick={handleMyProfile}
+                    />
+
+                    <SettingButton
+                        icon={<SparklesIcon className="h-6 w-6" />}
+                        label="Mon abonnement Premium"
+                        onClick={handlePremium}
                     />
 
                     <SettingButton

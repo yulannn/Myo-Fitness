@@ -27,6 +27,7 @@ import { R2Module } from './r2/r2.module';
 import { R2UrlInterceptor } from './r2/r2-url.interceptor';
 import { EmailModule } from './email/email.module';
 import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { DateSerializationInterceptor } from './common/interceptors/date-seriali
     SharedSessionModule,
     R2Module,
     EmailModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [

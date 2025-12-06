@@ -1,0 +1,108 @@
+.premium-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.premium-badge--small {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.premium-badge--medium {
+  font-size: 0.875rem;
+}
+
+.premium-badge--large {
+  font-size: 1rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.premium-badge__icon {
+  font-size: 1em;
+}
+
+.premium-badge__text {
+  font-size: 1em;
+}
+
+/* Subscription Info */
+.subscription-info {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+.subscription-info--free {
+  background: #f9fafb;
+}
+
+.subscription-info--active {
+  border-color: #FFD700;
+  background: linear-gradient(to bottom, #fffbf0, white);
+}
+
+.subscription-info--trial {
+  border-color: #60a5fa;
+  background: linear-gradient(to bottom, #eff6ff, white);
+}
+
+.subscription-info--expired,
+.subscription-info--cancelled {
+  border-color: #fca5a5;
+  background: linear-gradient(to bottom, #fef2f2, white);
+}
+
+.subscription-info__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.subscription-info__header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.subscription-info__details {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.subscription-info__details p {
+  margin: 0.25rem 0;
+}
+
+.subscription-info__trial {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.subscription-info__expiry {
+  color: #4b5563;
+}
+
+.subscription-info__days-remaining {
+  font-weight: 500;
+  color: #059669;
+}
+
+.subscription-info__auto-renew {
+  color: #059669;
+  font-weight: 500;
+}
+
+.subscription-info__loading {
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+}

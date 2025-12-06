@@ -11,6 +11,7 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyCode from "../pages/auth/VerifyCode";
 import ResetPassword from "../pages/auth/ResetPassword";
 import ChangePassword from "../pages/change-password";
+import Premium from "../pages/premium";
 import VerifyEmail from "../pages/verify-email";
 import type { ReactNode } from "react";
 import {
@@ -27,6 +28,7 @@ import {
     VERIFY_CODE,
     RESET_PASSWORD,
     CHANGE_PASSWORD,
+    PREMIUM,
     VERIFY_EMAIL,
 } from "../utils/paths";
 
@@ -72,6 +74,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: CHANGE_PASSWORD,
         element: <ChangePassword />,
+        protected: true
+    },
+    {
+        path: PREMIUM,
+        element: <Premium />,
         protected: true
     },
     {

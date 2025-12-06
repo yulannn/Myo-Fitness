@@ -83,6 +83,20 @@ enum MessageType {
   FILE
 }
 
+enum PremiumStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  TRIAL
+}
+
+enum SubscriptionPlan {
+  FREE
+  MONTHLY
+  YEARLY
+  LIFETIME
+}
+
 model User {
   id                   Int       @id @default(autoincrement())
   name                 String
@@ -124,6 +138,9 @@ model User {
   organizedSessions     SharedSession[]            @relation("OrganizedSessions")
   participatingSessions SharedSessionParticipant[]
   SharedSession         SharedSession[]
+
+  // Premium subscription
+  subscription Subscription?
 }
 
 enum WeekDay {
@@ -457,4 +474,38 @@ model SharedSessionParticipant {
 
   @@unique([sharedSessionId, userId])
   @@index([userId])
+}
+
+model Subscription {
+  id     Int @id @default(autoincrement())
+  userId Int @unique
+
+  // Plan et statut
+  plan   SubscriptionPlan @default(FREE)
+  status PremiumStatus    @default(EXPIRED)
+
+  // Dates importantes
+  startDate      DateTime?
+  endDate        DateTime?
+  trialStartDate DateTime?
+  trialEndDate   DateTime?
+  cancelledAt    DateTime?
+
+  // Informations de paiement (optionnel pour l'instant)
+  lastPaymentDate   DateTime?
+  nextBillingDate   DateTime?
+  paymentProvider   String? // 'stripe', 'paypal', etc.
+  externalPaymentId String? // ID de la transaction externe
+
+  // Métadonnées
+  autoRenew   Boolean @default(false)
+  cancelledBy String? // 'user', 'admin', 'payment_failed', etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([endDate])
 }
