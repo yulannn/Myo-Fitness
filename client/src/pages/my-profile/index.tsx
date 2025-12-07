@@ -7,6 +7,7 @@ import UserCard from '../../components/profile/UserCard';
 import FitnessProfilesList from '../../components/profile/FitnessProfilesList';
 import CreateProfileModal from '../../components/profile/CreateProfileModal';
 import EditProfileModal from '../../components/profile/EditProfileModal';
+import XpBar from '../../components/common/XpBar';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +51,6 @@ export default function FitnessProfiles() {
 
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
-      {/* Logout Button - Floating */}
       {/* Back Button - Floating */}
       <button
         onClick={() => navigate('/settings')}
@@ -60,7 +60,7 @@ export default function FitnessProfiles() {
         <ArrowLeftIcon className="h-5 w-5 text-gray-400 group-hover:text-[#94fbdd] transition-colors" />
       </button>
 
-      <div className="max-w-5xl mx-auto px-4 py-12 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 py-12 space-y-6">
         {/* USER CARD - Hero Section */}
         <section className="relative">
           <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-3xl blur-3xl"></div>
@@ -69,6 +69,11 @@ export default function FitnessProfiles() {
             email={user?.email || 'email@example.com'}
             profilePictureUrl={user?.profilePictureUrl || undefined}
           />
+        </section>
+
+        {/* XP BAR - Progression Section */}
+        <section className="relative">
+          <XpBar variant="full" showLevel={true} />
         </section>
 
 

@@ -122,6 +122,8 @@ export class AuthService {
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        level: user.level,
+        xp: user.xp,
       };
 
       const newPayload = this.buildJwtPayload(safeUser);

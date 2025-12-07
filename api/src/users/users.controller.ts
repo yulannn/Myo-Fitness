@@ -248,4 +248,69 @@ export class UsersController {
 
     return this.authService.changePassword(userId, currentPassword, newPassword);
   }
+
+  // ========================================
+  // SYSTÈME D'XP ET DE NIVEAUX
+  // ========================================
+
+  @Get('me/xp')
+  @ApiOperation({ summary: 'Récupérer le niveau et l\'XP de l\'utilisateur connecté' })
+  @ApiResponse({
+    status: 200,
+    description: 'Informations sur le niveau et l\'XP',
+    schema: {
+      type: 'object',
+      properties: {
+        level: { type: 'number', example: 5 },
+        totalXp: { type: 'number', example: 850 },
+        currentLevelXp: { type: 'number', example: 50 },
+        xpForNextLevel: { type: 'number', example: 150 },
+      },
+    },
+  })
+  async getMyXp(@Req() req) {
+    const userId = req.user.userId;
+    return this.usersService.getUserLevelAndXp(userId);
+  }
+
+  @Post('me/xp/gain')
+  @ApiOperation({ summary: 'Ajouter de l\'XP à l\'utilisateur connecté' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        xp: {
+          type: 'number',
+          description: 'Quantité d\'XP à ajouter',
+          example: 50,
+        },
+      },
+      required: ['xp'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'XP ajouté avec succès',
+    schema: {
+      type: 'object',
+      properties: {
+        level: { type: 'number', example: 5 },
+        totalXp: { type: 'number', example: 900 },
+        currentLevelXp: { type: 'number', example: 100 },
+        xpForNextLevel: { type: 'number', example: 100 },
+        leveledUp: { type: 'boolean', example: false },
+        previousLevel: { type: 'number', example: 4 },
+      },
+    },
+  })
+  async gainXp(@Body() body: { xp: number }, @Req() req) {
+    const userId = req.user.userId;
+    const { xp } = body;
+
+    if (!xp || xp <= 0) {
+      throw new BadRequestException('XP must be a positive number');
+    }
+
+    return this.usersService.gainXp(userId, xp);
+  }
 }

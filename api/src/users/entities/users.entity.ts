@@ -24,6 +24,18 @@ export class UserEntity {
   password: string;
 
   @ApiProperty({
+    description: 'Niveau de l\'utilisateur',
+    example: 1,
+  })
+  level: number;
+
+  @ApiProperty({
+    description: 'Expérience de l\'utilisateur',
+    example: 0,
+  })
+  xp: number;
+
+  @ApiProperty({
     description: 'Date de création du compte',
     example: '2025-10-22T12:00:00.000Z',
   })
