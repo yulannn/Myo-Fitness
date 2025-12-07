@@ -268,6 +268,7 @@ export class SubscriptionService {
 
     /**
      * Calcule les dates de souscription selon le plan
+     * Utilise les vraies dates de mois pour éviter les décalages
      */
     private calculateSubscriptionDates(plan: SubscriptionPlan): {
         startDate: Date;
@@ -280,11 +281,15 @@ export class SubscriptionService {
 
         switch (plan) {
             case SubscriptionPlan.MONTHLY:
-                endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+                // Utiliser la méthode setMonth pour gérer correctement les différentes longueurs de mois
+                endDate = new Date(startDate);
+                endDate.setMonth(endDate.getMonth() + 1);
                 nextBillingDate = new Date(endDate);
                 break;
             case SubscriptionPlan.YEARLY:
-                endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+                // Ajouter 1 an à la date actuelle
+                endDate = new Date(startDate);
+                endDate.setFullYear(endDate.getFullYear() + 1);
                 nextBillingDate = new Date(endDate);
                 break;
             case SubscriptionPlan.LIFETIME:

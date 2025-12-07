@@ -5,6 +5,7 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriptionPlan } from '@prisma/client';
+import { AdminGuard } from '../guards/admin.guard';
 
 @Controller('api/v1/subscription')
 @UseGuards(AuthGuard('jwt'))
@@ -88,8 +89,8 @@ export class SubscriptionController {
      * Récupère toutes les souscriptions (admin)
      */
     @Get('all')
+    @UseGuards(AdminGuard)
     async findAll(): Promise<SubscriptionResponseDto[]> {
-        // TODO: Ajouter un AdminGuard ici
         return this.subscriptionService.findAll();
     }
 
@@ -97,8 +98,8 @@ export class SubscriptionController {
      * Récupère la souscription d'un utilisateur spécifique (admin)
      */
     @Get('user/:userId')
+    @UseGuards(AdminGuard)
     async findByUserId(@Param('userId') userId: string): Promise<SubscriptionResponseDto | null> {
-        // TODO: Ajouter un AdminGuard ici
         return this.subscriptionService.findByUserId(+userId);
     }
 
@@ -106,11 +107,11 @@ export class SubscriptionController {
      * Met à jour la souscription d'un utilisateur spécifique (admin)
      */
     @Put('user/:userId')
+    @UseGuards(AdminGuard)
     async updateUserSubscription(
         @Param('userId') userId: string,
         @Body() updateSubscriptionDto: UpdateSubscriptionDto,
     ): Promise<SubscriptionResponseDto> {
-        // TODO: Ajouter un AdminGuard ici
         return this.subscriptionService.update(+userId, updateSubscriptionDto);
     }
 
@@ -118,8 +119,8 @@ export class SubscriptionController {
      * Annule la souscription d'un utilisateur spécifique (admin)
      */
     @Delete('user/:userId/cancel')
+    @UseGuards(AdminGuard)
     async cancelUserSubscription(@Param('userId') userId: string): Promise<SubscriptionResponseDto> {
-        // TODO: Ajouter un AdminGuard ici
         return this.subscriptionService.cancel(+userId, 'admin');
     }
 }

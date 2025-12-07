@@ -51,6 +51,12 @@ export class StripeService {
                 userId: userId.toString(),
                 plan: plan,
             },
+            subscription_data: {
+                metadata: {
+                    userId: userId.toString(),
+                    plan: plan,
+                },
+            },
             customer_email: undefined, // Optionnel: ajouter l'email de l'utilisateur
         });
 
@@ -86,23 +92,27 @@ export class StripeService {
 
     /**
      * Vérifie le statut d'une session de paiement
-     */
-    /**
-     * Vérifie le statut d'une session de paiement
+     * ⚠️ Cette méthode NE CRÉE PLUS l'abonnement - c'est le rôle du webhook!
+     * Elle retourne simplement le statut pour que le frontend puisse vérifier.
      */
     async verifyCheckoutSession(sessionId: string) {
         const session = await this.stripe.checkout.sessions.retrieve(sessionId);
 
-        // Si le paiement est réussi, on s'assure que l'abonnement est activé
-        // C'est utile en dev local où les webhooks ne passent pas forcément sans CLI
-        if (session.payment_status === 'paid') {
-            await this.handleCheckoutSessionCompleted(session);
+        // Récupérer l'abonnement local pour vérifier s'il a été créé par le webhook
+        const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : null;
+        let localSubscription: any = null;
+
+        if (userId) {
+            localSubscription = await this.subscriptionService.findByUserId(userId);
         }
 
         return {
             status: session.payment_status,
             customerId: session.customer,
             subscriptionId: session.subscription,
+            // Indiquer si l'abonnement a déjà été activé par le webhook
+            isActivated: localSubscription?.status === 'ACTIVE',
+            localSubscription: localSubscription,
         };
     }
 
@@ -151,10 +161,13 @@ export class StripeService {
 
     /**
      * Gère la complétion d'une session de checkout
+     * ⚡ Cette méthode est appelée par le webhook Stripe
      */
     private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
         const userId = parseInt(session.metadata!.userId);
         const plan = session.metadata!.plan as 'monthly' | 'yearly';
+
+        console.log(`🔔 Webhook received: checkout.session.completed for user ${userId}`);
 
         // Mapper le plan vers le SubscriptionPlan Prisma
         const subscriptionPlan = plan === 'monthly' ? SubscriptionPlan.MONTHLY : SubscriptionPlan.YEARLY;
@@ -164,19 +177,45 @@ export class StripeService {
             session.subscription as string
         ) as any; // Type assertion needed due to Stripe SDK typing complexity
 
-        // Créer ou mettre à jour l'abonnement dans la base de données
+        // 🔒 VALIDATION DE SÉCURITÉ: Vérifier que le Prix ID correspond au plan
+        const expectedPriceId = plan === 'monthly'
+            ? process.env.STRIPE_MONTHLY_PRICE_ID
+            : process.env.STRIPE_YEARLY_PRICE_ID;
+
+        const actualPriceId = subscription.items.data[0]?.price?.id;
+
+        if (actualPriceId !== expectedPriceId) {
+            console.error(`❌ SECURITY ALERT: Price mismatch for user ${userId}`);
+            console.error(`   Expected: ${expectedPriceId}`);
+            console.error(`   Actual: ${actualPriceId}`);
+            throw new BadRequestException('Price validation failed: subscription does not match expected plan');
+        }
+
+        console.log(`✅ Price validation passed for user ${userId}`);
+
+        // Vérifier si l'abonnement existe déjà (éviter les doublons)
         const existingSubscription = await this.subscriptionService.findByUserId(userId);
 
         if (existingSubscription) {
-            // Mettre à jour l'abonnement existant
+            // Si l'abonnement existe déjà avec le même externalPaymentId, c'est un doublon
+            if (existingSubscription.externalPaymentId === subscription.id) {
+                console.log(`⚠️  Subscription already activated for user ${userId} (webhook doublon ignored)`);
+                return;
+            }
+
+            // Sinon, mettre à jour l'abonnement existant
+            console.log(`🔄 Updating existing subscription for user ${userId}`);
             await this.subscriptionService.update(userId, {
                 plan: subscriptionPlan,
                 status: 'ACTIVE',
                 startDate: new Date(subscription.current_period_start * 1000).toISOString(),
                 endDate: new Date(subscription.current_period_end * 1000).toISOString(),
+                autoRenew: true,
+                externalPaymentId: subscription.id,
             });
         } else {
             // Créer un nouvel abonnement
+            console.log(`🆕 Creating new subscription for user ${userId}`);
             await this.subscriptionService.create(userId, {
                 plan: subscriptionPlan,
                 status: 'ACTIVE',
@@ -188,17 +227,21 @@ export class StripeService {
             });
         }
 
-        console.log(`✅ Subscription activated for user ${userId}`);
+        console.log(`✅ Subscription activated for user ${userId} via webhook`);
     }
 
     /**
      * Gère la mise à jour d'un abonnement
      */
     private async handleSubscriptionUpdated(subscription: any) {
-        const userId = parseInt(subscription.metadata.userId);
+        const userId = parseInt(subscription.metadata?.userId);
 
         if (!userId) {
-            console.error('No userId in subscription metadata');
+            console.error('❌ No userId in subscription metadata');
+            console.error('   Subscription ID:', subscription.id);
+            console.error('   Customer:', subscription.customer);
+            console.error('   Metadata:', JSON.stringify(subscription.metadata || {}));
+            console.error('   ⚠️  This subscription was likely created manually or is missing metadata');
             return;
         }
 
@@ -214,10 +257,14 @@ export class StripeService {
      * Gère la suppression/annulation d'un abonnement
      */
     private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-        const userId = parseInt(subscription.metadata.userId);
+        const userId = parseInt(subscription.metadata?.userId);
 
         if (!userId) {
-            console.error('No userId in subscription metadata');
+            console.error('❌ No userId in subscription metadata');
+            console.error('   Subscription ID:', subscription.id);
+            console.error('   Customer:', subscription.customer);
+            console.error('   Metadata:', JSON.stringify(subscription.metadata || {}));
+            console.error('   ⚠️  Cannot cancel subscription without userId');
             return;
         }
 

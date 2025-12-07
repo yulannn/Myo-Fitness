@@ -15,7 +15,13 @@ export const stripeService = {
     /**
      * Vérifie le statut d'une session de paiement
      */
-    verifySession: async (sessionId: string) => {
+    verifySession: async (sessionId: string): Promise<{
+        status: string;
+        customerId: string | null;
+        subscriptionId: string | null;
+        isActivated: boolean;
+        localSubscription: any;
+    }> => {
         const response = await apiClient.get(`/stripe/verify-session`, {
             params: { session_id: sessionId }
         });

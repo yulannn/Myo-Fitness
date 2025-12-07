@@ -1,31 +1,68 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePremium } from '../../contexts/PremiumContext';
 import { stripeService } from '../../api/services/stripeService';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 export default function PremiumSuccess() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { refetchSubscription } = usePremium();
     const sessionId = searchParams.get('session_id');
+    const [isActivated, setIsActivated] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-        const verifyAndRefetch = async () => {
-            if (sessionId) {
-                try {
-                    // Vérifier la session côté backend (ceci activera l'abonnement si nécessaire)
-                    await stripeService.verifySession(sessionId);
+        let pollInterval: number;
+
+        const checkActivation = async () => {
+            if (!sessionId) {
+                setIsChecking(false);
+                return;
+            }
+
+            try {
+                // Vérifier si le webhook a activé l'abonnement
+                const result = await stripeService.verifySession(sessionId);
+
+                if (result.isActivated) {
+                    console.log('✅ Subscription activated by webhook');
+                    setIsActivated(true);
+                    setIsChecking(false);
                     // Rafraîchir les données d'abonnement
                     await refetchSubscription();
-                } catch (error) {
-                    console.error('Erreur lors de la vérification de la session:', error);
+                    // Arrêter le polling
+                    if (pollInterval) clearInterval(pollInterval);
+                } else {
+                    console.log('⏳ Waiting for webhook to activate subscription...');
                 }
+            } catch (error) {
+                console.error('Erreur lors de la vérification de la session:', error);
+                setIsChecking(false);
             }
         };
 
-        verifyAndRefetch();
+        // Vérifier immédiatement
+        checkActivation();
+
+        // Puis vérifier toutes les 2 secondes pendant max 30 secondes
+        let attempts = 0;
+        pollInterval = setInterval(() => {
+            attempts++;
+            if (attempts > 15) {
+                // Après 30 secondes, arrêter le polling
+                clearInterval(pollInterval);
+                setIsChecking(false);
+                console.warn('⚠️ Webhook activation timeout - please refresh the page');
+            } else {
+                checkActivation();
+            }
+        }, 2000);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+        };
     }, [sessionId, refetchSubscription]);
 
     const handleContinue = () => {
@@ -38,25 +75,55 @@ export default function PremiumSuccess() {
                 {/* Icône de succès avec animation */}
                 <div className="flex justify-center">
                     <div className="relative">
-                        <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping"></div>
-                        <div className="relative bg-green-500/10 p-6 rounded-full border-2 border-green-500/30">
-                            <CheckCircleIcon className="h-16 w-16 text-green-400" />
-                        </div>
+                        {isChecking ? (
+                            // État de chargement
+                            <>
+                                <div className="absolute inset-0 bg-[#94fbdd]/20 rounded-full animate-ping"></div>
+                                <div className="relative bg-[#94fbdd]/10 p-6 rounded-full border-2 border-[#94fbdd]/30">
+                                    <ClockIcon className="h-16 w-16 text-[#94fbdd] animate-pulse" />
+                                </div>
+                            </>
+                        ) : (
+                            // État activé
+                            <>
+                                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping"></div>
+                                <div className="relative bg-green-500/10 p-6 rounded-full border-2 border-green-500/30">
+                                    <CheckCircleIcon className="h-16 w-16 text-green-400" />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 {/* Message de succès */}
                 <div className="space-y-4">
-                    <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
-                        <SparklesIcon className="h-8 w-8 text-[#94fbdd]" />
-                        Bienvenue Premium !
-                    </h1>
-                    <p className="text-lg text-gray-300">
-                        Votre paiement a été traité avec succès
-                    </p>
-                    <p className="text-sm text-gray-400">
-                        Vous avez maintenant accès à toutes les fonctionnalités premium de Myo Fitness
-                    </p>
+                    {isChecking ? (
+                        <>
+                            <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
+                                <SparklesIcon className="h-8 w-8 text-[#94fbdd]" />
+                                Paiement réussi !
+                            </h1>
+                            <p className="text-lg text-gray-300">
+                                Activation de votre abonnement en cours...
+                            </p>
+                            <p className="text-sm text-gray-400">
+                                Votre paiement a été traité avec succès. Nous activons votre accès Premium.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
+                                <SparklesIcon className="h-8 w-8 text-[#94fbdd]" />
+                                Bienvenue Premium !
+                            </h1>
+                            <p className="text-lg text-gray-300">
+                                Votre paiement a été traité avec succès
+                            </p>
+                            <p className="text-sm text-gray-400">
+                                Vous avez maintenant accès à toutes les fonctionnalités premium de Myo Fitness
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {/* Informations */}

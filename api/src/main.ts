@@ -4,9 +4,28 @@ import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
+import { json } from 'express';
+import { EnvValidationService } from './config/env-validation.service';
 
 async function bootstrap() {
+  // Valider les variables d'environnement AVANT de créer l'app
+  const envValidator = new EnvValidationService();
+  envValidator.validateEnvironment();
+  envValidator.validateOptionalEnvironment();
+
   const app = await NestFactory.create(AppModule);
+
+  // Middleware pour préserver le raw body pour Stripe webhook
+  // DOIT être avant le parsing JSON global
+  app.use('/api/v1/stripe/webhook', json({
+    verify: (req: any, res, buf) => {
+      req.rawBody = buf;
+    }
+  }));
+
+  // Global JSON body parser for all other routes
+  app.use(json());
+
   app.use(cookieParser.default());
 
   const config = new DocumentBuilder()

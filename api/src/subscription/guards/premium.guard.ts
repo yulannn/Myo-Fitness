@@ -17,11 +17,11 @@ export class PremiumGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        if (!user || !user.id) {
+        if (!user || !user.userId) {
             throw new ForbiddenException('User not authenticated');
         }
 
-        const isPremium = await this.subscriptionService.isPremium(user.id);
+        const isPremium = await this.subscriptionService.isPremium(user.userId);
 
         if (!isPremium) {
             throw new ForbiddenException('This feature requires a premium subscription');

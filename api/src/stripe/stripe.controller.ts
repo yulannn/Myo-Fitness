@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { StripeService } from './stripe.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('api/v1/stripe')
 export class StripeController {
@@ -19,15 +20,22 @@ export class StripeController {
 
     /**
      * Crée une session de paiement Stripe Checkout
+     * Rate limited à 3 requêtes par minute pour prévenir les abus
      */
     @Post('create-checkout-session')
     @UseGuards(AuthGuard('jwt'))
+    @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requêtes par minute
     async createCheckoutSession(
         @Request() req,
         @Body('plan') plan: 'monthly' | 'yearly'
     ) {
+        console.log('Received plan:', plan, 'Type:', typeof plan);
+        console.log('Full body:', req.body);
+
         if (!plan || (plan !== 'monthly' && plan !== 'yearly')) {
-            throw new BadRequestException('Plan must be either "monthly" or "yearly"');
+            throw new BadRequestException(
+                `Plan must be either "monthly" or "yearly". Received: ${plan} (type: ${typeof plan})`
+            );
         }
 
         const session = await this.stripeService.createCheckoutSession(
