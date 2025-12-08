@@ -13,6 +13,7 @@ export default function useUpdateCompletedSession() {
             qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });
+            qc.invalidateQueries({ queryKey: ['user', 'xp'] });
             if (sessionId) qc.invalidateQueries({ queryKey: ['session', sessionId] });
         }
     });

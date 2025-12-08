@@ -22,17 +22,28 @@ export default function XpBar({ variant = 'full', showLevel = true }: XpBarProps
 
     if (variant === 'compact') {
         return (
-            <div className="flex items-center gap-3">
-                {showLevel && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#94fbdd]/20 to-[#7de3c7]/20 rounded-full border border-[#94fbdd]/30">
-                        <SparklesIcon className="h-4 w-4 text-[#94fbdd]" />
-                        <span className="text-sm font-bold text-white">Niv. {level}</span>
+            <div className="space-y-2">
+                {/* Top row: Level badge and XP stats */}
+                <div className="flex items-center justify-between">
+                    {showLevel && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#94fbdd]/20 to-[#7de3c7]/20 rounded-full border border-[#94fbdd]/30">
+                            <SparklesIcon className="h-4 w-4 text-[#94fbdd]" />
+                            <span className="text-sm font-bold text-white">Niv. {level}</span>
+                        </div>
+                    )}
+                    <div className="text-right">
+                        <p className="text-xs text-gray-400">Progression</p>
+                        <p className="text-sm font-semibold text-white">
+                            {currentLevelXp} / {currentLevelXp + xpForNextLevel} XP
+                        </p>
                     </div>
-                )}
-                <div className="flex-1 min-w-[100px] max-w-[150px]">
-                    <div className="h-2 bg-[#252527] rounded-full overflow-hidden">
+                </div>
+
+                {/* Progress bar */}
+                <div className="relative">
+                    <div className="h-2.5 bg-[#252527] rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-[#94fbdd] to-[#7de3c7] rounded-full transition-all duration-500 ease-out"
+                            className="h-full bg-gradient-to-r from-[#94fbdd] to-[#7de3c7] rounded-full transition-all duration-500 ease-out shadow-lg shadow-[#94fbdd]/20"
                             style={{ width: `${progressPercentage}%` }}
                         />
                     </div>

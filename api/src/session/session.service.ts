@@ -5,12 +5,14 @@ import { UpdateSessionDateDto } from './dto/update-session.dto';
 import { BadRequestException } from '@nestjs/common/exceptions/bad-request.exception';
 import { ExerciseDataDto } from 'src/program/dto/add-session-program.dto';
 import { ProgramService } from 'src/program/program.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly programService: ProgramService,
+    private readonly usersService: UsersService,
   ) { }
 
   async getSessionById(id: number, userId: number) {
@@ -84,6 +86,7 @@ export class SessionService {
       throw new BadRequestException('You do not have permission to complete this session');
     }
 
+    // Marquer la séance comme complétée
     const updatedSession = await this.prisma.trainingSession.update({
       where: { id },
       data: {
@@ -91,6 +94,43 @@ export class SessionService {
         completed: true
       },
     });
+
+    // Gagner automatiquement 50 XP pour avoir complété la séance (1 fois par jour maximum)
+    try {
+      // Récupérer la date du dernier gain d'XP
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { lastXpGainDate: true },
+      });
+
+      // Obtenir la date du jour (UTC, sans heures)
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
+      // Vérifier si l'utilisateur a déjà gagné de l'XP aujourd'hui
+      let canGainXp = true;
+
+      if (user?.lastXpGainDate) {
+        const lastGainDay = new Date(user.lastXpGainDate);
+        lastGainDay.setUTCHours(0, 0, 0, 0);
+
+        // Comparer les dates (jour uniquement, pas l'heure)
+        canGainXp = today.getTime() > lastGainDay.getTime();
+      }
+
+      // Donner XP seulement si c'est la première séance du jour
+      if (canGainXp) {
+        await this.usersService.gainXp(userId, 50);
+
+        // Mettre à jour la date du dernier gain d'XP
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { lastXpGainDate: new Date() },
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du gain d\'XP:', error);
+    }
 
     return updatedSession;
   }
