@@ -14,6 +14,7 @@ import ChangePassword from "../pages/change-password";
 import Premium from "../pages/premium";
 import PremiumSuccess from "../pages/premium/success";
 import VerifyEmail from "../pages/verify-email";
+import Privacy from "../pages/privacy";
 import type { ReactNode } from "react";
 import {
     HOME,
@@ -32,6 +33,7 @@ import {
     PREMIUM,
     PREMIUM_SUCCESS,
     VERIFY_EMAIL,
+    PRIVACY,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -56,6 +58,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: MY_PROFILE,
         element: <MyProfile />,
+        protected: true
+    },
+    {
+        path: PRIVACY,
+        element: <Privacy />,
         protected: true
     },
     {

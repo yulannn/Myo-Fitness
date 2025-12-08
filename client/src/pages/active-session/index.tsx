@@ -7,15 +7,17 @@ import useUpdateCompletedSession from '../../api/hooks/session/useUpdateComplete
 import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../../components/ui/modal'
-import Button from '../../components/ui/button/Button'
 import { usePerformanceStore } from '../../store/usePerformanceStore'
+import SessionSummaryCard from '../../components/session/SessionSummaryCard'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
     const [activeSession, setActiveSession] = useState<any>(null)
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsedTime, setElapsedTime] = useState(0)
+    const [finalDuration, setFinalDuration] = useState(0)
     const [showGenerationModal, setShowGenerationModal] = useState(false)
+    const [showSummaryCard, setShowSummaryCard] = useState(false)
     const [showCancelModal, setShowCancelModal] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
 
@@ -98,9 +100,13 @@ export default function ActiveSession() {
 
     const handleStopSession = () => {
         if (activeSession?.id) {
+            // Capturer la durée finale avant de terminer
+            setFinalDuration(elapsedTime)
+
             updateCompletedSession(activeSession.id, {
                 onSuccess: () => {
-                    setShowGenerationModal(true)
+                    // Afficher d'abord la carte de résumé
+                    setShowSummaryCard(true)
                 },
                 onError: (error) => {
                     console.error('Erreur lors de la complétion de la session:', error)
@@ -108,6 +114,11 @@ export default function ActiveSession() {
                 }
             })
         }
+    }
+
+    const handleContinueToGeneration = () => {
+        setShowSummaryCard(false)
+        setShowGenerationModal(true)
     }
 
     const handleGenerateAdaptedSession = () => {
@@ -477,14 +488,52 @@ export default function ActiveSession() {
                 </div>
             </div>
 
-            {/* Modal de génération */}
-            <Modal isOpen={showGenerationModal} onClose={() => { }}>
+            {/* Modal avec carte de résumé */}
+            <Modal isOpen={showSummaryCard} onClose={() => { }} showClose={false}>
                 <ModalHeader>
                     <div className="flex items-center gap-3 justify-center">
                         <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
                             <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
                         </div>
                         <ModalTitle className="text-xl sm:text-2xl">Séance terminée ! 🎉</ModalTitle>
+                    </div>
+                </ModalHeader>
+                <div className="px-3 py-3">
+                    <SessionSummaryCard
+                        sessionData={{
+                            programName: activeSession?.trainingProgram?.name,
+                            duration: finalDuration,
+                            totalExercises: activeSession?.exercices?.length || 0,
+                            totalSets: totalSets,
+                            completedSets: validatedSets,
+                            exercises: (activeSession?.exercices || []).map((ex: any) => ({
+                                name: ex.exercice?.name || 'Exercice',
+                                sets: ex.sets,
+                                reps: ex.reps,
+                                weight: ex.weight
+                            })),
+                            date: new Date()
+                        }}
+                    />
+                </div>
+                <ModalFooter>
+                    <button
+                        onClick={handleContinueToGeneration}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 shadow-lg shadow-[#94fbdd]/30"
+                    >
+                        Continuer
+                    </button>
+                </ModalFooter>
+            </Modal>
+
+            {/* Modal de génération */}
+            <Modal isOpen={showGenerationModal} onClose={() => { }} showClose={false}>
+                <ModalHeader>
+                    <div className="flex items-center gap-3 justify-center">
+                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
+                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
+                        </div>
+                        <ModalTitle className="text-xl sm:text-2xl">Prochaine séance</ModalTitle>
                     </div>
                 </ModalHeader>
                 <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
@@ -517,20 +566,20 @@ export default function ActiveSession() {
                 </div>
                 <ModalFooter>
                     <div className="flex flex-col gap-3 w-full">
-                        <Button
-                            variant="primary"
+                        <button
                             onClick={handleGenerateAdaptedSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#94fbdd]/30"
                         >
                             {isAdaptingSession ? 'Génération...' : '✨ Adapter selon performances'}
-                        </Button>
-                        <Button
-                            variant="secondary"
+                        </button>
+                        <button
                             onClick={handleGenerateSimilarSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#252527] hover:bg-[#2a2a2d] text-white font-bold text-base rounded-xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isCreatingSimilar ? 'Génération...' : '🔁 Garder la même séance'}
-                        </Button>
+                        </button>
                     </div>
                 </ModalFooter>
             </Modal>
