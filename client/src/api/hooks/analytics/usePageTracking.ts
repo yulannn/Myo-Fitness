@@ -10,6 +10,8 @@ export const usePageTracking = () => {
     const location = useLocation();
 
     useEffect(() => {
+        // logAnalyticsEvent is now async, but we don't need to await it
+        // It will initialize analytics lazily and log the event when ready
         logAnalyticsEvent(AnalyticsEvents.PAGE_VIEW, {
             page_path: location.pathname,
             page_location: window.location.href,

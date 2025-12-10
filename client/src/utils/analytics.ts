@@ -1,17 +1,22 @@
 import { logEvent, setUserId, setUserProperties } from 'firebase/analytics';
-import { analytics } from '../config/firebase';
+import { getAnalyticsInstance } from '../config/firebase';
 
 /**
  * Log a custom event to Firebase Analytics
  * @param eventName - The name of the event
  * @param eventParams - Optional parameters for the event
  */
-export const logAnalyticsEvent = (
+export const logAnalyticsEvent = async (
     eventName: string,
     eventParams?: Record<string, any>
 ) => {
-    if (analytics) {
-        logEvent(analytics, eventName, eventParams);
+    try {
+        const analytics = await getAnalyticsInstance();
+        if (analytics) {
+            logEvent(analytics, eventName, eventParams);
+        }
+    } catch (error) {
+        console.warn('Failed to log analytics event:', error);
     }
 };
 
@@ -19,9 +24,14 @@ export const logAnalyticsEvent = (
  * Set the user ID for Analytics
  * @param userId - The user ID to set
  */
-export const setAnalyticsUserId = (userId: string | null) => {
-    if (analytics && userId) {
-        setUserId(analytics, userId);
+export const setAnalyticsUserId = async (userId: string | null) => {
+    try {
+        const analytics = await getAnalyticsInstance();
+        if (analytics && userId) {
+            setUserId(analytics, userId);
+        }
+    } catch (error) {
+        console.warn('Failed to set analytics user ID:', error);
     }
 };
 
@@ -29,9 +39,14 @@ export const setAnalyticsUserId = (userId: string | null) => {
  * Set user properties for Analytics
  * @param properties - User properties to set
  */
-export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-    if (analytics) {
-        setUserProperties(analytics, properties);
+export const setAnalyticsUserProperties = async (properties: Record<string, any>) => {
+    try {
+        const analytics = await getAnalyticsInstance();
+        if (analytics) {
+            setUserProperties(analytics, properties);
+        }
+    } catch (error) {
+        console.warn('Failed to set analytics user properties:', error);
     }
 };
 
