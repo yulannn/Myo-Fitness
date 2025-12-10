@@ -8,6 +8,7 @@ import { AuthProvider } from './context/AuthContext.tsx'
 import { ChatSocketProvider } from './context/ChatSocketContext.tsx'
 import { PremiumProvider } from './contexts/PremiumContext.tsx'
 import './utils/forceLogout'
+import './config/firebase' // Initialize Firebase Analytics
 
 const queryClient = new QueryClient()
 

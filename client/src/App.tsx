@@ -3,9 +3,13 @@ import { AppRoutes } from "./routes/AppRoutes";
 import BottomNav from "./components/app/BottomNav";
 import ActiveSessionBubble from "./components/app/ActiveSessionBubble";
 import { routes } from "./routes/routes.config";
+import { usePageTracking } from "./api/hooks/analytics/usePageTracking";
 
 export default function App() {
   const location = useLocation();
+
+  // Track page views in Firebase Analytics
+  usePageTracking();
 
   const shouldHideBottomNav = routes.some((r) =>
     r.hideBottomNav && matchPath({ path: r.path, end: true }, location.pathname)

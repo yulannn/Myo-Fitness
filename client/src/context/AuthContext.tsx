@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthSuccessResponse, AuthUser } from '../types/auth.type';
 import { AuthFetchDataService } from '../api/services/authService';
 import { tokenService } from '../api/services/tokenService';
+import { logAnalyticsEvent, AnalyticsEvents, setAnalyticsUserId } from '../utils/analytics';
 
 interface MeResponse {
     user: AuthUser;
@@ -59,6 +60,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (data?.user) {
             setUser(data.user);
             setInitialised(true);
+            // Set Analytics user ID when user is loaded
+            setAnalyticsUserId(data.user.id.toString());
         }
     }, [data]);
 
@@ -83,6 +86,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 window.localStorage.setItem(ACCESS_TOKEN_KEY, payload.accessToken);
             }
             queryClient.setQueryData(['auth', 'me'], { user: payload.user });
+
+            // Track login event in Analytics
+            logAnalyticsEvent(AnalyticsEvents.USER_LOGIN, {
+                user_id: payload.user.id,
+                timestamp: new Date().toISOString()
+            });
+            setAnalyticsUserId(payload.user.id.toString());
         },
         [queryClient]
     );
@@ -95,10 +105,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Ignore logout errors
             }
         }
+
+        // Track logout event before clearing session
+        if (user) {
+            logAnalyticsEvent(AnalyticsEvents.USER_LOGOUT, {
+                user_id: user.id,
+                timestamp: new Date().toISOString()
+            });
+        }
+        setAnalyticsUserId(null);
+
         clearSession();
         tokenService.clear();
         queryClient.clear();
-    }, [accessToken, clearSession, queryClient]);
+    }, [accessToken, clearSession, queryClient, user]);
 
     const value = useMemo<AuthContextValue>(
         () => ({
