@@ -92,8 +92,8 @@ export class StripeService {
 
     /**
      * Vérifie le statut d'une session de paiement
-     * ⚠️ Cette méthode NE CRÉE PLUS l'abonnement - c'est le rôle du webhook!
-     * Elle retourne simplement le statut pour que le frontend puisse vérifier.
+     * ⚠️ Fallback: Si le paiement est réussi mais que le webhook n'a pas encore activé l'abonnement,
+     * cette méthode activera l'abonnement directement (utile en développement local sans Stripe CLI)
      */
     async verifyCheckoutSession(sessionId: string) {
         const session = await this.stripe.checkout.sessions.retrieve(sessionId);
@@ -101,17 +101,70 @@ export class StripeService {
         // Récupérer l'abonnement local pour vérifier s'il a été créé par le webhook
         const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : null;
         let localSubscription: any = null;
+        let wasActivatedByFallback = false;
 
         if (userId) {
             localSubscription = await this.subscriptionService.findByUserId(userId);
+        }
+
+        // 🚨 FALLBACK: Si le paiement est réussi mais pas d'abonnement actif, activer manuellement
+        // Cela gère le cas où le webhook n'a pas pu être reçu (ex: développement local)
+        if (
+            session.payment_status === 'paid' &&
+            session.subscription &&
+            userId &&
+            (!localSubscription || localSubscription.status !== 'ACTIVE')
+        ) {
+            console.log(`⚠️  Webhook fallback: Activating subscription manually for user ${userId}`);
+
+            try {
+                // Récupérer les détails de l'abonnement Stripe
+                const stripeSubscription = await this.stripe.subscriptions.retrieve(
+                    session.subscription as string
+                ) as any;
+
+                const plan = session.metadata!.plan as 'monthly' | 'yearly';
+                const subscriptionPlan = plan === 'monthly' ? SubscriptionPlan.MONTHLY : SubscriptionPlan.YEARLY;
+
+                if (localSubscription) {
+                    // Mettre à jour l'abonnement existant
+                    await this.subscriptionService.update(userId, {
+                        plan: subscriptionPlan,
+                        status: 'ACTIVE',
+                        startDate: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
+                        endDate: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+                        autoRenew: true,
+                        externalPaymentId: stripeSubscription.id,
+                    });
+                } else {
+                    // Créer un nouvel abonnement
+                    await this.subscriptionService.create(userId, {
+                        plan: subscriptionPlan,
+                        status: 'ACTIVE',
+                        startDate: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
+                        endDate: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+                        autoRenew: true,
+                        paymentProvider: 'stripe',
+                        externalPaymentId: stripeSubscription.id,
+                    });
+                }
+
+                // Rafraîchir les données locales
+                localSubscription = await this.subscriptionService.findByUserId(userId);
+                wasActivatedByFallback = true;
+                console.log(`✅ Subscription activated via fallback for user ${userId}`);
+            } catch (error) {
+                console.error(`❌ Fallback activation failed for user ${userId}:`, error);
+            }
         }
 
         return {
             status: session.payment_status,
             customerId: session.customer,
             subscriptionId: session.subscription,
-            // Indiquer si l'abonnement a déjà été activé par le webhook
+            // Indiquer si l'abonnement a déjà été activé
             isActivated: localSubscription?.status === 'ACTIVE',
+            wasActivatedByFallback,
             localSubscription: localSubscription,
         };
     }

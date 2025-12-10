@@ -20,6 +20,7 @@ export const stripeService = {
         customerId: string | null;
         subscriptionId: string | null;
         isActivated: boolean;
+        wasActivatedByFallback: boolean;
         localSubscription: any;
     }> => {
         const response = await apiClient.get(`/stripe/verify-session`, {
