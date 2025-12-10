@@ -15,6 +15,7 @@ import Premium from "../pages/premium";
 import PremiumSuccess from "../pages/premium/success";
 import VerifyEmail from "../pages/verify-email";
 import Privacy from "../pages/privacy";
+import Onboarding from "../pages/onboarding";
 import type { ReactNode } from "react";
 import {
     HOME,
@@ -34,6 +35,7 @@ import {
     PREMIUM_SUCCESS,
     VERIFY_EMAIL,
     PRIVACY,
+    ONBOARDING,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -49,6 +51,12 @@ export const routes: AppRouteConfig[] = [
         path: HOME,
         element: <Home />,
         protected: true
+    },
+    {
+        path: ONBOARDING,
+        element: <Onboarding />,
+        protected: true,
+        hideBottomNav: true
     },
     {
         path: SETTINGS,

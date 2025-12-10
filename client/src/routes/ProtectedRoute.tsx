@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { OnboardingGuard } from './OnboardingGuard'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -22,5 +23,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth/login" replace state={{ from: location }} />
   }
 
-  return <>{children}</>
+  // Wrapper avec OnboardingGuard pour vérifier si l'utilisateur doit faire l'onboarding
+  return <OnboardingGuard>{children}</OnboardingGuard>
 }

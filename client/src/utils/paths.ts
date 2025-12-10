@@ -1,5 +1,6 @@
 export const HOME = "/";
 
+export const ONBOARDING = "/onboarding";
 export const PROGRAMS = "/programs";
 export const ACTIVE_SESSION = "/active-session";
 export const SESSIONS = "/sessions";
