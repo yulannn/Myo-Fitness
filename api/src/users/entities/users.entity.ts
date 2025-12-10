@@ -47,6 +47,12 @@ export class UserEntity {
   })
   updatedAt: Date;
 
+  @ApiProperty({
+    description: 'Version du token pour la révocation (sécurité)',
+    example: 0,
+  })
+  tokenVersion: number;
+
   @ApiPropertyOptional({
     description: 'Refresh token de l\'utilisateur',
     example: null,

@@ -23,7 +23,7 @@ export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @UseGuards(AuthGuard('local'))
-    @Throttle({ default: { limit: 35, ttl: 60000 } })
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     @Post('login')
     @ApiOperation({ summary: 'Se connecter avec e-mail et mot de passe' })
     @ApiBody({ type: SignInDto, description: 'Informations de connexion' })
@@ -71,7 +71,7 @@ export class AuthController {
         return { message: 'Logged out successfully' };
     }
 
-    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
     @Post('refresh')
     @HttpCode(200)
     @ApiOperation({ summary: 'Rafraîchir le token d\'accès' })

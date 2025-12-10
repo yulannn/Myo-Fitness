@@ -9,6 +9,15 @@ import { EmailService } from 'src/email/email.service';
 
 type SafeUser = Omit<UserEntity, 'password' | 'refreshToken'>;
 
+// Type pour le payload JWT avec tokenVersion
+interface JwtPayloadWithVersion {
+  sub: number;
+  email: string;
+  name: string;
+  profilePictureUrl: string | null;
+  tokenVersion: number;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -34,13 +43,14 @@ export class AuthService {
     return safeUser;
   }
 
-  /** Prépare le payload JWT */
-  private buildJwtPayload(user: SafeUser) {
+  /** Prépare le payload JWT avec tokenVersion pour la révocation */
+  private buildJwtPayload(user: SafeUser): JwtPayloadWithVersion {
     return {
       sub: user.id,
       email: user.email,
       name: user.name,
       profilePictureUrl: user.profilePictureUrl || null,
+      tokenVersion: user.tokenVersion,
     };
   }
 
@@ -98,18 +108,27 @@ export class AuthService {
     };
   }
 
-  /** Déconnexion */
+  /** Déconnexion - Invalide TOUS les tokens en incrémentant la version */
   async logout(userId: number) {
-    await this.usersService.updateUser(userId, { refreshToken: null });
+    const user = await this.usersService.findUserById(userId);
+    await this.usersService.updateUser(userId, {
+      refreshToken: null,
+      tokenVersion: user.tokenVersion + 1, // ✅ Révocation de tous les tokens existants
+    });
   }
 
-  /** Rafraîchir le token */
+  /** Rafraîchir le token avec vérification de la version */
   async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const payload = await this.jwtService.verifyAsync<JwtPayloadWithVersion>(refreshToken);
       const user = await this.usersService.findUserById(payload.sub);
 
       if (!user || !user.refreshToken) throw new UnauthorizedException('Invalid token');
+
+      // ✅ VÉRIFIER LA VERSION DU TOKEN (révocation)
+      if (payload.tokenVersion !== user.tokenVersion) {
+        throw new UnauthorizedException('Token révoqué - reconnectez-vous');
+      }
 
       const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
       if (!isMatch) throw new UnauthorizedException('Invalid token');
@@ -124,6 +143,7 @@ export class AuthService {
         updatedAt: user.updatedAt,
         level: user.level,
         xp: user.xp,
+        tokenVersion: user.tokenVersion, // ✅ Inclure tokenVersion
       };
 
       const newPayload = this.buildJwtPayload(safeUser);
@@ -226,17 +246,18 @@ export class AuthService {
     // Hasher le nouveau mot de passe
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Mettre à jour le mot de passe et supprimer le code de reset
+    // Mettre à jour le mot de passe, supprimer le code de reset ET incrémenter tokenVersion
     await this.usersService.updateUser(user.id, {
       password: hashedPassword,
       resetPasswordCode: null,
       resetPasswordExpires: null,
+      tokenVersion: user.tokenVersion + 1, // ✅ Sécurité : déconnecter tous les appareils
     });
 
     // Envoyer un email de confirmation
     await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
-    return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
+    return { message: 'Votre mot de passe a été réinitialisé avec succès. Vous devrez vous reconnecter.' };
   }
 
   /**
@@ -268,15 +289,16 @@ export class AuthService {
     // Hasher le nouveau mot de passe
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Mettre à jour le mot de passe
+    // Mettre à jour le mot de passe ET incrémenter tokenVersion pour déconnecter tous les appareils
     await this.usersService.updateUser(user.id, {
       password: hashedPassword,
+      tokenVersion: user.tokenVersion + 1, // ✅ Sécurité : déconnecter tous les appareils
     });
 
     // Envoyer un email de confirmation
     await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
-    return { message: 'Votre mot de passe a été modifié avec succès.' };
+    return { message: 'Votre mot de passe a été modifié avec succès. Vous devrez vous reconnecter sur tous vos appareils.' };
   }
 
   /**
