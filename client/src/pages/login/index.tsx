@@ -41,7 +41,10 @@ export default function Login() {
       const result = await loginMutation.mutateAsync(formValues)
       applyAuthResult(result)
       setFormValues(initialValues)
-      navigate('/', { replace: true })
+
+      // ✅ window.location.replace garantit le changement d'URL
+      // Fonctionne même si le composant se démonte
+      window.location.replace('/');
     } catch (error) {
       if (error instanceof ValidationError) {
         setFieldErrors(error.fieldErrors)

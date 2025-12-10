@@ -40,7 +40,7 @@ export interface AppRouteConfig {
     path: string;
     element: ReactNode;
     protected?: boolean;
-    redirectIfAuth?: boolean;
+    redirectIfAuthenticated?: boolean;
     hideBottomNav?: boolean;
 }
 
@@ -104,13 +104,13 @@ export const routes: AppRouteConfig[] = [
     {
         path: LOGIN,
         element: <Login />,
-        redirectIfAuth: true,
+        redirectIfAuthenticated: true,
         hideBottomNav: true
     },
     {
         path: REGISTER,
         element: <Register />,
-        redirectIfAuth: true,
+        redirectIfAuthenticated: true,
         hideBottomNav: true
     },
     {
@@ -121,19 +121,19 @@ export const routes: AppRouteConfig[] = [
     {
         path: FORGOT_PASSWORD,
         element: <ForgotPassword />,
-        redirectIfAuth: true,
+        redirectIfAuthenticated: true,
         hideBottomNav: true
     },
     {
         path: VERIFY_CODE,
         element: <VerifyCode />,
-        redirectIfAuth: true,
+        redirectIfAuthenticated: true,
         hideBottomNav: true
     },
     {
         path: RESET_PASSWORD,
         element: <ResetPassword />,
-        redirectIfAuth: true,
+        redirectIfAuthenticated: true,
         hideBottomNav: true
     },
     {
