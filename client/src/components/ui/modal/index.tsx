@@ -6,9 +6,10 @@ interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     children: React.ReactNode;
+    showClose?: boolean;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClose = true }) => {
     if (!isOpen) return null;
 
     return (
@@ -32,12 +33,14 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
                 )}
             >
                 {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors z-10"
-                >
-                    <XMarkIcon className="h-5 w-5" />
-                </button>
+                {showClose && (
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors z-10"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+                )}
 
                 {children}
             </div>

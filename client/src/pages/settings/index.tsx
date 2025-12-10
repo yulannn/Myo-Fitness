@@ -9,7 +9,8 @@ import {
     KeyIcon,
     ExclamationTriangleIcon,
     XMarkIcon,
-    SparklesIcon
+    SparklesIcon,
+    ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingButtonProps {
@@ -56,6 +57,10 @@ export default function Settings() {
 
     const handlePremium = () => {
         navigate('/premium');
+    };
+
+    const handlePrivacy = () => {
+        navigate('/privacy');
     };
 
     const handleNotifications = () => {
@@ -119,6 +124,12 @@ export default function Settings() {
                         icon={<ChatBubbleLeftRightIcon className="h-6 w-6" />}
                         label="Feedback"
                         onClick={handleFeedback}
+                    />
+
+                    <SettingButton
+                        icon={<ShieldCheckIcon className="h-6 w-6" />}
+                        label="Confidentialité & Données"
+                        onClick={handlePrivacy}
                     />
 
                     <SettingButton
