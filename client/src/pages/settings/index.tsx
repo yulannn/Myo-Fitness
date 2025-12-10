@@ -79,9 +79,17 @@ export default function Settings() {
 
     const handleConfirmLogout = async () => {
         setIsLoggingOut(true);
-        await logout();
-        setIsLoggingOut(false);
         setShowLogoutModal(false);
+
+        try {
+            await logout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            setIsLoggingOut(false);
+            // window.location.replace() est synchrone et fonctionne même si le composant est démonté
+            window.location.replace('/auth/login');
+        }
     };
 
     const handleCancelLogout = () => {

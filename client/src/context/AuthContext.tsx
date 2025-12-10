@@ -4,6 +4,7 @@ import type { AuthSuccessResponse, AuthUser } from '../types/auth.type';
 import { AuthFetchDataService } from '../api/services/authService';
 import { tokenService } from '../api/services/tokenService';
 import { logAnalyticsEvent, AnalyticsEvents, setAnalyticsUserId } from '../utils/analytics';
+import { setLoggingOut } from '../api/apiClient';
 
 interface MeResponse {
     user: AuthUser;
@@ -98,13 +99,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 
     const logout = useCallback(async () => {
-        if (accessToken) {
-            try {
-                await AuthFetchDataService.logout(accessToken);
-            } catch {
-                // Ignore logout errors
-            }
-        }
+        // Indiquer qu'on est en train de se déconnecter pour empêcher les refresh
+        setLoggingOut(true);
 
         // Track logout event before clearing session
         if (user) {
@@ -115,9 +111,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         setAnalyticsUserId(null);
 
+        // Sauvegarder le token actuel avant de le nettoyer
+        const currentToken = accessToken;
+
+        // Nettoyer immédiatement la session locale pour éviter que des requêtes ne se déclenchent
         clearSession();
         tokenService.clear();
+
+        // Annuler toutes les requêtes en cours et vider le cache
+        queryClient.cancelQueries();
         queryClient.clear();
+
+        // Appeler l'API de logout en dernier avec le token sauvegardé
+        if (currentToken) {
+            try {
+                await AuthFetchDataService.logout(currentToken);
+            } catch {
+                // Ignore logout errors - la session est déjà nettoyée localement
+            }
+        }
+
+        // Réinitialiser le flag de logout
+        setLoggingOut(false);
+
+        // Note: Pas besoin de redirection ici - le ProtectedRoute redirigera automatiquement
+        // vers /auth/login dès que isAuthenticated devient false
     }, [accessToken, clearSession, queryClient, user]);
 
     const value = useMemo<AuthContextValue>(

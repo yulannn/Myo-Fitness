@@ -2,6 +2,7 @@ import React, { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { useMySubscription, useIsPremium } from '../api/hooks/useSubscription';
 import type { Subscription } from '../types/subscription.type';
+import { useAuth } from '../context/AuthContext';
 
 interface PremiumContextValue {
     subscription: Subscription | null | undefined;
@@ -20,19 +21,21 @@ interface PremiumProviderProps {
 }
 
 export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+
     const {
         data: subscription,
         isLoading: isSubscriptionLoading,
         isError: isSubscriptionError,
         refetch: refetchSubscription,
-    } = useMySubscription();
+    } = useMySubscription(isAuthenticated);
 
     const {
         data: premiumStatus,
         isLoading: isPremiumLoading,
         isError: isPremiumError,
         refetch: refetchPremium,
-    } = useIsPremium();
+    } = useIsPremium(isAuthenticated);
 
     const isPremium = premiumStatus?.isPremium ?? false;
 

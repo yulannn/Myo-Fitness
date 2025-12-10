@@ -13,6 +13,7 @@ console.log('🔗 API Client configuré avec:', API_BASE_URL);
 
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
+let isLoggingOut = false; // Flag pour indiquer qu'on est en train de se déconnecter
 let failedQueue: {
     resolve: (token: string) => void;
     reject: (error: any) => void;
@@ -78,7 +79,7 @@ const processQueue = (error: any, token: string | null) => {
 // Interceptor → Ajoute automatiquement le token
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const token = tokenService.getAccessToken();
-    if (token) {
+    if (token && token.trim()) {
         config.headers = config.headers || {};
         (config.headers as any).Authorization = `Bearer ${token}`;
     }
@@ -92,12 +93,19 @@ api.interceptors.response.use(
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
         // Ne pas tenter de refresh sur les routes d'auth elles-mêmes
-        if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/login')) {
+        if (originalRequest.url?.includes('/auth/refresh') ||
+            originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/logout')) {
             return Promise.reject(error);
         }
 
         // Si 401 → token expiré
         if (error.response?.status === 401 && !originalRequest._retry) {
+            // Ne pas tenter de refresh si on est en train de se déconnecter
+            if (isLoggingOut) {
+                return Promise.reject(error);
+            }
+
             originalRequest._retry = true;
 
             try {
@@ -132,5 +140,10 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// Fonction pour indiquer qu'on est en train de se déconnecter
+export const setLoggingOut = (value: boolean) => {
+    isLoggingOut = value;
+};
 
 export default api;

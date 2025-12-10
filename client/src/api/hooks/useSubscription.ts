@@ -17,10 +17,11 @@ export const subscriptionKeys = {
 /**
  * Hook pour récupérer la souscription de l'utilisateur
  */
-export const useMySubscription = () => {
+export const useMySubscription = (enabled: boolean = true) => {
     return useQuery({
         queryKey: subscriptionKeys.mySubscription(),
         queryFn: subscriptionService.getMySubscription,
+        enabled,
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: (failureCount, error: any) => {
             // Ne pas réessayer sur les erreurs 404 (utilisateur sans abonnement)
@@ -36,10 +37,11 @@ export const useMySubscription = () => {
 /**
  * Hook pour vérifier si l'utilisateur est premium
  */
-export const useIsPremium = () => {
+export const useIsPremium = (enabled: boolean = true) => {
     return useQuery({
         queryKey: subscriptionKeys.isPremium(),
         queryFn: subscriptionService.checkPremium,
+        enabled,
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: (failureCount, error: any) => {
             if (error?.response?.status === 404) {
