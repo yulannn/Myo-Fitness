@@ -35,44 +35,42 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
 
   return (
     <>
-      <div className="relative bg-[#252527] rounded-2xl shadow-xl border border-[#94fbdd]/10 overflow-hidden transition-all">
-        {/* Decorative Background */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-2xl"></div>
+      <div className="relative bg-[#18181b] rounded-2xl border border-white/5 overflow-hidden transition-all hover:border-white/10">
 
         {/* Header */}
         <div
           onClick={isActive ? undefined : onToggleExpand}
-          className={`relative w-full p-4 sm:p-5 text-left transition-colors ${!isActive ? 'cursor-pointer hover:bg-[#94fbdd]/5' : ''}`}
+          className={`relative w-full p-5 text-left transition-colors ${!isActive ? 'cursor-pointer hover:bg-white/5' : ''}`}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg sm:text-xl font-bold text-white break-words">{program.name}</h2>
-                <div className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap ${isActive
-                  ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/30'
-                  : 'bg-gray-700 text-gray-400 border border-gray-600'
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl font-bold text-white tracking-tight">{program.name}</h2>
+                <div className={`px-2.5 py-1 rounded-md font-medium text-xs whitespace-nowrap ${isActive
+                  ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/20'
+                  : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                   }`}>
-                  {isActive ? '✓ Actif' : program.status}
+                  {isActive ? 'En cours' : 'Archivé'}
                 </div>
               </div>
 
               {program.description && (
-                <p className="text-xs sm:text-sm text-gray-400 line-clamp-1">{program.description}</p>
+                <p className="text-sm text-gray-400 line-clamp-2">{program.description}</p>
               )}
 
-              <div className="flex items-center gap-3 text-xs text-gray-500">
+              <div className="flex items-center gap-3 text-xs font-medium text-gray-500 pt-1">
                 <span>{program.sessions?.length || 0} séance{(program.sessions?.length || 0) > 1 ? 's' : ''}</span>
-                <span>•</span>
+                <span className="text-gray-700">•</span>
                 <span>Créé le {program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 items-end">
+            <div className="flex flex-col gap-2 items-end pt-1">
               <div
                 onClick={handleStatusClick}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${isActive
-                  ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
-                  : 'bg-[#94fbdd]/10 text-[#94fbdd] hover:bg-[#94fbdd]/20'
+                className={`p-2 rounded-lg transition-all cursor-pointer ${isActive
+                  ? 'text-gray-500 hover:text-white hover:bg-white/10'
+                  : 'text-[#94fbdd] hover:bg-[#94fbdd]/10'
                   }`}
                 title={isActive ? "Archiver le programme" : "Désarchiver le programme"}
               >
@@ -86,11 +84,11 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
               </div>
 
               {hasSession && !isActive && (
-                <div className="flex-shrink-0 p-2 rounded-xl bg-[#94fbdd]/10 transition-transform">
+                <div className="flex-shrink-0 p-2 rounded-lg text-gray-400 bg-white/5">
                   {isExpanded ? (
-                    <ChevronUpIcon className="h-5 w-5 text-[#94fbdd]" />
+                    <ChevronUpIcon className="h-5 w-5" />
                   ) : (
-                    <ChevronDownIcon className="h-5 w-5 text-[#94fbdd]" />
+                    <ChevronDownIcon className="h-5 w-5" />
                   )}
                 </div>
               )}
@@ -100,16 +98,16 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
 
         {/* Message pour programmes archivés */}
         {!isActive && (
-          <div className="px-4 sm:px-5 py-2 bg-gray-800/50 border-y border-gray-700">
-            <p className="text-xs text-gray-400 text-center italic">
-              📦 Programme archivé - Lecture seule
+          <div className="px-5 py-2 bg-zinc-900/50 border-y border-white/5">
+            <p className="text-xs text-gray-500 font-medium">
+              Lecture seule
             </p>
           </div>
         )}
 
         {/* Sessions */}
         {showSessions && (
-          <div className="relative border-t border-[#94fbdd]/10 p-4 sm:p-5 space-y-3 animate-fadeIn">
+          <div className="relative border-t border-white/5 p-5 space-y-4 bg-black/20">
             {sortSessions(program.sessions).map((session: any) => (
               <SessionCard
                 key={session.id ?? `session-${program.id}-${session.date}`}
@@ -122,8 +120,8 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         )}
 
         {!hasSession && (
-          <div className="relative border-t border-[#94fbdd]/10 p-4 text-center">
-            <p className="text-xs sm:text-sm text-gray-500 italic">Aucune séance dans ce programme.</p>
+          <div className="relative border-t border-white/5 p-6 text-center bg-black/20">
+            <p className="text-sm text-gray-500">Aucune séance dans ce programme.</p>
           </div>
         )}
       </div>

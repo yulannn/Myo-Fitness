@@ -4,7 +4,6 @@ import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
 import {
   ArrowRightIcon,
   ChartBarIcon,
-  BoltIcon
 } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
@@ -65,101 +64,69 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
         {/* Minimal Header with XP */}
         <HomeHeader />
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             to="/programs"
-            className="group p-4 bg-[#94fbdd] rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
+            className="group p-6 bg-[#18181b] border border-white/5 rounded-2xl hover:border-white/10 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-[#121214] font-bold text-base sm:text-lg">Mon Programme</p>
-                <p className="text-[#121214]/70 text-xs sm:text-sm mt-1">
+              <div>
+                <p className="text-white font-bold text-lg">Mon Programme</p>
+                <p className="text-gray-400 text-sm mt-1">
                   {stats.activeProgram ? stats.activeProgram.name : 'Créer un programme'}
                 </p>
               </div>
-              <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#121214] group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="h-5 w-5 text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
 
           <Link
             to="/sessions"
-            className="group p-4 bg-[#252527] border border-[#94fbdd]/20 rounded-2xl hover:border-[#94fbdd]/40 transition-all active:scale-95"
+            className="group p-6 bg-[#18181b] border border-white/5 rounded-2xl hover:border-white/10 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-white font-bold text-base sm:text-lg">Mes Séances</p>
-                <p className="text-gray-400 text-xs sm:text-sm mt-1">
+              <div>
+                <p className="text-white font-bold text-lg">Mes Séances</p>
+                <p className="text-gray-400 text-sm mt-1">
                   {stats.upcomingSessions} à venir
                 </p>
               </div>
-              <ArrowRightIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd] group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="h-5 w-5 text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
         </div>
 
-
-        {/* Motivation Card */}
-        <div className="relative bg-gradient-to-br from-[#94fbdd]/10 to-[#252527] rounded-3xl p-6 sm:p-8 border border-[#94fbdd]/20 overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#94fbdd]/5 rounded-full blur-3xl"></div>
-
-          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="p-4 bg-[#94fbdd]/10 rounded-2xl">
-              <BoltIcon className="h-8 w-8 sm:h-10 sm:w-10 text-[#94fbdd]" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
-                Continue comme ça ! 💪
-              </h3>
-              <p className="text-sm sm:text-base text-gray-400">
-                {stats.completedSessions > 0
-                  ? `Tu as déjà complété ${stats.completedSessions} séance${stats.completedSessions > 1 ? 's' : ''}. Chaque entraînement te rapproche de tes objectifs !`
-                  : "Commence ton premier entraînement et lance ta transformation !"
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Progress Dashboard Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-              <ChartBarIcon className="h-6 w-6 text-[#94fbdd]" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">Tableau de Progression</h2>
-              <p className="text-sm text-gray-400">Analyse détaillée de ta performance (90 derniers jours)</p>
-            </div>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white tracking-tight">Tableau de Bord</h2>
           </div>
 
-          {/* Weight Progress Chart */}
-          <ProgressChart
-            data={weightData}
-            title="Évolution du poids"
-            unit="kg"
-            color="#94fbdd"
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Chart - Spans 2 columns on large screens */}
+            <div className="lg:col-span-2 space-y-6">
+              <ProgressChart
+                data={weightData}
+                title="Évolution du poids"
+                unit="kg"
+                color="#94fbdd"
+              />
+              <PersonalRecords sessions={sessions || []} />
+            </div>
 
-
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Streak Tracker */}
-            <StreakTracker sessions={sessions || []} />
-
-            {/* AI Insights */}
-            <AIInsights sessions={sessions || []} programs={programs || []} />
+            {/* Side Column - Insights & Streak */}
+            <div className="space-y-6">
+              <StreakTracker sessions={sessions || []} />
+              <AIInsights sessions={sessions || []} programs={programs || []} />
+            </div>
           </div>
-
-          {/* Personal Records */}
-          <PersonalRecords sessions={sessions || []} />
         </div>
-
       </div>
     </div>
   )

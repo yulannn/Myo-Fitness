@@ -52,41 +52,42 @@ export default function FitnessProfiles() {
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
       {/* Back Button - Floating */}
+      {/* Back Button - Minimalist */}
       <button
         onClick={() => navigate('/settings')}
-        className="fixed top-6 left-6 z-30 p-3 bg-[#252527] hover:bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-xl transition-all group shadow-lg"
-        title="Retour aux paramètres"
+        className="fixed top-6 left-6 z-30 flex items-center gap-2 text-gray-400 hover:text-[#94fbdd] transition-colors"
       >
-        <ArrowLeftIcon className="h-5 w-5 text-gray-400 group-hover:text-[#94fbdd] transition-colors" />
+        <ArrowLeftIcon className="h-5 w-5" />
+        <span className="text-sm font-medium">Retour</span>
       </button>
 
-      <div className="max-w-5xl mx-auto px-4 py-12 space-y-6">
-        {/* USER CARD - Hero Section */}
-        <section className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-3xl blur-3xl"></div>
-          <UserCard
-            name={user?.name || 'John Doe'}
-            email={user?.email || 'email@example.com'}
-            profilePictureUrl={user?.profilePictureUrl || undefined}
-          />
-        </section>
+      <div className="max-w-6xl mx-auto px-4 pt-24 pb-8 md:py-12 space-y-6 md:space-y-0 md:grid md:grid-cols-12 md:gap-8">
 
-        {/* XP BAR - Progression Section */}
-        <section className="relative">
-          <XpBar variant="full" showLevel={true} />
-        </section>
+        {/* Left Column: User Info & XP (4 cols) */}
+        <div className="md:col-span-4 space-y-6">
+          <section>
+            <UserCard
+              name={user?.name || 'John Doe'}
+              email={user?.email || 'email@example.com'}
+              profilePictureUrl={user?.profilePictureUrl || undefined}
+            />
+          </section>
 
+          <section>
+            <h3 className="text-sm font-medium text-gray-400 mb-2 px-1">Niveau & Progression</h3>
+            <XpBar variant="compact" showLevel={true} />
+          </section>
+        </div>
 
-
-        {/* FITNESS PROFILES - Main Content */}
-        <section className="relative">
+        {/* Right Column: Fitness Profile (8 cols) */}
+        <div className="md:col-span-8">
           <FitnessProfilesList
             profiles={profiles || undefined}
             isLoading={isLoading}
             onAddClick={() => setIsCreateModalOpen(true)}
             onEditClick={handleEdit}
           />
-        </section>
+        </div>
       </div>
 
       {/* CREATE MODAL */}

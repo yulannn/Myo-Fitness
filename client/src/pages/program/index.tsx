@@ -13,7 +13,7 @@ import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useAuth } from '../../context/AuthContext';
 import { ProgramCard } from '../../components/ui/program';
-import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 
 const Program = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -171,67 +171,64 @@ const Program = () => {
 
   return (
     <div className="min-h-screen bg-[#121214] pb-24">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
-        {/* Header - Mobile Optimized */}
-        <div className="space-y-3">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Mes Programmes</h1>
-            <p className="text-sm text-gray-400 mt-1">Gérez vos programmes d'entraînement</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Mes Programmes</h1>
+            <p className="text-gray-400 mt-1">Gérez et suivez votre évolution</p>
           </div>
-          <button
-            onClick={openAddFlow}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/30 transition-all active:scale-95"
-          >
-            <PlusIcon className="h-5 w-5" />
-            Nouveau programme
-          </button>
+          {programs.length > 0 && (
+            <button
+              onClick={openAddFlow}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#94fbdd] text-[#121214] font-semibold rounded-xl shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95"
+            >
+              <PlusIcon className="h-5 w-5" />
+              Nouveau programme
+            </button>
+          )}
         </div>
 
         {/* Tabs - Actifs / Archivés */}
         {programs.length > 0 && (
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex p-1 bg-[#18181b] rounded-xl border border-white/5 w-fit">
             <button
               onClick={() => setActiveTab('active')}
-              className={`flex-1 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all ${activeTab === 'active'
-                ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
-                : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'active'
+                ? 'bg-[#27272a] text-white shadow-sm'
+                : 'text-gray-400 hover:text-white'
                 }`}
             >
-              Actifs ({activePrograms.length})
+              Actifs <span className="ml-1 text-xs opacity-60">({activePrograms.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('archived')}
-              className={`flex-1 px-4 py-3 rounded-2xl font-semibold text-sm sm:text-base transition-all ${activeTab === 'archived'
-                ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
-                : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'archived'
+                ? 'bg-[#27272a] text-white shadow-sm'
+                : 'text-gray-400 hover:text-white'
                 }`}
             >
-              Archivés ({archivedPrograms.length})
+              Archivés <span className="ml-1 text-xs opacity-60">({archivedPrograms.length})</span>
             </button>
           </div>
         )}
 
         {/* Programs List */}
         {programs.length === 0 ? (
-          <div className="relative bg-[#252527] rounded-3xl shadow-2xl p-8 sm:p-12 text-center border border-[#94fbdd]/10 overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
-
-            <div className="relative">
-              <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 rounded-3xl flex items-center justify-center mb-4 sm:mb-6 shadow-xl">
-                <SparklesIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Commencez votre voyage</h3>
-              <p className="text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
-                Créez votre premier programme personnalisé et transformez vos objectifs en réalité.
-              </p>
-              <button
-                onClick={openAddFlow}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#94fbdd]/90 transition-all active:scale-95 shadow-lg shadow-[#94fbdd]/20"
-              >
-                <PlusIcon className="h-5 w-5" />
-                Créer mon programme
-              </button>
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-white/10 rounded-3xl bg-[#18181b]/50">
+            <div className="w-16 h-16 bg-[#27272a] rounded-2xl flex items-center justify-center mb-4">
+              <SparklesIcon className="h-8 w-8 text-gray-500" />
             </div>
+            <h3 className="text-xl font-bold text-white mb-2">Aucun programme pour le moment</h3>
+            <p className="text-gray-400 max-w-sm mb-6">
+              Créez votre premier programme pour commencer à tracker vos séances et exercices.
+            </p>
+            <button
+              onClick={openAddFlow}
+              className="px-6 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-white font-medium rounded-xl border border-white/5 transition-colors"
+            >
+              Créer un programme
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -248,8 +245,9 @@ const Program = () => {
             ))}
 
             {(activeTab === 'active' ? activePrograms : archivedPrograms).length === 0 && (
-              <div className="text-center py-12 bg-[#252527] rounded-2xl border border-dashed border-gray-700">
-                <p className="text-gray-400">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}.</p>
+              <div className="flex flex-col items-center py-16 text-center">
+                <ArchiveBoxIcon className="h-12 w-12 text-gray-600 mb-3" />
+                <p className="text-gray-500 font-medium">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}.</p>
               </div>
             )}
           </div>

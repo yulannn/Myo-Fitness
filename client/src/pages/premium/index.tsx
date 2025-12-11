@@ -9,7 +9,6 @@ import {
     XCircleIcon,
     ClockIcon,
     CalendarIcon,
-    SparklesIcon,
     CreditCardIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
@@ -77,19 +76,14 @@ export default function Premium() {
     return (
         <div className="min-h-screen bg-[#121214] pb-24">
             <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
-                {/* Header avec bouton retour */}
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={handleBack}
-                        className="flex items-center gap-2 text-gray-400 hover:text-[#94fbdd] transition-colors"
-                    >
-                        <ArrowLeftIcon className="h-5 w-5" />
-                    </button>
-                    <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                        <SparklesIcon className="h-6 w-6 text-[#94fbdd]" />
-                        Mon Abonnement Premium
-                    </h1>
-                </div>
+                {/* Simple Back Button */}
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-gray-400 hover:text-[#94fbdd] transition-colors mb-4"
+                >
+                    <ArrowLeftIcon className="h-5 w-5" />
+                    <span className="text-sm font-medium">Retour</span>
+                </button>
 
                 {/* Badge de statut principal */}
                 <div className={`p-6 rounded-2xl border ${statusColor.bg} ${statusColor.border}`}>

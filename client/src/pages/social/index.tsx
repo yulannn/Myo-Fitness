@@ -264,7 +264,7 @@ export default function SocialPage() {
 
                 {/* --- ONGLET MESSAGES --- */}
                 {activeTab === 'messages' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-350px)] min-h-[500px]">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-450px)] min-h-[450px]">
                         {/* Liste Conversations */}
                         <div className={`bg-[#252527] rounded-2xl border border-purple-500/10 overflow-hidden flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                             <div className="p-4 border-b border-purple-500/10 bg-[#121214]/30">

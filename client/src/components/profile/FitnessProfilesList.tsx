@@ -1,4 +1,4 @@
-import { PencilSquareIcon, PlusIcon, FireIcon, ChartBarIcon, UserIcon, ClockIcon, TrophyIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, PlusIcon, FireIcon, ChartBarIcon, UserIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 import TrainingDaysDisplay from './TrainingDaysDisplay';
 
@@ -56,151 +56,116 @@ export default function FitnessProfilesList({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header with Edit Button */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-white mb-1">Profil Fitness</h2>
-          <p className="text-gray-400">Vos informations d'entraînement</p>
-        </div>
+        <h2 className="text-xl font-bold text-white">Vos Statistiques</h2>
         <button
           onClick={() => onEditClick(profiles)}
-          className="flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/30 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#94fbdd] bg-[#94fbdd]/5 border border-[#94fbdd]/20 rounded-lg hover:bg-[#94fbdd]/10 transition-colors"
         >
-          <PencilSquareIcon className="h-5 w-5" />
+          <PencilSquareIcon className="h-4 w-4" />
           Modifier
         </button>
       </div>
 
-      {/* Main Profile Card */}
-      <div className="relative bg-[#252527] rounded-3xl shadow-2xl border border-[#94fbdd]/10 overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-[#94fbdd]/5 to-transparent rounded-full blur-3xl"></div>
+      {/* Main Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Age */}
+        <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+          <p className="text-xs font-medium text-gray-500 uppercase mb-1">Âge</p>
+          <p className="text-2xl font-bold text-white">{profiles.age} <span className="text-sm text-gray-500 font-normal">ans</span></p>
+        </div>
 
-        <div className="relative p-8 space-y-8">
-          {/* Stats Grid - 3 columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Physical Stats */}
-            <div className="bg-[#121214] p-6 rounded-2xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-[#94fbdd]/10 rounded-xl group-hover:bg-[#94fbdd]/20 transition-colors">
-                  <ChartBarIcon className="h-6 w-6 text-[#94fbdd]" />
-                </div>
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Physique</h3>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-white">{profiles.age}</span>
-                  <span className="text-gray-400 text-sm">ans</span>
-                </div>
-                <div className="flex gap-3 text-sm">
-                  <span className="text-gray-400">{profiles.height} cm</span>
-                  <span className="text-gray-600">•</span>
-                  <span className="text-gray-400">{profiles.weight} kg</span>
-                </div>
-              </div>
+        {/* Weight */}
+        <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+          <p className="text-xs font-medium text-gray-500 uppercase mb-1">Poids</p>
+          <p className="text-2xl font-bold text-white">{profiles.weight} <span className="text-sm text-gray-500 font-normal">kg</span></p>
+        </div>
+
+        {/* Height */}
+        <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+          <p className="text-xs font-medium text-gray-500 uppercase mb-1">Taille</p>
+          <p className="text-2xl font-bold text-white">{profiles.height} <span className="text-sm text-gray-500 font-normal">cm</span></p>
+        </div>
+
+        {/* BMI Calculation (Optional/Derived) or Frequency */}
+        <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+          <p className="text-xs font-medium text-gray-500 uppercase mb-1">Fréquence</p>
+          <p className="text-2xl font-bold text-white">{profiles.trainingFrequency} <span className="text-sm text-gray-500 font-normal">/sem</span></p>
+        </div>
+      </div>
+
+      {/* Secondary Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Level & Gender */}
+        <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+              <TrophyIcon className="h-5 w-5" />
             </div>
-
-            {/* Training Frequency */}
-            <div className="bg-[#121214] p-6 rounded-2xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-[#94fbdd]/10 rounded-xl group-hover:bg-[#94fbdd]/20 transition-colors">
-                  <ClockIcon className="h-6 w-6 text-[#94fbdd]" />
-                </div>
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Fréquence</h3>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white">{profiles.trainingFrequency}</span>
-                <span className="text-gray-400 text-sm">séances/sem</span>
-              </div>
-            </div>
-
-            {/* Experience Level */}
-            <div className="bg-[#121214] p-6 rounded-2xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-[#94fbdd]/10 rounded-xl group-hover:bg-[#94fbdd]/20 transition-colors">
-                  <TrophyIcon className="h-6 w-6 text-[#94fbdd]" />
-                </div>
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Niveau</h3>
-              </div>
-              <div className="text-2xl font-bold text-white">
-                {profiles.experienceLevel === 'BEGINNER'
-                  ? 'Débutant'
-                  : profiles.experienceLevel === 'INTERMEDIATE'
-                    ? 'Intermédiaire'
-                    : 'Avancé'}
-              </div>
+            <div>
+              <p className="text-sm font-medium text-gray-400">Niveau d'expérience</p>
+              <p className="text-lg font-semibold text-white mt-1">
+                {profiles.experienceLevel === 'BEGINNER' ? 'Débutant' :
+                  profiles.experienceLevel === 'INTERMEDIATE' ? 'Intermédiaire' : 'Avancé'}
+              </p>
             </div>
           </div>
-
-          {/* Goals & Gender Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Goals */}
-            <div className="bg-[#121214] p-6 rounded-2xl border border-[#94fbdd]/10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                  <FireIcon className="h-6 w-6 text-[#94fbdd]" />
-                </div>
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Objectifs</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {profiles.goals.length > 0 ? (
-                  profiles.goals.map((g, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-[#94fbdd]/10 border border-[#94fbdd]/30 text-[#94fbdd] text-sm font-semibold rounded-xl hover:bg-[#94fbdd]/20 transition-all"
-                    >
-                      {g === 'MUSCLE_GAIN' ? 'Gain musculaire' : 'Perte de poids'}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-500 italic">Aucun objectif défini</span>
-                )}
-              </div>
+          <div className="flex items-start gap-4 pt-4 border-t border-white/5">
+            <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+              <UserIcon className="h-5 w-5" />
             </div>
+            <div>
+              <p className="text-sm font-medium text-gray-400">Genre</p>
+              <p className="text-lg font-semibold text-white mt-1">
+                {profiles.gender === 'MALE' ? 'Homme' :
+                  profiles.gender === 'FEMALE' ? 'Femme' : 'Autre'}
+              </p>
+            </div>
+          </div>
+        </div>
 
-            {/* Gender & Bodyweight */}
-            <div className="bg-[#121214] p-6 rounded-2xl border border-[#94fbdd]/10 space-y-4">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
-                    <UserIcon className="h-6 w-6 text-[#94fbdd]" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Genre</h3>
-                </div>
-                <div className="text-xl font-bold text-white">
-                  {profiles.gender === 'MALE'
-                    ? 'Homme'
-                    : profiles.gender === 'FEMALE'
-                      ? 'Femme'
-                      : 'Autre'}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#94fbdd]/10">
-                <div className="flex items-center gap-3">
-                  <span className={`w-3 h-3 rounded-full ${profiles.bodyWeight ? 'bg-[#94fbdd]' : 'bg-gray-600'} shadow-lg ${profiles.bodyWeight ? 'shadow-[#94fbdd]/50 animate-pulse' : ''}`}></span>
-                  <span className="text-sm text-gray-400">
-                    {profiles.bodyWeight ? 'Exercices au poids du corps' : 'Exercices avec équipement'}
+        {/* Goals & Type */}
+        <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+              <FireIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-400">Objectif principal</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {profiles.goals.map((g, index) => (
+                  <span key={index} className="text-xs font-medium px-2.5 py-1 rounded-md bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/20">
+                    {g === 'MUSCLE_GAIN' ? 'Prise de masse' : 'Perte de poids'}
                   </span>
-                </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Training Days Section */}
-          {profiles.trainingDays && profiles.trainingDays.length > 0 && (
-            <TrainingDaysDisplay selectedDays={profiles.trainingDays} />
-          )}
-
-          {/* Last Updated */}
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 pt-4 border-t border-[#94fbdd]/5">
-            <ClockIcon className="h-4 w-4" />
-            <span>Dernière mise à jour le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          <div className="flex items-start gap-4 pt-4 border-t border-white/5">
+            <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+              <ChartBarIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-400">Type d'entraînement</p>
+              <p className="text-sm font-medium text-white mt-1">
+                {profiles.bodyWeight ? 'Poids du corps (Calisthenics)' : 'Musculation avec équipement'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Training Days */}
+      {profiles.trainingDays && profiles.trainingDays.length > 0 && (
+        <div className="pt-2">
+          <h3 className="text-sm font-medium text-gray-400 mb-3">Jours d'entraînement</h3>
+          <TrainingDaysDisplay selectedDays={profiles.trainingDays} />
+        </div>
+      )}
     </div>
   );
 }
