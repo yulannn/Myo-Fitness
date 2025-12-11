@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { format, addDays, startOfToday, startOfWeek, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
@@ -6,6 +7,7 @@ import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessi
 import type { Session } from '../../types/session.type'
 
 export default function WeekCalendarPreview() {
+    const navigate = useNavigate()
     const { data: sessions } = useGetAllUserSessions()
     const { data: sharedSessions } = useSharedSessions()
 
@@ -35,6 +37,12 @@ export default function WeekCalendarPreview() {
         })
     }
 
+    const dayRedirect = (date: Date) => {
+        if (hasSessionOnDate(date)) return '/sessions'
+        if (hasSharedSessionOnDate(date)) return '/sessions'
+        return '/'
+    }
+
     const getSessionType = (date: Date): 'both' | 'session' | 'shared' | 'none' => {
         const hasSession = hasSessionOnDate(date)
         const hasShared = hasSharedSessionOnDate(date)
@@ -58,7 +66,8 @@ export default function WeekCalendarPreview() {
                     return (
                         <div
                             key={day.toISOString()}
-                            className="flex flex-col items-center"
+                            onClick={() => navigate(dayRedirect(day))}
+                            className="flex flex-col items-center cursor-pointer"
                         >
                             {/* Day Name */}
                             <span className="text-xs text-gray-500 font-medium mb-2 uppercase">
@@ -71,7 +80,7 @@ export default function WeekCalendarPreview() {
                   relative w-12 h-12 rounded-xl flex items-center justify-center font-semibold text-sm
                   transition-all duration-200
                   ${isToday
-                                        ? 'bg-[#94fbdd]/20 text-[#94fbdd] border-1 border-[#94fbdd]/20 ring-1 ring-[#94fbdd]/20'
+                                        ? 'bg-[#94fbdd]/20 text-[#94fbdd] border border-[#94fbdd]  ring-1 ring-[#94fbdd]/20'
                                         : 'text-gray-400'
                                     }
                   ${sessionType === 'both'
@@ -80,7 +89,7 @@ export default function WeekCalendarPreview() {
                                             ? 'bg-[#94fbdd]/30 border border-[#94fbdd]/40 ring-1 ring-[#94fbdd]/20'
                                             : sessionType === 'shared'
                                                 ? 'bg-purple-500/30 border border-purple-500/40 ring-1 ring-purple-500/20'
-                                                : ''
+                                                : 'bg-[#18181b]'
                                     }
                 `}
                             >
