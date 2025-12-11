@@ -77,7 +77,7 @@ export default function WeekCalendarPreview() {
                             {/* Day Circle */}
                             <div
                                 className={`
-                  relative w-12 h-12 rounded-xl flex items-center justify-center font-semibold text-sm
+                  relative w-10 h-10 rounded-xl flex items-center justify-center font-semibold text-sm
                   transition-all duration-200
                   ${isToday
                                         ? 'bg-[#94fbdd]/20 text-[#94fbdd] border border-[#94fbdd]  ring-1 ring-[#94fbdd]/20'
