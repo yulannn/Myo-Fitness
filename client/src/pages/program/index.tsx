@@ -191,10 +191,10 @@ const Program = () => {
 
         {/* Tabs - Actifs / Archivés */}
         {programs.length > 0 && (
-          <div className="flex p-1 bg-[#18181b] rounded-xl border border-white/5 w-fit">
+          <div className="flex justify-center items-center gap-2  p-1 bg-[#18181b] rounded-xl border border-white/5 w-auto">
             <button
               onClick={() => setActiveTab('active')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'active'
+              className={`px-4 w-full py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'active'
                 ? 'bg-[#27272a] text-white shadow-sm'
                 : 'text-gray-400 hover:text-white'
                 }`}
@@ -203,7 +203,7 @@ const Program = () => {
             </button>
             <button
               onClick={() => setActiveTab('archived')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'archived'
+              className={`px-4 w-full py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'archived'
                 ? 'bg-[#27272a] text-white shadow-sm'
                 : 'text-gray-400 hover:text-white'
                 }`}
