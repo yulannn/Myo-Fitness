@@ -3,7 +3,6 @@ import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions
 import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
 import {
   ArrowRightIcon,
-  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
@@ -12,6 +11,7 @@ import StreakTracker from '../../components/home/StreakTracker'
 import PersonalRecords from '../../components/home/PersonalRecords'
 import AIInsights from '../../components/home/AIInsights'
 import HomeHeader from '../../components/home/HomeHeader'
+import WeekCalendarPreview from '../../components/home/WeekCalendarPreview'
 
 export default function Home() {
   const { data: programs } = useProgramsByUser()
@@ -68,6 +68,9 @@ export default function Home() {
 
         {/* Minimal Header with XP */}
         <HomeHeader />
+
+        {/* Week Calendar Preview */}
+        <WeekCalendarPreview />
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
