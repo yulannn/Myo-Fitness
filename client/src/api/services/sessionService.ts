@@ -7,8 +7,12 @@ export const SessionFetchDataService = {
         return res.data;
     },
 
-    async getAllUserSessions(): Promise<Session[]> {
-        const res = await api.get<Session[]>('/session/user/all');
+    async getAllUserSessions(startDate?: string, endDate?: string): Promise<Session[]> {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+
+        const res = await api.get<Session[]>('/session/user/all', { params });
         return res.data;
     },
 

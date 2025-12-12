@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { DayPicker } from 'react-day-picker'
-import { format, isSameDay } from 'date-fns'
+import { format, isSameDay, startOfMonth, endOfMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
@@ -10,8 +10,22 @@ import { CalendarDaysIcon, ClockIcon, CheckCircleIcon, UsersIcon, MapPinIcon, Ch
 import { getImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
+    // 📅 État pour le mois affiché dans le calendrier (par défaut : mois actuel)
+    const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-    const { data: sessions, isLoading, error } = useGetAllUserSessions()
+
+    // 🎯 OPTIMISATION : Calculer les dates du mois affiché
+    const monthStart = useMemo(() =>
+        format(startOfMonth(currentMonth), 'yyyy-MM-dd'),
+        [currentMonth]
+    )
+    const monthEnd = useMemo(() =>
+        format(endOfMonth(currentMonth), 'yyyy-MM-dd'),
+        [currentMonth]
+    )
+
+    // 🚀 Ne charger que les sessions du mois visible
+    const { data: sessions, isLoading, error } = useGetAllUserSessions(monthStart, monthEnd)
     const { data: sharedSessions } = useSharedSessions()
 
     const getSharedSessionsForDate = (date: Date | undefined) => {
@@ -317,10 +331,12 @@ export default function Sessions() {
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
+                        month={currentMonth}
+                        onMonthChange={setCurrentMonth}
                         locale={fr}
                         modifiers={modifiers}
                         modifiersClassNames={modifiersClassNames}
-                        showOutsideDays
+                        showOutsideDays={false}
                     />
                 </div>
 

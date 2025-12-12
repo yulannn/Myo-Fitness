@@ -41,7 +41,43 @@ export class SessionService {
     return session;
   }
 
-  async getAllUserSessions(userId: number) {
+  /**
+   * Récupère toutes les sessions d'un utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param startDate - Date de début (optionnel, pour filtrage par mois)
+   * @param endDate - Date de fin (optionnel, pour filtrage par mois)
+   * 
+   * 🎯 Optimisation : Utiliser startDate/endDate pour charger seulement le mois visible
+   *    Exemple: Pour décembre 2024 → startDate = 2024-12-01, endDate = 2024-12-31
+   */
+  async getAllUserSessions(
+    userId: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    // Construction du filtre de dates
+    const dateFilter: any = {};
+
+    if (startDate && endDate) {
+      // Filtrer par plage de dates (pour le calendrier)
+      dateFilter.OR = [
+        {
+          // Sessions planifiées (date)
+          date: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        {
+          // Sessions complétées (performedAt)
+          performedAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      ];
+    }
+
     return this.prisma.trainingSession.findMany({
       where: {
         trainingProgram: {
@@ -50,6 +86,7 @@ export class SessionService {
           },
           status: 'ACTIVE', // Filtrer uniquement les programmes actifs
         },
+        ...dateFilter, // Ajouter le filtre de dates si présent
       },
       include: {
         exercices: {

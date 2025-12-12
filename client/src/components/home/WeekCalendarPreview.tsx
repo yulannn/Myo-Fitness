@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { format, addDays, startOfToday, startOfWeek, isSameDay } from 'date-fns'
+import { format, addDays, startOfToday, startOfWeek, endOfWeek, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
@@ -8,14 +8,23 @@ import type { Session } from '../../types/session.type'
 
 export default function WeekCalendarPreview() {
     const navigate = useNavigate()
-    const { data: sessions } = useGetAllUserSessions()
-    const { data: sharedSessions } = useSharedSessions()
 
-    const weekDays = useMemo(() => {
+    // 🎯 Calculer les dates de la semaine actuelle (Lundi → Dimanche)
+    const { weekStart, weekEnd, weekDays } = useMemo(() => {
         const today = startOfToday()
         const monday = startOfWeek(today, { weekStartsOn: 1 })
-        return Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+        const sunday = endOfWeek(today, { weekStartsOn: 1 })
+
+        return {
+            weekStart: format(monday, 'yyyy-MM-dd'),
+            weekEnd: format(sunday, 'yyyy-MM-dd'),
+            weekDays: Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+        }
     }, [])
+
+    // 🚀 Charger les sessions de TOUTE LA SEMAINE (peut chevaucher 2 mois)
+    const { data: sessions } = useGetAllUserSessions(weekStart, weekEnd)
+    const { data: sharedSessions } = useSharedSessions()
     const hasSessionOnDate = (date: Date) => {
         if (!sessions) return false
         return sessions.some((session: Session) => {

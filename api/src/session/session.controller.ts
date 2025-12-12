@@ -1,4 +1,4 @@
-import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put, Get } from '@nestjs/common';
+import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put, Get, Query } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
 import {
@@ -39,14 +39,21 @@ export class SessionController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('user/all')
-  @ApiOperation({ summary: 'Récupérer toutes les sessions d\'un utilisateur' })
+  @ApiOperation({
+    summary: 'Récupérer toutes les sessions d\'un utilisateur',
+    description: 'Supporte le filtrage par plage de dates via query params (startDate, endDate) pour optimiser le chargement du calendrier'
+  })
   @ApiResponse({
     status: 200,
     description: 'Sessions récupérées avec succès',
   })
-  getAllUserSessions(@Request() req) {
+  getAllUserSessions(
+    @Request() req,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
     const userId = req.user.userId;
-    return this.sessionService.getAllUserSessions(userId);
+    return this.sessionService.getAllUserSessions(userId, startDate, endDate);
   }
 
 
