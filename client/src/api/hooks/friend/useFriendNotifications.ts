@@ -13,14 +13,14 @@ export function useFriendNotifications() {
     if (!socket || !isConnected) return;
 
     // Écouter les nouvelles demandes d'ami reçues
-    const handleFriendRequestReceived = (friendRequest: any) => {
+    const handleFriendRequestReceived = (_friendRequest: any) => {
       // Invalider les queries pour rafraîchir les demandes en attente
       queryClient.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
     };
 
     // Écouter les demandes acceptées
-    const handleFriendRequestAccepted = (acceptedBy: any) => {
+    const handleFriendRequestAccepted = (_acceptedBy: any) => {
 
       // Invalider les queries pour rafraîchir la liste d'amis et les conversations
       queryClient.invalidateQueries({ queryKey: ['friends'] });
@@ -28,7 +28,7 @@ export function useFriendNotifications() {
     };
 
     // Écouter les demandes refusées
-    const handleFriendRequestDeclined = (declinedBy: any) => {
+    const handleFriendRequestDeclined = (_declinedBy: any) => {
 
       // Invalider les queries pour rafraîchir les demandes
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });

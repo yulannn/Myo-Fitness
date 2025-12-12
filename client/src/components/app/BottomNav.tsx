@@ -20,7 +20,13 @@ const items = [
   { to: '/sessions', icon: CalendarDaysIcon, iconSolid: CalendarDaysIconSolid, label: 'Séances' },
   { to: '/', icon: HomeIcon, iconSolid: HomeIconSolid, end: true, label: 'Accueil' },
   { to: '/social', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid, label: 'Social' },
-  { to: '/settings', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid, label: 'Paramètres' },
+  {
+    to: '/settings',
+    icon: Cog6ToothIcon,
+    iconSolid: Cog6ToothIconSolid,
+    label: 'Paramètres',
+    matches: ['/settings', '/my-profile', '/change-password', '/privacy', '/premium', '/profile']
+  },
 ]
 
 export default function BottomNav() {
@@ -30,8 +36,13 @@ export default function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#252527]/95 backdrop-blur-xl shadow-2xl border-t border-[#94fbdd]/10 rounded-t-3xl">
       <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
-        {items.map(({ to, icon: Icon, iconSolid: IconSolid, end, label }) => {
-          const isActive = end ? location.pathname === to : location.pathname.startsWith(to)
+        {items.map(({ to, icon: Icon, iconSolid: IconSolid, end, label, matches }) => {
+          const isActive = end
+            ? location.pathname === to
+            : (matches
+              ? matches.some(path => location.pathname.startsWith(path))
+              : location.pathname.startsWith(to)
+            )
           const ActiveIcon = isActive ? IconSolid : Icon
 
           return (

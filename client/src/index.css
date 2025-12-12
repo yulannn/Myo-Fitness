@@ -13,9 +13,31 @@
     "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-html,
-body,
+html {
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+body {
+  position: fixed;
+  /* EMPÊCHE LE SCROLL DU BODY */
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  /* Utilise la hauteur dynamique pour mobile */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  overscroll-behavior: none;
+}
+
 #root {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   font-family: var(--font-sans);
 }
 

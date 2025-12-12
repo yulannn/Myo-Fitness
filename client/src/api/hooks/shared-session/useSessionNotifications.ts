@@ -26,17 +26,17 @@ export function useSessionNotifications() {
         };
 
         // Écouter quand quelqu'un rejoint
-        const handleUserJoined = (data: any) => {
+        const handleUserJoined = (_data: any) => {
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 
         // Écouter quand quelqu'un quitte
-        const handleUserLeft = (data: any) => {
+        const handleUserLeft = (_data: any) => {
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 
         // Écouter les suppressions
-        const handleSessionDeleted = (data: any) => {
+        const handleSessionDeleted = (_data: any) => {
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 

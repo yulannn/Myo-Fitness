@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { tokenService } from "./services/tokenService";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const api = axios.create({
     baseURL: `${API_BASE_URL}/api/v1`,
