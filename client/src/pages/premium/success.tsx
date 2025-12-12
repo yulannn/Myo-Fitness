@@ -27,22 +27,14 @@ export default function PremiumSuccess() {
                 const result = await stripeService.verifySession(sessionId);
 
                 if (result.isActivated) {
-                    if (result.wasActivatedByFallback) {
-                        console.log('✅ Subscription activated via fallback (webhook not available in local dev)');
-                    } else {
-                        console.log('✅ Subscription activated by webhook');
-                    }
                     setIsActivated(true);
                     setIsChecking(false);
                     // Rafraîchir les données d'abonnement
                     await refetchSubscription();
                     // Arrêter le polling
                     if (pollInterval) clearInterval(pollInterval);
-                } else {
-                    console.log('⏳ Verifying subscription status... (attempt will activate if payment confirmed)');
                 }
             } catch (error) {
-                console.error('Erreur lors de la vérification de la session:', error);
                 setIsChecking(false);
             }
         };

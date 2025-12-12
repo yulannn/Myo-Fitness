@@ -30,7 +30,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly chatService: ChatService) { }
 
     handleConnection(client: Socket) {
-        console.log(`Client connected: ${client.id}`);
+
 
         // Récupérer l'ID utilisateur depuis le handshake auth
         const userId = client.handshake.auth?.userId;
@@ -39,12 +39,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 userSockets.set(userId, new Set());
             }
             userSockets.get(userId)?.add(client.id);
-            console.log(`User ${userId} connected with socket ${client.id}`);
         }
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`);
 
         const userId = client.handshake.auth?.userId;
         if (userId) {
@@ -240,17 +238,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
      * Notifier les membres d'un groupe ou des amis spécifiques qu'une séance a été créée
      */
     notifySessionCreated(session: any, memberIds: number[]) {
-        console.log(`📧 Envoi d'invitations à ${memberIds.length} membres:`, memberIds);
         memberIds.forEach((memberId) => {
             const socketIds = userSockets.get(memberId);
-            console.log(`  - Utilisateur ${memberId}: ${socketIds ? socketIds.size + ' connexions' : 'NON CONNECTÉ'}`);
             if (socketIds) {
                 socketIds.forEach((socketId) => {
                     this.server.to(socketId).emit('session:invitation', {
                         type: 'created',
                         session,
                     });
-                    console.log(`    ✓ Notification envoyée au socket ${socketId}`);
                 });
             }
         });
@@ -260,8 +255,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
      * Notifier un nouveau message dans une conversation (utilisé par d'autres services)
      */
     async notifyNewMessage(message: any, conversationId: string) {
-        console.log(`💬 Envoi du message dans la conversation ${conversationId}`);
-
         // Récupérer tous les participants de la conversation
         const conversation = await this.chatService.getConversation(conversationId, message.senderId);
 
@@ -271,7 +264,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (socketIds) {
                 socketIds.forEach((socketId) => {
                     this.server.to(socketId).emit('message:new', message);
-                    console.log(`    ✓ Message envoyé au socket ${socketId} (user ${participant.userId})`);
                 });
             }
         });
@@ -336,15 +328,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
      * Notifier quand une demande d'ami est reçue
      */
     notifyFriendRequestReceived(receiverId: number, friendRequest: any) {
-        console.log(`👥 Envoi de notification de demande d'ami à l'utilisateur ${receiverId}`);
         const socketIds = userSockets.get(receiverId);
         if (socketIds) {
             socketIds.forEach((socketId) => {
                 this.server.to(socketId).emit('friend:request-received', friendRequest);
-                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
             });
-        } else {
-            console.log(`    ⚠ Utilisateur ${receiverId} non connecté`);
         }
     }
 
@@ -352,12 +340,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
      * Notifier quand une demande d'ami est acceptée
      */
     notifyFriendRequestAccepted(senderId: number, acceptedBy: any) {
-        console.log(`✅ Notification d'acceptation de demande d'ami à l'utilisateur ${senderId}`);
         const socketIds = userSockets.get(senderId);
         if (socketIds) {
             socketIds.forEach((socketId) => {
                 this.server.to(socketId).emit('friend:request-accepted', acceptedBy);
-                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
             });
         }
     }
@@ -366,12 +352,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
      * Notifier quand une demande d'ami est refusée
      */
     notifyFriendRequestDeclined(senderId: number, declinedBy: any) {
-        console.log(`❌ Notification de refus de demande d'ami à l'utilisateur ${senderId}`);
         const socketIds = userSockets.get(senderId);
         if (socketIds) {
             socketIds.forEach((socketId) => {
                 this.server.to(socketId).emit('friend:request-declined', declinedBy);
-                console.log(`    ✓ Notification envoyée au socket ${socketId}`);
             });
         }
     }

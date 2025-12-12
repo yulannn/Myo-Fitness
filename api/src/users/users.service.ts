@@ -148,17 +148,6 @@ export class UsersService {
       select: { level: true, xp: true },
     });
 
-    // Log si montée de niveau
-    if (leveledUp) {
-      console.log(
-        `🎉 User ${id} leveled up! ${previousLevel} → ${newLevel} (Total XP: ${newTotalXp})`
-      );
-    } else {
-      console.log(
-        `✨ User ${id} gained ${xpGained} XP (Total: ${newTotalXp}, Level: ${newLevel})`
-      );
-    }
-
     // Calculer les informations du niveau actuel
     const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(updatedUser.xp);
 

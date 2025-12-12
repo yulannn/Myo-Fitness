@@ -11,9 +11,7 @@ export function useMessages(conversationId: string | null) {
         queryKey: ['messages', conversationId],
         queryFn: async () => {
             if (!conversationId) return [];
-            console.log('📨 [API] Fetching messages pour conversation:', conversationId);
             const response = await ChatService.getMessages(conversationId);
-            console.log(`✅ [API] ${response.data.length} messages récupérés`);
             return response.data;
         },
         enabled: !!conversationId,

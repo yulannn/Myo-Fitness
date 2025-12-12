@@ -9,7 +9,7 @@ const api = axios.create({
     withCredentials: true,
 });
 
-console.log('🔗 API Client configuré avec:', API_BASE_URL);
+
 
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;

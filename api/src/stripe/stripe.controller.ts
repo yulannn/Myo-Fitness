@@ -29,8 +29,6 @@ export class StripeController {
         @Request() req,
         @Body('plan') plan: 'monthly' | 'yearly'
     ) {
-        console.log('Received plan:', plan, 'Type:', typeof plan);
-        console.log('Full body:', req.body);
 
         if (!plan || (plan !== 'monthly' && plan !== 'yearly')) {
             throw new BadRequestException(

@@ -20,32 +20,26 @@ export default function Privacy() {
 
     // Handlers fantômes - à implémenter plus tard
     const handleExportData = () => {
-        console.log('Export des données demandé')
         // TODO: Implémenter l'export des données utilisateur
     }
 
     const handleDeleteAccount = () => {
-        console.log('Suppression du compte demandée')
         // TODO: Implémenter la suppression de compte avec confirmation
     }
 
     const handleContactDPO = () => {
-        console.log('Contact DPO')
         // TODO: Implémenter le formulaire de contact DPO
     }
 
     const handleViewPrivacyPolicy = () => {
-        console.log('Voir politique de confidentialité')
         // TODO: Afficher ou naviguer vers la politique complète
     }
 
     const handleViewTerms = () => {
-        console.log('Voir conditions générales')
         // TODO: Afficher ou naviguer vers les CGU
     }
 
     const handleViewConsentHistory = () => {
-        console.log('Voir historique des consentements')
         // TODO: Afficher l'historique des consentements
     }
 

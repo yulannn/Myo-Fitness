@@ -14,8 +14,6 @@ export function useFriendNotifications() {
 
     // Écouter les nouvelles demandes d'ami reçues
     const handleFriendRequestReceived = (friendRequest: any) => {
-      console.log('👥 Nouvelle demande d\'ami reçue:', friendRequest);
-
       // Invalider les queries pour rafraîchir les demandes en attente
       queryClient.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
@@ -23,7 +21,6 @@ export function useFriendNotifications() {
 
     // Écouter les demandes acceptées
     const handleFriendRequestAccepted = (acceptedBy: any) => {
-      console.log('✅ Demande d\'ami acceptée par:', acceptedBy);
 
       // Invalider les queries pour rafraîchir la liste d'amis et les conversations
       queryClient.invalidateQueries({ queryKey: ['friends'] });
@@ -32,7 +29,6 @@ export function useFriendNotifications() {
 
     // Écouter les demandes refusées
     const handleFriendRequestDeclined = (declinedBy: any) => {
-      console.log('❌ Demande d\'ami refusée par:', declinedBy);
 
       // Invalider les queries pour rafraîchir les demandes
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
@@ -43,14 +39,12 @@ export function useFriendNotifications() {
     socket.on('friend:request-accepted', handleFriendRequestAccepted);
     socket.on('friend:request-declined', handleFriendRequestDeclined);
 
-    console.log('👂 Écoute des événements de demandes d\'ami activée');
 
     // Nettoyer les listeners lors du démontage
     return () => {
       socket.off('friend:request-received', handleFriendRequestReceived);
       socket.off('friend:request-accepted', handleFriendRequestAccepted);
       socket.off('friend:request-declined', handleFriendRequestDeclined);
-      console.log('👂 Écoute des événements de demandes d\'ami désactivée');
     };
   }, [socket, isConnected, queryClient]);
 }

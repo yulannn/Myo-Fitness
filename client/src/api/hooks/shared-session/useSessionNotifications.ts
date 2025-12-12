@@ -11,7 +11,6 @@ export function useSessionNotifications() {
 
         // Écouter les invitations
         const handleInvitation = (data: any) => {
-            console.log('📅 [SESSION] Nouvelle invitation reçue:', data);
 
             // Invalider les queries pour mettre à jour la liste
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
@@ -23,26 +22,21 @@ export function useSessionNotifications() {
                     body: `${data.session.organizer.name} a créé "${data.session.title}"`,
                     icon: '/logo.png',
                 });
-            } else {
-                console.log('⚠️ Permissions de notification non accordées');
             }
         };
 
         // Écouter quand quelqu'un rejoint
         const handleUserJoined = (data: any) => {
-            console.log('✅ [SESSION] Utilisateur a rejoint:', data);
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 
         // Écouter quand quelqu'un quitte
         const handleUserLeft = (data: any) => {
-            console.log('❌ [SESSION] Utilisateur a quitté:', data);
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 
         // Écouter les suppressions
         const handleSessionDeleted = (data: any) => {
-            console.log('🗑️ [SESSION] Séance supprimée:', data);
             queryClient.invalidateQueries({ queryKey: ['sharedSessions'] });
         };
 

@@ -52,12 +52,10 @@ export const ChatSocketProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Événements de connexion
         newSocket.on('connect', () => {
-            console.log('✅ WebSocket chat connecté');
             setIsConnected(true);
         });
 
         newSocket.on('disconnect', () => {
-            console.log('❌ WebSocket chat déconnecté');
             setIsConnected(false);
         });
 
@@ -71,7 +69,6 @@ export const ChatSocketProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Cleanup lors du démontage
         return () => {
             if (socketRef.current) {
-                console.log('🔌 Déconnexion WebSocket chat');
                 socketRef.current.disconnect();
                 socketRef.current = null;
             }

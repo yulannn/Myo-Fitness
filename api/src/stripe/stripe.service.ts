@@ -115,8 +115,6 @@ export class StripeService {
             userId &&
             (!localSubscription || localSubscription.status !== 'ACTIVE')
         ) {
-            console.log(`⚠️  Webhook fallback: Activating subscription manually for user ${userId}`);
-
             try {
                 // Récupérer les détails de l'abonnement Stripe
                 const stripeSubscription = await this.stripe.subscriptions.retrieve(
@@ -152,7 +150,6 @@ export class StripeService {
                 // Rafraîchir les données locales
                 localSubscription = await this.subscriptionService.findByUserId(userId);
                 wasActivatedByFallback = true;
-                console.log(`✅ Subscription activated via fallback for user ${userId}`);
             } catch (error) {
                 console.error(`❌ Fallback activation failed for user ${userId}:`, error);
             }
@@ -208,7 +205,7 @@ export class StripeService {
                 break;
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                break;
         }
     }
 
@@ -219,8 +216,6 @@ export class StripeService {
     private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
         const userId = parseInt(session.metadata!.userId);
         const plan = session.metadata!.plan as 'monthly' | 'yearly';
-
-        console.log(`🔔 Webhook received: checkout.session.completed for user ${userId}`);
 
         // Mapper le plan vers le SubscriptionPlan Prisma
         const subscriptionPlan = plan === 'monthly' ? SubscriptionPlan.MONTHLY : SubscriptionPlan.YEARLY;
@@ -244,20 +239,16 @@ export class StripeService {
             throw new BadRequestException('Price validation failed: subscription does not match expected plan');
         }
 
-        console.log(`✅ Price validation passed for user ${userId}`);
-
         // Vérifier si l'abonnement existe déjà (éviter les doublons)
         const existingSubscription = await this.subscriptionService.findByUserId(userId);
 
         if (existingSubscription) {
             // Si l'abonnement existe déjà avec le même externalPaymentId, c'est un doublon
             if (existingSubscription.externalPaymentId === subscription.id) {
-                console.log(`⚠️  Subscription already activated for user ${userId} (webhook doublon ignored)`);
                 return;
             }
 
             // Sinon, mettre à jour l'abonnement existant
-            console.log(`🔄 Updating existing subscription for user ${userId}`);
             await this.subscriptionService.update(userId, {
                 plan: subscriptionPlan,
                 status: 'ACTIVE',
@@ -268,7 +259,6 @@ export class StripeService {
             });
         } else {
             // Créer un nouvel abonnement
-            console.log(`🆕 Creating new subscription for user ${userId}`);
             await this.subscriptionService.create(userId, {
                 plan: subscriptionPlan,
                 status: 'ACTIVE',
@@ -279,8 +269,6 @@ export class StripeService {
                 externalPaymentId: subscription.id,
             });
         }
-
-        console.log(`✅ Subscription activated for user ${userId} via webhook`);
     }
 
     /**
@@ -302,8 +290,6 @@ export class StripeService {
             startDate: new Date(subscription.current_period_start * 1000).toISOString(),
             endDate: new Date(subscription.current_period_end * 1000).toISOString(),
         });
-
-        console.log(`✅ Subscription updated for user ${userId}`);
     }
 
     /**
@@ -322,8 +308,6 @@ export class StripeService {
         }
 
         await this.subscriptionService.cancel(userId, 'stripe');
-
-        console.log(`❌ Subscription cancelled for user ${userId}`);
     }
 
     /**
@@ -331,7 +315,6 @@ export class StripeService {
      */
     private async handleInvoicePaymentSucceeded(invoice: any) {
         // Le paiement a réussi, l'abonnement est automatiquement renouvelé
-        console.log(`✅ Invoice paid for subscription ${invoice.subscription}`);
     }
 
     /**
@@ -339,6 +322,5 @@ export class StripeService {
      */
     private async handleInvoicePaymentFailed(invoice: any) {
         // Le paiement a échoué, vous pourriez vouloir notifier l'utilisateur
-        console.log(`❌ Invoice payment failed for subscription ${invoice.subscription}`);
     }
 }

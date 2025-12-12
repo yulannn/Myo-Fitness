@@ -13,7 +13,7 @@ export function useConversationRoom(conversationId: string | null) {
         // Rejoindre la room de la conversation
         socket.emit('conversation:join', { conversationId }, (response: any) => {
             if (response?.success) {
-                console.log(`✅ Joined conversation room: ${conversationId}`);
+
             }
         });
 
@@ -21,7 +21,7 @@ export function useConversationRoom(conversationId: string | null) {
         return () => {
             socket.emit('conversation:leave', { conversationId }, (response: any) => {
                 if (response?.success) {
-                    console.log(`👋 Left conversation room: ${conversationId}`);
+
                 }
             });
         };

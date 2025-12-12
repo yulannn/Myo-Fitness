@@ -168,14 +168,12 @@ export default function ActiveSession() {
             .map(perf => perf.savedPerformanceId!)
 
         if (performancesToDelete.length > 0) {
-            console.log('🗑️ Suppression de', performancesToDelete.length, 'performances')
 
             const deletePromises = performancesToDelete.map(
                 (performanceId) =>
                     new Promise((resolve, reject) => {
                         deletePerformance(performanceId, {
                             onSuccess: () => {
-                                console.log('✅ Performance supprimée:', performanceId)
                                 resolve(performanceId)
                             },
                             onError: (error) => {
@@ -188,7 +186,6 @@ export default function ActiveSession() {
 
             try {
                 await Promise.all(deletePromises)
-                console.log('✅ Toutes les performances ont été supprimées')
             } catch (error) {
                 console.error('❌ Erreur lors de la suppression des performances:', error)
                 alert('Certaines performances n\'ont pas pu être supprimées.')
@@ -240,7 +237,6 @@ export default function ActiveSession() {
 
         createPerformance(payload, {
             onSuccess: (data) => {
-                console.log('✅ Performance sauvegardée:', key, 'ID:', data.id_set)
                 // Marquer comme sauvegardé avec l'ID
                 markAsSaved(exerciceSessionId, setIndex, data.id_set)
             },

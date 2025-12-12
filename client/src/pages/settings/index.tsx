@@ -29,8 +29,8 @@ export default function Settings() {
     const handleChangePassword = () => navigate('/change-password');
     const handlePremium = () => navigate('/premium');
     const handlePrivacy = () => navigate('/privacy');
-    const handleNotifications = () => console.log('Notifications clicked');
-    const handleFeedback = () => console.log('Feedback clicked');
+    const handleNotifications = () => navigate('/notifications');
+    const handleFeedback = () => navigate('/feedback');
     const handleLogoutClick = () => setShowLogoutModal(true);
 
     const handleConfirmLogout = async () => {
