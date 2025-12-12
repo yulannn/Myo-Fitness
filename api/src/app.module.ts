@@ -29,9 +29,14 @@ import { EmailModule } from './email/email.module';
 import { DateSerializationInterceptor } from './common/interceptors/date-serialization.interceptor';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { StripeModule } from './stripe/stripe.module';
+import { LoggerModule } from './logger/logger.module';
+
 
 @Module({
   imports: [
+    // Logger en premier pour capturer tous les logs de l'application
+    LoggerModule,
+
     ConfigModule.forRoot({
       isGlobal: true,
     }),

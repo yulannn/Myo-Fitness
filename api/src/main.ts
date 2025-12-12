@@ -6,6 +6,8 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { json } from 'express';
 import { EnvValidationService } from './config/env-validation.service';
+import { Logger } from 'nestjs-pino';
+
 
 async function bootstrap() {
   // Valider les variables d'environnement AVANT de créer l'app
@@ -13,7 +15,15 @@ async function bootstrap() {
   envValidator.validateEnvironment();
   envValidator.validateOptionalEnvironment();
 
-  const app = await NestFactory.create(AppModule);
+  // Créer l'app avec le logger désactivé par défaut
+  // (On va utiliser Pino à la place)
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true, // Buffer les logs jusqu'à ce que Pino soit prêt
+  });
+
+  // Utiliser Pino comme logger global
+  app.useLogger(app.get(Logger));
+
 
   // Middleware pour préserver le raw body pour Stripe webhook
   // DOIT être avant le parsing JSON global
