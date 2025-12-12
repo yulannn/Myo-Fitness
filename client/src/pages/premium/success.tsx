@@ -10,7 +10,7 @@ export default function PremiumSuccess() {
     const [searchParams] = useSearchParams();
     const { refetchSubscription } = usePremium();
     const sessionId = searchParams.get('session_id');
-    const [isActivated, setIsActivated] = useState(false);
+
     const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
@@ -27,7 +27,12 @@ export default function PremiumSuccess() {
                 const result = await stripeService.verifySession(sessionId);
 
                 if (result.isActivated) {
-                    setIsActivated(true);
+                    if (result.wasActivatedByFallback) {
+                        console.log('✅ Subscription activated via fallback (webhook not available in local dev)');
+                    } else {
+                        console.log('✅ Subscription activated by webhook');
+                    }
+
                     setIsChecking(false);
                     // Rafraîchir les données d'abonnement
                     await refetchSubscription();

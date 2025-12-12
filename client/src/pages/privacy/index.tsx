@@ -14,7 +14,7 @@ import {
 
 export default function Privacy() {
     const navigate = useNavigate()
-    const [cookieConsent, setCookieConsent] = useState(true)
+
     const [analyticsConsent, setAnalyticsConsent] = useState(false)
     const [marketingConsent, setMarketingConsent] = useState(false)
 

@@ -9,7 +9,7 @@ interface AIInsightsProps {
   programs: any[];
 }
 
-export default function AIInsights({ sessions, programs }: AIInsightsProps) {
+export default function AIInsights({ sessions }: AIInsightsProps) {
   const insight = useMemo(() => {
     if (!sessions || sessions.length === 0) {
       return {

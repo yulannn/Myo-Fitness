@@ -9,18 +9,17 @@ import {
     ChatBubbleLeftRightIcon,
     ArrowRightOnRectangleIcon,
     KeyIcon,
-    ExclamationTriangleIcon,
-    XMarkIcon,
+
     SparklesIcon,
     ShieldCheckIcon,
     ChevronRightIcon,
-    CreditCardIcon
+
 } from '@heroicons/react/24/outline';
 
 export default function Settings() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { subscription, isPremium } = usePremium();
+    const { isPremium } = usePremium();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 

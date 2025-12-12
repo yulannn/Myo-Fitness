@@ -5,7 +5,6 @@ import type { FieldErrors } from '../../types/auth.type';
 import { ApiError } from '../../types/auth.type';
 import { useRegister, type RegisterFormValues } from '../../api/hooks/auth/useRegister';
 import { ValidationError } from '../../api/hooks/errors';
-import { useAuth } from '../../context/AuthContext'
 import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 const initialFormValues: RegisterFormValues = {
@@ -17,7 +16,7 @@ const initialFormValues: RegisterFormValues = {
 
 export default function Register() {
   const navigate = useNavigate();
-  const { applyAuthResult } = useAuth();
+
   const registerMutation = useRegister();
   const [formValues, setFormValues] = useState(initialFormValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -40,7 +39,7 @@ export default function Register() {
     setFormError(null)
 
     try {
-      const result = await registerMutation.mutateAsync(formValues)
+      await registerMutation.mutateAsync(formValues)
 
       // Ne plus connecter automatiquement, rediriger vers la vérification d'email
       setFormValues(initialFormValues)

@@ -1,4 +1,4 @@
-import { UsersIcon } from '@heroicons/react/24/outline';
+
 import { getImageUrl } from '../../utils/imageUtils';
 
 interface AvatarProps {
@@ -15,16 +15,11 @@ const sizeClasses = {
     xl: 'w-16 h-16',
 };
 
-const iconSizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
-    xl: 'h-8 w-8',
-};
+
 
 export default function Avatar({ imageUrl, name, size = 'md', className = '' }: AvatarProps) {
     const sizeClass = sizeClasses[size];
-    const iconSize = iconSizeClasses[size];
+
 
     // Générer une couleur basée sur la première lettre du nom
     const getColorFromName = (name: string) => {

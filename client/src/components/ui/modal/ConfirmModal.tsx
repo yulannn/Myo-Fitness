@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -83,8 +83,8 @@ export default function ConfirmModal({
                                     <button
                                         type="button"
                                         className={`inline-flex justify-center rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDestructive
-                                                ? 'bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500'
-                                                : 'bg-[#94fbdd] text-[#121214] hover:bg-[#7de3c7] focus-visible:ring-[#94fbdd]'
+                                            ? 'bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500'
+                                            : 'bg-[#94fbdd] text-[#121214] hover:bg-[#7de3c7] focus-visible:ring-[#94fbdd]'
                                             }`}
                                         onClick={onConfirm}
                                         disabled={isLoading}
