@@ -30,6 +30,7 @@ import { DateSerializationInterceptor } from './common/interceptors/date-seriali
 import { SubscriptionModule } from './subscription/subscription.module';
 import { StripeModule } from './stripe/stripe.module';
 import { LoggerModule } from './logger/logger.module';
+import { SentryTestController } from './config/sentry-test.controller';
 
 
 @Module({
@@ -73,7 +74,7 @@ import { LoggerModule } from './logger/logger.module';
     SubscriptionModule,
     StripeModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, SentryTestController],
   providers: [
     AppService,
     {

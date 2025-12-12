@@ -9,6 +9,10 @@ import { ChatSocketProvider } from './context/ChatSocketContext.tsx'
 import { PremiumProvider } from './contexts/PremiumContext.tsx'
 import './utils/forceLogout'
 import './config/firebase' // Initialize Firebase Analytics
+import { initializeSentry } from './config/sentry.config'
+
+// 🔴 IMPORTANT : Initialiser Sentry EN PREMIER pour capturer toutes les erreurs
+initializeSentry()
 
 const queryClient = new QueryClient()
 

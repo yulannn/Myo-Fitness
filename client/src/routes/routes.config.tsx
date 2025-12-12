@@ -16,6 +16,7 @@ import PremiumSuccess from "../pages/premium/success";
 import VerifyEmail from "../pages/verify-email";
 import Privacy from "../pages/privacy";
 import Onboarding from "../pages/onboarding";
+import SentryTestPage from "../pages/sentry-test";
 import type { ReactNode } from "react";
 import {
     HOME,
@@ -36,6 +37,7 @@ import {
     VERIFY_EMAIL,
     PRIVACY,
     ONBOARDING,
+    SENTRY_TEST,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -142,6 +144,12 @@ export const routes: AppRouteConfig[] = [
         path: RESET_PASSWORD,
         element: <ResetPassword />,
         redirectIfAuthenticated: true,
+        hideBottomNav: true
+    },
+    {
+        path: SENTRY_TEST,
+        element: <SentryTestPage />,
+        protected: false,
         hideBottomNav: true
     },
     {

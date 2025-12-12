@@ -7,9 +7,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { json } from 'express';
 import { EnvValidationService } from './config/env-validation.service';
 import { Logger } from 'nestjs-pino';
+import { initializeSentry } from './config/sentry.config';
 
 
 async function bootstrap() {
+  // 🔴 IMPORTANT : Initialiser Sentry EN PREMIER pour capturer toutes les erreurs
+  initializeSentry();
   // Valider les variables d'environnement AVANT de créer l'app
   const envValidator = new EnvValidationService();
   envValidator.validateEnvironment();
