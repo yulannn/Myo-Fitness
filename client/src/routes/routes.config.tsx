@@ -16,6 +16,9 @@ import PremiumSuccess from "../pages/premium/success";
 import VerifyEmail from "../pages/verify-email";
 import Privacy from "../pages/privacy";
 import Onboarding from "../pages/onboarding";
+import ChatsPage from "../pages/social/ChatsPage";
+import FriendsPage from "../pages/social/FriendsPage";
+import NotificationsPage from "../pages/social/NotificationsPage";
 import SentryTestPage from "../pages/sentry-test";
 import type { ReactNode } from "react";
 import {
@@ -37,6 +40,9 @@ import {
     VERIFY_EMAIL,
     PRIVACY,
     ONBOARDING,
+    SOCIAL_CHATS,
+    SOCIAL_FRIENDS,
+    SOCIAL_NOTIFICATIONS,
     SENTRY_TEST,
 } from "../utils/paths";
 
@@ -109,6 +115,21 @@ export const routes: AppRouteConfig[] = [
     {
         path: SOCIAL,
         element: <SocialPage />,
+        protected: true
+    },
+    {
+        path: SOCIAL_CHATS,
+        element: <ChatsPage />,
+        protected: true
+    },
+    {
+        path: SOCIAL_FRIENDS,
+        element: <FriendsPage />,
+        protected: true
+    },
+    {
+        path: SOCIAL_NOTIFICATIONS,
+        element: <NotificationsPage />,
         protected: true
     },
     {

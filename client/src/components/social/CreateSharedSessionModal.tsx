@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCreateSharedSession } from '../../api/hooks/shared-session/useSharedSessions';
-import { XMarkIcon, UsersIcon, MapPinIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, UsersIcon, MapPinIcon, CalendarDaysIcon, ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface CreateSharedSessionModalProps {
     isOpen: boolean;
@@ -8,6 +8,7 @@ interface CreateSharedSessionModalProps {
 }
 
 const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isOpen, onClose }) => {
+    const [step, setStep] = useState(1);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [startTime, setStartTime] = useState('');
@@ -20,7 +21,13 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title || !startTime) return;
+        if (step === 1) {
+            if (!title) return;
+            setStep(2);
+            return;
+        }
+
+        if (!startTime) return;
 
         createSession.mutate({
             title,
@@ -36,6 +43,7 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
     };
 
     const handleClose = () => {
+        setStep(1);
         setTitle('');
         setDescription('');
         setStartTime('');
@@ -45,129 +53,147 @@ const CreateSharedSessionModal: React.FC<CreateSharedSessionModalProps> = ({ isO
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-[#252527] p-6 shadow-2xl border border-[#94fbdd]/20 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-32 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5 relative mx-auto my-auto">
+
+                {/* Close Button */}
+                <button
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg z-10"
+                >
+                    <XMarkIcon className="h-6 w-6" />
+                </button>
 
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/10 rounded-xl">
-                            <UsersIcon className="h-6 w-6 text-purple-400" />
+                <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-2 bg-[#94fbdd]/10 rounded-lg">
+                            <UsersIcon className="h-6 w-6 text-[#94fbdd]" />
                         </div>
-                        <div>
-                            <h3 className="text-2xl font-bold text-white">
-                                Créer une séance partagée
-                            </h3>
-                            <p className="text-sm text-gray-400 mt-0.5">
-                                Invitez vos amis à s'entraîner ensemble
-                            </p>
-                        </div>
+                        <h3 className="text-xl font-bold text-white">
+                            {step === 1 ? "Détails de la séance" : "Date et Participants"}
+                        </h3>
                     </div>
-                    <button
-                        onClick={handleClose}
-                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-[#121214] rounded-lg"
-                    >
-                        <XMarkIcon className="h-6 w-6" />
-                    </button>
+                    {/* Progress Bar */}
+                    <div className="h-1 bg-gray-800 rounded-full mt-4 overflow-hidden">
+                        <div className={`h-full bg-[#94fbdd] transition-all duration-300 ease-out ${step === 1 ? 'w-1/2' : 'w-full'}`} />
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Title */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">
-                            Titre <span className="text-purple-400">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="w-full rounded-xl bg-[#121214] border border-purple-500/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
-                            placeholder="Ex: Séance Jambes Intense"
-                            required
-                        />
-                    </div>
 
-                    {/* Description */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">
-                            Description (optionnel)
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            className="w-full rounded-xl bg-[#121214] border border-purple-500/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all min-h-[100px] resize-none"
-                            placeholder="Détails sur la séance, niveau requis, matériel nécessaire..."
-                            rows={3}
-                        />
-                    </div>
+                    {step === 1 && (
+                        <div className="space-y-4 animate-in slide-in-from-right fade-in duration-300">
+                            {/* Title */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400">
+                                    Titre <span className="text-[#94fbdd]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    className="w-full rounded-lg bg-[#27272a] border border-white/5 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#94fbdd] focus:border-[#94fbdd] transition-all"
+                                    placeholder="Ex: Séance Jambes Intense"
+                                    autoFocus
+                                    required
+                                />
+                            </div>
 
-                    {/* Date and Time */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                            <CalendarDaysIcon className="h-4 w-4 text-purple-400" />
-                            Date et Heure <span className="text-purple-400">*</span>
-                        </label>
-                        <input
-                            type="datetime-local"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
-                            className="w-full rounded-xl bg-[#121214] border border-purple-500/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all [color-scheme:dark]"
-                            required
-                        />
-                    </div>
-
-                    {/* Location and Max Participants */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                                <MapPinIcon className="h-4 w-4 text-purple-400" />
-                                Lieu
-                            </label>
-                            <input
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                className="w-full rounded-xl bg-[#121214] border border-purple-500/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
-                                placeholder="Gym, Parc..."
-                            />
+                            {/* Description */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400">
+                                    Description (optionnel)
+                                </label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="w-full rounded-lg bg-[#27272a] border border-white/5 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#94fbdd] focus:border-[#94fbdd] transition-all min-h-[120px] resize-none"
+                                    placeholder="Détails sur la séance..."
+                                    rows={4}
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                                <UsersIcon className="h-4 w-4 text-purple-400" />
-                                Max Participants
-                            </label>
-                            <input
-                                type="number"
-                                min="2"
-                                value={maxParticipants}
-                                onChange={(e) => setMaxParticipants(e.target.value === '' ? '' : Number(e.target.value))}
-                                className="w-full rounded-xl bg-[#121214] border border-purple-500/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
-                                placeholder="Illimité"
-                            />
+                    )}
+
+                    {step === 2 && (
+                        <div className="space-y-4 animate-in slide-in-from-right fade-in duration-300">
+                            {/* Date and Time */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                                    <CalendarDaysIcon className="h-4 w-4 text-[#94fbdd]" />
+                                    Date et Heure <span className="text-[#94fbdd]">*</span>
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={startTime}
+                                    onChange={(e) => setStartTime(e.target.value)}
+                                    className="w-full max-w-full rounded-lg bg-[#27272a] border border-white/5 px-3 py-3 text-white focus:outline-none focus:ring-1 focus:ring-[#94fbdd] focus:border-[#94fbdd] transition-all [color-scheme:dark] text-sm"
+                                    required
+                                />
+                            </div>
+
+                            {/* Location and Max Participants */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                                        <MapPinIcon className="h-4 w-4 text-[#94fbdd]" />
+                                        Lieu
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={location}
+                                        onChange={(e) => setLocation(e.target.value)}
+                                        className="w-full rounded-lg bg-[#27272a] border border-white/5 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#94fbdd] focus:border-[#94fbdd] transition-all"
+                                        placeholder="Gym..."
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                                        <UsersIcon className="h-4 w-4 text-[#94fbdd]" />
+                                        Max
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="2"
+                                        value={maxParticipants}
+                                        onChange={(e) => setMaxParticipants(e.target.value === '' ? '' : Number(e.target.value))}
+                                        className="w-full rounded-lg bg-[#27272a] border border-white/5 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#94fbdd] focus:border-[#94fbdd] transition-all"
+                                        placeholder="Illimité"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Buttons */}
                     <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={handleClose}
-                            className="flex-1 rounded-xl border border-purple-500/20 bg-transparent px-4 py-3 text-sm font-semibold text-gray-300 hover:bg-[#121214] transition-all"
-                        >
-                            Annuler
-                        </button>
+                        {step === 2 && (
+                            <button
+                                type="button"
+                                onClick={() => setStep(1)}
+                                className="px-4 py-3 rounded-lg border border-white/10 bg-transparent text-gray-300 hover:bg-white/5 transition-all"
+                            >
+                                <ArrowLeftIcon className="h-5 w-5" />
+                            </button>
+                        )}
+
                         <button
                             type="submit"
-                            disabled={createSession.isPending}
-                            className="flex-1 rounded-xl px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-500 shadow-lg shadow-purple-500/20 hover:from-purple-500 hover:to-purple-400 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={createSession.isPending || (step === 1 && !title) || (step === 2 && !startTime)}
+                            className="flex-1 rounded-lg px-4 py-3 text-sm font-bold text-[#18181b] bg-[#94fbdd] hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {createSession.isPending ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Création...
-                                </span>
+                            {step === 1 ? (
+                                <>
+                                    Suivant <ArrowRightIcon className="h-4 w-4" />
+                                </>
                             ) : (
-                                'Créer la séance'
+                                createSession.isPending ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-[#18181b]/30 border-t-[#18181b] rounded-full animate-spin"></div>
+                                        Création...
+                                    </>
+                                ) : 'Créer la séance'
                             )}
                         </button>
                     </div>
