@@ -6,7 +6,7 @@ import 'react-day-picker/dist/style.css'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
 import type { Session } from '../../types/session.type'
-import { CalendarDaysIcon, ClockIcon, CheckCircleIcon, UsersIcon, MapPinIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { getImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
@@ -326,7 +326,7 @@ export default function Sessions() {
                 </div>
 
                 {/* Calendrier */}
-                <div className="bg-[#252527] rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 border border-[#94fbdd]/10">
+                <div className="bg-[#18181b] rounded-xl shadow-lg p-4 sm:p-6 border border-white/5">
                     <DayPicker
                         mode="single"
                         selected={selectedDate}
@@ -347,19 +347,14 @@ export default function Sessions() {
                             <h2 className="text-lg sm:text-xl font-bold text-white">
                                 {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
                             </h2>
-                            <span className={`px-4 py-2 rounded-xl font-semibold text-sm w-fit ${sessionsForSelectedDate.length > 0 && sharedSessionsForSelectedDate.length > 0
-                                ? 'bg-gradient-to-r from-[#94fbdd]/10 to-purple-500/10 border border-[#94fbdd]/30 text-white'
-                                : sharedSessionsForSelectedDate.length > 0
-                                    ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
-                                    : 'bg-[#94fbdd]/10 border border-[#94fbdd]/30 text-[#94fbdd]'
-                                }`}>
+                            <span className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/5 text-gray-400 border border-white/5">
                                 {sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length} séance{(sessionsForSelectedDate.length + sharedSessionsForSelectedDate.length) > 1 ? 's' : ''}
                             </span>
                         </div>
 
                         {sessionsForSelectedDate.length === 0 && sharedSessionsForSelectedDate.length === 0 ? (
-                            <div className="bg-[#252527] rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-[#94fbdd]/10">
-                                <CalendarDaysIcon className="h-12 w-12 sm:h-16 sm:w-16 text-gray-600 mx-auto mb-4" />
+                            <div className="bg-[#18181b] rounded-xl p-8 sm:p-12 text-center border border-white/5">
+                                <CalendarDaysIcon className="h-12 w-12 sm:h-16 sm:w-16 text-white mx-auto mb-4" />
                                 <p className="text-gray-400 font-medium">Aucune séance prévue</p>
                                 <p className="text-gray-500 text-sm mt-1">Sélectionnez une autre date</p>
                             </div>
@@ -375,10 +370,10 @@ export default function Sessions() {
                         )}
                     </div>
                 ) : (
-                    <div className="bg-[#252527] rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-[#94fbdd]/10">
-                        <CalendarDaysIcon className="h-12 w-12 sm:h-16 sm:w-16 text-[#94fbdd] mx-auto mb-4" />
+                    <div className="bg-[#18181b] rounded-xl p-8 sm:p-12 text-center border border-white/5">
+                        <CalendarDaysIcon className="h-12 w-12 sm:h-16 sm:w-16 text-white mx-auto mb-4" />
                         <p className="text-white font-semibold text-base sm:text-lg">Sélectionnez une date</p>
-                        <p className="text-gray-400 text-sm mt-1">
+                        <p className="text-gray-500 text-sm mt-1">
                             Cliquez sur une date du calendrier pour voir les séances
                         </p>
                     </div>
@@ -393,59 +388,47 @@ function SessionCard({ session }: { session: Session }) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <div className="bg-[#252527] rounded-2xl shadow-lg border border-[#94fbdd]/15 overflow-hidden transition-all hover:shadow-xl hover:border-[#94fbdd]/30">
+        <div className="bg-[#18181b] rounded-lg border border-white/5 overflow-hidden transition-all hover:border-white/10 group">
             {/* Header */}
             <div
-                className="p-4 sm:p-5 cursor-pointer"
+                className="p-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between sm:gap-4">
-                    <div className="flex-1 space-y-2 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base sm:text-lg font-bold text-white break-words">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-semibold text-white truncate">
                                 {session.trainingProgram?.name || 'Programme'}
                             </h3>
                             {session.completed && (
-                                <CheckCircleIcon className="h-5 w-5 text-[#94fbdd]/80 flex-shrink-0" />
+                                <CheckCircleIcon className="h-4 w-4 text-[#94fbdd]" />
                             )}
                         </div>
 
-                        {session.notes && (
-                            <p className="text-sm text-gray-400 break-words">{session.notes}</p>
+                        {(session.notes || session.duration || (session.exercices && session.exercices.length > 0)) && (
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                                {session.duration && (
+                                    <span>{session.duration} min</span>
+                                )}
+                                {(session.duration && session.exercices?.length) && <span>•</span>}
+                                {session.exercices && session.exercices.length > 0 && (
+                                    <span>{session.exercices.length} exercice{session.exercices.length > 1 ? 's' : ''}</span>
+                                )}
+                            </div>
                         )}
 
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                            {session.date && (
-                                <div className="flex items-center gap-1 text-gray-400">
-                                    <ClockIcon className="h-4 w-4 flex-shrink-0" />
-                                    <span>{format(new Date(session.date), 'HH:mm', { locale: fr })}</span>
-                                </div>
-                            )}
-
-                            {session.duration && (
-                                <span className="text-gray-400 font-medium">{session.duration} min</span>
-                            )}
-
-                            <div className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
-                                {session.exercices?.length || 0} exercice{(session.exercices?.length || 0) > 1 ? 's' : ''}
-                            </div>
-                        </div>
+                        {session.notes && (
+                            <p className="text-xs text-gray-600 line-clamp-1 mt-1">{session.notes}</p>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
-                        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${session.completed
-                            ? 'bg-[#94fbdd]/10 text-[#94fbdd]/90 border border-[#94fbdd]/20'
-                            : 'bg-gray-700/50 text-gray-400 border border-gray-600/50'
-                            }`}>
-                            {session.completed ? 'Complétée' : 'À venir'}
-                        </div>
-
+                    <div className="flex items-center gap-3">
                         {session.exercices && session.exercices.length > 0 && (
-                            <button className="text-gray-400 hover:text-[#94fbdd] transition-colors">
+                            <button className="text-gray-600 group-hover:text-gray-400 transition-colors bg-white/5 p-1.5 rounded-md">
                                 {isExpanded ? (
-                                    <ChevronUpIcon className="h-5 w-5" />
+                                    <ChevronUpIcon className="h-4 w-4" />
                                 ) : (
-                                    <ChevronDownIcon className="h-5 w-5" />
+                                    <ChevronDownIcon className="h-4 w-4" />
                                 )}
                             </button>
                         )}
@@ -455,11 +438,8 @@ function SessionCard({ session }: { session: Session }) {
 
             {/* Exercices expandable */}
             {isExpanded && session.exercices && session.exercices.length > 0 && (
-                <div className="border-t border-[#94fbdd]/10 bg-[#121214]">
-                    <div className="p-4 sm:p-5 space-y-3">
-                        <h4 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wide">
-                            {session.completed ? 'Performances réalisées' : 'Exercices planifiés'}
-                        </h4>
+                <div className="border-t border-white/5 bg-black/20">
+                    <div className="p-4 space-y-3">
                         <div className="space-y-2">
                             {session.exercices.map((ex: any, index: number) => {
                                 const hasPerformances = session.completed && ex.performances && ex.performances.length > 0
@@ -467,72 +447,39 @@ function SessionCard({ session }: { session: Session }) {
                                 return (
                                     <div
                                         key={index}
-                                        className="bg-[#252527] rounded-xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/20 transition-colors overflow-hidden"
+                                        className="bg-[#18181b] rounded-md border border-white/5 p-3"
                                     >
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border-b border-[#94fbdd]/5">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-white break-words">
+                                                <p className="text-sm font-medium text-white">
                                                     {ex.exercice?.name || `Exercice ${index + 1}`}
                                                 </p>
-                                                {ex.exercice?.groupes && ex.exercice.groupes.length > 0 && (
-                                                    <p className="text-xs text-gray-500 mt-0.5">
-                                                        {ex.exercice.groupes.map((g: any) => g.groupe.name).join(', ')}
-                                                    </p>
-                                                )}
                                             </div>
 
                                             {!hasPerformances && (
-                                                <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                                                    {ex.sets && (
-                                                        <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
-                                                            {ex.sets} séries
-                                                        </span>
-                                                    )}
-                                                    {ex.reps && (
-                                                        <span className="px-2 py-1 rounded-lg bg-gray-700/50 text-gray-300 font-medium whitespace-nowrap">
-                                                            {ex.reps} reps
-                                                        </span>
-                                                    )}
-                                                    {ex.weight && (
-                                                        <span className="px-2 py-1 rounded-lg bg-gray-600/50 text-gray-200 font-medium whitespace-nowrap">
-                                                            {ex.weight} kg
-                                                        </span>
-                                                    )}
+                                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                    {ex.sets && <span>{ex.sets} séries</span>}
+                                                    {ex.reps && <span>{ex.reps} reps</span>}
+                                                    {ex.weight && <span>{ex.weight} kg</span>}
                                                 </div>
                                             )}
                                         </div>
 
                                         {hasPerformances && (
-                                            <div className="bg-[#121214] p-3">
-                                                <div className="space-y-2">
-                                                    {ex.performances.map((perf: any, perfIndex: number) => (
-                                                        <div
-                                                            key={perfIndex}
-                                                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-[#252527] rounded-lg border border-[#94fbdd]/10"
-                                                        >
-                                                            <span className="text-xs font-medium text-gray-500">
-                                                                Série {perfIndex + 1}
-                                                            </span>
-                                                            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                                                                {perf.reps_effectuees && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd]/90 font-medium whitespace-nowrap">
-                                                                        {perf.reps_effectuees} reps
-                                                                    </span>
-                                                                )}
-                                                                {perf.weight && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-gray-700/50 text-gray-300 font-medium whitespace-nowrap">
-                                                                        {perf.weight} kg
-                                                                    </span>
-                                                                )}
-                                                                {perf.rpe && (
-                                                                    <span className="px-2 py-1 rounded-lg bg-gray-600/50 text-gray-200 font-medium text-xs whitespace-nowrap">
-                                                                        RPE: {perf.rpe}
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                            <div className="mt-3 space-y-1">
+                                                {ex.performances.map((perf: any, perfIndex: number) => (
+                                                    <div
+                                                        key={perfIndex}
+                                                        className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
+                                                    >
+                                                        <span>Série {perfIndex + 1}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
+                                                            {perf.weight && <span>{perf.weight} kg</span>}
+                                                            {perf.rpe && <span>RPE {perf.rpe}</span>}
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
@@ -548,57 +495,39 @@ function SessionCard({ session }: { session: Session }) {
 
 function SharedSessionCard({ session }: { session: any }) {
     return (
-        <div className="bg-[#252527] rounded-2xl shadow-lg border border-purple-500/15 overflow-hidden transition-all hover:shadow-xl hover:border-purple-500/30">
-            <div className="p-4 sm:p-5">
-                <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between sm:gap-4">
-                    <div className="flex-1 space-y-2 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <UsersIcon className="h-5 w-5 text-purple-400/80 flex-shrink-0" />
-                            <h3 className="text-base sm:text-lg font-bold text-white break-words">{session.title}</h3>
+        <div className="bg-[#18181b] rounded-lg border border-white/5 overflow-hidden transition-all hover:border-purple-500/20 group">
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                            <UsersIcon className="h-4 w-4 text-purple-400" />
+                            <h3 className="text-base font-semibold text-white truncate">{session.title}</h3>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                            {session.startTime && (
+                                <span>{format(new Date(session.startTime), 'HH:mm', { locale: fr })}</span>
+                            )}
+                            {(session.startTime && session.location) && <span>•</span>}
+                            {session.location && (
+                                <span className="truncate">{session.location}</span>
+                            )}
                         </div>
 
                         {session.description && (
-                            <p className="text-sm text-gray-400 break-words">{session.description}</p>
+                            <p className="text-xs text-gray-600 line-clamp-1 mt-1">{session.description}</p>
                         )}
 
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <div className="flex items-center gap-1 text-gray-400">
-                                <ClockIcon className="h-4 w-4 flex-shrink-0" />
-                                <span>{format(new Date(session.startTime), 'HH:mm', { locale: fr })}</span>
-                            </div>
-
-                            {session.location && (
-                                <div className="flex items-center gap-1 text-gray-400">
-                                    <MapPinIcon className="h-4 w-4 flex-shrink-0" />
-                                    <span className="break-words">{session.location}</span>
-                                </div>
-                            )}
-
-                            <div className="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400/90 font-medium whitespace-nowrap">
-                                {session.participants?.length || 0} / {session.maxParticipants || '∞'} participants
-                            </div>
-
-                            {session.group && (
-                                <div className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400/90 font-medium whitespace-nowrap">
-                                    {session.group.name}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2 border-t border-purple-500/10">
+                        <div className="pt-2 flex items-center gap-2">
                             <img
                                 src={getImageUrl(session.organizer?.profilePictureUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.organizer?.name || 'U')}&background=random`}
                                 alt={session.organizer?.name}
-                                className="h-6 w-6 rounded-full flex-shrink-0"
+                                className="h-5 w-5 rounded-full flex-shrink-0 opacity-70"
                             />
-                            <span className="text-xs text-gray-400 break-words">
-                                Organisé par <span className="font-medium text-gray-300">{session.organizer?.name}</span>
+                            <span className="text-xs text-gray-500">
+                                {session.organizer?.name}
                             </span>
                         </div>
-                    </div>
-
-                    <div className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/10 text-purple-400/90 border border-purple-500/20 whitespace-nowrap self-start">
-                        À venir
                     </div>
                 </div>
             </div>
