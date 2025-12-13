@@ -14,7 +14,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClo
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-4 pb-32"
             role="dialog"
             aria-modal="true"
         >
@@ -28,7 +28,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClo
                     "relative z-[100] w-full max-w-lg",
                     "rounded-3xl bg-[#252527]",
                     "shadow-2xl border border-[#94fbdd]/10",
-                    "max-h-[85vh]",
+                    "max-h-[80vh]",
                     "flex flex-col"
                 )}
             >

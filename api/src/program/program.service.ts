@@ -341,4 +341,50 @@ export class ProgramService {
         });
     }
 
+    async deleteProgram(programId: number, userId: number) {
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: { fitnessProfile: true },
+        });
+
+        if (!program) {
+            throw new BadRequestException('Programme introuvable');
+        }
+
+        this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
+
+        return this.prisma.$transaction(async (prisma) => {
+            // Prisma cascade delete should handle relations, but manual cleanup ensures data integrity
+            const sessions = await prisma.trainingSession.findMany({ where: { programId } });
+            for (const session of sessions) {
+                await prisma.exerciceSession.deleteMany({ where: { sessionId: session.id } });
+            }
+            await prisma.trainingSession.deleteMany({ where: { programId } });
+
+            return prisma.trainingProgram.delete({ where: { id: programId } });
+        });
+    }
+
+    async updateProgram(programId: number, dto: any, userId: number) {
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: { fitnessProfile: true },
+        });
+
+        if (!program) {
+            throw new BadRequestException('Programme introuvable');
+        }
+
+        this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
+
+        return this.prisma.trainingProgram.update({
+            where: { id: programId },
+            data: {
+                name: dto.name,
+                description: dto.description,
+            },
+            include: { sessions: { include: { exercices: true } } },
+        });
+    }
+
 }

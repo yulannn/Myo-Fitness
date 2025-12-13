@@ -45,7 +45,7 @@ export const ManualProgramModal = ({
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [numberOfSessions, setNumberOfSessions] = useState(1);
     const [sessions, setSessions] = useState<SessionData[]>([]);
-    const [currentStep, setCurrentStep] = useState<'info' | 'sessions'>('info');
+    const [currentStep, setCurrentStep] = useState<'basics' | 'settings' | 'sessions'>('basics');
 
     // Initialize sessions on mount and when number changes
     useEffect(() => {
@@ -125,7 +125,7 @@ export const ManualProgramModal = ({
         setStartDate(new Date().toISOString().split('T')[0]);
         setNumberOfSessions(1);
         setSessions([]);
-        setCurrentStep('info');
+        setCurrentStep('basics');
         onClose();
     };
 
@@ -135,16 +135,16 @@ export const ManualProgramModal = ({
                 <div className="flex items-center gap-2 justify-center">
                     <ClipboardDocumentListIcon className="h-6 w-6 text-[#94fbdd]" />
                     <ModalTitle>
-                        {currentStep === 'info'
-                            ? 'Créer un programme manuel'
-                            : 'Configurer les séances'}
+                        {currentStep === 'basics' && 'Informations (1/3)'}
+                        {currentStep === 'settings' && 'Paramètres (2/3)'}
+                        {currentStep === 'sessions' && 'Séances (3/3)'}
                     </ModalTitle>
                 </div>
             </ModalHeader>
 
             <ModalContent>
                 <div className="space-y-5 max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
-                    {currentStep === 'info' ? (
+                    {currentStep === 'basics' && (
                         <div className="space-y-5">
                             {/* Program Name */}
                             <div className="space-y-2">
@@ -159,6 +159,7 @@ export const ManualProgramModal = ({
                                     value={programName}
                                     onChange={(e) => setProgramName(e.target.value)}
                                     disabled={isPending}
+                                    autoFocus
                                 />
                             </div>
 
@@ -176,7 +177,11 @@ export const ManualProgramModal = ({
                                     disabled={isPending}
                                 />
                             </div>
+                        </div>
+                    )}
 
+                    {currentStep === 'settings' && (
+                        <div className="space-y-5">
                             {/* Start Date */}
                             <div className="space-y-2">
                                 <label htmlFor="program-start-date" className="text-sm font-medium text-gray-300">
@@ -220,7 +225,9 @@ export const ManualProgramModal = ({
                                 <p className="text-xs text-gray-500">Maximum 7 séances par semaine</p>
                             </div>
                         </div>
-                    ) : (
+                    )}
+
+                    {currentStep === 'sessions' && (
                         <div className="space-y-4">
                             {sessions.map((session, sessionIndex) => (
                                 <div key={sessionIndex} className="bg-[#121214] rounded-2xl p-4 border border-[#94fbdd]/10 space-y-4">
@@ -392,9 +399,9 @@ export const ManualProgramModal = ({
                 <div className="flex flex-col gap-3">
                     {/* First row: Back and Cancel buttons */}
                     <div className="flex gap-3">
-                        {currentStep === 'sessions' && (
+                        {currentStep !== 'basics' && (
                             <button
-                                onClick={() => setCurrentStep('info')}
+                                onClick={() => setCurrentStep(currentStep === 'sessions' ? 'settings' : 'basics')}
                                 disabled={isPending}
                                 className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
                             >
@@ -412,10 +419,10 @@ export const ManualProgramModal = ({
                     </div>
 
                     {/* Second row: Action button (Next or Create) */}
-                    {currentStep === 'info' ? (
+                    {currentStep !== 'sessions' ? (
                         <button
-                            onClick={() => setCurrentStep('sessions')}
-                            disabled={!programName.trim() || isPending}
+                            onClick={() => setCurrentStep(currentStep === 'basics' ? 'settings' : 'sessions')}
+                            disabled={(currentStep === 'basics' && !programName.trim()) || isPending}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Suivant

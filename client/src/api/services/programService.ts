@@ -36,6 +36,15 @@ export const ProgramFetchDataService = {
         const res = await api.patch<Program>(`/program/${programId}/status`, { status });
         return res.data;
     },
+
+    async updateProgram(programId: number, payload: any): Promise<Program> {
+        const res = await api.patch<Program>(`/program/${programId}`, payload);
+        return res.data;
+    },
+
+    async deleteProgram(programId: number): Promise<void> {
+        await api.delete(`/program/${programId}`);
+    },
 };
 
 export default ProgramFetchDataService;

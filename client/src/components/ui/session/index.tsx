@@ -2,9 +2,10 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
-import { CalendarIcon, ClockIcon, PlayIcon, CheckCircleIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import { CalendarIcon, ClockIcon, PlayIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
 import { EditSessionModal } from "../modal/EditSessionModal"
+import { StartSessionModal } from "../modal/StartSessionModal"
 import { DayPicker } from 'react-day-picker'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
@@ -19,6 +20,7 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
     const navigate = useNavigate()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isStartModalOpen, setIsStartModalOpen] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         session.date ? new Date(session.date) : undefined
@@ -46,20 +48,24 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
         }
     }
 
-    const handleStartSession = (e: React.MouseEvent) => {
+    const handleStartSessionClick = (e: React.MouseEvent) => {
         e.stopPropagation()
+        setIsStartModalOpen(true)
+    }
+
+    const handleConfirmStartSession = () => {
         localStorage.setItem('activeSession', JSON.stringify(session))
         localStorage.setItem('sessionStartTime', Date.now().toString())
+        setIsStartModalOpen(false)
         navigate('/active-session')
     }
 
     const formatDisplayDate = (date: string | undefined) => {
         if (!date) return null
         return new Date(date).toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
+            weekday: 'short',
             day: 'numeric',
+            month: 'short',
         })
     }
 
@@ -286,104 +292,63 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
     return (
         <>
             <style>{customStyles}</style>
-            <article
-                className={`
-                    rounded-2xl 
-                    bg-[#121214]
-                    border border-[#94fbdd]/10 
-                    shadow-lg
-                    transition-all 
-                    hover:shadow-xl
-                    hover:border-[#94fbdd]/30
-                    overflow-hidden
-                `}
-            >
-                {/* Header cliquable */}
+            <article className="relative rounded-lg bg-[#121214] border border-white/5 hover:border-white/10 transition-all overflow-hidden">
+                {/* Header */}
                 <div
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="p-4 sm:p-5 cursor-pointer hover:bg-[#94fbdd]/5 transition-colors"
+                    className="p-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
                 >
-                    <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-start sm:gap-4">
-                        <div className="flex-1 space-y-1">
-                            <div>
-                                {session.date ? (
-                                    <div className="flex items-center gap-2">
-                                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#94fbdd] flex-shrink-0" />
-                                        <div className="text-sm sm:text-base font-semibold text-white capitalize break-words">
-                                            {formatDisplayDate(session.date)}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
-                                        <div className="text-sm sm:text-base font-semibold text-gray-500 italic">
-                                            Aucune date planifiée
-                                        </div>
-                                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                            {/* Date */}
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                                <div className={`text-sm font-medium ${session.date ? 'text-white' : 'text-gray-600'}`}>
+                                    {session.date ? formatDisplayDate(session.date) : 'Non planifiée'}
+                                </div>
+                                {session.completed && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-400">
-                                <div className="flex items-center gap-1.5">
-                                    <ClockIcon className="h-4 w-4 flex-shrink-0" />
+                            {/* Info */}
+                            <div className="flex items-center gap-3 text-xs text-gray-600">
+                                <div className="flex items-center gap-1">
+                                    <ClockIcon className="h-3 w-3" />
                                     <span>{session.duration ?? "—"} min</span>
                                 </div>
                                 <span>•</span>
-                                <span>{(session.exercices ?? []).length} exercice{(session.exercices ?? []).length > 1 ? 's' : ''}</span>
+                                <span>{(session.exercices ?? []).length} ex.</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 justify-between sm:justify-end w-full sm:w-auto mt-3 sm:mt-0">
-                            <div
-                                className={`
-                                    px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0 flex items-center gap-1.5
-                                    ${session.completed
-                                        ? "bg-[#94fbdd]/10 text-[#94fbdd] border-[#94fbdd]/30"
-                                        : "bg-gray-700 text-gray-400 border-gray-600"
-                                    }
-                                `}
-                            >
-                                {session.completed && <CheckCircleIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                                <span className="whitespace-nowrap">{session.completed ? "Terminée" : "Prévue"}</span>
-                            </div>
-
-                            <div className="p-1.5 rounded-lg bg-[#252527] text-gray-400">
-                                {isExpanded ? (
-                                    <ChevronUpIcon className="h-5 w-5" />
-                                ) : (
-                                    <ChevronDownIcon className="h-5 w-5" />
-                                )}
-                            </div>
+                        {/* Expand icon */}
+                        <div className="p-1 text-gray-500">
+                            {isExpanded ? (
+                                <ChevronUpIcon className="h-4 w-4" />
+                            ) : (
+                                <ChevronDownIcon className="h-4 w-4" />
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Contenu détaillé (Accordéon) */}
+                {/* Expanded content */}
                 {isExpanded && (
-                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-[#94fbdd]/10 pt-4 animate-fadeIn">
+                    <div className="border-t border-white/5 p-3 space-y-3 bg-black/20">
+                        {/* Action Buttons */}
                         {!session.completed && !isArchived && (
-                            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                            <div className="grid grid-cols-3 gap-2">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         if (!isArchived) setIsModalOpen(true);
                                     }}
                                     disabled={isArchived}
-                                    className={`
-                                        flex-1 px-4 py-2.5 
-                                        rounded-xl
-                                        ${isArchived
-                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
-                                            : 'bg-[#252527] border border-[#94fbdd]/20 hover:bg-[#94fbdd]/10 hover:border-[#94fbdd]/40 text-[#94fbdd]'
-                                        }
-                                        font-semibold text-sm
-                                        transition-all
-                                        ${!isArchived && 'active:scale-95'}
-                                        flex items-center justify-center gap-2
-                                    `}
+                                    className="px-2 py-2 rounded text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                                 >
-                                    <CalendarIcon className="h-4 w-4" />
-                                    <span>{session.date ? 'Modifier date' : 'Planifier'}</span>
+                                    <CalendarIcon className="h-3.5 w-3.5" />
+                                    <span className="hidden sm:inline">Date</span>
                                 </button>
 
                                 <button
@@ -392,91 +357,61 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
                                         if (!isArchived) setIsEditModalOpen(true);
                                     }}
                                     disabled={isArchived}
-                                    className={`
-                                        flex-1 px-4 py-2.5 
-                                        rounded-xl
-                                        ${isArchived
-                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
-                                            : 'bg-[#252527] border border-yellow-500/20 hover:bg-yellow-500/10 hover:border-yellow-500/40 text-yellow-400'
-                                        }
-                                        font-semibold text-sm
-                                        transition-all
-                                        ${!isArchived && 'active:scale-95'}
-                                        flex items-center justify-center gap-2
-                                    `}
+                                    className="px-2 py-2 rounded text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                                 >
-                                    <PencilSquareIcon className="h-4 w-4" />
-                                    <span>Modifier</span>
+                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                    <span className="hidden sm:inline">Modifier</span>
                                 </button>
 
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (!isArchived) handleStartSession(e);
+                                        if (!isArchived) handleStartSessionClick(e);
                                     }}
                                     disabled={isArchived}
-                                    className={`
-                                        flex-1 px-4 py-2.5 
-                                        rounded-xl
-                                        ${isArchived
-                                            ? 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
-                                            : 'bg-[#94fbdd] hover:bg-[#94fbdd]/90 text-[#121214] shadow-lg shadow-[#94fbdd]/20 hover:shadow-xl hover:shadow-[#94fbdd]/30'
-                                        }
-                                        font-bold text-sm
-                                        transition-all
-                                        ${!isArchived && 'active:scale-95'}
-                                        flex items-center justify-center gap-2
-                                    `}
+                                    className="px-2 py-2 rounded text-xs font-medium bg-white/5 text-white hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                                 >
-                                    <PlayIcon className="h-4 w-4" />
-                                    <span>Démarrer</span>
+                                    <PlayIcon className="h-3.5 w-3.5" />
+                                    <span className="hidden sm:inline">Démarrer</span>
                                 </button>
                             </div>
                         )}
 
+                        {/* Notes */}
                         {session.notes && (
-                            <p
-                                className="
-                                    mb-4 p-3 rounded-xl text-xs sm:text-sm 
-                                    bg-[#252527] text-gray-300 
-                                    border border-[#94fbdd]/10
-                                    break-words
-                                "
-                            >
-                                <span className="font-medium text-[#94fbdd]">Notes :</span> {session.notes}
-                            </p>
+                            <div className="p-2 rounded bg-white/[0.02] border border-white/5">
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                    {session.notes}
+                                </p>
+                            </div>
                         )}
 
-                        <ul className="space-y-2">
-                            {(session.exercices ?? []).map((ex: any) => (
-                                <li
+                        {/* Exercise List */}
+                        <div className="space-y-1.5">
+                            {(session.exercices ?? []).map((ex: any, index: number) => (
+                                <div
                                     key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}
-                                    className="
-                                        flex items-start gap-2 sm:gap-3
-                                        p-3 rounded-xl
-                                        bg-[#252527]
-                                        border border-[#94fbdd]/10
-                                        hover:border-[#94fbdd]/30
-                                        transition
-                                    "
+                                    className="flex items-center gap-2 p-2 rounded bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors"
                                 >
-                                    <div
-                                        className="h-2 w-2 rounded-full mt-1.5 sm:mt-2 shrink-0 bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/50"
-                                    />
+                                    <div className="flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/5 text-gray-500 flex-shrink-0">
+                                        {index + 1}
+                                    </div>
 
-                                    <div className="text-xs sm:text-sm flex-1 min-w-0">
-                                        <div className="font-semibold text-white break-words">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium text-white truncate">
                                             {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
                                         </div>
-                                        <div className="text-gray-400 mt-0.5">
-                                            {ex.reps && `${ex.reps} reps`}
-                                            {ex.reps && ex.sets && " • "}
-                                            {ex.sets && `${ex.sets} sets`}
-                                        </div>
                                     </div>
-                                </li>
+
+                                    {(ex.sets || ex.reps) && (
+                                        <div className="flex items-center gap-2 text-[11px] text-gray-500 flex-shrink-0">
+                                            {ex.sets && <span>{ex.sets}×</span>}
+                                            {ex.reps && <span>{ex.reps}</span>}
+                                        </div>
+                                    )}
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </div>
                 )}
             </article>
@@ -541,6 +476,14 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
                 onClose={() => setIsEditModalOpen(false)}
                 session={session}
                 availableExercises={availableExercises}
+            />
+
+            {/* Start Session Modal */}
+            <StartSessionModal
+                isOpen={isStartModalOpen}
+                onClose={() => setIsStartModalOpen(false)}
+                onConfirm={handleConfirmStartSession}
+                sessionDate={session.date}
             />
         </>
     )

@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { SessionCard } from '../session';
 import { ProgramStatusModal } from '../modal/ProgramStatusModal';
+import { DeleteProgramModal } from '../modal/DeleteProgramModal';
+import { EditProgramModal } from '../modal/EditProgramModal';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
+import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
+import useUpdateProgram from '../../../api/hooks/program/useUpdateProgram';
 
 interface ProgramCardProps {
   program: any;
@@ -16,7 +20,12 @@ interface ProgramCardProps {
 export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, sortSessions, activeProgram }: ProgramCardProps) => {
   const hasSession = program.sessions && program.sessions.length > 0;
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateProgramStatus();
+  const { mutate: deleteProgram, isPending: isDeleting } = useDeleteProgram();
+  const { mutate: updateProgram, isPending: isUpdating } = useUpdateProgram();
+
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const isActive = program.status === 'ACTIVE';
   const showSessions = hasSession && (isActive || isExpanded);
@@ -33,62 +42,115 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
     });
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteProgram(program.id, {
+      onSuccess: () => setIsDeleteModalOpen(false)
+    });
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = (data: { name: string; description: string }) => {
+    updateProgram({ programId: program.id, payload: data }, {
+      onSuccess: () => setIsEditModalOpen(false)
+    });
+  };
+
   return (
     <>
-      <div className="relative bg-[#18181b] rounded-2xl border border-white/5 overflow-hidden transition-all hover:border-white/10">
-
+      <div
+        className={`
+          relative overflow-hidden rounded-lg
+          bg-[#18181b] border transition-all
+          ${isActive
+            ? 'border-white/10 hover:border-white/20'
+            : 'border-white/5 hover:border-white/10'
+          }
+        `}
+      >
         {/* Header */}
         <div
           onClick={isActive ? undefined : onToggleExpand}
-          className={`relative w-full p-5 text-left transition-colors ${!isActive ? 'cursor-pointer hover:bg-white/5' : ''}`}
+          className={`relative p-4 ${!isActive ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-xl font-bold text-white tracking-tight">{program.name}</h2>
-                <div className={`px-2.5 py-1 rounded-md font-medium text-xs whitespace-nowrap ${isActive
-                  ? 'bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/20'
-                  : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                  }`}>
-                  {isActive ? 'En cours' : 'Archivé'}
-                </div>
-              </div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-2">
+              {/* Title */}
+              <h2 className={`text-base font-semibold truncate ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                {program.name}
+              </h2>
 
+              {/* Description */}
               {program.description && (
-                <p className="text-sm text-gray-400 line-clamp-2">{program.description}</p>
+                <p className="text-sm text-gray-500 line-clamp-1">
+                  {program.description}
+                </p>
               )}
 
-              <div className="flex items-center gap-3 text-xs font-medium text-gray-500 pt-1">
-                <span>{program.sessions?.length || 0} séance{(program.sessions?.length || 0) > 1 ? 's' : ''}</span>
-                <span className="text-gray-700">•</span>
-                <span>Créé le {program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
+              {/* Metadata */}
+              <div className="flex items-center gap-3 text-xs text-gray-600">
+                <div className="flex items-center gap-1.5">
+                  <CalendarDaysIcon className="h-3.5 w-3.5" />
+                  <span>{program.sessions?.length || 0} séance{(program.sessions?.length || 0) > 1 ? 's' : ''}</span>
+                </div>
+                <span>•</span>
+                <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 items-end pt-1">
-              <div
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleEditClick}
+                disabled={isUpdatingStatus || isDeleting || isUpdating}
+                className="p-1.5 rounded text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+                title="Modifier"
+              >
+                <PencilSquareIcon className="h-4 w-4" />
+              </button>
+
+              <button
                 onClick={handleStatusClick}
-                className={`p-2 rounded-lg transition-all cursor-pointer ${isActive
-                  ? 'text-gray-500 hover:text-white hover:bg-white/10'
-                  : 'text-[#94fbdd] hover:bg-[#94fbdd]/10'
-                  }`}
-                title={isActive ? "Archiver le programme" : "Désarchiver le programme"}
+                disabled={isUpdatingStatus || isDeleting || isUpdating}
+                className="p-1.5 rounded text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+                title={isActive ? "Archiver" : "Désarchiver"}
               >
                 {isUpdatingStatus ? (
-                  <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 border border-current border-t-transparent rounded-full animate-spin" />
                 ) : isActive ? (
-                  <ArchiveBoxIcon className="h-5 w-5" />
+                  <ArchiveBoxIcon className="h-4 w-4" />
                 ) : (
-                  <ArrowUturnLeftIcon className="h-5 w-5" />
+                  <ArrowUturnLeftIcon className="h-4 w-4" />
                 )}
-              </div>
+              </button>
+
+              <button
+                onClick={handleDeleteClick}
+                disabled={isUpdatingStatus || isDeleting || isUpdating}
+                className="p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                title="Supprimer"
+              >
+                {isDeleting ? (
+                  <div className="h-4 w-4 border border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <TrashIcon className="h-4 w-4" />
+                )}
+              </button>
 
               {hasSession && !isActive && (
-                <div className="flex-shrink-0 p-2 rounded-lg text-gray-400 bg-white/5">
+                <div className="p-1.5 text-gray-500">
                   {isExpanded ? (
-                    <ChevronUpIcon className="h-5 w-5" />
+                    <ChevronUpIcon className="h-4 w-4" />
                   ) : (
-                    <ChevronDownIcon className="h-5 w-5" />
+                    <ChevronDownIcon className="h-4 w-4" />
                   )}
                 </div>
               )}
@@ -96,18 +158,9 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
           </div>
         </div>
 
-        {/* Message pour programmes archivés */}
-        {!isActive && (
-          <div className="px-5 py-2 bg-zinc-900/50 border-y border-white/5">
-            <p className="text-xs text-gray-500 font-medium">
-              Lecture seule
-            </p>
-          </div>
-        )}
-
         {/* Sessions */}
         {showSessions && (
-          <div className="relative border-t border-white/5 p-5 space-y-4 bg-black/20">
+          <div className="border-t border-white/5 p-4 space-y-3 bg-black/20">
             {sortSessions(program.sessions).map((session: any) => (
               <SessionCard
                 key={session.id ?? `session-${program.id}-${session.date}`}
@@ -120,8 +173,8 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         )}
 
         {!hasSession && (
-          <div className="relative border-t border-white/5 p-6 text-center bg-black/20">
-            <p className="text-sm text-gray-500">Aucune séance dans ce programme.</p>
+          <div className="border-t border-white/5 p-6 text-center bg-black/20">
+            <p className="text-xs text-gray-600">Aucune séance</p>
           </div>
         )}
       </div>
@@ -133,6 +186,22 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         program={program}
         activeProgram={activeProgram}
         isPending={isUpdatingStatus}
+      />
+
+      <DeleteProgramModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        programName={program.name}
+        isPending={isDeleting}
+      />
+
+      <EditProgramModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onConfirm={handleConfirmEdit}
+        program={program}
+        isPending={isUpdating}
       />
     </>
   );

@@ -191,43 +191,41 @@ const Program = () => {
 
         {/* Tabs - Actifs / Archivés */}
         {programs.length > 0 && (
-          <div className="flex justify-center items-center gap-2  p-1 bg-[#18181b] rounded-xl border border-white/5 w-auto">
+          <div className="inline-flex gap-2">
             <button
               onClick={() => setActiveTab('active')}
-              className={`px-4 w-full py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'active'
-                ? 'bg-[#27272a] text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'active'
+                ? 'bg-white/10 text-white'
+                : 'text-gray-500 hover:text-gray-300'
                 }`}
             >
-              Actifs <span className="ml-1 text-xs opacity-60">({activePrograms.length})</span>
+              Actifs <span className="text-xs opacity-50">({activePrograms.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('archived')}
-              className={`px-4 w-full py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'archived'
-                ? 'bg-[#27272a] text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'archived'
+                ? 'bg-white/10 text-white'
+                : 'text-gray-500 hover:text-gray-300'
                 }`}
             >
-              Archivés <span className="ml-1 text-xs opacity-60">({archivedPrograms.length})</span>
+              Archivés <span className="text-xs opacity-50">({archivedPrograms.length})</span>
             </button>
           </div>
         )}
 
         {/* Programs List */}
         {programs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-white/10 rounded-3xl bg-[#18181b]/50">
-            <div className="w-16 h-16 bg-[#27272a] rounded-2xl flex items-center justify-center mb-4">
-              <SparklesIcon className="h-8 w-8 text-gray-500" />
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center mb-3">
+              <SparklesIcon className="h-6 w-6 text-gray-600" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Aucun programme pour le moment</h3>
-            <p className="text-gray-400 max-w-sm mb-6">
-              Créez votre premier programme pour commencer à tracker vos séances et exercices.
-            </p>
+            <h3 className="text-base font-semibold text-white mb-1">Aucun programme</h3>
+            <p className="text-sm text-gray-500 mb-4">Créez votre premier programme</p>
             <button
               onClick={openAddFlow}
-              className="px-6 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-white font-medium rounded-xl border border-white/5 transition-colors"
+              className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              Créer un programme
+              Nouveau programme
             </button>
           </div>
         ) : (
@@ -245,9 +243,9 @@ const Program = () => {
             ))}
 
             {(activeTab === 'active' ? activePrograms : archivedPrograms).length === 0 && (
-              <div className="flex flex-col items-center py-16 text-center">
-                <ArchiveBoxIcon className="h-12 w-12 text-gray-600 mb-3" />
-                <p className="text-gray-500 font-medium">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}.</p>
+              <div className="flex flex-col items-center py-12 text-center">
+                <ArchiveBoxIcon className="h-10 w-10 text-gray-700 mb-2" />
+                <p className="text-sm text-gray-500">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}</p>
               </div>
             )}
           </div>
@@ -322,6 +320,7 @@ const Program = () => {
 
       <Modal
         isOpen={automaticOpen}
+        showClose={false}
         onClose={() => {
           setAutomaticOpen(false);
           setSelectedProfileId('');
@@ -369,7 +368,7 @@ const Program = () => {
             <input
               id="program-start-date"
               type="date"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
+              className="w-full min-w-0 appearance-none rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
               defaultValue={new Date().toISOString().split('T')[0]}
               onChange={(e) =>
                 (automaticProgramStartDateRef.current = e.target.value)

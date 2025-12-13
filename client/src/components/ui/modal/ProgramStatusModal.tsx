@@ -23,30 +23,30 @@ export const ProgramStatusModal: React.FC<ProgramStatusModalProps> = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalContent className="max-w-md">
+            <ModalContent className="max-w-md mx-4">
                 <ModalHeader>
-                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${isActivating ? 'bg-[#94fbdd]/10' : 'bg-yellow-500/10'} mb-4`}>
+                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl ${isActivating ? 'bg-[#94fbdd]/10 border border-[#94fbdd]/20' : 'bg-[#94fbdd]/10 border border-[#94fbdd]/20'} mb-4`}>
                         {isActivating ? (
                             <ArrowUturnLeftIcon className="h-6 w-6 text-[#94fbdd]" aria-hidden="true" />
                         ) : (
-                            <ArchiveBoxIcon className="h-6 w-6 text-yellow-500" aria-hidden="true" />
+                            <ArchiveBoxIcon className="h-6 w-6 text-[#94fbdd]" aria-hidden="true" />
                         )}
                     </div>
-                    <ModalTitle className="text-center">
+                    <ModalTitle className="text-center text-lg sm:text-xl">
                         {isActivating ? 'Activer ce programme ?' : 'Archiver ce programme ?'}
                     </ModalTitle>
                 </ModalHeader>
 
-                <div className="mt-2 text-center">
-                    <p className="text-sm text-gray-400">
+                <div className="px-4 sm:px-6 pb-4">
+                    <p className="text-sm sm:text-base text-gray-400 text-center leading-relaxed">
                         {isActivating ? (
                             <>
-                                Vous êtes sur le point d'activer <strong>{program.name}</strong>.
+                                Vous êtes sur le point d'activer <strong className="text-white">{program.name}</strong>.
                                 {activeProgram && (
-                                    <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-left">
+                                    <div className="mt-4 p-3 bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-lg text-left">
                                         <div className="flex gap-2">
-                                            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500 flex-shrink-0" />
-                                            <span className="text-yellow-200 text-xs">
+                                            <ExclamationTriangleIcon className="h-5 w-5 text-[#94fbdd] flex-shrink-0 mt-0.5" />
+                                            <span className="text-[#94fbdd] text-xs sm:text-sm">
                                                 Attention : Le programme actuel <strong>{activeProgram.name}</strong> sera automatiquement archivé.
                                             </span>
                                         </div>
@@ -55,18 +55,20 @@ export const ProgramStatusModal: React.FC<ProgramStatusModalProps> = ({
                             </>
                         ) : (
                             <>
-                                Le programme <strong>{program.name}</strong> sera déplacé dans vos archives.
-                                <br className="mb-2" />
-                                Vous ne pourrez plus lancer de séances tant qu'il ne sera pas réactivé.
+                                Le programme <strong className="text-white">{program.name}</strong> sera déplacé dans vos archives.
+                                <br />
+                                <span className="text-xs sm:text-sm">
+                                    Vous ne pourrez plus lancer de séances tant qu'il ne sera pas réactivé.
+                                </span>
                             </>
                         )}
                     </p>
                 </div>
 
-                <ModalFooter className="sm:justify-center gap-3 mt-6">
+                <ModalFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
                     <button
                         type="button"
-                        className="inline-flex w-full justify-center rounded-xl bg-[#252527] px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-700 hover:bg-gray-700 sm:w-auto transition-colors"
+                        className="w-full sm:flex-1 px-4 py-2.5 rounded-lg bg-[#252527] text-white text-sm font-semibold hover:bg-[#2a2a2d] border border-white/10 transition-colors disabled:opacity-50"
                         onClick={onClose}
                         disabled={isPending}
                     >
@@ -74,17 +76,20 @@ export const ProgramStatusModal: React.FC<ProgramStatusModalProps> = ({
                     </button>
                     <button
                         type="button"
-                        className={`inline-flex w-full justify-center rounded-xl px-3 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-all ${isActivating
-                                ? 'bg-[#94fbdd] text-[#121214] hover:bg-[#94fbdd]/90 shadow-[#94fbdd]/20'
-                                : 'bg-yellow-500 text-white hover:bg-yellow-400 shadow-yellow-500/20'
+                        className={`w-full sm:flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 ${isActivating
+                            ? 'bg-[#94fbdd] text-[#121214] hover:bg-[#94fbdd]/90'
+                            : 'bg-[#94fbdd] text-[#121214] hover:bg-[#94fbdd]/90'
                             }`}
                         onClick={onConfirm}
                         disabled={isPending}
                     >
                         {isPending ? (
-                            <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                <span>Traitement...</span>
+                            </div>
                         ) : (
-                            isActivating ? 'Confirmer l\'activation' : 'Confirmer l\'archivage'
+                            isActivating ? "Confirmer l'activation" : "Confirmer l'archivage"
                         )}
                     </button>
                 </ModalFooter>

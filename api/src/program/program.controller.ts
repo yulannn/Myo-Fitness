@@ -27,6 +27,7 @@ import { ExerciseDataDto, SessionDataWrapperDto } from './dto/session-data.dto';
 import { CreateManualProgramDto } from './dto/create-manual-program.dto';
 import { AddSessionToProgramDto } from './dto/add-session-program.dto';
 import { UpdateProgramStatusDto } from './dto/update-program-status.dto';
+import { UpdateTrainingProgramDto } from './dto/update-program.dto';
 
 @ApiTags('program')
 @ApiBearerAuth()
@@ -148,5 +149,33 @@ export class ProgramController {
   ) {
     const userId = req.user.userId;
     return this.programService.updateProgramStatus(programId, updateStatusDto.status, userId);
+  }
+
+  @Patch(':programId')
+  @ApiOperation({ summary: 'Mettre à jour un programme d’entraînement' })
+  @ApiBody({ type: UpdateTrainingProgramDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Programme mis à jour avec succès',
+    type: TrainingProgramEntity,
+  })
+  update(
+    @Param('programId', ParseIntPipe) programId: number,
+    @Body() updateProgramDto: UpdateTrainingProgramDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.programService.updateProgram(programId, updateProgramDto, userId);
+  }
+
+  @Delete(':programId')
+  @ApiOperation({ summary: 'Supprimer un programme d’entraînement' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programme supprimé avec succès',
+  })
+  remove(@Param('programId', ParseIntPipe) programId: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.programService.deleteProgram(programId, userId);
   }
 }
