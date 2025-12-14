@@ -188,12 +188,12 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         )}
 
         {/* Add session */}
-        {hasSession && (
+        {hasSession && isActive && (
           <div className="flex items-center justify-center border-t border-white/5 p-6 text-center bg-black/20">
             <button
               onClick={handleAddSessionClick}
               disabled={isUpdatingStatus || isDeleting || isUpdating || isAddingSession}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#94fbdd] font-semibold rounded-lg text-black hover:bg-[#94fbdd]/90 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200"
             >
               <PlusIcon className="h-4 w-4" />
               Ajouter une séance

@@ -8,7 +8,6 @@ import {
     InformationCircleIcon,
     TrashIcon,
     PlusIcon,
-    UserPlusIcon,
     CheckIcon
 } from '@heroicons/react/24/outline';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';

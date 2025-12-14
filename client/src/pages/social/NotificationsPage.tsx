@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, UserPlusIcon, UserGroupIcon, CheckIcon, XMarkIcon, BellIcon } from '@heroicons/react/24/outline';
 import useGetPendingFriendRequests from '../../api/hooks/friend/useGetPendingFriendRequests';

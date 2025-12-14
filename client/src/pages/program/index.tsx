@@ -2,7 +2,7 @@ import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
 import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
 import useExercicesByUser from '../../api/hooks/exercice/useGetExercicesByUser';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import {
   Modal,
   ModalFooter,
@@ -46,17 +46,7 @@ const Program = () => {
     [programs]
   );
 
-  // Ouvrir automatiquement les programmes actifs par défaut
-  useEffect(() => {
-    if (activePrograms.length > 0) {
-      const activeIds = activePrograms.map((p: any) => p.id);
-      setExpandedPrograms(prev => {
-        const newSet = new Set(prev);
-        activeIds.forEach((id: number) => newSet.add(id));
-        return newSet;
-      });
-    }
-  }, [activePrograms]);
+
 
   const hasActiveProgram = activePrograms.length > 0;
   const activeProgram = activePrograms[0]; // Le premier programme actif (il ne devrait y en avoir qu'un)
