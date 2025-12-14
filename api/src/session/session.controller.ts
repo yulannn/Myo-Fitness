@@ -100,6 +100,37 @@ export class SessionController {
     return this.sessionService.updateDate(Number(id), updateSessionDateDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/sessionName')
+  @ApiOperation({ summary: 'Mettre à jour le nom d\'une session' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la session à mettre à jour',
+    type: Number,
+  })
+  @ApiBody({
+    description: 'Nouveau nom pour la session',
+    schema: {
+      type: 'object',
+      properties: {
+        sessionName: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Nom de session mis à jour avec succès',
+  })
+  @ApiResponse({ status: 404, description: 'Session non trouvée' })
+  updateSessionName(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('sessionName') sessionName: string,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.updateSessionName(id, sessionName, userId);
+  }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('delete-exercise/:sessionId/:exerciceId')

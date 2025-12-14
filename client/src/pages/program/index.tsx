@@ -191,10 +191,10 @@ const Program = () => {
 
         {/* Tabs - Actifs / Archivés */}
         {programs.length > 0 && (
-          <div className="inline-flex gap-2">
+          <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => setActiveTab('active')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'active'
+              className={`px-4 py-2 w-full rounded-lg text-sm font-medium transition-colors ${activeTab === 'active'
                 ? 'bg-white/10 text-white'
                 : 'text-gray-500 hover:text-gray-300'
                 }`}
@@ -203,7 +203,7 @@ const Program = () => {
             </button>
             <button
               onClick={() => setActiveTab('archived')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'archived'
+              className={`px-4 py-2 w-full rounded-lg text-sm font-medium transition-colors ${activeTab === 'archived'
                 ? 'bg-white/10 text-white'
                 : 'text-gray-500 hover:text-gray-300'
                 }`}

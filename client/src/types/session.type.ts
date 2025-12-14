@@ -11,7 +11,7 @@ export interface Session {
     date?: string;
     performedAt?: string;
     duration?: number;
-    notes?: string | null;
+    sessionName?: string | null;
     exercices?: any[];
     trainingProgram?: any;
     completed: boolean;

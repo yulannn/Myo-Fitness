@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from './index';
-import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import type { Session } from '../../../types/session.type';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import SessionService from '../../../api/services/sessionService';
@@ -28,9 +28,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
     const [exercises, setExercises] = useState<ExerciseRow[]>([]);
     const [isAddingExercise, setIsAddingExercise] = useState(false);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
+    const [sessionName, setSessionName] = useState<string>('');
+    const [hasSessionNameChanged, setHasSessionNameChanged] = useState(false);
     const queryClient = useQueryClient();
 
-    // Initialize exercises from session
+    // Initialize exercises and sessionName from session
     useEffect(() => {
         if (session.exercices) {
             const mappedExercises: ExerciseRow[] = session.exercices.map((ex: any) => ({
@@ -46,11 +48,20 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
             }));
             setExercises(mappedExercises);
         }
+        setSessionName(session.sessionName ?? '');
+        setHasSessionNameChanged(false);
     }, [session, isOpen]);
 
     const saveMutation = useMutation({
         mutationFn: async () => {
             const promises = [];
+
+            // Update sessionName if changed
+            if (hasSessionNameChanged) {
+                promises.push(
+                    SessionService.updateSessionName(session.id, sessionName)
+                );
+            }
 
             // Delete exercises marked for deletion
             for (const exercise of exercises.filter(ex => ex.toDelete && !ex.isNew)) {
@@ -176,6 +187,29 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
             <ModalContent>
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
+
+                    {/* Notes Section */}
+                    <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <DocumentTextIcon className="h-5 w-5 text-[#94fbdd]" />
+                            <h4 className="text-white font-semibold">Nom de la séance</h4>
+                            {hasSessionNameChanged && (
+                                <span className="ml-auto text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-lg">
+                                    Modifié
+                                </span>
+                            )}
+                        </div>
+                        <input
+                            value={sessionName}
+                            onChange={(e) => {
+                                setSessionName(e.target.value);
+                                setHasSessionNameChanged(true);
+                            }}
+                            placeholder="Donnez un nom à cette séance... (ex: Séance Pectoraux, Push Day, etc.)"
+                            className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 resize-none transition-all"
+                        />
+                    </div>
+
                     {/* Exercises List */}
                     {visibleExercises.map((exercise) => {
                         // Get the real index in the full exercises array

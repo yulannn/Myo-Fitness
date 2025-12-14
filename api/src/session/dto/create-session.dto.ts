@@ -27,10 +27,10 @@ export class CreateTrainingSessionDto {
   duration?: number;
 
   @ApiPropertyOptional({
-    description: 'Notes ou commentaires sur la séance',
+    description: 'Nom de la séance',
     example: 'Travail sur les jambes, focus squat et fentes',
   })
   @IsOptional()
   @IsString()
-  notes?: string;
+  sessionName?: string;
 }

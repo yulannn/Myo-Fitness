@@ -137,7 +137,7 @@ export class ProgramService {
                 const createdSession = await prisma.trainingSession.create({
                     data: {
                         programId: createdProgram.id,
-                        notes: session.name,
+                        sessionName: session.name,
                         date: sessionDate, // null si pas de planification auto
                     },
                 });
@@ -211,7 +211,7 @@ export class ProgramService {
                 const createdSession = await prisma.trainingSession.create({
                     data: {
                         programId: createdProgram.id,
-                        notes: session.name ?? '',
+                        sessionName: session.name ?? '',
                         date: sessionDate, // null si pas de planification auto
                     },
                 });
@@ -260,7 +260,7 @@ export class ProgramService {
 
         return this.prisma.$transaction(async (prisma) => {
             const createdSession = await prisma.trainingSession.create({
-                data: { programId, notes: sessionData.name ?? '' },
+                data: { programId, sessionName: sessionData.name ?? '' },
             });
 
             for (const ex of sessionData.exercises) {

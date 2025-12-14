@@ -3,7 +3,7 @@ export interface SessionAdaptation {
     programId: number;
     date?: string;
     duration?: number;
-    notes?: string | null;
+    sessionName?: string | null;
     exercices?: any[];
     [key: string]: any;
 }

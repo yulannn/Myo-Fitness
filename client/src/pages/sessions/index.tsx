@@ -405,7 +405,7 @@ function SessionCard({ session }: { session: Session }) {
                             )}
                         </div>
 
-                        {(session.notes || session.duration || (session.exercices && session.exercices.length > 0)) && (
+                        {(session.sessionName || session.duration || (session.exercices && session.exercices.length > 0)) && (
                             <div className="flex items-center gap-3 text-xs text-gray-500">
                                 {session.duration && (
                                     <span>{session.duration} min</span>
@@ -417,8 +417,8 @@ function SessionCard({ session }: { session: Session }) {
                             </div>
                         )}
 
-                        {session.notes && (
-                            <p className="text-xs text-gray-600 line-clamp-1 mt-1">{session.notes}</p>
+                        {session.sessionName && (
+                            <p className="text-xs text-gray-600 line-clamp-1 mt-1">{session.sessionName}</p>
                         )}
                     </div>
 

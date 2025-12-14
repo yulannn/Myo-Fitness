@@ -974,7 +974,7 @@ async function main() {
       programId: program1.id,
       date: new Date('2024-11-10'),
       duration: 60,
-      notes: 'Bonne séance, je me sens en forme',
+      sessionName: 'Bonne séance, je me sens en forme',
     },
   });
 
@@ -1071,7 +1071,7 @@ async function main() {
       programId: program1.id,
       date: new Date('2024-11-12'),
       duration: 70,
-      notes: 'Legs day difficile mais satisfaisant',
+      sessionName: 'Legs day difficile mais satisfaisant',
     },
   });
 
@@ -1167,7 +1167,7 @@ async function main() {
       programId: program2.id,
       date: new Date('2024-11-11'),
       duration: 45,
-      notes: 'Premier entraînement, très motivée !',
+      sessionName: 'Premier entraînement, très motivée !',
     },
   });
 

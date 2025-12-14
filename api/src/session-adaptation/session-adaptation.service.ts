@@ -164,7 +164,7 @@ export class SessionAdaptationService {
                 programId: previousSession.programId,
                 date: nextSessionDate, // null si trainingDays est vide
                 duration: null,
-                notes: `Session adaptée basée sur la session du ${previousSession.date
+                sessionName: `Session adaptée basée sur la session du ${previousSession.date
                     ? new Date(previousSession.date).toLocaleDateString()
                     : 'précédente'
                     }`,
@@ -252,7 +252,7 @@ export class SessionAdaptationService {
                 programId: oldSession.programId,
                 date: nextSessionDate, // null si trainingDays est vide
                 duration: null,
-                notes: `Session adaptée basée sur la session du ${oldSession.date
+                sessionName: `Session adaptée basée sur la session du ${oldSession.date
                     ? new Date(oldSession.date).toLocaleDateString()
                     : 'précédente'
                     }`,

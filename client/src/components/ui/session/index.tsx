@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
-import { CalendarIcon, ClockIcon, PlayIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import { CalendarIcon, PlayIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
 import { EditSessionModal } from "../modal/EditSessionModal"
 import { StartSessionModal } from "../modal/StartSessionModal"
@@ -313,10 +313,14 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
 
                             {/* Info */}
                             <div className="flex items-center gap-3 text-xs text-gray-600">
-                                <div className="flex items-center gap-1">
-                                    <ClockIcon className="h-3 w-3" />
-                                    <span>{session.duration ?? "—"} min</span>
-                                </div>
+                                {/* Session Name */}
+                                {session.sessionName && (
+                                    <div className="p-2">
+                                        <p className="text-xs text-gray-400 leading-relaxed">
+                                            {session.sessionName}
+                                        </p>
+                                    </div>
+                                )}
                                 <span>•</span>
                                 <span>{(session.exercices ?? []).length} ex.</span>
                             </div>
@@ -377,14 +381,6 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
                             </div>
                         )}
 
-                        {/* Notes */}
-                        {session.notes && (
-                            <div className="p-2 rounded bg-white/[0.02] border border-white/5">
-                                <p className="text-xs text-gray-400 leading-relaxed">
-                                    {session.notes}
-                                </p>
-                            </div>
-                        )}
 
                         {/* Exercise List */}
                         <div className="space-y-1.5">

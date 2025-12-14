@@ -65,7 +65,7 @@ export const mockPrograms: TrainingProgram[] = [
         id: 101,
         name: 'Push Day - Puissance',
         focus: 'Chest & Shoulders',
-        notes: 'Accent sur tempo contrôlé et amplitude complète.',
+        sessionName: 'Accent sur tempo contrôlé et amplitude complète.',
         scheduledDate: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)),
         durationMinutes: 70,
         exercices: [
@@ -105,7 +105,7 @@ export const mockPrograms: TrainingProgram[] = [
         id: 102,
         name: 'Pull Day - Volume',
         focus: 'Dos & biceps',
-        notes: 'Prioriser contraction scapulaire et écart entre les séries.',
+        sessionName: 'Prioriser contraction scapulaire et écart entre les séries.',
         scheduledDate: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3)),
         durationMinutes: 65,
         exercices: [
@@ -134,7 +134,7 @@ export const mockPrograms: TrainingProgram[] = [
         id: 103,
         name: 'Legs - Force & Plyo',
         focus: 'Jambes complètes',
-        notes: 'Superset force + pliométrie.',
+        sessionName: 'Superset force + pliométrie.',
         scheduledDate: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 5)),
         durationMinutes: 75,
         exercices: [
@@ -156,7 +156,7 @@ export const mockPrograms: TrainingProgram[] = [
             muscleGroups: ['Quadriceps', 'Fessiers'],
             equipment: [],
             difficulty: 3,
-            notes: 'Mettre l’accent sur la stabilité.',
+            sessionName: 'Mettre l’accent sur la stabilité.',
           },
         ],
       },

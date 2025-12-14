@@ -17,8 +17,8 @@ export class TrainingSessionEntity {
   @ApiPropertyOptional({ description: 'Durée de la séance en minutes', example: 60 })
   duration?: number;
 
-  @ApiPropertyOptional({ description: 'Notes sur la séance', example: 'Travail sur les jambes, focus squat et fentes' })
-  notes?: string;
+  @ApiPropertyOptional({ description: 'Nom de la séance', example: 'Seance Jambes' })
+  sessionName?: string;
 
   @ApiPropertyOptional({ description: 'Liste des exercices de la séance', type: [Object] })
   exercices?: ExerciceSession[];

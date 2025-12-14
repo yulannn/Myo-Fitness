@@ -39,14 +39,14 @@ export interface SessionExercise {
   equipment: string[]
   difficulty: number
   tempo?: string
-  notes?: string
+  sessionName?: string
 }
 
 export interface TrainingSession {
   id: number
   name: string
   focus: string
-  notes?: string
+  sessionName?: string
   scheduledDate?: string
   durationMinutes?: number
   exercices: SessionExercise[]

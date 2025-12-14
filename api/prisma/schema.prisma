@@ -92,7 +92,7 @@ model TrainingSession {
   programId                Int
   date                     DateTime?
   duration                 Int?
-  notes                    String?
+  sessionName              String?
   createdAt                DateTime                   @default(now())
   originalSessionId        Int?
   updatedAt                DateTime                   @default(now()) @updatedAt

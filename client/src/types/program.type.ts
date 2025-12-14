@@ -3,7 +3,7 @@ export interface Exercise {
     name: string;
     sets?: number;
     reps?: number;
-    notes?: string | null;
+    sessionName?: string | null;
 }
 
 export interface Session {
@@ -11,7 +11,7 @@ export interface Session {
     date?: string | null;
     duration?: number | null;
     completed?: boolean;
-    notes?: string | null;
+    sessionName?: string | null;
     exercices?: Exercise[];
     createdAt?: string;
     updatedAt?: string;

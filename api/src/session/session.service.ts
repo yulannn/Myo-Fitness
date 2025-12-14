@@ -187,6 +187,41 @@ export class SessionService {
     });
   }
 
+  async updateSessionName(id: number, sessionName: string, userId: number) {
+    const session = await this.prisma.trainingSession.findUnique({
+      where: { id },
+      include: {
+        trainingProgram: {
+          include: {
+            fitnessProfile: true,
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+
+    this.programService.verifyPermissions(
+      session.trainingProgram.fitnessProfile.userId,
+      userId,
+      'cette session',
+    );
+
+    return this.prisma.trainingSession.update({
+      where: { id },
+      data: { sessionName },
+      include: {
+        exercices: {
+          include: {
+            exercice: true,
+          },
+        },
+      },
+    });
+  }
+
 
   async addExerciseToSession(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
     return this.prisma.$transaction(async (prisma) => {

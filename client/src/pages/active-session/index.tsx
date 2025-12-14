@@ -329,11 +329,11 @@ export default function ActiveSession() {
                     </div>
                 </div>
 
-                {/* Notes */}
-                {activeSession.notes && (
+                {/* Session Name */}
+                {activeSession.sessionName && (
                     <div className="relative bg-[#252527] rounded-2xl p-4 sm:p-5 border-l-4 border-[#94fbdd] overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#94fbdd]/5 rounded-full blur-2xl"></div>
-                        <p className="relative text-sm text-[#94fbdd] font-medium">{activeSession.notes}</p>
+                        <p className="relative text-sm text-[#94fbdd] font-medium">{activeSession.sessionName}</p>
                     </div>
                 )}
 
