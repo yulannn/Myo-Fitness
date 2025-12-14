@@ -8,7 +8,7 @@ export function useAddSessionToProgram(programId?: number) {
     return useMutation<Program, unknown, AddSessionPayload>({
         mutationFn: (payload: AddSessionPayload) => ProgramService.addSessionToProgram(programId as number, payload),
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['programs'] });
+            qc.invalidateQueries({ queryKey: ['program'] });
             if (programId) qc.invalidateQueries({ queryKey: ['program', programId] });
         }
     });

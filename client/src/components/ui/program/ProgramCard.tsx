@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { SessionCard } from '../session';
 import { ProgramStatusModal } from '../modal/ProgramStatusModal';
 import { DeleteProgramModal } from '../modal/DeleteProgramModal';
 import { EditProgramModal } from '../modal/EditProgramModal';
+import { AddSessionModal } from '../modal/AddSessionModal';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
 import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
 import useUpdateProgram from '../../../api/hooks/program/useUpdateProgram';
+import useAddSessionToProgram from '../../../api/hooks/program/useAddSessionToProgram';
 
 interface ProgramCardProps {
   program: any;
@@ -22,10 +24,12 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateProgramStatus();
   const { mutate: deleteProgram, isPending: isDeleting } = useDeleteProgram();
   const { mutate: updateProgram, isPending: isUpdating } = useUpdateProgram();
+  const { mutate: addSession, isPending: isAddingSession } = useAddSessionToProgram(program.id);
 
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
 
   const isActive = program.status === 'ACTIVE';
   const showSessions = hasSession && (isActive || isExpanded);
@@ -61,6 +65,17 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
   const handleConfirmEdit = (data: { name: string; description: string }) => {
     updateProgram({ programId: program.id, payload: data }, {
       onSuccess: () => setIsEditModalOpen(false)
+    });
+  };
+
+  const handleAddSessionClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsAddSessionModalOpen(true);
+  };
+
+  const handleConfirmAddSession = (data: any) => {
+    addSession(data, {
+      onSuccess: () => setIsAddSessionModalOpen(false)
     });
   };
 
@@ -172,6 +187,20 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
           </div>
         )}
 
+        {/* Add session */}
+        {hasSession && (
+          <div className="flex items-center justify-center border-t border-white/5 p-6 text-center bg-black/20">
+            <button
+              onClick={handleAddSessionClick}
+              disabled={isUpdatingStatus || isDeleting || isUpdating || isAddingSession}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#94fbdd] font-semibold rounded-lg text-black hover:bg-[#94fbdd]/90 transition-colors disabled:opacity-50"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Ajouter une séance
+            </button>
+          </div>
+        )}
+
         {!hasSession && (
           <div className="border-t border-white/5 p-6 text-center bg-black/20">
             <p className="text-xs text-gray-600">Aucune séance</p>
@@ -202,6 +231,14 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         onConfirm={handleConfirmEdit}
         program={program}
         isPending={isUpdating}
+      />
+
+      <AddSessionModal
+        isOpen={isAddSessionModalOpen}
+        onClose={() => setIsAddSessionModalOpen(false)}
+        onConfirm={handleConfirmAddSession}
+        availableExercises={exercices}
+        isPending={isAddingSession}
       />
     </>
   );
