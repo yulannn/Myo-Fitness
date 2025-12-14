@@ -42,7 +42,44 @@ model User {
   SharedSession            SharedSession[]
   participatingSessions    SharedSessionParticipant[]
   subscription             Subscription?
+
   groups                   FriendGroup[]              @relation("GroupMembers")
+  shareActivities          Boolean                    @default(false)
+  activities               Activity[]
+  activityReactions        ActivityReaction[]
+}
+
+model Activity {
+  id        Int                @id @default(autoincrement())
+  type      ActivityType
+  userId    Int
+  data      Json
+  createdAt DateTime           @default(now())
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions ActivityReaction[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ActivityReaction {
+  id         Int      @id @default(autoincrement())
+  activityId Int
+  userId     Int
+  emoji      String
+  createdAt  DateTime @default(now())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+}
+
+enum ActivityType {
+  SESSION_COMPLETED
+  PERSONAL_RECORD
+  PROGRAM_COMPLETED
+  STREAK_REACHED
+  SESSION_SHARED
 }
 
 model FitnessProfile {

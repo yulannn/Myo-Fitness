@@ -31,6 +31,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { StripeModule } from './stripe/stripe.module';
 import { LoggerModule } from './logger/logger.module';
 import { SentryTestController } from './config/sentry-test.controller';
+import { ActivityModule } from './social/activity/activity.module';
 
 
 @Module({
@@ -73,6 +74,7 @@ import { SentryTestController } from './config/sentry-test.controller';
     EmailModule,
     SubscriptionModule,
     StripeModule,
+    ActivityModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [

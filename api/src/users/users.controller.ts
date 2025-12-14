@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Delete, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -312,5 +313,18 @@ export class UsersController {
     }
 
     return this.usersService.gainXp(userId, xp);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Mettre à jour le profil de l\'utilisateur connecté' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil mis à jour avec succès',
+    type: UserEntity,
+  })
+  async updateMyProfile(@Body() body: UpdateUserDto, @Req() req) {
+    const userId = req.user.userId;
+    return this.usersService.updateUser(userId, body);
   }
 }

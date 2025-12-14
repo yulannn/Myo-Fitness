@@ -12,6 +12,8 @@ import { SOCIAL_CHATS, SOCIAL_FRIENDS, SOCIAL_NOTIFICATIONS } from '../../utils/
 import useGetPendingFriendRequests from '../../api/hooks/friend/useGetPendingFriendRequests';
 import usePendingGroupRequests from '../../api/hooks/group/useGetPendingGroupRequests';
 import { useConversations } from '../../api/hooks/chat/useConversations';
+import { useState } from 'react';
+import ActivityFeed from '../../components/social/ActivityFeed';
 
 export default function SocialFeed() {
     const navigate = useNavigate();
@@ -27,6 +29,8 @@ export default function SocialFeed() {
     const { data: friendRequests = [] } = useGetPendingFriendRequests();
     const { data: groupRequests = [] } = usePendingGroupRequests();
     const { data: conversations = [] } = useConversations();
+
+    const [viewMode, setViewMode] = useState<'sessions' | 'feed'>('sessions');
 
     const unreadMessagesCount = conversations.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0);
     const notificationsCount = friendRequests.length + (groupRequests?.length || 0);
@@ -81,8 +85,37 @@ export default function SocialFeed() {
                     </div>
                 </div>
 
-                {/* Content: Shared Sessions List */}
-                <SharedSessionsList />
+                {/* Toggle: Séances vs Feed */}
+                <div className="flex justify-center mb-6">
+                    <div className="bg-[#18181b] p-1 rounded-xl border border-white/5 inline-flex">
+                        <button
+                            onClick={() => setViewMode('sessions')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'sessions'
+                                ? 'bg-[#27272a] text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                        >
+                            Séances Partagées
+                        </button>
+                        <button
+                            onClick={() => setViewMode('feed')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'feed'
+                                ? 'bg-[#27272a] text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                        >
+                            Fil d'actualité
+                            <span className="ml-2 text-[10px] bg-[#94fbdd]/10 text-[#94fbdd] px-1.5 py-0.5 rounded border border-[#94fbdd]/20">BETA</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content */}
+                {viewMode === 'sessions' ? (
+                    <SharedSessionsList />
+                ) : (
+                    <ActivityFeed />
+                )}
 
             </div>
         </div>

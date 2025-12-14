@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePremium } from '../../contexts/PremiumContext'; // Ensure this path is correct based on your project structure
@@ -15,13 +15,32 @@ import {
     ChevronRightIcon,
 
 } from '@heroicons/react/24/outline';
+import api from '../../api/apiClient';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function Settings() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const { isPremium } = usePremium();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    const queryClient = useQueryClient();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isLoadingShare, setIsLoadingShare] = useState(false);
+
+    const handleToggleShare = async () => {
+        if (!user) return;
+        setIsLoadingShare(true);
+        try {
+            const newState = !user.shareActivities;
+            await api.patch('/users/me', { shareActivities: newState });
+            await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+        } catch (error) {
+            console.error('Failed to toggle share activities', error);
+        } finally {
+            setIsLoadingShare(false);
+        }
+    };
 
     // Navigation Handlers
     const handleMyProfile = () => navigate('/my-profile');
@@ -46,7 +65,7 @@ export default function Settings() {
     };
 
     // Sub-components for cleaner render
-    const SettingsSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
+    const SettingsSection = ({ title, children }: { title: string, children: ReactNode }) => (
         <div className="mb-6">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">{title}</h3>
             <div className="bg-[#252527] rounded-2xl overflow-hidden border border-purple-500/10 divide-y divide-[#121214]">
@@ -132,7 +151,31 @@ export default function Settings() {
 
                 <SettingsSection title="Application">
                     <SettingsItem icon={BellIcon} label="Notifications" onClick={handleNotifications} />
-                    <SettingsItem icon={ShieldCheckIcon} label="Confidentialité" onClick={handlePrivacy} />
+
+                    <div className="w-full flex items-center justify-between p-4 bg-[#252527] border-t border-[#121214] first:border-t-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-[#121214] border border-purple-500/10">
+                                <ShieldCheckIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-medium text-gray-200">Partager mes activités</span>
+                                <span className="text-xs text-gray-500">Visible par mes amis</span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleToggleShare}
+                            disabled={isLoadingShare}
+                            className={`w-11 h-6 flex items-center rounded-full transition-colors duration-200 ease-in-out px-1 ${user?.shareActivities ? 'bg-purple-600' : 'bg-gray-700'
+                                }`}
+                        >
+                            <span
+                                className={`h-4 w-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${user?.shareActivities ? 'translate-x-5' : 'translate-x-0'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
+                    <SettingsItem icon={ShieldCheckIcon} label="Politique de confidentialité" onClick={handlePrivacy} />
                     <SettingsItem icon={ChatBubbleLeftRightIcon} label="Envoyer un avis" onClick={handleFeedback} />
                 </SettingsSection>
 

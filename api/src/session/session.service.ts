@@ -6,6 +6,8 @@ import { BadRequestException } from '@nestjs/common/exceptions/bad-request.excep
 import { ExerciseDataDto } from 'src/program/dto/add-session-program.dto';
 import { ProgramService } from 'src/program/program.service';
 import { UsersService } from 'src/users/users.service';
+import { ActivityService } from '../social/activity/activity.service';
+import { ActivityType } from '@prisma/client';
 
 @Injectable()
 export class SessionService {
@@ -13,6 +15,7 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly programService: ProgramService,
     private readonly usersService: UsersService,
+    private readonly activityService: ActivityService,
   ) { }
 
   async getSessionById(id: number, userId: number) {
@@ -165,8 +168,22 @@ export class SessionService {
           data: { lastXpGainDate: new Date() },
         });
       }
+
+      // Generate Social Activity
+      if (updatedSession.completed) {
+        await this.activityService.createActivity(
+          userId,
+          ActivityType.SESSION_COMPLETED,
+          {
+            sessionId: updatedSession.id,
+            sessionName: updatedSession.sessionName || 'Séance sans nom',
+            programName: session.trainingProgram.name,
+            duration: updatedSession.duration || 0, // Assuming duration is tracked, if not it's 0
+          }
+        );
+      }
     } catch (error) {
-      console.error('Erreur lors du gain d\'XP:', error);
+      console.error('Erreur lors du gain d\'XP ou activité sociale:', error);
     }
 
     return updatedSession;
