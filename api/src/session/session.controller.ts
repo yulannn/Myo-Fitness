@@ -38,6 +38,25 @@ export class SessionController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('user/calendar')
+  @ApiOperation({
+    summary: '🚀 Récupérer les sessions optimisées pour le calendrier',
+    description: 'Endpoint ultra-optimisé qui retourne uniquement les données minimales pour l\'affichage calendrier'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions calendrier récupérées avec succès',
+  })
+  getSessionsForCalendar(
+    @Request() req,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.getSessionsForCalendar(userId, startDate, endDate);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('user/all')
   @ApiOperation({
     summary: 'Récupérer toutes les sessions d\'un utilisateur',

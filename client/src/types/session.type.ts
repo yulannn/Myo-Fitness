@@ -17,6 +17,19 @@ export interface Session {
     completed: boolean;
     createdAt?: string;
     updatedAt?: string;
+    summary?: SessionSummary;
+}
+
+export interface SessionSummary {
+    id: number;
+    sessionId: number;
+    totalSets: number;
+    totalReps: number;
+    totalVolume: number;
+    avgRPE: number;
+    duration: number;
+    muscleGroups: string[];
+    createdAt: string;
 }
 
 export interface UpdateSessionDatePayload {

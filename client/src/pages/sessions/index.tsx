@@ -3,9 +3,9 @@ import { DayPicker } from 'react-day-picker'
 import { format, isSameDay, startOfMonth, endOfMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
-import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
+import useGetSessionsForCalendar from '../../api/hooks/session/useGetSessionsForCalendar'
+import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
-import type { Session } from '../../types/session.type'
 import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { getImageUrl } from '../../utils/imageUtils'
 
@@ -24,8 +24,8 @@ export default function Sessions() {
         [currentMonth]
     )
 
-    // 🚀 Ne charger que les sessions du mois visible
-    const { data: sessions, isLoading, error } = useGetAllUserSessions(monthStart, monthEnd)
+    // 🚀 OPTIMISÉ : Charger uniquement les données minimales pour le calendrier
+    const { data: sessions, isLoading, error } = useGetSessionsForCalendar(monthStart, monthEnd)
     const { data: sharedSessions } = useSharedSessions()
 
     const getSharedSessionsForDate = (date: Date | undefined) => {
@@ -36,10 +36,10 @@ export default function Sessions() {
         })
     }
 
-    const getSessionsForDate = (date: Date | undefined): Session[] => {
+    const getSessionsForDate = (date: Date | undefined): any[] => {
         if (!date || !sessions) return []
-        return sessions.filter((session: Session) => {
-            // Utiliser performedAt si la séance est complétée, sinon utiliser date
+        return sessions.filter((session: any) => {
+            // Format optimisé utilise "date" pour les sessions planifiées et "performedAt" pour les complétées
             const sessionDate = session.performedAt ? new Date(session.performedAt) : session.date ? new Date(session.date) : null
             if (!sessionDate) return false
             return isSameDay(sessionDate, date)
@@ -50,14 +50,14 @@ export default function Sessions() {
     const sharedSessionsForSelectedDate = getSharedSessionsForDate(selectedDate)
 
     const datesWithSessions = sessions
-        ?.filter((session: Session) => session.date || session.performedAt)
-        .map((session: Session) => {
-            // Utiliser performedAt si disponible, sinon date
-            return session.performedAt ? new Date(session.performedAt) : new Date(session.date!)
+        ?.filter((session: any) => session.date || session.performedAt)
+        .map((session: any) => {
+            return session.performedAt ? new Date(session.performedAt) : new Date(session.date)
         }) || []
 
     const datesWithSharedSessions = sharedSessions
-        ?.map((session: any) => new Date(session.startTime)) || []
+        ?.filter((session: any) => session.startTime)
+        .map((session: any) => new Date(session.startTime)) || []
 
     const customStyles = `
     /* ---------- Base / variables ---------- */
@@ -384,15 +384,24 @@ export default function Sessions() {
 }
 
 /* Unified design for session cards - both types share the same layout with their respective colors */
-function SessionCard({ session }: { session: Session }) {
+function SessionCard({ session }: { session: any }) {
     const [isExpanded, setIsExpanded] = useState(false)
+
+    // 🚀 Lazy loading: charger les détails complets SEULEMENT si la carte est étendue
+    const { data: fullSession, isLoading: isLoadingDetails } = useGetSessionById(
+        isExpanded ? session.id : null
+    )
+
+    // Déterminer si on peut expand (si il y a des exercices)
+    const exerciseCount = session._count?.exercices || 0
+    const canExpand = exerciseCount > 0
 
     return (
         <div className="bg-[#18181b] rounded-lg border border-white/5 overflow-hidden transition-all hover:border-white/10 group">
             {/* Header */}
             <div
-                className="p-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
-                onClick={() => setIsExpanded(!isExpanded)}
+                className={`p-4 ${canExpand ? 'cursor-pointer hover:bg-white/[0.02]' : ''} transition-colors`}
+                onClick={() => canExpand && setIsExpanded(!isExpanded)}
             >
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 space-y-1">
@@ -405,14 +414,14 @@ function SessionCard({ session }: { session: Session }) {
                             )}
                         </div>
 
-                        {(session.sessionName || session.duration || (session.exercices && session.exercices.length > 0)) && (
+                        {(session.sessionName || session.summary?.duration || exerciseCount > 0) && (
                             <div className="flex items-center gap-3 text-xs text-gray-500">
-                                {session.duration && (
-                                    <span>{session.duration} min</span>
+                                {session.summary?.duration && (
+                                    <span>{session.summary.duration} min</span>
                                 )}
-                                {(session.duration && session.exercices?.length) && <span>•</span>}
-                                {session.exercices && session.exercices.length > 0 && (
-                                    <span>{session.exercices.length} exercice{session.exercices.length > 1 ? 's' : ''}</span>
+                                {(session.summary?.duration && exerciseCount) && <span>•</span>}
+                                {exerciseCount > 0 && (
+                                    <span>{exerciseCount} exercice{exerciseCount > 1 ? 's' : ''}</span>
                                 )}
                             </div>
                         )}
@@ -423,7 +432,7 @@ function SessionCard({ session }: { session: Session }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {session.exercices && session.exercices.length > 0 && (
+                        {canExpand && (
                             <button className="text-gray-600 group-hover:text-gray-400 transition-colors bg-white/5 p-1.5 rounded-md">
                                 {isExpanded ? (
                                     <ChevronUpIcon className="h-4 w-4" />
@@ -436,57 +445,121 @@ function SessionCard({ session }: { session: Session }) {
                 </div>
             </div>
 
-            {/* Exercices expandable */}
-            {isExpanded && session.exercices && session.exercices.length > 0 && (
+            {/* Détails complets avec lazy loading */}
+            {isExpanded && canExpand && (
                 <div className="border-t border-white/5 bg-black/20">
-                    <div className="p-4 space-y-3">
-                        <div className="space-y-2">
-                            {session.exercices.map((ex: any, index: number) => {
-                                const hasPerformances = session.completed && ex.performances && ex.performances.length > 0
+                    {isLoadingDetails ? (
+                        <div className="p-8 flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#94fbdd]"></div>
+                        </div>
+                    ) : fullSession ? (
+                        <div className="p-4 space-y-3">
+                            <div className="space-y-2">
+                                {fullSession.exercices?.map((ex: any, index: number) => {
+                                    const hasPerformances = fullSession.completed && ex.performances && ex.performances.length > 0
 
-                                return (
-                                    <div
-                                        key={index}
-                                        className="bg-[#18181b] rounded-md border border-white/5 p-3"
-                                    >
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-white">
-                                                    {ex.exercice?.name || `Exercice ${index + 1}`}
-                                                </p>
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="bg-[#18181b] rounded-md border border-white/5 p-3"
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-white">
+                                                        {ex.exercice?.name || `Exercice ${index + 1}`}
+                                                    </p>
+                                                </div>
+
+                                                {!hasPerformances && (
+                                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                        {ex.sets && <span>{ex.sets} séries</span>}
+                                                        {ex.reps && <span>{ex.reps} reps</span>}
+                                                        {ex.weight && <span>{ex.weight} kg</span>}
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {!hasPerformances && (
-                                                <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                    {ex.sets && <span>{ex.sets} séries</span>}
-                                                    {ex.reps && <span>{ex.reps} reps</span>}
-                                                    {ex.weight && <span>{ex.weight} kg</span>}
+                                            {hasPerformances && (
+                                                <div className="mt-3 space-y-1">
+                                                    {ex.performances.map((perf: any, perfIndex: number) => (
+                                                        <div
+                                                            key={perfIndex}
+                                                            className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
+                                                        >
+                                                            <span>Série {perfIndex + 1}</span>
+                                                            <div className="flex items-center gap-3">
+                                                                {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
+                                                                {perf.weight && <span>{perf.weight} kg</span>}
+                                                                {perf.rpe && <span>RPE {perf.rpe}</span>}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
+                                    );
+                                })}
+                            </div>
 
-                                        {hasPerformances && (
-                                            <div className="mt-3 space-y-1">
-                                                {ex.performances.map((perf: any, perfIndex: number) => (
-                                                    <div
-                                                        key={perfIndex}
-                                                        className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
-                                                    >
-                                                        <span>Série {perfIndex + 1}</span>
-                                                        <div className="flex items-center gap-3">
-                                                            {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
-                                                            {perf.weight && <span>{perf.weight} kg</span>}
-                                                            {perf.rpe && <span>RPE {perf.rpe}</span>}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                            {/* 📊 Résumé de session (uniquement si complétée ET summary existe) */}
+                            {fullSession.completed && fullSession.summary && (
+                                <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                                    <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                                        📊 Résumé de performance
+                                    </h5>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {fullSession.summary.totalSets && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
+                                                <p className="text-xs text-gray-500">Séries totales</p>
+                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
+                                                    {fullSession.summary.totalSets}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {fullSession.summary.totalReps && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
+                                                <p className="text-xs text-gray-500">Reps totales</p>
+                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
+                                                    {fullSession.summary.totalReps}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {fullSession.summary.totalVolume && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
+                                                <p className="text-xs text-gray-500">Volume total</p>
+                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
+                                                    {Math.round(fullSession.summary.totalVolume)} kg
+                                                </p>
+                                            </div>
+                                        )}
+                                        {fullSession.summary.avgRPE && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
+                                                <p className="text-xs text-gray-500">RPE moyen</p>
+                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
+                                                    {fullSession.summary.avgRPE.toFixed(1)}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {fullSession.summary.muscleGroups && fullSession.summary.muscleGroups.length > 0 && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3 col-span-2 sm:col-span-2">
+                                                <p className="text-xs text-gray-500 mb-2">Groupes musculaires</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {fullSession.summary.muscleGroups.map((muscle: string, idx: number) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="px-2 py-0.5 bg-[#94fbdd]/10 text-[#94fbdd] text-xs rounded-full capitalize"
+                                                        >
+                                                            {muscle}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
-                                );
-                            })}
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    ) : null}
                 </div>
             )}
         </div>

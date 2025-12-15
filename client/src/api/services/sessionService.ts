@@ -16,6 +16,19 @@ export const SessionFetchDataService = {
         return res.data;
     },
 
+    /**
+     * 🚀 OPTIMISÉ: Récupère les sessions pour l'affichage calendrier
+     * Utilise l'endpoint ultra-optimisé qui retourne uniquement les données minimales
+     */
+    async getSessionsForCalendar(startDate?: string, endDate?: string): Promise<any[]> {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+
+        const res = await api.get<any[]>('/session/user/calendar', { params });
+        return res.data;
+    },
+
     async updateSessionDate(sessionId: number, payload: UpdateSessionDatePayload): Promise<Session> {
         const res = await api.patch<Session>(`/session/${sessionId}/date`, payload);
         return res.data;

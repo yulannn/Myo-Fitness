@@ -18,40 +18,156 @@ export class SessionService {
     private readonly activityService: ActivityService,
   ) { }
 
+  /**
+   * 🎯 OPTIMISÉ: Récupère une session par ID avec seulement les données nécessaires
+   */
   async getSessionById(id: number, userId: number) {
-    const session = await this.prisma.trainingSession.findUnique({
+    // D'abord récupérer seulement les infos pour vérifier les permissions
+    const sessionWithProgram = await this.prisma.trainingSession.findUnique({
       where: { id },
-      include: {
-        exercices: {
-          include: {
-            exercice: true,
-          },
-        },
+      select: {
         trainingProgram: {
-          include: {
-            fitnessProfile: true,
+          select: {
+            fitnessProfile: {
+              select: {
+                userId: true,
+              },
+            },
           },
         },
       },
     });
 
-    if (!session) {
+    if (!sessionWithProgram) {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
 
-    this.programService.verifyPermissions(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+    this.programService.verifyPermissions(
+      sessionWithProgram.trainingProgram.fitnessProfile.userId,
+      userId,
+      'cette session'
+    );
+
+    // Ensuite récupérer les données complètes optimisées
+    const session = await this.prisma.trainingSession.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        completed: true,
+        sessionName: true,
+        date: true,
+        performedAt: true,
+        duration: true,
+        exercices: {
+          select: {
+            id: true,
+            sets: true,
+            reps: true,
+            weight: true,
+            exercice: {
+              select: {
+                name: true,
+              },
+            },
+            performances: {
+              select: {
+                set_index: true,
+                reps_effectuees: true,
+                weight: true,
+                rpe: true,
+                success: true,
+              },
+            },
+          },
+        },
+        summary: {
+          select: {
+            totalSets: true,
+            totalReps: true,
+            totalVolume: true,
+            avgRPE: true,
+            duration: true,
+            muscleGroups: true,
+          },
+        },
+      },
+    });
 
     return session;
   }
 
   /**
-   * Récupère toutes les sessions d'un utilisateur
-   * @param userId - ID de l'utilisateur
-   * @param startDate - Date de début (optionnel, pour filtrage par mois)
-   * @param endDate - Date de fin (optionnel, pour filtrage par mois)
-   * 
-   * 🎯 Optimisation : Utiliser startDate/endDate pour charger seulement le mois visible
-   *    Exemple: Pour décembre 2024 → startDate = 2024-12-01, endDate = 2024-12-31
+   * 🚀 ULTRA-OPTIMISÉ: Endpoint pour le calendrier
+   * Retourne uniquement les données minimales nécessaires pour l'affichage calendrier
+   */
+  async getSessionsForCalendar(
+    userId: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const dateFilter: any = {};
+
+    if (startDate && endDate) {
+      dateFilter.OR = [
+        {
+          date: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        {
+          performedAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      ];
+    }
+
+    return this.prisma.trainingSession.findMany({
+      where: {
+        trainingProgram: {
+          fitnessProfile: {
+            userId,
+          },
+          status: 'ACTIVE',
+        },
+        ...dateFilter,
+      },
+      select: {
+        id: true,
+        date: true,
+        performedAt: true,
+        completed: true,
+        sessionName: true,
+        trainingProgram: {
+          select: {
+            name: true,
+          },
+        },
+        summary: {
+          select: {
+            duration: true,
+            totalVolume: true,
+            totalSets: true,
+            muscleGroups: true,
+          },
+        },
+        _count: {
+          select: {
+            exercices: true,
+          },
+        },
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Récupère toutes les sessions d'un utilisateur (mode détaillé - utilisé seulement si nécessaire)
+   * @deprecated Utiliser getSessionsForCalendar pour l'affichage calendrier
    */
   async getAllUserSessions(
     userId: number,
@@ -115,6 +231,20 @@ export class SessionService {
             fitnessProfile: true,
           },
         },
+        exercices: {
+          include: {
+            exercice: {
+              include: {
+                groupes: {
+                  include: {
+                    groupe: true,
+                  },
+                },
+              },
+            },
+            performances: true,
+          },
+        },
       },
     });
 
@@ -134,6 +264,9 @@ export class SessionService {
         completed: true
       },
     });
+
+    // 📊 Créer le résumé de la session
+    await this.createSessionSummary(session);
 
     // Gagner automatiquement 50 XP pour avoir complété la séance (1 fois par jour maximum)
     try {
@@ -187,6 +320,78 @@ export class SessionService {
     }
 
     return updatedSession;
+  }
+
+  /**
+   * 📊 Créer un résumé de session pour optimiser l'affichage calendrier
+   */
+  private async createSessionSummary(session: any) {
+    try {
+      let totalSets = 0;
+      let totalReps = 0;
+      let totalVolume = 0;
+      let totalRPE = 0;
+      let rpeCount = 0;
+      const muscleGroupsSet = new Set<string>();
+
+      // Parcourir tous les exercices
+      session.exercices.forEach((ex: any) => {
+        // Compter les séries
+        totalSets += ex.sets || 0;
+
+        // Si des performances existent, les utiliser
+        if (ex.performances && ex.performances.length > 0) {
+          ex.performances.forEach((perf: any) => {
+            totalReps += perf.reps_effectuees || 0;
+            totalVolume += (perf.reps_effectuees || 0) * (perf.weight || 0);
+            if (perf.rpe) {
+              totalRPE += perf.rpe;
+              rpeCount++;
+            }
+          });
+        } else {
+          // Sinon utiliser les données planifiées
+          totalReps += (ex.sets || 0) * (ex.reps || 0);
+          totalVolume += (ex.sets || 0) * (ex.reps || 0) * (ex.weight || 0);
+        }
+
+        // Collecter les groupes musculaires
+        if (ex.exercice?.groupes) {
+          ex.exercice.groupes.forEach((g: any) => {
+            if (g.groupe?.name) {
+              muscleGroupsSet.add(g.groupe.name.toLowerCase());
+            }
+          });
+        }
+      });
+
+      // Calculer la moyenne RPE
+      const avgRPE = rpeCount > 0 ? totalRPE / rpeCount : null;
+
+      // Créer ou mettre à jour le résumé
+      await this.prisma.sessionSummary.upsert({
+        where: { sessionId: session.id },
+        create: {
+          sessionId: session.id,
+          totalSets,
+          totalReps,
+          totalVolume,
+          avgRPE,
+          duration: session.duration,
+          muscleGroups: Array.from(muscleGroupsSet),
+        },
+        update: {
+          totalSets,
+          totalReps,
+          totalVolume,
+          avgRPE,
+          duration: session.duration,
+          muscleGroups: Array.from(muscleGroupsSet),
+        },
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création du résumé de session:', error);
+    }
   }
 
   async updateDate(id: number, updateSessionDateDto: UpdateSessionDateDto) {

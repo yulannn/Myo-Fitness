@@ -43,10 +43,10 @@ model User {
   participatingSessions    SharedSessionParticipant[]
   subscription             Subscription?
 
-  groups                   FriendGroup[]              @relation("GroupMembers")
-  shareActivities          Boolean                    @default(false)
-  activities               Activity[]
-  activityReactions        ActivityReaction[]
+  groups            FriendGroup[]      @relation("GroupMembers")
+  shareActivities   Boolean            @default(false)
+  activities        Activity[]
+  activityReactions ActivityReaction[]
 }
 
 model Activity {
@@ -140,6 +140,22 @@ model TrainingSession {
   SharedSession            SharedSession[]
   SharedSessionParticipant SharedSessionParticipant[]
   trainingProgram          TrainingProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  summary                  SessionSummary?
+}
+
+model SessionSummary {
+  id           Int             @id @default(autoincrement())
+  sessionId    Int             @unique
+  totalSets    Int
+  totalReps    Int
+  totalVolume  Float
+  avgRPE       Float?
+  duration     Int?
+  muscleGroups String[]
+  createdAt    DateTime        @default(now())
+  session      TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
 }
 
 model SessionPhoto {
