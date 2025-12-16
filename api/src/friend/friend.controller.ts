@@ -8,6 +8,7 @@ import {
   UseGuards,
   Request,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { CreateFriendDto } from './dto/create-friend.dto';
@@ -147,5 +148,24 @@ export class FriendController {
   getFriendsList(@Request() req) {
     const userId = req.user.userId;
     return this.friendService.getFriendsList(userId);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Delete(':friendId')
+  @ApiOperation({ summary: 'Supprimer un ami' })
+  @ApiParam({
+    name: 'friendId',
+    description: 'ID de l’ami à supprimer',
+    type: Number,
+    example: 3,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Ami supprimé',
+    schema: { example: { message: 'Friend removed successfully' } },
+  })
+  removeFriend(@Param('friendId') friendId: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.removeFriend(userId, +friendId);
   }
 }

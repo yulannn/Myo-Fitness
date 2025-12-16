@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import useFriendsList from '../../api/hooks/friend/useGetFriendsList';
 import useSearchUsers from '../../api/hooks/friend/useSearchUsers';
 import useSendFriendRequest from '../../api/hooks/friend/useSendFriendRequest';
+import useRemoveFriend from '../../api/hooks/friend/useRemoveFriend';
 import { getImageUrl } from '../../utils/imageUtils';
 import ChatService from '../../api/services/chatService';
 import { SOCIAL_CHATS } from '../../utils/paths';
@@ -24,10 +25,13 @@ export default function FriendsPage() {
     const [friendRequestSent, setFriendRequestSent] = useState<number | null>(null);
 
     // --- FRIENDS ---
-    // --- FRIENDS ---
     const { data: friends = [] } = useFriendsList();
     const { data: searchResults = [] } = useSearchUsers(searchQuery);
     const sendFriendRequest = useSendFriendRequest();
+
+    // Remove Friend Logic
+    const removeFriendMutation = useRemoveFriend();
+    const [friendToRemove, setFriendToRemove] = useState<any | null>(null);
 
     const startChatWithFriend = async (friendId: number) => {
         try {
@@ -141,8 +145,6 @@ export default function FriendsPage() {
                 )}
 
                 {/* Liste d'amis */}
-
-                {/* Liste d'amis */}
                 <div className="bg-[#18181b] p-4 rounded-xl border border-white/5">
                     <h3 className="font-bold text-white mb-4">Mes Amis ({friends.length})</h3>
                     {friends.length === 0 ? (
@@ -155,10 +157,12 @@ export default function FriendsPage() {
                             {friends.map((f: any) => (
                                 <div
                                     key={f.id}
-                                    className="flex items-center justify-between p-3 bg-[#27272a] rounded-lg border border-white/5 hover:border-[#94fbdd]/30 transition-all cursor-pointer group"
-                                    onClick={() => startChatWithFriend(f.friend.id)}
+                                    className="flex items-center justify-between p-3 bg-[#27272a] rounded-lg border border-white/5 group relative"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div
+                                        className="flex items-center gap-3 flex-1 cursor-pointer"
+                                        onClick={() => startChatWithFriend(f.friend.id)}
+                                    >
                                         <div className="w-10 h-10 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
                                             {f.friend.profilePictureUrl ? (
                                                 <img src={getImageUrl(f.friend.profilePictureUrl)} alt={f.friend.name} className="w-full h-full object-cover" />
@@ -168,14 +172,72 @@ export default function FriendsPage() {
                                         </div>
                                         <span className="font-bold text-white group-hover:text-[#94fbdd] transition-colors text-sm">{f.friend.name}</span>
                                     </div>
-                                    <div className="p-2 bg-[#18181b] rounded-lg text-gray-400 group-hover:text-[#94fbdd] transition-colors">
-                                        <ChatBubbleLeftRightIcon className="h-5 w-5" />
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => startChatWithFriend(f.friend.id)}
+                                            className="p-2 bg-[#18181b] rounded-lg text-gray-400 hover:text-[#94fbdd] transition-colors"
+                                        >
+                                            <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFriendToRemove(f.friend);
+                                            }}
+                                            className="p-2 bg-red-500/10 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
+                                            title="Retirer cet ami"
+                                        >
+                                            <XMarkIcon className="h-5 w-5" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
+
+                {/* Modal Confirmation Suppression */}
+                {friendToRemove && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-red-500/10 rounded-lg">
+                                    <XMarkIcon className="h-6 w-6 text-red-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white">Retirer un ami</h3>
+                            </div>
+                            <p className="text-gray-400 mb-6">
+                                Voulez-vous vraiment retirer <strong>{friendToRemove.name}</strong> de vos amis ?
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setFriendToRemove(null)}
+                                    className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        removeFriendMutation.mutate(friendToRemove.id, {
+                                            onSuccess: () => {
+                                                setFriendToRemove(null);
+                                            },
+                                            onError: (err) => {
+                                                console.error("Error removing friend", err);
+                                                // Optional: Add toast notification
+                                            }
+                                        });
+                                    }}
+                                    disabled={removeFriendMutation.isPending}
+                                    className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {removeFriendMutation.isPending ? 'En cours...' : 'Retirer'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

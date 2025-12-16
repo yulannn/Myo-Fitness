@@ -327,11 +327,11 @@ export default function ChatsPage() {
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg: any) => {
                                     // Handle System Messages
-                                    if (msg.content.startsWith('SYSTEM:')) {
+                                    if (msg.type === 'SYSTEM') {
                                         return (
                                             <div key={msg.id} className="flex justify-center my-2">
                                                 <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-1 rounded-full">
-                                                    {msg.content.replace('SYSTEM:', '').trim()}
+                                                    {msg.content}
                                                 </span>
                                             </div>
                                         );
@@ -480,10 +480,10 @@ export default function ChatsPage() {
                                                 }}
                                                 disabled={updateGroupNameStatus !== 'idle'}
                                                 className={`px-3 py-2 rounded-lg font-bold transition-all ${updateGroupNameStatus === 'success'
-                                                        ? 'bg-green-500 text-white'
-                                                        : updateGroupNameStatus === 'error'
-                                                            ? 'bg-red-500 text-white'
-                                                            : 'bg-[#94fbdd] text-[#18181b] hover:bg-[#94fbdd]/90'
+                                                    ? 'bg-green-500 text-white'
+                                                    : updateGroupNameStatus === 'error'
+                                                        ? 'bg-red-500 text-white'
+                                                        : 'bg-[#94fbdd] text-[#18181b] hover:bg-[#94fbdd]/90'
                                                     }`}
                                             >
                                                 {updateGroupNameStatus === 'saving' ? '...' :
@@ -574,8 +574,8 @@ export default function ChatsPage() {
                                                                 }}
                                                                 disabled={sendGroupRequestMutation.isPending || invitedFriends.includes(f.friend.id)}
                                                                 className={`p-1 rounded transition-colors ${invitedFriends.includes(f.friend.id)
-                                                                        ? 'text-green-500 bg-green-500/10'
-                                                                        : 'text-[#94fbdd] hover:bg-[#94fbdd]/10'
+                                                                    ? 'text-green-500 bg-green-500/10'
+                                                                    : 'text-[#94fbdd] hover:bg-[#94fbdd]/10'
                                                                     }`}
                                                             >
                                                                 {invitedFriends.includes(f.friend.id) ? (

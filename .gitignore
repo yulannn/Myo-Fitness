@@ -47,3 +47,4 @@ logs/
 
 api/uploads/*
 client/.env.*
+client/.env.development

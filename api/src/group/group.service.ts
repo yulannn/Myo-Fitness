@@ -4,7 +4,7 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { ChatService } from '../chat/chat.service';
 import { ChatGateway } from '../chat/chat.gateway';
-import { ConversationType } from '@prisma/client';
+import { ConversationType, MessageType } from '@prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -109,7 +109,8 @@ export class GroupService {
                 data: {
                     conversationId: conversation.id,
                     senderId: request.receiverId,
-                    content: `SYSTEM:${request.receiver.name} a rejoint le groupe`,
+                    content: `${request.receiver.name} a rejoint le groupe`,
+                    type: MessageType.SYSTEM,
                 },
                 include: {
                     sender: { select: { id: true, name: true, profilePictureUrl: true } },
@@ -230,7 +231,8 @@ export class GroupService {
                 data: {
                     conversationId: conversation.id,
                     senderId: oldGroup.adminId,
-                    content: `SYSTEM:Le nom du groupe a été modifié : "${oldGroup.name}" ➔ "${name}"`,
+                    content: `Le nom du groupe a été modifié : "${oldGroup.name}" ➔ "${name}"`,
+                    type: MessageType.SYSTEM,
                 },
                 include: {
                     sender: { select: { id: true, name: true, profilePictureUrl: true } },
@@ -283,7 +285,8 @@ export class GroupService {
                 data: {
                     conversationId: conversation.id,
                     senderId: group.adminId, // Admin sends the kick message
-                    content: `SYSTEM:${memberToRemove.name} a été retiré(e) du groupe`,
+                    content: `${memberToRemove.name} a été retiré(e) du groupe`,
+                    type: MessageType.SYSTEM,
                 },
                 include: {
                     sender: { select: { id: true, name: true, profilePictureUrl: true } },
@@ -344,7 +347,8 @@ export class GroupService {
                 data: {
                     conversationId: conversation.id,
                     senderId: userId,
-                    content: `SYSTEM:${user.name} a quitté le groupe`,
+                    content: `${user.name} a quitté le groupe`,
+                    type: MessageType.SYSTEM,
                 },
                 include: {
                     sender: { select: { id: true, name: true, profilePictureUrl: true } },

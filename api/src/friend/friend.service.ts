@@ -246,4 +246,39 @@ export class FriendService {
     }
     return friendList;
   }
+  async removeFriend(userId: number, friendId: number) {
+    // 1. Trouver la conversation privée entre les deux utilisateurs
+    const conversation = await this.prisma.conversation.findFirst({
+      where: {
+        type: ConversationType.PRIVATE,
+        participants: {
+          every: {
+            userId: { in: [userId, friendId] },
+          },
+        },
+      },
+    });
+
+    // 2. Si une conversation existe, la supprimer (ceci supprimera aussi les messages via Cascade)
+    if (conversation) {
+      // Notifier les clients que la conversation est supprimée (optionnel mais recommandé pour mettre à jour l'UI en temps réel)
+      // this.chatGateway.server.to(conversation.id).emit('conversation:deleted', conversation.id); // Si besoin
+
+      await this.prisma.conversation.delete({
+        where: { id: conversation.id },
+      });
+    }
+
+    // 3. Supprimer les deux sens de la relation d'amitié
+    await this.prisma.friend.deleteMany({
+      where: {
+        OR: [
+          { userId: userId, friendId: friendId },
+          { userId: friendId, friendId: userId },
+        ],
+      },
+    });
+
+    return { message: 'Friend removed successfully' };
+  }
 }

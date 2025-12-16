@@ -9,7 +9,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { AddReactionDto } from './dto/add-reaction.dto';
-import { ConversationType } from '@prisma/client';
+import { ConversationType, MessageType } from '@prisma/client';
 
 @Injectable()
 export class ChatService {
@@ -248,7 +248,7 @@ export class ChatService {
                 conversationId: dto.conversationId,
                 senderId,
                 content: dto.content,
-                type: dto.type,
+                type: dto.type === MessageType.SYSTEM ? MessageType.TEXT : dto.type,
                 mediaUrl: dto.mediaUrl,
             },
             include: {
