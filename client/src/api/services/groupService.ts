@@ -52,6 +52,11 @@ export const GroupFetchDataService = {
         const res = await api.delete<{ message: string }>(`/group/${groupId}`);
         return res.data;
     },
+
+    async leaveGroup(groupId: number): Promise<{ message: string }> {
+        const res = await api.post<{ message: string }>(`/group/${groupId}/leave`);
+        return res.data;
+    },
 };
 
 export default GroupFetchDataService;

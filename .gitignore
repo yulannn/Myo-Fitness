@@ -46,3 +46,4 @@ logs/
 *.swp
 
 api/uploads/*
+client/.env.*

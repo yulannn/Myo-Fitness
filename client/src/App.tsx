@@ -5,6 +5,7 @@ import ActiveSessionBubble from "./components/app/ActiveSessionBubble";
 import { routes } from "./routes/routes.config";
 import { usePageTracking } from "./api/hooks/analytics/usePageTracking";
 import { useIOSBounceFix } from "./hooks/useIOSBounceFix";
+import { useGlobalMessageListener } from "./api/hooks/chat/useGlobalMessageListener";
 import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
@@ -12,6 +13,9 @@ export default function App() {
 
   // Track page views in Firebase Analytics
   usePageTracking();
+
+  // Listen for global chat messages
+  useGlobalMessageListener();
 
   // Fix iOS rubber-band effect
   useIOSBounceFix();

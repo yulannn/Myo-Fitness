@@ -9,6 +9,7 @@ export function useAcceptGroupRequest() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['groups'] });
             qc.invalidateQueries({ queryKey: ['groupRequests'] });
+            qc.invalidateQueries({ queryKey: ['conversations'] });
         }
     });
 }

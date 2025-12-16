@@ -1,15 +1,18 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { ChatService } from '../chat/chat.service';
+import { ChatGateway } from '../chat/chat.gateway';
 import { ConversationType } from '@prisma/client';
 
 @Injectable()
 export class GroupService {
     constructor(
         private prisma: PrismaService,
-        private chatService: ChatService
+        private chatService: ChatService,
+        @Inject(forwardRef(() => ChatGateway))
+        private chatGateway: ChatGateway,
     ) { }
 
     async createGroup(createGroupDto: CreateGroupDto, userId: number) {
@@ -65,6 +68,10 @@ export class GroupService {
     async acceptGroupRequest(requestId: string) {
         const request = await this.prisma.friendGroupRequest.findUnique({
             where: { id: requestId },
+            include: {
+                receiver: { select: { name: true } },
+                group: { select: { name: true } }
+            }
         });
 
         if (!request) {
@@ -96,6 +103,20 @@ export class GroupService {
                     userId: request.receiverId
                 }
             }).catch(e => console.error("Error adding participant to conversation", e));
+
+            // Envoyer message système
+            const message = await this.prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    senderId: request.receiverId,
+                    content: `SYSTEM:${request.receiver.name} a rejoint le groupe`,
+                },
+                include: {
+                    sender: { select: { id: true, name: true, profilePictureUrl: true } },
+                    reactions: true
+                }
+            });
+            await this.chatGateway.notifyNewMessage(message, conversation.id);
         }
 
         return { message: 'Group request accepted' };
@@ -183,21 +204,40 @@ export class GroupService {
     }
 
     async updateGroup(groupId: number, name: string) {
+        // Obtenir l'ancien nom pour le message (et l'adminId)
+        const oldGroup = await this.prisma.friendGroup.findUnique({
+            where: { id: groupId },
+            select: { name: true, adminId: true }
+        });
+
         const group = await this.prisma.friendGroup.update({
             where: { id: groupId },
             data: { name },
         });
 
-        // Mettre à jour le nom de la conversation associée
         const conversation = await this.prisma.conversation.findFirst({
             where: { groupId: groupId }
         });
 
-        if (conversation) {
+        if (conversation && oldGroup && oldGroup.adminId) {
             await this.prisma.conversation.update({
                 where: { id: conversation.id },
                 data: { name: name }
             });
+
+            // Message système
+            const message = await this.prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    senderId: oldGroup.adminId,
+                    content: `SYSTEM:Le nom du groupe a été modifié : "${oldGroup.name}" ➔ "${name}"`,
+                },
+                include: {
+                    sender: { select: { id: true, name: true, profilePictureUrl: true } },
+                    reactions: true
+                }
+            });
+            await this.chatGateway.notifyNewMessage(message, conversation.id);
         }
 
         return group;
@@ -214,6 +254,11 @@ export class GroupService {
             throw new NotFoundException('Group not found');
         }
 
+        const memberToRemove = await this.prisma.user.findUnique({
+            where: { id: userIdToRemove },
+            select: { name: true }
+        });
+
         // Retirer du groupe
         await this.prisma.friendGroup.update({
             where: { id: groupId },
@@ -229,7 +274,24 @@ export class GroupService {
             where: { groupId: groupId }
         });
 
-        if (conversation) {
+        if (conversation && memberToRemove && group.adminId) {
+            // Message système AVANT de supprimer le participant de la convo (sinon il ne le verra ptet pas ? ou on veut qu'il le voie pas ? 
+            // "Se fait virer" implies others see it. The removed user won't see it if removed from participants?
+            // Usually removed user shouldn't see future messages. So we send message then remove participant.
+
+            const message = await this.prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    senderId: group.adminId, // Admin sends the kick message
+                    content: `SYSTEM:${memberToRemove.name} a été retiré(e) du groupe`,
+                },
+                include: {
+                    sender: { select: { id: true, name: true, profilePictureUrl: true } },
+                    reactions: true
+                }
+            });
+            await this.chatGateway.notifyNewMessage(message, conversation.id);
+
             await this.prisma.conversationParticipant.deleteMany({
                 where: {
                     conversationId: conversation.id,
@@ -239,6 +301,67 @@ export class GroupService {
         }
 
         return { message: 'Member removed successfully' };
+    }
+
+    async leaveGroup(userId: number, groupId: number) {
+        // Vérifier si le groupe existe
+        const group = await this.prisma.friendGroup.findUnique({
+            where: { id: groupId },
+            include: { members: true }
+        });
+
+        if (!group) {
+            throw new NotFoundException('Group not found');
+        }
+
+        // Vérifier si c'est l'admin (ne peut pas quitter, doit supprimer ou transférer - pour l'instant bloquer)
+        if (group.adminId === userId) {
+            throw new ConflictException('Admin cannot leave group. Delete group or transfer ownership.');
+        }
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true }
+        });
+
+        // Retirer du groupe
+        await this.prisma.friendGroup.update({
+            where: { id: groupId },
+            data: {
+                members: {
+                    disconnect: { id: userId }
+                }
+            }
+        });
+
+        // Retirer de la conversation associée
+        const conversation = await this.prisma.conversation.findFirst({
+            where: { groupId: groupId }
+        });
+
+        if (conversation && user) {
+            const message = await this.prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    senderId: userId,
+                    content: `SYSTEM:${user.name} a quitté le groupe`,
+                },
+                include: {
+                    sender: { select: { id: true, name: true, profilePictureUrl: true } },
+                    reactions: true
+                }
+            });
+            await this.chatGateway.notifyNewMessage(message, conversation.id);
+
+            await this.prisma.conversationParticipant.deleteMany({
+                where: {
+                    conversationId: conversation.id,
+                    userId: userId
+                }
+            });
+        }
+
+        return { message: 'Left group successfully' };
     }
 
     async deleteGroup(groupId: number) {

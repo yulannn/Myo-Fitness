@@ -249,7 +249,21 @@ export class SharedSessionService {
             where: { id: sessionId },
             include: {
                 organizer: {
-                    select: { id: true, name: true },
+                    select: { id: true, name: true, profilePictureUrl: true },
+                },
+                participants: {
+                    include: {
+                        user: {
+                            select: { id: true, name: true, profilePictureUrl: true },
+                        },
+                    },
+                },
+                // On inclut le groupe s'il était DÉJÀ lié à la création, mais on ne le change pas ici
+                group: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
                 },
             },
         });
@@ -262,38 +276,13 @@ export class SharedSessionService {
             throw new BadRequestException('Only organizer can invite groups');
         }
 
-        // Mettre à jour la session avec le groupe
-        const updatedSession = await this.prisma.sharedSession.update({
-            where: { id: sessionId },
-            data: { groupId },
-            include: {
-                organizer: {
-                    select: { id: true, name: true, profilePictureUrl: true },
-                },
-                participants: {
-                    include: {
-                        user: {
-                            select: { id: true, name: true, profilePictureUrl: true },
-                        },
-                    },
-                },
-                group: {
-                    select: {
-                        id: true,
-                        name: true,
-                        members: {
-                            select: {
-                                id: true,
-                                name: true,
-                                profilePictureUrl: true,
-                            }
-                        }
-                    },
-                },
-            },
+        // Récupérer le groupe cible pour avoir ses membres et son nom
+        const targetGroup = await this.prisma.friendGroup.findUnique({
+            where: { id: groupId },
+            include: { members: true },
         });
 
-        if (!updatedSession.group) {
+        if (!targetGroup) {
             throw new NotFoundException('Group not found');
         }
 
@@ -305,11 +294,11 @@ export class SharedSessionService {
         if (!conversation) {
             conversation = await this.prisma.conversation.create({
                 data: {
-                    name: updatedSession.group.name,
+                    name: targetGroup.name,
                     type: 'GROUP',
                     groupId: groupId,
                     participants: {
-                        create: updatedSession.group.members.map(member => ({
+                        create: targetGroup.members.map(member => ({
                             userId: member.id,
                         })),
                     },
@@ -340,11 +329,11 @@ export class SharedSessionService {
         });
 
         // Notifier les membres via WebSocket
-        const memberIds = updatedSession.group.members
+        const memberIds = targetGroup.members
             .map(m => m.id)
             .filter(id => id !== userId);
 
-        this.chatGateway.notifySessionCreated(updatedSession, memberIds);
+        this.chatGateway.notifySessionCreated(session, memberIds);
 
         // Mettre à jour le timestamp de la conversation
         await this.prisma.conversation.update({
@@ -355,7 +344,7 @@ export class SharedSessionService {
         // Émettre l'événement message:new pour mettre à jour les conversations en temps réel
         await this.chatGateway.notifyNewMessage(invitationMessage, conversation.id);
 
-        return updatedSession;
+        return session;
     }
 
     async inviteFriend(userId: number, sessionId: string, friendId: number) {

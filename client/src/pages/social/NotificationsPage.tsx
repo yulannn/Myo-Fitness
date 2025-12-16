@@ -106,27 +106,29 @@ export default function NotificationsPage() {
                                     Invitations de groupe ({groupRequests.length})
                                 </h2>
                                 <div className="space-y-3">
-                                    {groupRequests.map((group: any) => (
-                                        <div key={group.id} className="bg-[#18181b] p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                                    {groupRequests.map((req: any) => (
+                                        <div key={req.id} className="bg-[#18181b] p-4 rounded-xl border border-white/5 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 bg-[#27272a] rounded-lg overflow-hidden border border-white/10 flex items-center justify-center">
                                                     <UserGroupIcon className="w-6 h-6 text-gray-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-white">{group.name}</p>
-                                                    <p className="text-xs text-gray-500">Invitation à rejoindre</p>
+                                                    <p className="font-bold text-white">{req.group?.name || 'Groupe'}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        Invité par <span className="text-white">{req.sender?.name || 'Un membre'}</span>
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => acceptGroup.mutate(group.id)}
+                                                    onClick={() => acceptGroup.mutate(req.id)}
                                                     className="p-2 bg-[#94fbdd] text-[#121214] rounded-lg hover:bg-[#94fbdd]/90 transition-colors"
                                                     disabled={acceptGroup.isPending}
                                                 >
                                                     <CheckIcon className="h-5 w-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => declineGroup.mutate(group.id)}
+                                                    onClick={() => declineGroup.mutate(req.id)}
                                                     className="p-2 bg-[#27272a] text-gray-400 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                                     disabled={declineGroup.isPending}
                                                 >

@@ -151,6 +151,16 @@ export class GroupController {
     return this.groupService.removeMember(groupId, userId);
   }
 
+  @Post(':groupId/leave')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitter un groupe' })
+  @ApiParam({ name: 'groupId', type: Number })
+  leaveGroup(@Param('groupId') groupId: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.groupService.leaveGroup(userId, groupId);
+  }
+
   @Delete(':groupId')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()

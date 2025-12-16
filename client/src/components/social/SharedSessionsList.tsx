@@ -24,6 +24,7 @@ const SharedSessionsList: React.FC = () => {
     const [inviteTab, setInviteTab] = useState<'groups' | 'friends'>('groups');
     const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
     const [deleteConfirmSessionId, setDeleteConfirmSessionId] = useState<string | null>(null);
+    const [confirmLeaveSessionId, setConfirmLeaveSessionId] = useState<string | null>(null);
     const [invitedFriends, setInvitedFriends] = useState<number[]>([]);
 
     const toggleSessionExpansion = (sessionId: string) => {
@@ -190,7 +191,7 @@ const SharedSessionsList: React.FC = () => {
 
                                         {isParticipant ? (
                                             <button
-                                                onClick={() => leaveSession.mutate(session.id)}
+                                                onClick={() => setConfirmLeaveSessionId(session.id)}
                                                 disabled={isOrganizer}
                                                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${isOrganizer
                                                     ? 'bg-white/5 text-gray-500 cursor-not-allowed'
@@ -284,6 +285,42 @@ const SharedSessionsList: React.FC = () => {
                                 className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {deleteSession.isPending ? 'Suppression...' : 'Supprimer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmation de sortie (Leave) */}
+            {confirmLeaveSessionId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-red-500/10 rounded-lg">
+                                <LogOut className="h-6 w-6 text-red-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Quitter la séance</h3>
+                        </div>
+                        <p className="text-gray-400 mb-6">
+                            Êtes-vous sûr de vouloir quitter cette séance ? Vous ne recevrez plus les notifications associées.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmLeaveSessionId(null)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    leaveSession.mutate(confirmLeaveSessionId, {
+                                        onSuccess: () => setConfirmLeaveSessionId(null)
+                                    });
+                                }}
+                                disabled={leaveSession.isPending}
+                                className="flex-1 px-4 py-3 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 font-bold hover:bg-red-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {leaveSession.isPending ? 'En cours...' : 'Quitter'}
                             </button>
                         </div>
                     </div>

@@ -16,6 +16,7 @@ import useDeleteGroup from '../../api/hooks/group/useDeleteGroup';
 import useGroupMembers from '../../api/hooks/group/useGetGroupMembers';
 import useCreateGroup from '../../api/hooks/group/useCreateGroup';
 import useSendGroupRequest from '../../api/hooks/group/useSendGroupRequest';
+import useLeaveGroup from '../../api/hooks/group/useLeaveGroup';
 import useFriendsList from '../../api/hooks/friend/useGetFriendsList';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,8 @@ import { useTypingIndicator } from '../../api/hooks/chat/useTypingIndicator';
 import { useConversationRoom } from '../../api/hooks/chat/useConversationRoom';
 import { useAuth } from '../../context/AuthContext';
 import { getImageUrl } from '../../utils/imageUtils';
+import useJoinSession from '../../api/hooks/shared-session/useJoinSession';
+import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions';
 
 export default function ChatsPage() {
     const navigate = useNavigate();
@@ -42,6 +45,11 @@ export default function ChatsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showDetails, setShowDetails] = useState(false);
     const [isAddingMember, setIsAddingMember] = useState(false);
+    const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
+    const [showLeaveGroupModal, setShowLeaveGroupModal] = useState(false);
+    const [memberToRemove, setMemberToRemove] = useState<any | null>(null);
+    const [invitedFriends, setInvitedFriends] = useState<number[]>([]);
+    const [updateGroupNameStatus, setUpdateGroupNameStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<number | null>(null);
@@ -55,6 +63,8 @@ export default function ChatsPage() {
 
     // Mutations
     const sendGroupRequestMutation = useSendGroupRequest();
+    const joinSession = useJoinSession();
+    const { data: sharedSessions } = useSharedSessions();
 
     const createGroupMutation = useCreateGroup({
         onSuccess: (newGroup) => {
@@ -77,6 +87,7 @@ export default function ChatsPage() {
     const updateGroupMutation = useUpdateGroup();
     const removeMemberMutation = useRemoveMember();
     const deleteGroupMutation = useDeleteGroup();
+    const leaveGroupMutation = useLeaveGroup();
 
     const selectedConv = conversations.find((c: any) => c.id === selectedConversation);
     const isGroupChat = selectedConv?.type === 'GROUP' || !!selectedConv?.groupId;
@@ -315,6 +326,17 @@ export default function ChatsPage() {
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg: any) => {
+                                    // Handle System Messages
+                                    if (msg.content.startsWith('SYSTEM:')) {
+                                        return (
+                                            <div key={msg.id} className="flex justify-center my-2">
+                                                <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-1 rounded-full">
+                                                    {msg.content.replace('SYSTEM:', '').trim()}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+
                                     const isMe = msg.sender?.id === user?.id;
                                     return (
                                         <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -325,7 +347,44 @@ export default function ChatsPage() {
                                                 {!isMe && (
                                                     <p className="text-[10px] font-bold opacity-50 mb-1">{msg.sender?.name}</p>
                                                 )}
-                                                <p className="text-sm">{msg.content}</p>
+                                                {/* Content handling for Session Invites */
+                                                    (() => {
+                                                        const sessionMatch = msg.content.match(/SESSION_ID:(\S+)/);
+                                                        if (sessionMatch) {
+                                                            const sessionId = sessionMatch[1];
+                                                            const displayContent = msg.content.replace(/SESSION_ID:\S+/, '').trim();
+
+                                                            // Check if already joined
+                                                            const isJoined = sharedSessions?.some((s: any) => s.id === sessionId);
+
+                                                            return (
+                                                                <div className="space-y-2">
+                                                                    <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
+                                                                    {!isMe && (
+                                                                        isJoined ? (
+                                                                            <button
+                                                                                disabled
+                                                                                className="w-full bg-[#94fbdd]/10 text-[#94fbdd] text-xs font-bold py-2 px-3 rounded-lg border border-[#94fbdd]/20 cursor-default flex items-center justify-center gap-2"
+                                                                            >
+                                                                                <CheckIcon className="h-4 w-4" />
+                                                                                Déjà rejoint
+                                                                            </button>
+                                                                        ) : (
+                                                                            <button
+                                                                                onClick={() => joinSession.mutate(sessionId)}
+                                                                                disabled={joinSession.isPending}
+                                                                                className="w-full bg-[#121214]/50 hover:bg-[#121214]/80 text-white text-xs font-bold py-2 px-3 rounded-lg border border-white/10 transition-colors flex items-center justify-center gap-2"
+                                                                            >
+                                                                                {joinSession.isPending ? 'Rejoint...' : 'Rejoindre la séance'}
+                                                                            </button>
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return <p className="text-sm">{msg.content}</p>;
+                                                    })()
+                                                }
                                                 <p className={`text-[9px] mt-1 text-right ${isMe ? 'opacity-50' : 'text-gray-400'}`}>
                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
@@ -401,12 +460,36 @@ export default function ChatsPage() {
                                                 onClick={() => {
                                                     const name = (document.getElementById('groupNameInput') as HTMLInputElement).value;
                                                     if (name && selectedConv.groupId) {
-                                                        updateGroupMutation.mutate({ id: selectedConv.groupId, name });
+                                                        setUpdateGroupNameStatus('saving');
+                                                        updateGroupMutation.mutate({ id: selectedConv.groupId, name }, {
+                                                            onSuccess: () => {
+                                                                setUpdateGroupNameStatus('success');
+                                                                setTimeout(() => {
+                                                                    setUpdateGroupNameStatus('idle');
+                                                                }, 2000);
+                                                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                                            },
+                                                            onError: () => {
+                                                                setUpdateGroupNameStatus('error');
+                                                                setTimeout(() => {
+                                                                    setUpdateGroupNameStatus('idle');
+                                                                }, 2000);
+                                                            }
+                                                        });
                                                     }
                                                 }}
-                                                className="bg-[#94fbdd] text-[#18181b] px-3 py-2 rounded-lg font-bold hover:bg-[#94fbdd]/90"
+                                                disabled={updateGroupNameStatus !== 'idle'}
+                                                className={`px-3 py-2 rounded-lg font-bold transition-all ${updateGroupNameStatus === 'success'
+                                                        ? 'bg-green-500 text-white'
+                                                        : updateGroupNameStatus === 'error'
+                                                            ? 'bg-red-500 text-white'
+                                                            : 'bg-[#94fbdd] text-[#18181b] hover:bg-[#94fbdd]/90'
+                                                    }`}
                                             >
-                                                Sauver
+                                                {updateGroupNameStatus === 'saving' ? '...' :
+                                                    updateGroupNameStatus === 'success' ? <CheckIcon className="h-5 w-5" /> :
+                                                        updateGroupNameStatus === 'error' ? '!' :
+                                                            'Sauver'}
                                             </button>
                                         )}
                                     </div>
@@ -433,11 +516,7 @@ export default function ChatsPage() {
                                                 </div>
                                                 {isAdmin && member.id !== user?.id && (
                                                     <button
-                                                        onClick={() => {
-                                                            if (selectedConv.groupId) {
-                                                                removeMemberMutation.mutate({ groupId: selectedConv.groupId, userId: member.id });
-                                                            }
-                                                        }}
+                                                        onClick={() => setMemberToRemove(member)}
                                                         className="text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-colors"
                                                         title="Exclure"
                                                     >
@@ -486,13 +565,24 @@ export default function ChatsPage() {
                                                                         sendGroupRequestMutation.mutate({
                                                                             groupId: selectedConv.groupId,
                                                                             payload: { receiverId: f.friend.id }
+                                                                        }, {
+                                                                            onSuccess: () => {
+                                                                                setInvitedFriends(prev => [...prev, f.friend.id]);
+                                                                            }
                                                                         });
                                                                     }
                                                                 }}
-                                                                disabled={sendGroupRequestMutation.isPending}
-                                                                className="p-1 text-[#94fbdd] hover:bg-[#94fbdd]/10 rounded"
+                                                                disabled={sendGroupRequestMutation.isPending || invitedFriends.includes(f.friend.id)}
+                                                                className={`p-1 rounded transition-colors ${invitedFriends.includes(f.friend.id)
+                                                                        ? 'text-green-500 bg-green-500/10'
+                                                                        : 'text-[#94fbdd] hover:bg-[#94fbdd]/10'
+                                                                    }`}
                                                             >
-                                                                <PlusIcon className="h-4 w-4" />
+                                                                {invitedFriends.includes(f.friend.id) ? (
+                                                                    <CheckIcon className="h-4 w-4" />
+                                                                ) : (
+                                                                    <PlusIcon className="h-4 w-4" />
+                                                                )}
                                                             </button>
                                                         </div>
                                                     ))}
@@ -504,24 +594,29 @@ export default function ChatsPage() {
                                     </div>
                                 )}
 
-                                {isAdmin && (
+                                {/* Delete Group Button */}
+                                {isAdmin ? (
                                     <div className="pt-4 border-t border-white/5">
                                         <button
                                             onClick={() => {
-                                                if (selectedConv.groupId && confirm("Êtes-vous sûr de vouloir supprimer ce groupe ?")) {
-                                                    deleteGroupMutation.mutate(selectedConv.groupId, {
-                                                        onSuccess: () => {
-                                                            setShowDetails(false);
-                                                            setSelectedConversation(null);
-                                                            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                                                        }
-                                                    });
+                                                if (selectedConv.groupId) {
+                                                    setShowDeleteGroupModal(true);
                                                 }
                                             }}
                                             className="w-full py-3 bg-red-500/10 text-red-500 rounded-lg font-bold hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
                                         >
                                             <TrashIcon className="h-5 w-5" />
                                             Supprimer le groupe
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="pt-4 border-t border-white/5">
+                                        <button
+                                            onClick={() => setShowLeaveGroupModal(true)}
+                                            className="w-full py-3 bg-red-500/10 text-red-500 rounded-lg font-bold hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <ArrowLeftIcon className="h-5 w-5" />
+                                            Quitter le groupe
                                         </button>
                                     </div>
                                 )}
@@ -531,6 +626,130 @@ export default function ChatsPage() {
                                 <p>Conversation privée</p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmation Suppression Groupe */}
+            {showDeleteGroupModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-red-500/10 rounded-lg">
+                                <TrashIcon className="h-6 w-6 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Supprimer le groupe</h3>
+                        </div>
+                        <p className="text-gray-400 mb-6">
+                            Êtes-vous sûr de vouloir supprimer ce groupe ? Cette action est irréversible et supprimera toutes les données associées.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteGroupModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (selectedConv?.groupId) {
+                                        deleteGroupMutation.mutate(selectedConv.groupId, {
+                                            onSuccess: () => {
+                                                setShowDeleteGroupModal(false);
+                                                setShowDetails(false);
+                                                setSelectedConversation(null);
+                                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                            }
+                                        });
+                                    }
+                                }}
+                                disabled={deleteGroupMutation.isPending}
+                                className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {deleteGroupMutation.isPending ? 'Suppression...' : 'Supprimer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmation Quitter Groupe */}
+            {showLeaveGroupModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-red-500/10 rounded-lg">
+                                <ArrowLeftIcon className="h-6 w-6 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Quitter le groupe</h3>
+                        </div>
+                        <p className="text-gray-400 mb-6">
+                            Voulez-vous vraiment quitter ce groupe ? Vous ne pourrez plus voir les messages ni y répondre à moins d'y être invité à nouveau.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLeaveGroupModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (selectedConv?.groupId) {
+                                        leaveGroupMutation.mutate(selectedConv.groupId, {
+                                            onSuccess: () => {
+                                                setShowLeaveGroupModal(false);
+                                                setShowDetails(false);
+                                                setSelectedConversation(null);
+                                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                            }
+                                        });
+                                    }
+                                }}
+                                disabled={leaveGroupMutation.isPending}
+                                className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {leaveGroupMutation.isPending ? 'En cours...' : 'Quitter'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmation Suppression Membre */}
+            {memberToRemove && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-xl bg-[#18181b] p-6 shadow-2xl border border-white/5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-orange-500/10 rounded-lg">
+                                <TrashIcon className="h-6 w-6 text-orange-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Retirer un membre</h3>
+                        </div>
+                        <p className="text-gray-400 mb-6">
+                            Voulez-vous vraiment retirer <strong>{memberToRemove.name}</strong> du groupe ?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setMemberToRemove(null)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (selectedConv?.groupId) {
+                                        removeMemberMutation.mutate({ groupId: selectedConv.groupId, userId: memberToRemove.id }, {
+                                            onSuccess: () => setMemberToRemove(null)
+                                        });
+                                    }
+                                }}
+                                disabled={removeMemberMutation.isPending}
+                                className="flex-1 px-4 py-3 rounded-lg bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {removeMemberMutation.isPending ? 'En cours...' : 'Retirer'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

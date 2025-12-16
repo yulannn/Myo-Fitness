@@ -26,11 +26,13 @@ export function useConversations() {
         socket.on('message:new', handleNewMessage);
         socket.on('message:updated', handleMessageUpdated);
         socket.on('message:deleted', handleMessageDeleted);
+        socket.on('friend:request-accepted', handleNewMessage); // Reuse handleNewMessage to refetch conversations
 
         return () => {
             socket.off('message:new', handleNewMessage);
             socket.off('message:updated', handleMessageUpdated);
             socket.off('message:deleted', handleMessageDeleted);
+            socket.off('friend:request-accepted', handleNewMessage);
         };
     }, [socket, isConnected, queryClient]);
 

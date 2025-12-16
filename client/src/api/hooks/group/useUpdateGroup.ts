@@ -9,7 +9,6 @@ export function useUpdateGroup() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['myGroups'] });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            alert('Groupe mis à jour');
         }
     });
 }
