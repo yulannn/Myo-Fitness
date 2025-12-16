@@ -6,9 +6,12 @@ import { ActivityType } from '@prisma/client';
 export class ActivityService {
     constructor(private prisma: PrismaService) { }
 
-    async createActivity(userId: number, type: ActivityType, data: any) {
+    async createActivity(userId: number, type: ActivityType, data: any, tx?: any) {
+        // Utiliser la transaction si fournie, sinon prisma normal
+        const prisma = tx || this.prisma;
+
         // Check if user has enabled sharing
-        const user = await this.prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { shareActivities: true },
         });
@@ -17,7 +20,7 @@ export class ActivityService {
             return null;
         }
 
-        return this.prisma.activity.create({
+        return prisma.activity.create({
             data: {
                 userId,
                 type,

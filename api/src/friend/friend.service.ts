@@ -16,6 +16,7 @@ export class FriendService {
   async searchUsers(query: string, currentUserId: number) {
     if (!query || query.length < 2) return [];
 
+    // 1️⃣ Rechercher les utilisateurs
     const users = await this.prisma.user.findMany({
       where: {
         OR: [
@@ -33,37 +34,74 @@ export class FriendService {
       take: 10,
     });
 
-    // Ajouter le statut d'ami pour chaque utilisateur trouvé
-    const results = await Promise.all(
-      users.map(async (user) => {
-        const friend = await this.prisma.friend.findFirst({
-          where: {
-            OR: [
-              { userId: currentUserId, friendId: user.id },
-              { userId: user.id, friendId: currentUserId },
-            ],
-          },
-        });
+    // Si aucun utilisateur trouvé, retourner vide
+    if (users.length === 0) return [];
 
-        const pendingRequest = await this.prisma.friendRequest.findFirst({
-          where: {
-            OR: [
-              { senderId: currentUserId, receiverId: user.id },
-              { senderId: user.id, receiverId: currentUserId },
-            ],
-            status: 'PENDING',
-          },
-        });
+    // Extraire les IDs pour les requêtes bulk
+    const userIds = users.map(u => u.id);
 
-        let status = 'NONE';
-        if (friend) status = 'FRIEND';
-        else if (pendingRequest) {
-          status = pendingRequest.senderId === currentUserId ? 'SENT' : 'RECEIVED';
+    // 2️⃣ ✅ OPTIMISATION : Récupérer TOUS les friends et requests en 2 requêtes
+    const [friends, requests] = await Promise.all([
+      // Récupérer toutes les relations d'amitié en une seule requête
+      this.prisma.friend.findMany({
+        where: {
+          OR: [
+            { userId: currentUserId, friendId: { in: userIds } },
+            { friendId: currentUserId, userId: { in: userIds } }
+          ]
+        },
+        select: {
+          userId: true,
+          friendId: true,
         }
-
-        return { ...user, status };
       }),
-    );
+      // Récupérer toutes les demandes d'ami en une seule requête
+      this.prisma.friendRequest.findMany({
+        where: {
+          OR: [
+            { senderId: currentUserId, receiverId: { in: userIds } },
+            { receiverId: currentUserId, senderId: { in: userIds } }
+          ],
+          status: 'PENDING',
+        },
+        select: {
+          senderId: true,
+          receiverId: true,
+        }
+      })
+    ]);
+
+    // 3️⃣ ✅ Créer des Maps pour lookup O(1) au lieu de O(N)
+    const friendMap = new Map<number, boolean>();
+    const requestMap = new Map<number, { sent: boolean }>();
+
+    // Remplir le Map des amis
+    friends.forEach(f => {
+      const otherUserId = f.userId === currentUserId ? f.friendId : f.userId;
+      friendMap.set(otherUserId, true);
+    });
+
+    // Remplir le Map des requêtes
+    requests.forEach(r => {
+      const otherUserId = r.senderId === currentUserId ? r.receiverId : r.senderId;
+      requestMap.set(otherUserId, {
+        sent: r.senderId === currentUserId
+      });
+    });
+
+    // 4️⃣ ✅ Mapper les résultats en mémoire (très rapide)
+    const results = users.map(user => {
+      let status = 'NONE';
+
+      if (friendMap.has(user.id)) {
+        status = 'FRIEND';
+      } else if (requestMap.has(user.id)) {
+        const request = requestMap.get(user.id)!;
+        status = request.sent ? 'SENT' : 'RECEIVED';
+      }
+
+      return { ...user, status };
+    });
 
     return results;
   }

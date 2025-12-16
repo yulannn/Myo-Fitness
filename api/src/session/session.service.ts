@@ -242,6 +242,7 @@ export class SessionService {
   }
 
   async completedSession(id: number, userId: number) {
+    // 1️⃣ Récupérer et valider la session (en dehors de la transaction pour performance)
     const session = await this.prisma.trainingSession.findUnique({
       where: { id },
       include: {
@@ -275,77 +276,98 @@ export class SessionService {
       throw new BadRequestException('You do not have permission to complete this session');
     }
 
-    // Marquer la séance comme complétée
-    const updatedSession = await this.prisma.trainingSession.update({
-      where: { id },
-      data: {
-        performedAt: new Date(),
-        completed: true
-      },
-    });
-
-    // 📊 Créer le résumé de la session
-    await this.createSessionSummary(session);
-
-    // Gagner automatiquement 50 XP pour avoir complété la séance (1 fois par jour maximum)
-    try {
-      // Récupérer la date du dernier gain d'XP
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { lastXpGainDate: true },
+    // 2️⃣ ✅ TRANSACTION ATOMIQUE pour éviter les race conditions
+    return this.prisma.$transaction(async (tx) => {
+      // Marquer la séance comme complétée
+      const updatedSession = await tx.trainingSession.update({
+        where: { id },
+        data: {
+          performedAt: new Date(),
+          completed: true
+        },
       });
 
-      // Obtenir la date du jour (UTC, sans heures)
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      // 📊 Créer le résumé de la session
+      await this.createSessionSummary(session, tx);
 
-      // Vérifier si l'utilisateur a déjà gagné de l'XP aujourd'hui
-      let canGainXp = true;
-
-      if (user?.lastXpGainDate) {
-        const lastGainDay = new Date(user.lastXpGainDate);
-        lastGainDay.setUTCHours(0, 0, 0, 0);
-
-        // Comparer les dates (jour uniquement, pas l'heure)
-        canGainXp = today.getTime() > lastGainDay.getTime();
-      }
-
-      // Donner XP seulement si c'est la première séance du jour
-      if (canGainXp) {
-        await this.usersService.gainXp(userId, 50);
-
-        // Mettre à jour la date du dernier gain d'XP
-        await this.prisma.user.update({
+      // 💰 Gain d'XP atomique (1 fois par jour max)
+      try {
+        // Récupérer l'user avec XP actuel
+        const user = await tx.user.findUnique({
           where: { id: userId },
-          data: { lastXpGainDate: new Date() },
+          select: {
+            lastXpGainDate: true,
+            xp: true,
+            level: true,
+          },
         });
+
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+
+        // Calculer si on peut gagner de l'XP aujourd'hui
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+
+        let canGainXp = true;
+        if (user.lastXpGainDate) {
+          const lastGainDay = new Date(user.lastXpGainDate);
+          lastGainDay.setUTCHours(0, 0, 0, 0);
+          canGainXp = today.getTime() > lastGainDay.getTime();
+        }
+
+        // ✅ Donner XP seulement si c'est la première séance du jour
+        if (canGainXp) {
+          const XP_PER_LEVEL = 200;
+          const XP_GAIN = 50;
+
+          const newTotalXp = user.xp + XP_GAIN;
+          const newLevel = Math.floor(newTotalXp / XP_PER_LEVEL) + 1;
+
+          // ✅ Tout en UNE SEULE opération atomique
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              xp: newTotalXp,
+              level: newLevel,
+              lastXpGainDate: new Date(),
+            },
+          });
+        }
+
+        // 📱 Générer l'activité sociale
+        if (updatedSession.completed) {
+          await this.activityService.createActivity(
+            userId,
+            ActivityType.SESSION_COMPLETED,
+            {
+              sessionId: updatedSession.id,
+              sessionName: updatedSession.sessionName || 'Séance sans nom',
+              programName: session.trainingProgram.name,
+              duration: updatedSession.duration || 0,
+            },
+            tx // ✅ Passer la transaction
+          );
+        }
+      } catch (error) {
+        console.error('Erreur lors du gain d\'XP ou activité sociale:', error);
+        // ⚠️ On laisse l'erreur remonter pour rollback la transaction
+        throw error;
       }
 
-      // Generate Social Activity
-      if (updatedSession.completed) {
-        await this.activityService.createActivity(
-          userId,
-          ActivityType.SESSION_COMPLETED,
-          {
-            sessionId: updatedSession.id,
-            sessionName: updatedSession.sessionName || 'Séance sans nom',
-            programName: session.trainingProgram.name,
-            duration: updatedSession.duration || 0, // Assuming duration is tracked, if not it's 0
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Erreur lors du gain d\'XP ou activité sociale:', error);
-    }
-
-    return updatedSession;
+      return updatedSession;
+    });
   }
 
   /**
    * 📊 Créer un résumé de session pour optimiser l'affichage calendrier
    */
-  private async createSessionSummary(session: any) {
+  private async createSessionSummary(session: any, tx?: any) {
     try {
+      // Utiliser la transaction si fournie, sinon prisma normal
+      const prisma = tx || this.prisma;
+
       let totalSets = 0;
       let totalReps = 0;
       let totalVolume = 0;
@@ -388,7 +410,7 @@ export class SessionService {
       const avgRPE = rpeCount > 0 ? totalRPE / rpeCount : null;
 
       // Créer ou mettre à jour le résumé
-      await this.prisma.sessionSummary.upsert({
+      await prisma.sessionSummary.upsert({
         where: { sessionId: session.id },
         create: {
           sessionId: session.id,
