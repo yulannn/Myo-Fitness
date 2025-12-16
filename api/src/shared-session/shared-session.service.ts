@@ -4,9 +4,13 @@ import { CreateSharedSessionDto } from './dto/create-shared-session.dto';
 import { ChatGateway } from '../chat/chat.gateway';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { MessageType } from '@prisma/client';
 
 @Injectable()
 export class SharedSessionService {
+    // ... existing constructor ...
+
+
     constructor(
         private prisma: PrismaService,
         @Inject(forwardRef(() => ChatGateway))
@@ -307,14 +311,20 @@ export class SharedSessionService {
         }
 
         // Envoyer un message système dans le chat du groupe
-        const formattedDate = format(new Date(session.startTime), "d MMMM yyyy 'à' HH:mm", { locale: fr });
-        const messageContent = `📅 INVITATION: ${session.organizer.name} propose une séance de groupe : "${session.title}" le ${formattedDate} à ${session.location || 'lieu non précisé'}. SESSION_ID:${sessionId}`;
+        const invitationData = {
+            sessionId: session.id,
+            title: session.title,
+            startTime: session.startTime,
+            location: session.location,
+            organizerName: session.organizer.name
+        };
 
         const invitationMessage = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 senderId: userId,
-                content: messageContent,
+                content: JSON.stringify(invitationData),
+                type: MessageType.INVITATION,
             },
             include: {
                 sender: {
@@ -409,15 +419,21 @@ export class SharedSessionService {
             });
         }
 
-        // 3. Envoyer le message d'invitation avec pattern reconnaissable
-        const formattedDate = format(new Date(session.startTime), "d MMMM yyyy 'à' HH:mm", { locale: fr });
-        const messageContent = `📅 INVITATION: ${session.organizer.name} vous invite à "${session.title}" le ${formattedDate} à ${session.location || 'lieu non précisé'}. SESSION_ID:${sessionId}`;
+        // 3. Envoyer le message d'invitation avec type structuré
+        const invitationData = {
+            sessionId: session.id,
+            title: session.title,
+            startTime: session.startTime,
+            location: session.location,
+            organizerName: session.organizer.name
+        };
 
         const invitationMessage = await this.prisma.message.create({
             data: {
                 conversationId: conversation.id,
                 senderId: userId,
-                content: messageContent,
+                content: JSON.stringify(invitationData),
+                type: MessageType.INVITATION,
             },
             include: {
                 sender: {

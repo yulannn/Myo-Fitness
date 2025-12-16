@@ -494,6 +494,7 @@ enum MessageType {
   VIDEO
   FILE
   SYSTEM
+  INVITATION
 }
 
 enum PremiumStatus {

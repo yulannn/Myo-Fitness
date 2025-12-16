@@ -326,7 +326,76 @@ export default function ChatsPage() {
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg: any) => {
-                                    // Handle System Messages
+                                    // Handle INVITATION Messages
+                                    if (msg.type === 'INVITATION') {
+                                        try {
+                                            const invite = JSON.parse(msg.content);
+                                            const isJoined = sharedSessions?.some((s: any) => s.id === invite.sessionId);
+                                            const isMe = msg.sender?.id === user?.id;
+
+                                            return (
+                                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} my-2`}>
+                                                    <div className={`
+                                                        w-full max-w-xs rounded-2xl p-4 border transition-all
+                                                        ${isMe
+                                                            ? 'bg-[#18181b] border-[#94fbdd]/30'
+                                                            : 'bg-[#18181b] border-white/10'
+                                                        }
+                                                    `}>
+                                                        {/* Header */}
+                                                        <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/5">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isMe ? 'bg-[#94fbdd]/10 text-[#94fbdd]' : 'bg-white/10 text-gray-300'}`}>
+                                                                <PaperAirplaneIcon className="h-4 w-4 -rotate-45" />
+                                                            </div>
+                                                            <div>
+                                                                <p className={`text-xs font-bold uppercase tracking-wider ${isMe ? 'text-[#94fbdd]' : 'text-gray-300'}`}>Invitation</p>
+                                                                <p className="text-gray-500 text-[10px]">{new Date(invite.startTime).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Body */}
+                                                        <div className="mb-4">
+                                                            <h3 className="text-white font-bold text-base mb-1">{invite.title}</h3>
+                                                            <p className="text-gray-400 text-xs flex items-center gap-1">
+                                                                <span>📍</span> {invite.location || 'Lieu non défini'}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Action */}
+                                                        {!isMe && (
+                                                            isJoined ? (
+                                                                <button
+                                                                    disabled
+                                                                    className="w-full bg-white/5 text-gray-400 text-xs font-bold py-2 px-3 rounded-lg border border-white/5 cursor-default flex items-center justify-center gap-2"
+                                                                >
+                                                                    <CheckIcon className="h-3 w-3" />
+                                                                    Inscrit
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => joinSession.mutate(invite.sessionId)}
+                                                                    disabled={joinSession.isPending}
+                                                                    className="w-full bg-[#27272a] hover:bg-[#323236] text-white text-xs font-bold py-2 px-3 rounded-lg border border-white/10 transition-colors flex items-center justify-center gap-2"
+                                                                >
+                                                                    {joinSession.isPending ? '...' : 'Rejoindre'}
+                                                                </button>
+                                                            )
+                                                        )}
+                                                        {isMe && (
+                                                            <div className="text-right">
+                                                                <span className="text-gray-600 text-[10px] italic">Envoyé par vous</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        } catch (e) {
+                                            console.error("Failed to parse invitation", e);
+                                            return null; // Don't render broken invites
+                                        }
+                                    }
+
+                                    // Handle SYSTEM Messages
                                     if (msg.type === 'SYSTEM') {
                                         return (
                                             <div key={msg.id} className="flex justify-center my-2">
@@ -347,44 +416,8 @@ export default function ChatsPage() {
                                                 {!isMe && (
                                                     <p className="text-[10px] font-bold opacity-50 mb-1">{msg.sender?.name}</p>
                                                 )}
-                                                {/* Content handling for Session Invites */
-                                                    (() => {
-                                                        const sessionMatch = msg.content.match(/SESSION_ID:(\S+)/);
-                                                        if (sessionMatch) {
-                                                            const sessionId = sessionMatch[1];
-                                                            const displayContent = msg.content.replace(/SESSION_ID:\S+/, '').trim();
-
-                                                            // Check if already joined
-                                                            const isJoined = sharedSessions?.some((s: any) => s.id === sessionId);
-
-                                                            return (
-                                                                <div className="space-y-2">
-                                                                    <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
-                                                                    {!isMe && (
-                                                                        isJoined ? (
-                                                                            <button
-                                                                                disabled
-                                                                                className="w-full bg-[#94fbdd]/10 text-[#94fbdd] text-xs font-bold py-2 px-3 rounded-lg border border-[#94fbdd]/20 cursor-default flex items-center justify-center gap-2"
-                                                                            >
-                                                                                <CheckIcon className="h-4 w-4" />
-                                                                                Déjà rejoint
-                                                                            </button>
-                                                                        ) : (
-                                                                            <button
-                                                                                onClick={() => joinSession.mutate(sessionId)}
-                                                                                disabled={joinSession.isPending}
-                                                                                className="w-full bg-[#121214]/50 hover:bg-[#121214]/80 text-white text-xs font-bold py-2 px-3 rounded-lg border border-white/10 transition-colors flex items-center justify-center gap-2"
-                                                                            >
-                                                                                {joinSession.isPending ? 'Rejoint...' : 'Rejoindre la séance'}
-                                                                            </button>
-                                                                        )
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return <p className="text-sm">{msg.content}</p>;
-                                                    })()
-                                                }
+                                                {/* Fallback for legacy text invites if any exist in DB, though we encourage cleaning them up or ignoring */}
+                                                <p className="text-sm">{msg.content}</p>
                                                 <p className={`text-[9px] mt-1 text-right ${isMe ? 'opacity-50' : 'text-gray-400'}`}>
                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
