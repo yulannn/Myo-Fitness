@@ -260,7 +260,10 @@ export default function ChatsPage() {
                                                 <div className="flex justify-between items-center">
                                                     <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-white font-medium' : 'text-gray-400'}`}>
                                                         {conv.lastMessage?.sender?.id === user?.id && 'Vous: '}
-                                                        {conv.lastMessage?.content || 'Nouvelle conversation'}
+                                                        {conv.lastMessage?.type === 'INVITATION'
+                                                            ? '📅 Invitation à une séance'
+                                                            : (conv.lastMessage?.content || 'Nouvelle conversation')
+                                                        }
                                                     </p>
                                                     {conv.unreadCount > 0 && (
                                                         <span className="bg-[#94fbdd] text-[#121214] text-xs font-bold px-2 py-0.5 rounded-full ml-2">
