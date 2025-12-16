@@ -166,8 +166,9 @@ export class SessionService {
   }
 
   /**
-   * Récupère toutes les sessions d'un utilisateur (mode détaillé - utilisé seulement si nécessaire)
-   * @deprecated Utiliser getSessionsForCalendar pour l'affichage calendrier
+   * Récupère toutes les sessions d'un utilisateur
+   * ✅ OPTIMISÉ: Utilise select pour charger uniquement les données nécessaires
+   * Utilisé par: Home (PersonalRecords, StreakTracker, AIInsights, WeekCalendarPreview)
    */
   async getAllUserSessions(
     userId: number,
@@ -207,14 +208,32 @@ export class SessionService {
         },
         ...dateFilter, // Ajouter le filtre de dates si présent
       },
-      include: {
+      select: {
+        id: true,
+        completed: true,
+        performedAt: true,
+        date: true,
+        createdAt: true,
+        // Exercices avec données minimales (pour PersonalRecords)
         exercices: {
-          include: {
-            exercice: true,
-            performances: true, // Inclure les performances pour afficher les données réelles
-          },
-        },
-        trainingProgram: true,
+          select: {
+            id: true,
+            exercice: {
+              select: {
+                id: true,
+                name: true, // Nécessaire pour PersonalRecords
+              }
+            },
+            // Performances nécessaires pour calculer les PR
+            performances: {
+              select: {
+                id_set: true,
+                weight: true,
+                reps_effectuees: true,
+              }
+            }
+          }
+        }
       },
       orderBy: {
         date: 'desc',
