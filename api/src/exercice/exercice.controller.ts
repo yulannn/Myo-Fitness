@@ -46,7 +46,7 @@ export class ExerciceController {
 
 
   @Get()
-  @ApiOperation({ summary: 'Récupérer tous les exercices de l’utilisateur' })
+  @ApiOperation({ summary: 'Récupérer tous les exercices de l\'utilisateur' })
   @ApiResponse({
     status: 200,
     description: 'Liste des exercices',
@@ -74,10 +74,33 @@ export class ExerciceController {
     return this.exerciceService.findAll(userId);
   }
 
+  @Get('minimal')
+  @ApiOperation({ summary: 'Récupérer les exercices de l\'utilisateur (version allégée)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste minimale des exercices (id et name uniquement)',
+    schema: {
+      example: [
+        {
+          id: 1,
+          name: 'Pompes',
+        },
+        {
+          id: 2,
+          name: 'Squats',
+        },
+      ],
+    },
+  })
+  findAllMinimal(@Request() req) {
+    const userId = req.user.userId;
+    return this.exerciceService.findAllMinimal(userId);
+  }
+
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un exercice par son ID' })
-  @ApiParam({ name: 'id', description: 'ID de l’exercice', type: Number, example: 1 })
+  @ApiParam({ name: 'id', description: 'ID de l\'exercice', type: Number, example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Exercice trouvé',
@@ -91,7 +114,7 @@ export class ExerciceController {
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un exercice' })
   @ApiBody({ type: UpdateExerciceDto })
-  @ApiParam({ name: 'id', description: 'ID de l’exercice à modifier', type: Number, example: 1 })
+  @ApiParam({ name: 'id', description: 'ID de l\'exercice à modifier', type: Number, example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Exercice mis à jour',
@@ -104,7 +127,7 @@ export class ExerciceController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un exercice' })
-  @ApiParam({ name: 'id', description: 'ID de l’exercice à supprimer', type: Number, example: 1 })
+  @ApiParam({ name: 'id', description: 'ID de l\'exercice à supprimer', type: Number, example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Exercice supprimé avec succès',
@@ -117,11 +140,11 @@ export class ExerciceController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post(':id/equipments/:equipmentId')
   @ApiOperation({ summary: 'Ajouter un équipement à un exercice' })
-  @ApiParam({ name: 'id', description: 'ID de l’exercice', type: Number, example: 1 })
-  @ApiParam({ name: 'equipmentId', description: 'ID de l’équipement', type: Number, example: 2 })
+  @ApiParam({ name: 'id', description: 'ID de l\'exercice', type: Number, example: 1 })
+  @ApiParam({ name: 'equipmentId', description: 'ID de l\'équipement', type: Number, example: 2 })
   @ApiResponse({
     status: 200,
-    description: 'Équipement ajouté à l’exercice',
+    description: 'Équipement ajouté à l\'exercice',
     schema: {
       example: {
         exerciceId: 1,

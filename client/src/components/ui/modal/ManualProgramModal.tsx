@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, ModalFooter, ModalHeader, ModalTitle, ModalContent } from '../modal';
-import type { Exercice } from '../../../types/exercice.type';
+import type { ExerciceMinimal } from '../../../types/exercice.type';
 import { PlusIcon, TrashIcon, ArrowLeftIcon, ArrowRightIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 interface ExerciseSelection {
@@ -18,7 +18,7 @@ interface SessionData {
 interface ManualProgramModalProps {
     isOpen: boolean;
     onClose: () => void;
-    availableExercises: Exercice[];
+    availableExercises: ExerciceMinimal[];
     fitnessProfileId: number;
     onConfirm: (data: {
         createProgramDto: {
@@ -267,7 +267,6 @@ export const ManualProgramModal = ({
                                         ) : (
                                             <div className="space-y-3">
                                                 {session.exercises.map((exercise, exerciseIndex) => {
-                                                    const selectedExercise = availableExercises.find(ex => ex.id === exercise.id);
                                                     return (
                                                         <div
                                                             key={exerciseIndex}
@@ -306,16 +305,7 @@ export const ManualProgramModal = ({
                                                                 </button>
                                                             </div>
 
-                                                            {/* Muscle Group Badge */}
-                                                            {selectedExercise?.groupes && selectedExercise.groupes.length > 0 && (
-                                                                <div className="flex items-center gap-2 flex-wrap">
-                                                                    {selectedExercise.groupes.map((g) => (
-                                                                        <span key={g.groupe.id} className="text-xs px-2 py-1 rounded-lg bg-[#94fbdd]/10 text-[#94fbdd] font-medium">
-                                                                            {g.groupe.name}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                            {/* Muscle Group Badge - Hidden for minimal exercises */}
 
                                                             {/* Sets, Reps, Weight */}
                                                             <div className="grid grid-cols-3 gap-3">

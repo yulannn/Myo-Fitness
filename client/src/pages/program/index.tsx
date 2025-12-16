@@ -1,7 +1,7 @@
 import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser';
 import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
-import useExercicesByUser from '../../api/hooks/exercice/useGetExercicesByUser';
+import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal';
 import { useState, useMemo, useRef } from 'react';
 import {
   Modal,
@@ -28,7 +28,7 @@ const Program = () => {
 
   const { data: fitnessProfile } = useFitnessProfilesByUser();
   const { data, isLoading } = useProgramsByUser();
-  const { data: exercices = [] } = useExercicesByUser();
+  const { data: exercices = [] } = useExercicesMinimal();
   const { mutate, isPending } = useCreateProgram();
   const { mutate: mutateManual } = useCreateManualProgram();
 

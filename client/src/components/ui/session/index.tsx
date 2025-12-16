@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import type { Session as SessionType } from "../../../types/session.type"
+import type { ExerciceMinimal } from "../../../types/exercice.type"
 import useUpdateSessionDate from "../../../api/hooks/session/useUpdateSessionDate"
 import { CalendarIcon, PlayIcon, PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from "../modal"
@@ -12,7 +13,7 @@ import 'react-day-picker/dist/style.css'
 
 interface SessionProps {
     session: SessionType
-    availableExercises?: any[]
+    availableExercises?: ExerciceMinimal[]
     programStatus?: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' | 'DRAFT'
 }
 

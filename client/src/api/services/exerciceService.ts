@@ -1,9 +1,14 @@
 import api from '../apiClient';
-import type { Exercice, CreateExercicePayload, UpdateExercicePayload } from '../../types/exercice.type';
+import type { Exercice, ExerciceMinimal, CreateExercicePayload, UpdateExercicePayload } from '../../types/exercice.type';
 
 export const ExerciceFetchDataService = {
     async getExercicesByUser(): Promise<Exercice[]> {
         const res = await api.get<Exercice[]>('/exercice');
+        return res.data;
+    },
+
+    async getExercicesMinimalByUser(): Promise<ExerciceMinimal[]> {
+        const res = await api.get<ExerciceMinimal[]>('/exercice/minimal');
         return res.data;
     },
 

@@ -5,6 +5,7 @@ import { ProgramStatusModal } from '../modal/ProgramStatusModal';
 import { DeleteProgramModal } from '../modal/DeleteProgramModal';
 import { EditProgramModal } from '../modal/EditProgramModal';
 import { AddSessionModal } from '../modal/AddSessionModal';
+import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
 import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
 import useUpdateProgram from '../../../api/hooks/program/useUpdateProgram';
@@ -14,7 +15,7 @@ interface ProgramCardProps {
   program: any;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  exercices: any[];
+  exercices: ExerciceMinimal[];
   sortSessions: (sessions: any[]) => any[];
   activeProgram?: any;
 }

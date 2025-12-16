@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from './index';
 import { PlusIcon, TrashIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import type { Session } from '../../../types/session.type';
+import type { ExerciceMinimal } from '../../../types/exercice.type';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import SessionService from '../../../api/services/sessionService';
 
@@ -9,7 +10,7 @@ interface EditSessionModalProps {
     isOpen: boolean;
     onClose: () => void;
     session: Session;
-    availableExercises: any[];
+    availableExercises: ExerciceMinimal[];
 }
 
 interface ExerciseRow {

@@ -54,6 +54,27 @@ export class ExerciceService {
     return exercices;
   }
 
+  async findAllMinimal(userId: number): Promise<{ id: number; name: string }[]> {
+    const exercices = await this.prisma.exercice.findMany({
+      where: {
+        OR: [
+          { isDefault: true },
+          { createdByUserId: userId },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    if (!exercices) {
+      throw new Error('No exercices found');
+    }
+
+    return exercices;
+  }
+
   async findOne(id: number): Promise<ExerciceEntity> {
     const exercice = await this.prisma.exercice.findUnique({
       where: { id },

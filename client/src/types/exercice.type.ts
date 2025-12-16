@@ -25,6 +25,11 @@ export interface Exercice {
     groupes?: ExerciceMuscleGroup[];
 }
 
+export interface ExerciceMinimal {
+    id: number;
+    name: string;
+}
+
 export interface CreateExercicePayload {
     name: string;
     difficulty: number;
