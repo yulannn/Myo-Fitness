@@ -12,25 +12,65 @@ const MAX_SESSIONS_PER_PROGRAM = 7;
 export class ProgramService {
     constructor(private prisma: PrismaService, private iaService: IaService) { }
 
-    // Recupere tout les programmes d'un utilisateur
+    // Recupere tout les programmes d'un utilisateurS
     async getProgramsByUser(userId: number) {
-        return this.prisma.trainingProgram.findMany(
-            {
-                where: { fitnessProfile: { userId } },
-                include: {
-                    sessions: {
-                        where: { completed: false },
-                        include: {
-                            exercices: {
-                                include: {
-                                    exercice: true,
-                                    performances: true // Inclure les performances pour afficher les données réelles
+        return this.prisma.trainingProgram.findMany({
+            where: { fitnessProfile: { userId } },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                template: true,
+                startDate: true,
+                // Sessions avec données minimales
+                sessions: {
+                    where: { completed: false },
+                    select: {
+                        id: true,
+                        sessionName: true,
+                        date: true,
+                        completed: true,
+                        performedAt: true,
+                        // Exercices avec seulement le nom (pas toutes les données)
+                        exercices: {
+                            select: {
+                                id: true,
+                                sets: true,
+                                reps: true,
+                                weight: true,
+                                exercice: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        imageUrl: true // Pour affichage éventuel
+                                    }
                                 }
                             }
                         },
+                        // Compter les exercices pour affichage rapide
+                        _count: {
+                            select: {
+                                exercices: true
+                            }
+                        }
                     },
+                    orderBy: {
+                        date: 'asc'
+                    }
                 },
-            });
+                // Compter toutes les sessions (pour stats)
+                _count: {
+                    select: {
+                        sessions: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
     }
 
     async getProgramById(programId: number, userId: number) {
