@@ -7,6 +7,7 @@ import { usePageTracking } from "./api/hooks/analytics/usePageTracking";
 import { useIOSBounceFix } from "./hooks/useIOSBounceFix";
 import { useGlobalMessageListener } from "./api/hooks/chat/useGlobalMessageListener";
 import ScrollToTop from "./components/ScrollToTop";
+import BadgeToastContainer from "./components/badge/BadgeToastContainer";
 
 export default function App() {
   const location = useLocation();
@@ -38,6 +39,9 @@ export default function App() {
         {!shouldHideBottomNav && <BottomNav />}
         <ActiveSessionBubble />
       </div>
+
+      {/* Badge Toast Container - Au-dessus de tout */}
+      <BadgeToastContainer />
     </div>
   );
 }

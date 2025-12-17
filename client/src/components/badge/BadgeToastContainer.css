@@ -1,0 +1,376 @@
+/* ========================================
+   BADGE TOAST CONTAINER
+   ======================================== */
+.badge-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    /* Au-dessus de tout : modal (z-50), drawer (z-40) */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    pointer-events: none;
+    max-width: 90vw;
+    width: 420px;
+}
+
+/* ========================================
+   BADGE TOAST CARD
+   ======================================== */
+.badge-toast {
+    position: relative;
+    background: linear-gradient(135deg, #1a1a1c 0%, #252527 100%);
+    border-radius: 24px;
+    padding: 20px;
+    pointer-events: auto;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes slideInRight {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+@keyframes glow {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(200px) rotate(360deg);
+    }
+}
+
+.badge-toast-enter {
+    animation: slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.badge-toast-exit {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+/* ========================================
+   GLOW EFFECT
+   ======================================== */
+.badge-toast-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: glow 2s ease-in-out infinite;
+    z-index: 0;
+}
+
+/* ========================================
+   BORDER ANIMATION
+   ======================================== */
+.badge-toast-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ========================================
+   CONTENT
+   ======================================== */
+.badge-toast-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* ========================================
+   CLOSE BUTTON
+   ======================================== */
+.badge-toast-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.badge-toast-close:hover {
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   BADGE ICON
+   ======================================== */
+.badge-toast-icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: spin 20s linear infinite;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.badge-toast-sparkles {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    animation: spin 3s linear infinite reverse;
+}
+
+/* ========================================
+   INFO SECTION
+   ======================================== */
+.badge-toast-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.badge-toast-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94fbdd;
+}
+
+.badge-toast-tier {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.badge-toast-badge-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.badge-toast-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.badge-toast-xp {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: rgba(148, 251, 221, 0.1);
+    border: 1px solid rgba(148, 251, 221, 0.2);
+    border-radius: 12px;
+    width: fit-content;
+    color: #94fbdd;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ========================================
+   CONFETTI PARTICLES
+   ======================================== */
+.badge-toast-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.confetti {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(45deg, #94fbdd, #72e8cc);
+    border-radius: 2px;
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+/* Different starting positions and delays */
+.confetti-1 {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.confetti-2 {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0.1s;
+    background: linear-gradient(45deg, #fbbf24, #f59e0b);
+}
+
+.confetti-3 {
+    top: 15%;
+    left: 30%;
+    animation-delay: 0.2s;
+    background: linear-gradient(45deg, #a78bfa, #8b5cf6);
+}
+
+.confetti-4 {
+    top: 25%;
+    left: 40%;
+    animation-delay: 0.15s;
+}
+
+.confetti-5 {
+    top: 10%;
+    left: 50%;
+    animation-delay: 0.25s;
+    background: linear-gradient(45deg, #f87171, #ef4444);
+}
+
+.confetti-6 {
+    top: 30%;
+    left: 60%;
+    animation-delay: 0.3s;
+    background: linear-gradient(45deg, #60a5fa, #3b82f6);
+}
+
+.confetti-7 {
+    top: 20%;
+    left: 70%;
+    animation-delay: 0.05s;
+}
+
+.confetti-8 {
+    top: 15%;
+    left: 80%;
+    animation-delay: 0.35s;
+    background: linear-gradient(45deg, #34d399, #10b981);
+}
+
+.confetti-9 {
+    top: 25%;
+    left: 90%;
+    animation-delay: 0.4s;
+    background: linear-gradient(45deg, #fbbf24, #f59e0b);
+}
+
+.confetti-10 {
+    top: 5%;
+    left: 25%;
+    animation-delay: 0.2s;
+    background: linear-gradient(45deg, #f472b6, #ec4899);
+}
+
+.confetti-11 {
+    top: 35%;
+    left: 35%;
+    animation-delay: 0.45s;
+}
+
+.confetti-12 {
+    top: 30%;
+    left: 75%;
+    animation-delay: 0.5s;
+    background: linear-gradient(45deg, #a78bfa, #8b5cf6);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 640px) {
+    .badge-toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+
+    .badge-toast {
+        padding: 16px;
+    }
+
+    .badge-toast-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .badge-toast-badge-name {
+        font-size: 18px;
+    }
+
+    .badge-toast-description {
+        font-size: 12px;
+    }
+}

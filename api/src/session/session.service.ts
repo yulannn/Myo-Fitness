@@ -363,35 +363,50 @@ export class SessionService {
       return updatedSession;
     });
 
-    // 🏆 Vérifier les badges (en dehors de la transaction pour ne pas bloquer)
-    // Exécuté de manière asynchrone sans attendre la réponse
-    this.checkBadgesAfterSession(userId, id).catch((error) => {
+    // 🏆 Vérifier les badges et retourner ceux qui sont débloqués
+    let unlockedBadges: any[] = [];
+    try {
+      unlockedBadges = await this.checkBadgesAfterSession(userId, id);
+    } catch (error) {
       console.error('Erreur lors de la vérification des badges:', error);
       // On ne fait pas échouer la requête si les badges échouent
-    });
+    }
 
-    return result;
+    return {
+      ...result,
+      unlockedBadges, // ✨ Retourner les badges débloqués
+    };
   }
 
   /**
    * 🏆 Vérifie et débloque tous les badges liés à une session complétée
+   * Retourne la liste des badges nouvellement débloqués
    */
-  private async checkBadgesAfterSession(userId: number, sessionId: number) {
+  private async checkBadgesAfterSession(userId: number, sessionId: number): Promise<any[]> {
+    const allUnlockedBadges: any[] = [];
+
     try {
       // Vérifier les badges de session
-      await this.badgeCheckerService.checkSessionBadges(userId, sessionId);
+      const sessionBadges = await this.badgeCheckerService.checkSessionBadges(userId, sessionId);
+      allUnlockedBadges.push(...sessionBadges);
 
       // Vérifier les badges de volume
-      await this.badgeCheckerService.checkVolumeBadges(userId);
+      const volumeBadges = await this.badgeCheckerService.checkVolumeBadges(userId);
+      allUnlockedBadges.push(...volumeBadges);
 
       // Vérifier le badge "Semaine Parfaite"
-      await this.badgeCheckerService.checkPerfectWeekBadge(userId);
+      const perfectWeekBadge = await this.badgeCheckerService.checkPerfectWeekBadge(userId);
+      if (perfectWeekBadge) {
+        allUnlockedBadges.push(perfectWeekBadge);
+      }
     } catch (error) {
       console.error(
         `Erreur lors de la vérification des badges pour la session ${sessionId}:`,
         error,
       );
     }
+
+    return allUnlockedBadges;
   }
 
   /**

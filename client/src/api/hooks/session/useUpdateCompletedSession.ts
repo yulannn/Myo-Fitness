@@ -1,20 +1,33 @@
 import { useMutation } from "@tanstack/react-query";
 import SessionService from "../../services/sessionService";
-import type { Session } from "../../../types/session.type";
 import { useQueryClient } from "@tanstack/react-query";
+import { useBadgeToastStore } from "../../../stores/useBadgeToastStore";
+
 
 
 export default function useUpdateCompletedSession() {
     const qc = useQueryClient();
+    const { addBadgeToast } = useBadgeToastStore();
 
-    return useMutation<Session, unknown, number>({
+    return useMutation<any, unknown, number>({
         mutationFn: (sessionId: number) => SessionService.completedSession(sessionId),
-        onSuccess: (_, sessionId) => {
+        onSuccess: (data, sessionId) => {
+            // Invalider les queries
             qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });
             qc.invalidateQueries({ queryKey: ['user', 'xp'] });
             if (sessionId) qc.invalidateQueries({ queryKey: ['session', sessionId] });
+
+            // Afficher les badges débloqués
+            if (data?.unlockedBadges && data.unlockedBadges.length > 0) {
+                // Déclencher les toasts avec un délai entre chaque
+                data.unlockedBadges.forEach((badge: any, index: number) => {
+                    setTimeout(() => {
+                        addBadgeToast(badge);
+                    }, index * 800); // Délai de 800ms entre chaque badge
+                });
+            }
         }
     });
 }
