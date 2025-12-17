@@ -294,9 +294,16 @@ export class ProgramService {
 
         this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
 
-        const sessionNumber = await this.prisma.trainingSession.count({ where: { programId } });
+        // Compter seulement les sessions actives (non complétées)
+        const sessionNumber = await this.prisma.trainingSession.count({
+            where: {
+                programId,
+                completed: false
+            }
+        });
+
         if (sessionNumber >= MAX_SESSIONS_PER_PROGRAM)
-            throw new BadRequestException('Le programme a déjà le nombre maximum de sessions.');
+            throw new BadRequestException(`Le programme a déjà ${MAX_SESSIONS_PER_PROGRAM} sessions actives. Complétez-en une avant d'en ajouter.`);
 
         return this.prisma.$transaction(async (prisma) => {
             const createdSession = await prisma.trainingSession.create({
