@@ -10,6 +10,7 @@ import { StartSessionModal } from "../modal/StartSessionModal"
 import { DayPicker } from 'react-day-picker'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
+import { usePerformanceStore } from "../../../store/usePerformanceStore"
 
 interface SessionProps {
     session: SessionType
@@ -27,6 +28,9 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
         session.date ? new Date(session.date) : undefined
     )
     const { mutate: updateDate, isPending } = useUpdateSessionDate(session.id)
+
+    // Utiliser le store unifié
+    const { setActiveSession, setStartTime, setSessionId } = usePerformanceStore()
 
     const isArchived = programStatus === 'ARCHIVED'
 
@@ -55,8 +59,10 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
     }
 
     const handleConfirmStartSession = () => {
-        localStorage.setItem('activeSession', JSON.stringify(session))
-        localStorage.setItem('sessionStartTime', Date.now().toString())
+        // Utiliser le store Zustand unifié au lieu de localStorage
+        setActiveSession(session)
+        setSessionId(session.id)
+        setStartTime(Date.now())
         setIsStartModalOpen(false)
         navigate('/active-session')
     }

@@ -12,20 +12,23 @@ import SessionSummaryCard from '../../components/session/SessionSummaryCard'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
-    const [activeSession, setActiveSession] = useState<any>(null)
-    const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsedTime, setElapsedTime] = useState(0)
     const [finalDuration, setFinalDuration] = useState(0)
     const [showGenerationModal, setShowGenerationModal] = useState(false)
     const [showSummaryCard, setShowSummaryCard] = useState(false)
     const [showCancelModal, setShowCancelModal] = useState(false)
+    const [showCompletionModal, setShowCompletionModal] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
 
-    // Zustand store
+    // Zustand store unifié - Plus de localStorage manuel !
     const {
         performances,
         sessionId,
+        activeSession,
+        startTime,
         setSessionId,
+        setActiveSession,
+        setStartTime,
         updatePerformance,
         toggleSuccess,
         markAsSaved,
@@ -39,25 +42,7 @@ export default function ActiveSession() {
     const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
     const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
 
-    // Charger la session active depuis localStorage au montage
-    useEffect(() => {
-        const savedSession = localStorage.getItem('activeSession')
-        const savedStartTime = localStorage.getItem('sessionStartTime')
-
-        if (savedSession) {
-            const session = JSON.parse(savedSession)
-            setActiveSession(session)
-
-            // Initialiser le sessionId dans le store
-            if (session.id && sessionId !== session.id) {
-                setSessionId(session.id)
-            }
-        }
-
-        if (savedStartTime) {
-            setStartTime(parseInt(savedStartTime))
-        }
-    }, [sessionId, setSessionId])
+    // Plus besoin de charger depuis localStorage - Le store Zustand gère toute la persistance !
 
     // Chronomètre
     useEffect(() => {
@@ -91,21 +76,25 @@ export default function ActiveSession() {
 
     const allSetsValidated = totalSets > 0 && validatedSets === totalSets
 
-    // Helper pour nettoyer complètement la session (dans tous les cas)
+    // Helper pour nettoyer complètement la session
     const cleanupSession = () => {
-        clearSession() // Nettoie le store Zustand + localStorage 'performance-storage'
-        localStorage.removeItem('activeSession')
-        localStorage.removeItem('sessionStartTime')
+        clearSession() // Nettoie tout le store Zustand (performances + activeSession + startTime)
     }
 
-    const handleStopSession = () => {
+    // Demander confirmation avant de terminer la session
+    const handleRequestStopSession = () => {
+        setShowCompletionModal(true)
+    }
+
+    // Terminer la session après confirmation
+    const handleConfirmStopSession = () => {
         if (activeSession?.id) {
             // Capturer la durée finale avant de terminer
             setFinalDuration(elapsedTime)
+            setShowCompletionModal(false)
 
             updateCompletedSession(activeSession.id, {
                 onSuccess: () => {
-                    // Afficher d'abord la carte de résumé
                     setShowSummaryCard(true)
                 },
                 onError: (error) => {
@@ -205,6 +194,10 @@ export default function ActiveSession() {
         field: 'reps_effectuees' | 'weight' | 'rpe',
         value: any
     ) => {
+        // Validation : pas de valeurs négatives
+        if (value < 0) {
+            return
+        }
         updatePerformance(exerciceSessionId, setIndex, { [field]: value })
     }
 
@@ -218,9 +211,17 @@ export default function ActiveSession() {
             return
         }
 
-        // Validation des données
-        if (!perf?.reps_effectuees && !perf?.weight) {
-            alert('Veuillez entrer au moins les répétitions ou le poids.')
+        // ✅ Validation améliorée des données
+        const reps = perf?.reps_effectuees ?? 0
+        const weight = perf?.weight ?? 0
+
+        // Au moins l'un des deux doit être renseigné et > 0
+        if (reps <= 0 && weight <= 0) {
+            return
+        }
+
+        // Vérifier que les valeurs ne sont pas négatives
+        if (reps < 0 || weight < 0) {
             return
         }
 
@@ -230,19 +231,17 @@ export default function ActiveSession() {
         // Sauvegarder en BDD
         const payload = {
             exerciceSessionId: exerciceSessionId,
-            reps_effectuees: perf.reps_effectuees || 0,
-            weight: perf.weight || 0,
-            rpe: perf.rpe
+            reps_effectuees: reps,
+            weight: weight,
+            rpe: perf?.rpe
         }
 
         createPerformance(payload, {
             onSuccess: (data) => {
-                // Marquer comme sauvegardé avec l'ID
                 markAsSaved(exerciceSessionId, setIndex, data.id_set)
             },
             onError: (error) => {
                 console.error('❌ Erreur:', error)
-                alert('Erreur lors de la sauvegarde.')
                 // Annuler la validation en cas d'erreur
                 toggleSuccess(exerciceSessionId, setIndex)
             }
@@ -468,7 +467,7 @@ export default function ActiveSession() {
                 <div className="fixed bottom-24 left-0 right-0 p-4 sm:px-6 pointer-events-none">
                     <div className="max-w-5xl mx-auto">
                         <button
-                            onClick={handleStopSession}
+                            onClick={handleRequestStopSession}
                             disabled={!allSetsValidated}
                             className={`w-full font-bold py-4 sm:py-5 rounded-2xl shadow-2xl transition-all flex items-center justify-center gap-3 text-base sm:text-lg pointer-events-auto ${allSetsValidated
                                 ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-red-500/50 active:scale-95'
@@ -575,6 +574,34 @@ export default function ActiveSession() {
                             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#252527] hover:bg-[#2a2a2d] text-white font-bold text-base rounded-xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isCreatingSimilar ? 'Génération...' : '🔁 Garder la même séance'}
+                        </button>
+                    </div>
+                </ModalFooter>
+            </Modal>
+
+            {/* Modal de confirmation avant terminer */}
+            <Modal isOpen={showCompletionModal} onClose={() => setShowCompletionModal(false)}>
+                <ModalHeader>
+                    <div className="flex items-center gap-3 justify-center">
+                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
+                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
+                        </div>
+                        <ModalTitle className="text-xl sm:text-2xl">Terminer la séance ?</ModalTitle>
+                    </div>
+                </ModalHeader>
+                <ModalFooter>
+                    <div className="flex flex-col gap-3 w-full">
+                        <button
+                            onClick={handleConfirmStopSession}
+                            className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/30 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95"
+                        >
+                            Oui, terminer la séance
+                        </button>
+                        <button
+                            onClick={() => setShowCompletionModal(false)}
+                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all"
+                        >
+                            Continuer l'entraînement
                         </button>
                     </div>
                 </ModalFooter>

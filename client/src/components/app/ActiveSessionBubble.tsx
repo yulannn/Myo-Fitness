@@ -1,30 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
+import { usePerformanceStore } from '../../store/usePerformanceStore';
 
 export default function ActiveSessionBubble() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [hasActiveSession, setHasActiveSession] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
 
-    // Vérifier s'il y a une session active
+    // Utiliser le store unifi\u00e9 au lieu de localStorage
+    const { activeSession, startTime } = usePerformanceStore();
+
+    // Calculer le  temps \u00e9coul\u00e9
     useEffect(() => {
-        const checkActiveSession = () => {
-            const session = localStorage.getItem('activeSession');
-            const startTime = localStorage.getItem('sessionStartTime');
-            setHasActiveSession(!!(session && startTime));
+        if (startTime) {
+            const interval = setInterval(() => {
+                setElapsedTime(Date.now() - startTime);
+            }, 1000);
 
-            if (startTime) {
-                setElapsedTime(Date.now() - parseInt(startTime));
-            }
-        };
-
-        checkActiveSession();
-        const interval = setInterval(checkActiveSession, 1000);
-
-        return () => clearInterval(interval);
-    }, []);
+            return () => clearInterval(interval);
+        }
+    }, [startTime]);
 
     const formatTime = (milliseconds: number) => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -34,8 +30,8 @@ export default function ActiveSessionBubble() {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    // Ne pas afficher la bulle si on est déjà sur la page active-session
-    if (!hasActiveSession || location.pathname === '/active-session') {
+    // Ne pas afficher la bulle si pas de session active ou si on est d\u00e9j\u00e0 sur la page active-session
+    if (!activeSession || !startTime || location.pathname === '/active-session') {
         return null;
     }
 
@@ -43,7 +39,7 @@ export default function ActiveSessionBubble() {
         <button
             onClick={() => navigate('/active-session')}
             className="fixed z-50 bottom-24 right-4 sm:right-6 group"
-            aria-label="Retour à la session active"
+            aria-label="Retour \u00e0 la session active"
         >
             {/* Effet de glow pulsant */}
             <div className="absolute inset-0 bg-[#94fbdd] rounded-full blur-xl opacity-50 group-hover:opacity-70 animate-pulse"></div>

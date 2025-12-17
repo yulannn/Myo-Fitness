@@ -16,9 +16,13 @@ interface PerformanceStore {
     // État
     performances: Record<string, PerformanceData>;
     sessionId: number | null;
+    activeSession: any | null; // Session complète pour UI
+    startTime: number | null; // Timestamp de démarrage
 
     // Actions
     setSessionId: (id: number | null) => void;
+    setActiveSession: (session: any) => void;
+    setStartTime: (time: number | null) => void;
 
     updatePerformance: (
         exerciceSessionId: number,
@@ -50,8 +54,14 @@ export const usePerformanceStore = create<PerformanceStore>()(
         (set, get) => ({
             performances: {},
             sessionId: null,
+            activeSession: null,
+            startTime: null,
 
             setSessionId: (id: number | null) => set({ sessionId: id }),
+
+            setActiveSession: (session: any) => set({ activeSession: session }),
+
+            setStartTime: (time: number | null) => set({ startTime: time }),
 
             updatePerformance: (exerciceSessionId: number, setIndex: number, data: Partial<PerformanceData>) => {
                 const key = getKey(exerciceSessionId, setIndex);
@@ -103,9 +113,12 @@ export const usePerformanceStore = create<PerformanceStore>()(
             },
 
             clearSession: () => {
-                set({ performances: {}, sessionId: null });
-                // Nettoyer aussi le localStorage de Zustand
-                localStorage.removeItem('performance-storage');
+                set({
+                    performances: {},
+                    sessionId: null,
+                    activeSession: null,
+                    startTime: null
+                });
             },
 
             getAllPerformances: () => {
@@ -114,11 +127,21 @@ export const usePerformanceStore = create<PerformanceStore>()(
         }),
         {
             name: 'performance-storage', // Nom dans localStorage
-            // Ne persister que si une session est active
+            // Persister tout l'état si une session est active
             partialize: (state) =>
                 state.sessionId
-                    ? { performances: state.performances, sessionId: state.sessionId }
-                    : { performances: {}, sessionId: null },
+                    ? {
+                        performances: state.performances,
+                        sessionId: state.sessionId,
+                        activeSession: state.activeSession,
+                        startTime: state.startTime
+                    }
+                    : {
+                        performances: {},
+                        sessionId: null,
+                        activeSession: null,
+                        startTime: null
+                    },
         }
     )
 );
