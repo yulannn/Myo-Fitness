@@ -36,17 +36,22 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
     // Initialize exercises and sessionName from session
     useEffect(() => {
         if (session.exercices) {
-            const mappedExercises: ExerciseRow[] = session.exercices.map((ex: any) => ({
-                id: ex.id,
-                exerciceId: ex.exerciceId,
-                exerciceName: ex.exercice?.name || `Exercice #${ex.exerciceId}`,
-                sets: ex.sets || 0,
-                reps: ex.reps || 0,
-                weight: ex.weight || 0,
-                isNew: false,
-                isModified: false,
-                toDelete: false,
-            }));
+            const mappedExercises: ExerciseRow[] = session.exercices.map((ex: any) => {
+                // Utiliser exerciceId s'il existe, sinon essayer exercice.id
+                const exerciceId = ex.exerciceId || ex.exercice?.id;
+
+                return {
+                    id: ex.id,
+                    exerciceId: exerciceId,
+                    exerciceName: ex.exercice?.name || `Exercice #${exerciceId || 'unknown'}`,
+                    sets: ex.sets || 0,
+                    reps: ex.reps || 0,
+                    weight: ex.weight || 0,
+                    isNew: false,
+                    isModified: false,
+                    toDelete: false,
+                };
+            });
             setExercises(mappedExercises);
         }
         setSessionName(session.sessionName ?? '');
@@ -66,6 +71,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
             // Delete exercises marked for deletion
             for (const exercise of exercises.filter(ex => ex.toDelete && !ex.isNew)) {
+                if (!exercise.exerciceId) {
+                    console.error('❌ Cannot delete exercise with undefined exerciceId:', exercise);
+                    continue;
+                }
+                console.log('🗑️ Deleting exercise:', { sessionId: session.id, exerciceId: exercise.exerciceId });
                 promises.push(
                     SessionService.deleteExerciseFromSession(session.id, exercise.exerciceId)
                 );
@@ -73,6 +83,10 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
             // Add new exercises
             for (const exercise of exercises.filter(ex => ex.isNew && !ex.toDelete)) {
+                if (!exercise.exerciceId) {
+                    console.error('❌ Cannot add exercise with undefined exerciceId:', exercise);
+                    continue;
+                }
                 promises.push(
                     SessionService.addExerciseToSession(session.id, exercise.exerciceId, {
                         id: exercise.exerciceId,
@@ -85,6 +99,10 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
             // Update modified exercises
             for (const exercise of exercises.filter(ex => ex.isModified && !ex.isNew && !ex.toDelete)) {
+                if (!exercise.exerciceId) {
+                    console.error('❌ Cannot update exercise with undefined exerciceId:', exercise);
+                    continue;
+                }
                 promises.push(
                     SessionService.updateExerciseInSession(session.id, exercise.exerciceId, {
                         id: exercise.exerciceId,

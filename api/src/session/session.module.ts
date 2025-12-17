@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
-import { SessionService } from './session.service';
 import { SessionController } from './session.controller';
-import { ProgramModule } from 'src/program/program.module';
+import { SessionService } from './session.service';
+import { PrismaModule } from 'prisma/prisma.module';
+import { ProgramModule } from '../program/program.module';
 import { UsersModule } from 'src/users/users.module';
 import { ActivityModule } from '../social/activity/activity.module';
+import { BadgeModule } from '../badge/badge.module';
 
 @Module({
-  imports: [ProgramModule, UsersModule, ActivityModule],
+  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule],
   controllers: [SessionController],
   providers: [SessionService],
+  exports: [SessionService],
 })
 export class SessionModule { }
-

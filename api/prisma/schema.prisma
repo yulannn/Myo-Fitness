@@ -47,6 +47,9 @@ model User {
   shareActivities   Boolean            @default(false)
   activities        Activity[]
   activityReactions ActivityReaction[]
+  userBadges        UserBadge[]
+  badgeProgress     BadgeProgress[]
+  pinnedBadges      Int[]            @default([])
 }
 
 model Activity {
@@ -72,6 +75,53 @@ model ActivityReaction {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([activityId, userId])
+}
+
+model Badge {
+  id            Int             @id @default(autoincrement())
+  code          String          @unique
+  name          String
+  description   String
+  category      BadgeCategory
+  tier          BadgeTier
+  iconUrl       String?
+  xpReward      Int             @default(0)
+  requirement   Json
+  isSecret      Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  userBadges    UserBadge[]
+
+  @@index([category])
+  @@index([tier])
+}
+
+model UserBadge {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  badgeId       Int
+  unlockedAt    DateTime @default(now())
+  progress      Int      @default(0)
+  isDisplayed   Boolean  @default(true)
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge         Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model BadgeProgress {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  badgeCode     String
+  currentValue  Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, badgeCode])
+  @@index([userId])
 }
 
 enum ActivityType {
@@ -520,4 +570,19 @@ enum WeekDay {
   SATURDAY
   SUNDAY
   CUSTOM
+}
+
+enum BadgeCategory {
+  TRAINING
+  SOCIAL
+  PROGRESSION
+  SPECIAL
+}
+
+enum BadgeTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  LEGENDARY
 }

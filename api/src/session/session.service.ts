@@ -8,6 +8,7 @@ import { ProgramService } from 'src/program/program.service';
 import { UsersService } from 'src/users/users.service';
 import { ActivityService } from '../social/activity/activity.service';
 import { ActivityType } from '@prisma/client';
+import { BadgeCheckerService } from '../badge/badge-checker.service';
 
 @Injectable()
 export class SessionService {
@@ -16,6 +17,7 @@ export class SessionService {
     private readonly programService: ProgramService,
     private readonly usersService: UsersService,
     private readonly activityService: ActivityService,
+    private readonly badgeCheckerService: BadgeCheckerService,
   ) { }
 
   /**
@@ -61,6 +63,7 @@ export class SessionService {
         exercices: {
           select: {
             id: true,
+            exerciceId: true, // ✅ Ajouté pour le frontend
             sets: true,
             reps: true,
             weight: true,
@@ -218,6 +221,7 @@ export class SessionService {
         exercices: {
           select: {
             id: true,
+            exerciceId: true, // ✅ Ajouté pour le frontend
             exercice: {
               select: {
                 id: true,
@@ -277,7 +281,7 @@ export class SessionService {
     }
 
     // 2️⃣ ✅ TRANSACTION ATOMIQUE pour éviter les race conditions
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       // Marquer la séance comme complétée
       const updatedSession = await tx.trainingSession.update({
         where: { id },
@@ -358,6 +362,36 @@ export class SessionService {
 
       return updatedSession;
     });
+
+    // 🏆 Vérifier les badges (en dehors de la transaction pour ne pas bloquer)
+    // Exécuté de manière asynchrone sans attendre la réponse
+    this.checkBadgesAfterSession(userId, id).catch((error) => {
+      console.error('Erreur lors de la vérification des badges:', error);
+      // On ne fait pas échouer la requête si les badges échouent
+    });
+
+    return result;
+  }
+
+  /**
+   * 🏆 Vérifie et débloque tous les badges liés à une session complétée
+   */
+  private async checkBadgesAfterSession(userId: number, sessionId: number) {
+    try {
+      // Vérifier les badges de session
+      await this.badgeCheckerService.checkSessionBadges(userId, sessionId);
+
+      // Vérifier les badges de volume
+      await this.badgeCheckerService.checkVolumeBadges(userId);
+
+      // Vérifier le badge "Semaine Parfaite"
+      await this.badgeCheckerService.checkPerfectWeekBadge(userId);
+    } catch (error) {
+      console.error(
+        `Erreur lors de la vérification des badges pour la session ${sessionId}:`,
+        error,
+      );
+    }
   }
 
   /**

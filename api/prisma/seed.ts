@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, BadgeCategory, BadgeTier } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -28,6 +28,122 @@ async function main() {
   });
 
   console.log('✅ Utilisateurs créés');
+
+  // 1.5. Créer les badges
+  console.log('🏋️ Création des badges...');
+
+  const trainingBadges = [
+    {
+      code: 'FIRST_SESSION',
+      name: 'Rookie',
+      description: 'Complète ta première séance d\'entraînement',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.BRONZE,
+      xpReward: 50,
+      requirement: { type: 'count', field: 'sessions', target: 1 },
+      isSecret: false,
+    },
+    {
+      code: 'SESSIONS_10',
+      name: 'Habitué',
+      description: 'Complète 10 séances d\'entraînement',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.BRONZE,
+      xpReward: 50,
+      requirement: { type: 'count', field: 'sessions', target: 10 },
+      isSecret: false,
+    },
+    {
+      code: 'SESSIONS_50',
+      name: 'Vétéran',
+      description: 'Complète 50 séances d\'entraînement',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.SILVER,
+      xpReward: 100,
+      requirement: { type: 'count', field: 'sessions', target: 50 },
+      isSecret: false,
+    },
+    {
+      code: 'EARLY_BIRD',
+      name: 'Lève-tôt',
+      description: 'Complète 10 séances avant 8h du matin',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.SILVER,
+      xpReward: 100,
+      requirement: { type: 'time', condition: 'before', target: 8, metadata: { count: 10 } },
+      isSecret: false,
+    },
+    {
+      code: 'NIGHT_OWL',
+      name: 'Chouette de nuit',
+      description: 'Complète 10 séances après 22h',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.SILVER,
+      xpReward: 100,
+      requirement: { type: 'time', condition: 'after', target: 22, metadata: { count: 10 } },
+      isSecret: false,
+    },
+    {
+      code: 'VOLUME_10000',
+      name: 'Force Brute',
+      description: 'Soulève un total de 10 000 kg',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.SILVER,
+      xpReward: 100,
+      requirement: { type: 'count', field: 'totalVolume', target: 10000 },
+      isSecret: false,
+    },
+    {
+      code: 'SESSIONS_100',
+      name: 'Centurion',
+      description: 'Complète 100 séances d\'entraînement',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.GOLD,
+      xpReward: 250,
+      requirement: { type: 'count', field: 'sessions', target: 100 },
+      isSecret: false,
+    },
+    {
+      code: 'PERFECT_WEEK',
+      name: 'Semaine Parfaite',
+      description: 'Complète toutes les séances prévues cette semaine',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.GOLD,
+      xpReward: 250,
+      requirement: { type: 'custom', condition: 'perfect_week' },
+      isSecret: false,
+    },
+    {
+      code: 'VOLUME_100000',
+      name: 'Hercule',
+      description: 'Soulève un total de 100 000 kg',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.PLATINUM,
+      xpReward: 500,
+      requirement: { type: 'count', field: 'totalVolume', target: 100000 },
+      isSecret: false,
+    },
+    {
+      code: 'SESSIONS_500',
+      name: 'Légende',
+      description: 'Complète 500 séances d\'entraînement',
+      category: BadgeCategory.TRAINING,
+      tier: BadgeTier.LEGENDARY,
+      xpReward: 1000,
+      requirement: { type: 'count', field: 'sessions', target: 500 },
+      isSecret: false,
+    },
+  ];
+
+  for (const badge of trainingBadges) {
+    await prisma.badge.upsert({
+      where: { code: badge.code },
+      create: badge,
+      update: badge,
+    });
+  }
+
+  console.log(`✅ ${trainingBadges.length} badges créés avec succès`);
 
   // 2. Créer les groupes musculaires
   const muscleGroups = [
