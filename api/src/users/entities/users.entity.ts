@@ -20,6 +20,9 @@ export class UserEntity {
   })
   profilePictureUrl?: string | null;
 
+  @ApiPropertyOptional({ description: 'Code ami unique', example: 'ABC1234' })
+  friendCode?: string | null;
+
   @Exclude()
   password: string;
 

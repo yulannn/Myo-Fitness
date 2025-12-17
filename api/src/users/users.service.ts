@@ -27,6 +27,7 @@ export class UsersService {
     email: string;
     password: string;
     name: string;
+    friendCode?: string;
   }): Promise<UserEntity> {
     const newUser = await this.prisma.user.create({
       data,

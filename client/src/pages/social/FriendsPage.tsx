@@ -16,17 +16,47 @@ import useRemoveFriend from '../../api/hooks/friend/useRemoveFriend';
 import { getImageUrl } from '../../utils/imageUtils';
 import ChatService from '../../api/services/chatService';
 import { SOCIAL_CHATS } from '../../utils/paths';
+import { useAuth } from '../../context/AuthContext';
+import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+
 
 export default function FriendsPage() {
     const navigate = useNavigate();
     // const queryClient = useQueryClient();
-    const [showSearchModal, setShowSearchModal] = useState(false);
+    // const [showSearchModal, setShowSearchModal] = useState(false); // Removed modal state
+    // const queryClient = useQueryClient();
+    // const [showSearchModal, setShowSearchModal] = useState(false); // Removed modal state
     const [searchQuery, setSearchQuery] = useState('');
+    const [lastSearchedQuery, setLastSearchedQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
     const [friendRequestSent, setFriendRequestSent] = useState<number | null>(null);
+    const { user } = useAuth();
+    const [copied, setCopied] = useState(false);
+
+    const copyFriendCode = () => {
+        if (user?.friendCode) {
+            navigator.clipboard.writeText(user.friendCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     // --- FRIENDS ---
     const { data: friends = [] } = useFriendsList();
-    const { data: searchResults = [] } = useSearchUsers(searchQuery);
+    const { data: searchResults = [], isLoading: isLoadingSearch } = useSearchUsers(lastSearchedQuery, { enabled: isSearching });
+
+    const handleSearch = () => {
+        if (!searchQuery.trim()) return;
+        setLastSearchedQuery(searchQuery.trim().toUpperCase());
+        setIsSearching(true); // Enable query execution
+        // We can optionally use useEffect to trigger refetch if query key changes, 
+        // but updating lastSearchedQuery (which is in the query key) should be enough.
+    };
+
+    // Auto-uppercase input
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value.toUpperCase());
+    };
     const sendFriendRequest = useSendFriendRequest();
 
     // Remove Friend Logic
@@ -58,91 +88,109 @@ export default function FriendsPage() {
                         </button>
                         <h1 className="text-2xl font-bold text-white">Mes Amis</h1>
                     </div>
+                </div>
+
+                {/* Friend Code Card */}
+                <div className="bg-gradient-to-r from-[#27272a] to-[#18181b] p-4 rounded-xl border border-white/5 flex items-center justify-between shadow-lg">
+                    <div>
+                        <p className="text-gray-400 text-sm mb-1">Ton Code Ami</p>
+                        <p className="text-2xl font-mono font-bold text-white tracking-widest">
+                            {user?.friendCode || <span className="text-gray-600 text-sm">Génération...</span>}
+                        </p>
+                    </div>
                     <button
-                        onClick={() => setShowSearchModal(true)}
-                        className="p-2 bg-[#27272a] hover:bg-[#94fbdd]/10 text-white hover:text-[#94fbdd] rounded-lg transition-all border border-white/5"
+                        onClick={copyFriendCode}
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group"
+                        title="Copier le code"
                     >
-                        <PlusIcon className="h-6 w-6" />
+                        {copied ? (
+                            <CheckIcon className="h-6 w-6 text-green-400" />
+                        ) : (
+                            <ClipboardDocumentIcon className="h-6 w-6 text-gray-400 group-hover:text-white" />
+                        )}
                     </button>
                 </div>
 
-                {/* Modal Recherche */}
-                {showSearchModal && (
-                    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-32 bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                        <div className="w-full max-w-lg bg-[#18181b] p-4 rounded-xl border border-white/10 shadow-2xl relative">
-                            <button
-                                onClick={() => {
-                                    setShowSearchModal(false);
-                                    setSearchQuery('');
-                                }}
-                                className="absolute -top-2 -right-2 p-2 bg-[#27272a] text-white rounded-full border border-white/10 hover:bg-white/10 transition-colors"
-                            >
-                                <XMarkIcon className="h-5 w-5" />
-                            </button>
-
-                            <h3 className="text-lg font-bold text-white mb-4">Ajouter un ami</h3>
-
-                            <div className="relative mb-4">
-                                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-500" />
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher par nom..."
-                                    className="w-full bg-[#27272a] pl-10 pr-4 py-3 rounded-lg border border-white/5 text-white placeholder-gray-500 focus:outline-none focus:border-[#94fbdd] focus:ring-1 focus:ring-[#94fbdd] transition-all"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="max-h-[60vh] overflow-y-auto space-y-2">
-                                {searchResults.length === 0 && searchQuery && (
-                                    <p className="text-center text-gray-500 py-4">Aucun utilisateur trouvé</p>
-                                )}
-                                {searchResults.map((user: any) => (
-                                    <div key={user.id} className="flex items-center justify-between p-3 bg-[#27272a] rounded-lg border border-white/5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
-                                                {user.profilePictureUrl ? (
-                                                    <img src={getImageUrl(user.profilePictureUrl)} alt={user.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <UsersIcon className="w-5 h-5 m-2.5 text-gray-400" />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-white text-sm">{user.name}</p>
-                                            </div>
-                                        </div>
-                                        {(user.status === 'NONE' || user.status === 'SENT') && (
-                                            <button
-                                                onClick={() => {
-                                                    if (user.status === 'NONE') {
-                                                        sendFriendRequest.mutate({ friendId: user.id }, {
-                                                            onSuccess: () => {
-                                                                setFriendRequestSent(user.id);
-                                                            }
-                                                        });
-                                                    }
-                                                }}
-                                                disabled={user.status === 'SENT'}
-                                                className={`p-2 rounded-lg transition-all duration-300 ${friendRequestSent === user.id || user.status === 'SENT'
-                                                    ? 'bg-green-500/10 text-green-400 cursor-default'
-                                                    : 'bg-white/5 text-[#94fbdd] hover:bg-[#94fbdd]/10 cursor-pointer'
-                                                    }`}
-                                            >
-                                                {friendRequestSent === user.id || user.status === 'SENT' ? (
-                                                    <CheckIcon className="h-5 w-5" />
-                                                ) : (
-                                                    <PlusIcon className="h-5 w-5" />
-                                                )}
-                                            </button>
-                                        )}
-                                        {user.status === 'FRIEND' && <span className="text-xs text-[#94fbdd] bg-[#94fbdd]/10 px-2 py-1 rounded">Ami</span>}
-                                    </div>
-                                ))}
-                            </div>
+                {/* Search Bar Section */}
+                <div className="bg-[#18181b] p-4 rounded-xl border border-white/5">
+                    <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Ajouter un ami</h3>
+                    <div className="relative mb-4 flex gap-2">
+                        <div className="relative flex-1">
+                            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-500" />
+                            <input
+                                type="text"
+                                placeholder="CODE AMI"
+                                className="w-full bg-[#27272a] pl-10 pr-4 py-3 rounded-lg border border-white/5 text-white placeholder-gray-500 font-mono tracking-widest uppercase focus:outline-none focus:border-[#94fbdd] focus:ring-1 focus:ring-[#94fbdd] transition-all"
+                                value={searchQuery}
+                                onChange={handleInputChange}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                maxLength={8}
+                            />
                         </div>
+                        <button
+                            onClick={handleSearch}
+                            disabled={!searchQuery.trim()}
+                            className="p-3 bg-[#94fbdd] text-[#121214] rounded-lg hover:bg-[#7dfbc9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <MagnifyingGlassIcon className="h-6 w-6" />
+                        </button>
                     </div>
-                )}
+
+                    {/* Search Results */}
+                    {(searchResults.length > 0 || isLoadingSearch || (lastSearchedQuery && searchResults.length === 0)) && (
+                        <div className="max-h-[300px] overflow-y-auto space-y-2 mt-4 pt-4 border-t border-white/5">
+                            {isLoadingSearch && (
+                                <div className="p-4 text-center">
+                                    <div className="w-6 h-6 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                </div>
+                            )}
+                            {!isLoadingSearch && searchResults.length === 0 && lastSearchedQuery && (
+                                <p className="text-center text-gray-500 py-4">Aucun utilisateur trouvé</p>
+                            )}
+                            {searchResults.map((user: any) => (
+                                <div key={user.id} className="flex items-center justify-between p-3 bg-[#27272a] rounded-lg border border-white/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
+                                            {user.profilePictureUrl ? (
+                                                <img src={getImageUrl(user.profilePictureUrl)} alt={user.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <UsersIcon className="w-5 h-5 m-2.5 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white text-sm">{user.name}</p>
+                                        </div>
+                                    </div>
+                                    {(user.status === 'NONE' || user.status === 'SENT') && (
+                                        <button
+                                            onClick={() => {
+                                                if (user.status === 'NONE') {
+                                                    sendFriendRequest.mutate({ friendId: user.id }, {
+                                                        onSuccess: () => {
+                                                            setFriendRequestSent(user.id);
+                                                        }
+                                                    });
+                                                }
+                                            }}
+                                            disabled={user.status === 'SENT'}
+                                            className={`p-2 rounded-lg transition-all duration-300 ${friendRequestSent === user.id || user.status === 'SENT'
+                                                ? 'bg-green-500/10 text-green-400 cursor-default'
+                                                : 'bg-white/5 text-[#94fbdd] hover:bg-[#94fbdd]/10 cursor-pointer'
+                                                }`}
+                                        >
+                                            {friendRequestSent === user.id || user.status === 'SENT' ? (
+                                                <CheckIcon className="h-5 w-5" />
+                                            ) : (
+                                                <PlusIcon className="h-5 w-5" />
+                                            )}
+                                        </button>
+                                    )}
+                                    {user.status === 'FRIEND' && <span className="text-xs text-[#94fbdd] bg-[#94fbdd]/10 px-2 py-1 rounded">Ami</span>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 {/* Liste d'amis */}
                 <div className="bg-[#18181b] p-4 rounded-xl border border-white/5">
@@ -240,6 +288,6 @@ export default function FriendsPage() {
                 )}
 
             </div>
-        </div>
+        </div >
     );
 }

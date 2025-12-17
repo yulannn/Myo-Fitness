@@ -7,6 +7,7 @@ import {
     Request,
     Res,
     HttpCode,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,7 +33,7 @@ export class AuthController {
         const result = await this.authService.signIn(req.user);
         res.cookie('refreshToken', result.refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
         });
@@ -84,12 +85,17 @@ export class AuthController {
     })
     async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
         const refreshToken = req.cookies['refreshToken'];
+
+        if (!refreshToken) {
+            throw new UnauthorizedException('No refresh token provided');
+        }
+
         const { accessToken, refreshToken: newRefreshToken } =
             await this.authService.refreshToken(refreshToken);
 
         res.cookie('refreshToken', newRefreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });

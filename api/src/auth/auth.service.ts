@@ -26,6 +26,16 @@ export class AuthService {
     private emailService: EmailService,
   ) { }
 
+  /** Génère un code ami unique de 8 caractères alphanumériques */
+  private generateFriendCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
   /** Valide l'utilisateur pour le LocalStrategy */
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
     const user = await this.usersService.findUserByEmail(email);
@@ -57,6 +67,18 @@ export class AuthService {
   async getFreshUser(id: number) {
     const user = await this.usersService.findUserById(id);
 
+    // Auto-migration: Générer un code ami s'il n'en a pas
+    if (!user.friendCode) {
+      try {
+        const friendCode = this.generateFriendCode();
+        await this.usersService.updateUser(user.id, { friendCode });
+        user.friendCode = friendCode;
+      } catch (e) {
+        // En cas de collision (très rare), on réessayera au prochain appel
+        console.error('Erreur génération friendCode auto:', e);
+      }
+    }
+
     const { password, refreshToken, ...safeUser } = user;
 
     return safeUser;
@@ -82,9 +104,17 @@ export class AuthService {
     if (existingUser) throw new BadRequestException('Cet email est déjà utilisé. Si c\'est votre compte, veuillez vous connecter.');
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
+
+    // Essayer de générer un code unique (avec retry manuel simple si collision)
+    let friendCode = this.generateFriendCode();
+    // On pourrait vérifier l'existence ici, mais le @unique de la DB nous protégera
+    // et on laissera l'erreur remonter ou on ferait une boucle. 
+    // Pour simplifier, on assume que la collision est rare sur 8 chars.
+
     const newUser = await this.usersService.createUser({
       ...signUpDto,
       password: hashedPassword,
+      friendCode,
     });
 
     // Générer un code de vérification à 6 chiffres

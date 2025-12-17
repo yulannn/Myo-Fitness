@@ -3,6 +3,7 @@ export interface AuthUser {
     email: string;
     name: string;
     profilePictureUrl?: string | null;
+    friendCode?: string | null;
     shareActivities?: boolean;
 }
 

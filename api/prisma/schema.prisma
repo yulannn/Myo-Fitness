@@ -50,6 +50,7 @@ model User {
   userBadges        UserBadge[]
   badgeProgress     BadgeProgress[]
   pinnedBadges      Int[]            @default([])
+  friendCode        String?          @unique
 }
 
 model Activity {

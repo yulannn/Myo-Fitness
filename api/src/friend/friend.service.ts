@@ -16,13 +16,10 @@ export class FriendService {
   async searchUsers(query: string, currentUserId: number) {
     if (!query || query.length < 2) return [];
 
-    // 1️⃣ Rechercher les utilisateurs
+    // 1️⃣ Rechercher les utilisateurs par code ami uniquement
     const users = await this.prisma.user.findMany({
       where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
-        ],
+        friendCode: { equals: query, mode: 'insensitive' }, // Recherche exacte (mais insensible à la casse au cas où)
         NOT: { id: currentUserId },
       },
       select: {
