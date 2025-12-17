@@ -1,17 +1,25 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { SessionSchedulingHelper } from 'src/program/session-scheduling.helper';
+import { PerformanceAnalyzer } from './adapters/performance-analyzer';
+import { AdaptationStrategyEngine } from './adapters/adaptation-strategy';
+import { ExerciseAdapter } from './adapters/exercise-adapter';
 
-enum PerformanceStatus {
-    TOO_EASY = 'too_easy',
-    TOO_HARD = 'too_hard',
-    PERFECT = 'perfect',
-}
-
+/**
+ * Service d'adaptation professionnel de séances
+ * Architecture modulaire avec analyseur, stratégie et adaptateur séparés
+ */
 @Injectable()
 export class SessionAdaptationService {
-    constructor(private prisma: PrismaService) { }
+    private readonly performanceAnalyzer: PerformanceAnalyzer;
+    private readonly strategyEngine: AdaptationStrategyEngine;
+    private readonly exerciseAdapter: ExerciseAdapter;
 
+    constructor(private prisma: PrismaService) {
+        this.performanceAnalyzer = new PerformanceAnalyzer();
+        this.strategyEngine = new AdaptationStrategyEngine();
+        this.exerciseAdapter = new ExerciseAdapter();
+    }
 
     async getSessionWithPerformances(trainingSessionId: number, userId: number) {
         const session = await this.prisma.trainingSession.findUnique({
@@ -44,9 +52,9 @@ export class SessionAdaptationService {
         return session;
     }
 
-
-    // Fonction  lorsque l'utilisateur veut une adaptation automatique basée sur les performances précédentes
-
+    /**
+     * Crée une session adaptée basée sur les performances
+     */
     async createAdaptedSessionFromPrevious(trainingSessionId: number, userId: number) {
         const session = await this.getSessionWithPerformances(trainingSessionId, userId);
 
@@ -63,66 +71,15 @@ export class SessionAdaptationService {
         return this.createAdaptedSession(session);
     }
 
+    /**
+     * Crée une nouvelle session similaire sans adaptation
+     */
+    async createNewSimilarSession(trainingSessionId: number, userId: number) {
+        const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
+        const originalSessionId = oldSession.originalSessionId || oldSession.id;
 
-
-    private analyzePerformance(performances: any[]) {
-        const totalSets = performances.length;
-
-        const failedSets = performances.filter((p) => p.success === false).length;
-
-        const avgRPE =
-            performances.reduce((sum, p) => sum + (p.rpe ?? 0), 0) / totalSets;
-
-
-        if (failedSets === 0 && avgRPE < 8) {
-            return PerformanceStatus.TOO_EASY;
-        }
-        if (failedSets >= 3 || avgRPE > 9) {
-            return PerformanceStatus.TOO_HARD;
-        }
-        return PerformanceStatus.PERFECT;
-    }
-
-
-    private adaptExercise(exerciceSession: any, status: PerformanceStatus) {
-        let reps = exerciceSession.reps;
-        let weight = exerciceSession.weight;
-        const isBodyweight = exerciceSession.exercice.bodyWeight;
-
-        switch (status) {
-            case PerformanceStatus.TOO_EASY:
-                if (isBodyweight) {
-                    reps += 2;
-                } else if (weight) {
-                    weight = Math.round(weight * 1.05 * 2) / 2;
-                }
-                break;
-
-            case PerformanceStatus.TOO_HARD:
-                if (isBodyweight) {
-                    reps = Math.max(5, reps - 2);
-                } else if (weight) {
-                    weight = Math.round(weight * 0.9 * 2) / 2;
-                }
-                break;
-
-            case PerformanceStatus.PERFECT:
-            default:
-
-                break;
-        }
-
-        return { reps, weight };
-    }
-
-
-    private async createAdaptedSession(previousSession) {
-
-        const originalSessionId = previousSession.originalSessionId || previousSession.id;
-
-        // Récupérer le profil fitness pour obtenir les trainingDays
         const program = await this.prisma.trainingProgram.findUnique({
-            where: { id: previousSession.programId },
+            where: { id: oldSession.programId },
             include: {
                 fitnessProfile: {
                     select: { trainingDays: true },
@@ -131,60 +88,31 @@ export class SessionAdaptationService {
         });
 
         const trainingDays = program?.fitnessProfile?.trainingDays || [];
-
-        // Récupérer la dernière session planifiée pour ce programme
-        const lastScheduledSession = await this.prisma.trainingSession.findFirst({
-            where: {
-                programId: previousSession.programId,
-                date: { not: null }
-            },
-            orderBy: { date: 'desc' },
-        });
-
-        // La date de référence est la plus récente entre "maintenant" et la dernière session planifiée
-        // Cela garantit que la nouvelle session est planifiée APRÈS les sessions existantes
-        // et jamais dans le passé
-        let referenceDate = new Date();
-
-        if (lastScheduledSession?.date) {
-            const lastDate = new Date(lastScheduledSession.date);
-            if (lastDate > referenceDate) {
-                referenceDate = lastDate;
-            }
-        }
-
-        // Calculer la prochaine date de session
-        const nextSessionDate = SessionSchedulingHelper.getNextSessionDate(
-            referenceDate,
-            trainingDays,
-        );
+        const nextSessionDate = this.calculateNextSessionDate(oldSession.programId, trainingDays);
 
         const newSession = await this.prisma.trainingSession.create({
             data: {
-                programId: previousSession.programId,
-                date: nextSessionDate, // null si trainingDays est vide
+                programId: oldSession.programId,
+                date: nextSessionDate,
                 duration: null,
-                sessionName: `Session adaptée basée sur la session du ${previousSession.date
-                    ? new Date(previousSession.date).toLocaleDateString()
-                    : 'précédente'
-                    }`,
+                sessionName: `Session basée sur ${oldSession.sessionName || 'session précédente'}`,
                 originalSessionId: originalSessionId,
-            },
+            }
         });
 
+        if (!newSession) {
+            throw new NotFoundException('Failed to create a new training session.');
+        }
 
-        for (const exerciceSession of previousSession.exercices) {
-            const status = this.analyzePerformance(exerciceSession.performances);
-            const adapted = this.adaptExercise(exerciceSession, status);
-
+        for (const exerciceSession of oldSession.exercices) {
             await this.prisma.exerciceSession.create({
                 data: {
                     sessionId: newSession.id,
                     exerciceId: exerciceSession.exerciceId,
                     sets: exerciceSession.sets,
-                    reps: adapted.reps,
-                    weight: adapted.weight,
-                },
+                    reps: exerciceSession.reps,
+                    weight: exerciceSession.weight,
+                }
             });
         }
 
@@ -198,83 +126,72 @@ export class SessionAdaptationService {
         });
     }
 
+    /**
+     * Logique principale d'adaptation avec le nouveau système
+     */
+    private async createAdaptedSession(previousSession: any) {
+        const originalSessionId = previousSession.originalSessionId || previousSession.id;
 
-
-    // Fonction lorsque l'utilisateur ne veut pas d'adaptation automatique ou n'a pas de données de performance
-
-    async createNewSimilarSession(trainingSessionId: number, userId: number) {
-
-
-        const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
-
-
-        const originalSessionId = oldSession.originalSessionId || oldSession.id;
-
-        // Récupérer le profil fitness pour obtenir les trainingDays
+        // Calculer la prochaine date
         const program = await this.prisma.trainingProgram.findUnique({
-            where: { id: oldSession.programId },
+            where: { id: previousSession.programId },
             include: {
-                fitnessProfile: {
-                    select: { trainingDays: true },
-                },
+                fitnessProfile: { select: { trainingDays: true } },
             },
         });
 
         const trainingDays = program?.fitnessProfile?.trainingDays || [];
+        const nextSessionDate = this.calculateNextSessionDate(previousSession.programId, trainingDays);
 
-        // Récupérer la dernière session planifiée pour ce programme
-        const lastScheduledSession = await this.prisma.trainingSession.findFirst({
-            where: {
-                programId: oldSession.programId,
-                date: { not: null }
-            },
-            orderBy: { date: 'desc' },
-        });
-
-        // La date de référence est la plus récente entre "maintenant" et la dernière session planifiée
-        let referenceDate = new Date();
-
-        if (lastScheduledSession?.date) {
-            const lastDate = new Date(lastScheduledSession.date);
-            if (lastDate > referenceDate) {
-                referenceDate = lastDate;
-            }
-        }
-
-        // Calculer la prochaine date de session
-        const nextSessionDate = SessionSchedulingHelper.getNextSessionDate(
-            referenceDate,
-            trainingDays,
-        );
-
+        // Créer la nouvelle session
         const newSession = await this.prisma.trainingSession.create({
             data: {
-                programId: oldSession.programId,
-                date: nextSessionDate, // null si trainingDays est vide
+                programId: previousSession.programId,
+                date: nextSessionDate,
                 duration: null,
-                sessionName: `Session adaptée basée sur la session du ${oldSession.date
-                    ? new Date(oldSession.date).toLocaleDateString()
-                    : 'précédente'
-                    }`,
+                sessionName: `Session adaptée - ${new Date().toLocaleDateString()}`,
                 originalSessionId: originalSessionId,
-            }
-        })
+            },
+        });
 
-        if (!newSession) {
-            throw new NotFoundException('Failed to create a new training session.');
-        }
+        // Adapter chaque exercice
+        for (const exerciceSession of previousSession.exercices) {
 
-        for (const exerciceSession of oldSession.exercices) {
+            // 1. Analyser les performances
+            const analysis = this.performanceAnalyzer.analyze(
+                exerciceSession.performances,
+                exerciceSession.reps,
+                exerciceSession.weight,
+                exerciceSession.sets
+            );
 
+            // 2. Déterminer la stratégie
+            const strategy = this.strategyEngine.determine(
+                analysis.recommendation,
+                exerciceSession.exercice.bodyWeight,
+                exerciceSession.weight
+            );
+
+            // 3. Appliquer l'adaptation
+            const adapted = this.exerciseAdapter.adapt(
+                exerciceSession.reps,
+                exerciceSession.weight,
+                exerciceSession.sets,
+                strategy,
+                exerciceSession.exercice.bodyWeight
+            );
+
+            // 4. Créer l'exercice adapté
             await this.prisma.exerciceSession.create({
                 data: {
                     sessionId: newSession.id,
                     exerciceId: exerciceSession.exerciceId,
-                    sets: exerciceSession.sets,
-                    reps: exerciceSession.reps,
-                    weight: exerciceSession.weight,
-                }
-            })
+                    sets: adapted.sets,
+                    reps: adapted.reps,
+                    weight: adapted.weight,
+                },
+            });
+
         }
 
         return this.prisma.trainingSession.findUnique({
@@ -285,5 +202,15 @@ export class SessionAdaptationService {
                 },
             },
         });
+    }
+
+    /**
+     * Calcule la prochaine date de session
+     */
+    private calculateNextSessionDate(programId: number, trainingDays: any[]): Date | null {
+        return SessionSchedulingHelper.getNextSessionDate(
+            new Date(),
+            trainingDays as any,
+        );
     }
 }

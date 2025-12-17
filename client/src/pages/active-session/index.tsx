@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/solid'
+import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
 import useDeletePerformance from '../../api/hooks/performance/useDeletePerformance'
 import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
@@ -524,59 +524,43 @@ export default function ActiveSession() {
             {/* Modal de génération */}
             <Modal isOpen={showGenerationModal} onClose={() => { }} showClose={false}>
                 <ModalHeader>
-                    <div className="flex items-center gap-3 justify-center">
-                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
-                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
-                        </div>
-                        <ModalTitle className="text-xl sm:text-2xl">Prochaine séance</ModalTitle>
-                    </div>
+                    <ModalTitle className="text-xl sm:text-2xl text-center">Séance terminée</ModalTitle>
                 </ModalHeader>
-                <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
-                    <p className="text-sm sm:text-base text-gray-300 text-center">
-                        Félicitations pour avoir terminé votre séance !
+                <div className="px-4 sm:px-6 py-6 sm:py-8">
+                    <p className="text-base sm:text-lg text-gray-300 text-center mb-8">
+                        Comment voulez-vous générer votre prochaine séance ?
                     </p>
-                    <p className="text-sm sm:text-base text-gray-300 text-center">
-                        Voulez-vous générer automatiquement votre prochaine séance ?
-                    </p>
-                    <div className="space-y-3 mt-4">
-                        <div className="group bg-[#94fbdd]/5 hover:bg-[#94fbdd]/10 p-4 rounded-2xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all cursor-pointer">
-                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
-                                <span className="text-lg">✨</span>
-                                Session adaptée
-                            </h4>
-                            <p className="text-xs sm:text-sm text-gray-400">
-                                La prochaine séance sera ajustée selon vos performances pour optimiser votre progression.
-                            </p>
-                        </div>
-                        <div className="group bg-[#252527]/50 hover:bg-[#252527] p-4 rounded-2xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/20 transition-all cursor-pointer">
-                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
-                                <span className="text-lg">🔁</span>
-                                Session similaire
-                            </h4>
-                            <p className="text-xs sm:text-sm text-gray-400">
-                                La prochaine séance reprendra exactement les mêmes paramètres.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <ModalFooter>
                     <div className="flex flex-col gap-3 w-full">
                         <button
                             onClick={handleGenerateAdaptedSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#94fbdd]/30"
+                            className="w-full relative flex items-center justify-center px-6 py-4 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#94fbdd]/30"
                         >
-                            {isAdaptingSession ? 'Génération...' : '✨ Adapter selon performances'}
+                            {isAdaptingSession ? (
+                                'Génération...'
+                            ) : (
+                                <>
+                                    <SparklesIcon className="absolute left-5 h-5 w-5" />
+                                    <span>Adapter selon mes performances</span>
+                                </>
+                            )}
                         </button>
                         <button
                             onClick={handleGenerateSimilarSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#252527] hover:bg-[#2a2a2d] text-white font-bold text-base rounded-xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full relative flex items-center justify-center px-6 py-4 bg-[#252527] hover:bg-[#2a2a2d] text-white font-bold text-base rounded-xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isCreatingSimilar ? 'Génération...' : '🔁 Garder la même séance'}
+                            {isCreatingSimilar ? (
+                                'Génération...'
+                            ) : (
+                                <>
+                                    <ArrowPathIcon className="absolute left-5 h-5 w-5" />
+                                    <span>Répéter la même séance</span>
+                                </>
+                            )}
                         </button>
                     </div>
-                </ModalFooter>
+                </div>
             </Modal>
 
             {/* Modal de confirmation avant terminer */}

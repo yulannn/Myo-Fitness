@@ -27,12 +27,6 @@ export default function PremiumSuccess() {
                 const result = await stripeService.verifySession(sessionId);
 
                 if (result.isActivated) {
-                    if (result.wasActivatedByFallback) {
-                        console.log('✅ Subscription activated via fallback (webhook not available in local dev)');
-                    } else {
-                        console.log('✅ Subscription activated by webhook');
-                    }
-
                     setIsChecking(false);
                     // Rafraîchir les données d'abonnement
                     await refetchSubscription();

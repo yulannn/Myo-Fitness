@@ -75,7 +75,6 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                     console.error('❌ Cannot delete exercise with undefined exerciceId:', exercise);
                     continue;
                 }
-                console.log('🗑️ Deleting exercise:', { sessionId: session.id, exerciceId: exercise.exerciceId });
                 promises.push(
                     SessionService.deleteExerciseFromSession(session.id, exercise.exerciceId)
                 );
