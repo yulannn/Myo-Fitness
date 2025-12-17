@@ -268,8 +268,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                         <input
                                             type="number"
                                             min="1"
-                                            value={exercise.sets}
-                                            onChange={(e) => handleUpdateExercise(realIndex, 'sets', Number(e.target.value))}
+                                            value={exercise.sets === 0 ? '' : exercise.sets}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                handleUpdateExercise(realIndex, 'sets', value === '' ? 0 : Number(value));
+                                            }}
                                             className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
                                         />
                                     </div>
@@ -279,8 +282,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                         <input
                                             type="number"
                                             min="1"
-                                            value={exercise.reps}
-                                            onChange={(e) => handleUpdateExercise(realIndex, 'reps', Number(e.target.value))}
+                                            value={exercise.reps === 0 ? '' : exercise.reps}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                handleUpdateExercise(realIndex, 'reps', value === '' ? 0 : Number(value));
+                                            }}
                                             className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
                                         />
                                     </div>
@@ -291,8 +297,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                             type="number"
                                             min="0"
                                             step="0.5"
-                                            value={exercise.weight || 0}
-                                            onChange={(e) => handleUpdateExercise(realIndex, 'weight', Number(e.target.value))}
+                                            value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                handleUpdateExercise(realIndex, 'weight', value === '' ? 0 : Number(value));
+                                            }}
                                             className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
                                         />
                                     </div>
