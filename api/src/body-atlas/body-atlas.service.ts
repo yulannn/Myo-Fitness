@@ -2,6 +2,54 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { MuscleHeat, MuscleCategory } from '@prisma/client';
 
+/**
+ * 💪 Coefficients biomécaniques pour exercices poids du corps
+ * Représente la proportion du poids du corps réellement soulevée
+ * Source : Biomechanical Analysis of Common Bodyweight Exercises
+ */
+const BODYWEIGHT_COEFFICIENTS: Record<string, number> = {
+    // === POITRINE & TRICEPS ===
+    'Pompes': 0.65,                     // ~65% du poids (position horizontale)
+    'Pompes inclinées': 0.50,           // Pieds surélevés = moins de charge
+    'Pompes déclinées': 0.75,           // Mains surélevées = plus de charge
+    'Pompes diamant': 0.65,
+    'Pompes sur les genoux': 0.45,      // Moins de charge
+    'Pompes archer': 0.70,
+    'Dips sur chaise': 0.60,
+    'Dips aux barres parallèles': 0.80, // Presque tout le poids
+
+    // === DOS & BICEPS ===
+    'Tractions': 1.0,                   // 100% du poids du corps
+    'Tractions assistées': 0.70,        // Assistance réduit la charge
+    'Tractions lestées': 1.0,           // + le lest sera ajouté
+    'Muscle-ups': 1.0,
+
+    // === JAMBES ===
+    'Squats': 0.55,                     // ~55% (pas tout le poids)
+    'Squats sautés': 0.60,
+    'Squats bulgares': 0.50,            // Une jambe = ~50% par jambe
+    'Pistol Squats': 1.0,               // Une jambe = 100% sur une jambe
+    'Fentes': 0.50,
+    'Wall Sits': 0.55,
+    'Calf Raises': 1.0,                 // Mollets supportent tout
+    'Glute Bridges': 0.60,
+    'Single Leg Glute Bridges': 1.0,
+
+    // === CORE ===
+    'Planche': 0.70,                    // Position statique
+    'Planche latérale': 0.70,
+    'Mountain Climbers': 0.60,
+    'Hollow Hold': 0.70,
+    'V-ups': 0.50,
+    'Russian Twists': 0.40,
+    'L-sit': 0.80,
+    'Burpees': 0.65,
+
+    // === ÉPAULES ===
+    'Handstand Push-ups': 0.95,         // Presque tout le poids en vertical
+    'Pompes piquées': 0.75,
+};
+
 @Injectable()
 export class BodyAtlasService {
     private readonly logger = new Logger(BodyAtlasService.name);
@@ -139,6 +187,18 @@ export class BodyAtlasService {
     async updateMuscleStats(userId: number, sessionId: number) {
         this.logger.log(`Updating muscle stats for user ${userId} from session ${sessionId}`);
 
+        // 🏋️ Récupérer le poids du corps de l'utilisateur depuis FitnessProfile
+        const fitnessProfile = await this.prisma.fitnessProfile.findUnique({
+            where: { userId },
+            select: { weight: true },
+        });
+
+        const userBodyWeight = fitnessProfile?.weight || null;
+
+        if (!userBodyWeight) {
+            this.logger.warn(`User ${userId} has no bodyWeight set in FitnessProfile. Bodyweight exercises will have reduced volume.`);
+        }
+
         // 1️⃣ Récupérer la session avec les exercices et performances
         const session = await this.prisma.trainingSession.findUnique({
             where: { id: sessionId },
@@ -164,14 +224,22 @@ export class BodyAtlasService {
             throw new Error('Session not found');
         }
 
-        // 2️⃣ Grouper les performances par muscle (calcul en mémoire)
+        // 2️⃣ Grouper les performances par muscle avec calcul adaptatif du volume
         const muscleVolumes = new Map<number, { volume: number; sets: number; category: MuscleCategory }>();
 
         for (const exerciceSession of session.exercices) {
-            const muscleGroups = exerciceSession.exercice.groupes;
+            const exercice = exerciceSession.exercice;
+            const muscleGroups = exercice.groupes;
 
             for (const performance of exerciceSession.performances) {
-                const volume = (performance.reps_effectuees || 0) * (performance.weight || 0);
+                // 💪 Calcul adaptatif du volume (gère poids du corps + lestage)
+                const volume = this.calculateVolumeForAtlas(
+                    performance.weight || 0,
+                    performance.reps_effectuees || 0,
+                    exercice.bodyWeight,
+                    exercice.name,
+                    userBodyWeight
+                );
 
                 for (const muscleGroupRelation of muscleGroups) {
                     const muscleId = muscleGroupRelation.groupeId;
@@ -308,6 +376,50 @@ export class BodyAtlasService {
     }
 
     /**
+     * 💪 Calcule le volume adaptatif pour le Body Atlas
+     * 
+     * Gère 3 cas :
+     * 1. Exercice avec charges (bench, squat barre, etc.) → weight × reps
+     * 2. Exercice poids du corps (pompes, tractions) → bodyWeight × coefficient × reps  
+     * 3. Exercice poids du corps LESTÉ (tractions +10kg) → (bodyWeight + lest) × coefficient × reps
+     * 
+     * @param weight Charge utilisée (0 si poids du corps pur, >0 si lesté)
+     * @param reps Répétitions effectuées
+     * @param isBodyWeight Flag indiquant si c'est un exercice poids du corps
+     * @param exerciseName Nom de l'exercice (pour le coefficient)
+     * @param userBodyWeight Poids du corps de l'utilisateur (kg)
+     * @returns Volume calculé en kg
+     */
+    private calculateVolumeForAtlas(
+        weight: number,
+        reps: number,
+        isBodyWeight: boolean,
+        exerciseName: string,
+        userBodyWeight: number | null
+    ): number {
+        // Cas 1: Exercice avec charges classiques
+        if (!isBodyWeight) {
+            return weight * reps;
+        }
+
+        // Cas 2 & 3: Exercice poids du corps (avec ou sans lest)
+        if (!userBodyWeight || userBodyWeight <= 0) {
+            // Si pas de poids du corps renseigné, fallback sur le weight uniquement
+            this.logger.warn(`User bodyWeight not set, using weight only for ${exerciseName}`);
+            return weight * reps;
+        }
+
+        // Récupérer le coefficient biomécanique (70% par défaut si non trouvé)
+        const coefficient = BODYWEIGHT_COEFFICIENTS[exerciseName] || 0.7;
+
+        // Total weight = poids du corps + lest éventuel
+        const totalWeight = userBodyWeight + weight;
+
+        return totalWeight * coefficient * reps;
+    }
+
+    /**
+
      * 🌡️ Calcule la "chaleur" d'un muscle (HOT, WARM, COLD, FROZEN)
      * ✅ Retourne null si le muscle n'a jamais été travaillé (totalVolume = 0)
      */
