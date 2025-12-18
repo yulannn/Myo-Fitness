@@ -64,7 +64,7 @@ export default function PersonalRecords({ sessions }: PersonalRecordsProps) {
 
     return Array.from(exerciseRecords.values())
       .sort((a, b) => b.weight * b.reps - a.weight * a.reps)
-      .slice(0, 5);
+      .slice(0, 3);
   }, [sessions]);
 
   if (records.length === 0) {
@@ -93,7 +93,7 @@ export default function PersonalRecords({ sessions }: PersonalRecordsProps) {
           </div>
           <div>
             <h3 className="text-lg font-bold text-white">Records Personnels</h3>
-            <p className="text-xs text-gray-400">Top 5 performances</p>
+            <p className="text-xs text-gray-400">Top 3 performances</p>
           </div>
         </div>
         <div className="px-3 py-1 bg-yellow-500/10 rounded-lg">
