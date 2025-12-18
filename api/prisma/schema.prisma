@@ -49,8 +49,13 @@ model User {
   activityReactions ActivityReaction[]
   userBadges        UserBadge[]
   badgeProgress     BadgeProgress[]
-  pinnedBadges      Int[]            @default([])
-  friendCode        String?          @unique
+  pinnedBadges      Int[]              @default([])
+  friendCode        String?            @unique
+
+  // 🎯 BODY ATLAS Relations
+  muscleStats      UserMuscleStats[]
+  mirrorMatchesAs1 MirrorMatch[]     @relation("MirrorMatchUser1")
+  mirrorMatchesAs2 MirrorMatch[]     @relation("MirrorMatchUser2")
 }
 
 model Activity {
@@ -79,48 +84,48 @@ model ActivityReaction {
 }
 
 model Badge {
-  id            Int             @id @default(autoincrement())
-  code          String          @unique
-  name          String
-  description   String
-  category      BadgeCategory
-  tier          BadgeTier
-  iconUrl       String?
-  xpReward      Int             @default(0)
-  requirement   Json
-  isSecret      Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  userBadges    UserBadge[]
+  id          Int           @id @default(autoincrement())
+  code        String        @unique
+  name        String
+  description String
+  category    BadgeCategory
+  tier        BadgeTier
+  iconUrl     String?
+  xpReward    Int           @default(0)
+  requirement Json
+  isSecret    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  userBadges  UserBadge[]
 
   @@index([category])
   @@index([tier])
 }
 
 model UserBadge {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  badgeId       Int
-  unlockedAt    DateTime @default(now())
-  progress      Int      @default(0)
-  isDisplayed   Boolean  @default(true)
-  
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge         Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  badgeId     Int
+  unlockedAt  DateTime @default(now())
+  progress    Int      @default(0)
+  isDisplayed Boolean  @default(true)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
   @@unique([userId, badgeId])
   @@index([userId])
 }
 
 model BadgeProgress {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  badgeCode     String
-  currentValue  Int      @default(0)
-  updatedAt     DateTime @updatedAt
-  
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  badgeCode    String
+  currentValue Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, badgeCode])
   @@index([userId])
 }
@@ -277,7 +282,49 @@ model ExerciceMuscleGroup {
 model MuscleGroup {
   id        Int                   @id @default(autoincrement())
   name      String                @unique
+  category  MuscleCategory        @default(OTHER)
   exercices ExerciceMuscleGroup[]
+  userStats UserMuscleStats[]
+}
+
+// 🎯 BODY ATLAS: Statistiques musculaires par utilisateur
+model UserMuscleStats {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  muscleGroupId Int
+  totalVolume   Float     @default(0) // Volume cumulé (kg × reps)
+  level         Int       @default(0) // 0-5 (Novice à Legend)
+  lastTrainedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muscleGroup MuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, muscleGroupId])
+  @@index([userId])
+  @@index([lastTrainedAt])
+}
+
+// 🎯 BODY ATLAS: Mirror Match (duels en temps réel)
+model MirrorMatch {
+  id            String      @id @default(uuid())
+  user1Id       Int
+  user2Id       Int
+  muscleGroupId Int
+  user1Volume   Float       @default(0)
+  user2Volume   Float       @default(0)
+  status        MatchStatus @default(ACTIVE)
+  startedAt     DateTime    @default(now())
+  endedAt       DateTime?
+  winnerId      Int?
+
+  user1 User @relation("MirrorMatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("MirrorMatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([status])
 }
 
 model Equipment {
@@ -586,4 +633,28 @@ enum BadgeTier {
   GOLD
   PLATINUM
   LEGENDARY
+}
+
+// 🎯 BODY ATLAS Enums
+enum MuscleCategory {
+  CHEST
+  BACK
+  SHOULDERS
+  ARMS
+  LEGS
+  CORE
+  OTHER
+}
+
+enum MuscleHeat {
+  HOT // 0-72h (récemment travaillé)
+  WARM // 72h-120h (prêt à retravailler)
+  COLD // 120h+ (négligé)
+  FROZEN // 7j+ (perd du niveau)
+}
+
+enum MatchStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }

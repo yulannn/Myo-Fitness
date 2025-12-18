@@ -20,4 +20,5 @@ export const VERIFY_CODE = "/verify-code";
 export const RESET_PASSWORD = "/reset-password";
 export const VERIFY_EMAIL = "/verify-email";
 export const PRIVACY = "/privacy";
+export const BODY_ATLAS = "/body-atlas";
 export const SENTRY_TEST = "/sentry-test";

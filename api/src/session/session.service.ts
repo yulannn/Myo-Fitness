@@ -9,6 +9,7 @@ import { UsersService } from 'src/users/users.service';
 import { ActivityService } from '../social/activity/activity.service';
 import { ActivityType } from '@prisma/client';
 import { BadgeCheckerService } from '../badge/badge-checker.service';
+import { BodyAtlasService } from '../body-atlas/body-atlas.service';
 
 @Injectable()
 export class SessionService {
@@ -18,6 +19,7 @@ export class SessionService {
     private readonly usersService: UsersService,
     private readonly activityService: ActivityService,
     private readonly badgeCheckerService: BadgeCheckerService,
+    private readonly bodyAtlasService: BodyAtlasService,
   ) { }
 
   /**
@@ -370,6 +372,14 @@ export class SessionService {
     } catch (error) {
       console.error('Erreur lors de la vérification des badges:', error);
       // On ne fait pas échouer la requête si les badges échouent
+    }
+
+    // 🗺️ Mettre à jour les stats musculaires du Body Atlas
+    try {
+      await this.bodyAtlasService.updateMuscleStats(userId, id);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des stats musculaires:', error);
+      // On ne fait pas échouer la requête si la mise à jour échoue
     }
 
     return {

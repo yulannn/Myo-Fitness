@@ -6,9 +6,10 @@ import { ProgramModule } from '../program/program.module';
 import { UsersModule } from 'src/users/users.module';
 import { ActivityModule } from '../social/activity/activity.module';
 import { BadgeModule } from '../badge/badge.module';
+import { BodyAtlasModule } from '../body-atlas/body-atlas.module';
 
 @Module({
-  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule],
+  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule, BodyAtlasModule],
   controllers: [SessionController],
   providers: [SessionService],
   exports: [SessionService],

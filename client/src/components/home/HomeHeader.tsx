@@ -1,6 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
 import XpBar from '../common/XpBar';
 import { useUserXp } from '../../api/hooks/user/useUserXp';
+import { Link } from 'react-router-dom';
+import { Activity } from 'lucide-react';
 
 export default function HomeHeader() {
     const { user } = useAuth();
@@ -26,6 +28,21 @@ export default function HomeHeader() {
                             Prêt pour ta séance du jour ?
                         </p>
                     </div>
+
+                    {/* Right: Body Atlas Icon */}
+                    <Link
+                        to="/body-atlas"
+                        className="group relative p-3 bg-gradient-to-br from-[#94fbdd]/10 to-[#94fbdd]/5 border border-[#94fbdd]/20 rounded-xl hover:border-[#94fbdd]/40 transition-all active:scale-95"
+                        title="Body Atlas"
+                    >
+                        {/* Glow effect on hover */}
+                        <div className="absolute inset-0 bg-[#94fbdd]/20 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+
+                        <Activity className="relative w-5 h-5 text-[#94fbdd] group-hover:scale-110 transition-transform" />
+
+                        {/* Optional: Badge for notification */}
+                        {/* <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" /> */}
+                    </Link>
                 </div>
 
                 {/* XP Bar - Integrated */}

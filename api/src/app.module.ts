@@ -33,6 +33,8 @@ import { LoggerModule } from './logger/logger.module';
 import { SentryTestController } from './config/sentry-test.controller';
 import { ActivityModule } from './social/activity/activity.module';
 import { BadgeModule } from './badge/badge.module';
+import { BodyAtlasModule } from './body-atlas/body-atlas.module';
+
 
 
 @Module({
@@ -77,6 +79,7 @@ import { BadgeModule } from './badge/badge.module';
     StripeModule,
     ActivityModule,
     BadgeModule,
+    BodyAtlasModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [

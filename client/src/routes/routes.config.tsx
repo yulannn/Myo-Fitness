@@ -16,6 +16,7 @@ import PremiumSuccess from "../pages/premium/success";
 import VerifyEmail from "../pages/verify-email";
 import Privacy from "../pages/privacy";
 import Onboarding from "../pages/onboarding";
+import BodyAtlasPage from "../pages/body-atlas";
 import ChatsPage from "../pages/social/ChatsPage";
 import FriendsPage from "../pages/social/FriendsPage";
 import NotificationsPage from "../pages/social/NotificationsPage";
@@ -39,6 +40,7 @@ import {
     PREMIUM_SUCCESS,
     VERIFY_EMAIL,
     PRIVACY,
+    BODY_ATLAS,
     ONBOARDING,
     SOCIAL_CHATS,
     SOCIAL_FRIENDS,
@@ -130,6 +132,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: SOCIAL_NOTIFICATIONS,
         element: <NotificationsPage />,
+        protected: true
+    },
+    {
+        path: BODY_ATLAS,
+        element: <BodyAtlasPage />,
         protected: true
     },
     {
