@@ -1,4 +1,4 @@
-import { PrismaClient, BadgeCategory, BadgeTier } from '@prisma/client';
+import { PrismaClient, BadgeCategory, BadgeTier, MuscleCategory } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -145,22 +145,38 @@ async function main() {
 
   console.log(`✅ ${trainingBadges.length} badges créés avec succès`);
 
-  // 2. Créer les groupes musculaires
+  // 2. Créer les groupes musculaires (uniquement en français, avec catégories)
+  console.log('💪 Nettoyage et création des groupes musculaires...');
+
+  // Supprimer d'abord tous les groupes musculaires existants pour éviter les doublons
+  await prisma.muscleGroup.deleteMany({});
+
   const muscleGroups = [
-    { name: 'Pectoraux' },
-    { name: 'Dorsaux' },
-    { name: 'Épaules' },
-    { name: 'Biceps' },
-    { name: 'Triceps' },
-    { name: 'Quadriceps' },
-    { name: 'Ischio-jambiers' },
-    { name: 'Fessiers' },
-    { name: 'Mollets' },
-    { name: 'Abdominaux' },
-    { name: 'Obliques' },
-    { name: 'Avant-bras' },
-    { name: 'Trapèzes' },
-    { name: 'Lombaires' },
+    // 🫀 CHEST (Poitrine)
+    { name: 'Pectoraux', category: MuscleCategory.CHEST },
+
+    // 💪 BACK (Dos)
+    { name: 'Dorsaux', category: MuscleCategory.BACK },
+    { name: 'Trapèzes', category: MuscleCategory.BACK },
+    { name: 'Lombaires', category: MuscleCategory.BACK },
+
+    // 🏋️ SHOULDERS (Épaules)
+    { name: 'Épaules', category: MuscleCategory.SHOULDERS },
+
+    // 💪 ARMS (Bras)
+    { name: 'Biceps', category: MuscleCategory.ARMS },
+    { name: 'Triceps', category: MuscleCategory.ARMS },
+    { name: 'Avant-bras', category: MuscleCategory.ARMS },
+
+    // 🦵 LEGS (Jambes)
+    { name: 'Quadriceps', category: MuscleCategory.LEGS },
+    { name: 'Ischio-jambiers', category: MuscleCategory.LEGS },
+    { name: 'Fessiers', category: MuscleCategory.LEGS },
+    { name: 'Mollets', category: MuscleCategory.LEGS },
+
+    // 🔥 CORE (Core/Abdominaux)
+    { name: 'Abdominaux', category: MuscleCategory.CORE },
+    { name: 'Obliques', category: MuscleCategory.CORE },
   ];
 
   const createdMuscleGroups = await Promise.all(
@@ -169,7 +185,7 @@ async function main() {
     )
   );
 
-  console.log('✅ Groupes musculaires créés');
+  console.log(`✅ ${muscleGroups.length} groupes musculaires créés (FR uniquement)`);
 
   // 3. Créer les équipements
   const equipments = [

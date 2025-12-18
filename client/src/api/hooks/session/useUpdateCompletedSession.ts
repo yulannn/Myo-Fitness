@@ -17,6 +17,7 @@ export default function useUpdateCompletedSession() {
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });
             qc.invalidateQueries({ queryKey: ['user', 'xp'] });
+            qc.invalidateQueries({ queryKey: ['body-atlas'] }); // ✅ Rafraîchir le Body Atlas
             if (sessionId) qc.invalidateQueries({ queryKey: ['session', sessionId] });
 
             // Afficher les badges débloqués

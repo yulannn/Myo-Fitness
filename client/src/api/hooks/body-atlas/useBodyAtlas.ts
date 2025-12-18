@@ -6,7 +6,7 @@ import { useBodyAtlasStore } from '../../../store/useBodyAtlasStore';
  * 🎯 Hook pour récupérer le Body Atlas de l'utilisateur
  */
 export function useBodyAtlas() {
-    const { setAtlasData, setLoading, setError, shouldRefetch } = useBodyAtlasStore();
+    const { setAtlasData, setLoading, setError } = useBodyAtlasStore();
 
     return useQuery({
         queryKey: ['body-atlas'],
@@ -22,8 +22,7 @@ export function useBodyAtlas() {
                 throw error;
             }
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes 5
-        enabled: shouldRefetch(), // Ne refetch que si nécessaire
+        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
 

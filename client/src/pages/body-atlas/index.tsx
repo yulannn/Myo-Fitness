@@ -1,8 +1,9 @@
 import { useBodyAtlas } from '../../api/hooks/body-atlas/useBodyAtlas';
 import { useBodyAtlasStore } from '../../store/useBodyAtlasStore';
-import { MuscleHeat } from '../../types/body-atlas.type';
-import { Flame, Snowflake, Zap, TrendingUp, Trophy, Target, ChevronRight, Activity } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { MuscleHeat, MuscleCategory } from '../../types/body-atlas.type';
+import { Flame, Snowflake, Zap, TrendingUp, Trophy, Target, Activity, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 export default function BodyAtlasPage() {
     const { data, isLoading, error } = useBodyAtlas();
@@ -33,12 +34,22 @@ export default function BodyAtlasPage() {
         return null;
     }
 
-    const hasData = displayData.muscleStats.length > 0;
+    const hasData = displayData.muscleStats.some(s => s.totalVolume > 0);
+
+    // Regrouper les muscles par catégorie
+    const musclesByCategory = displayData.muscleStats.reduce((acc, stat) => {
+        const category = stat.muscleGroup?.category || 'OTHER';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(stat);
+        return acc;
+    }, {} as Record<MuscleCategory, any[]>);
 
     return (
         <div className="min-h-screen bg-[#121214] pb-24">
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-                {/* Hero Header with gradient */}
+                {/* Hero Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -55,7 +66,7 @@ export default function BodyAtlasPage() {
                                     Body Atlas
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-1">
-                                    Ta cartographie musculaire
+                                    Ta cartographie musculaire complète
                                 </p>
                             </div>
                         </div>
@@ -63,50 +74,35 @@ export default function BodyAtlasPage() {
                 </motion.div>
 
                 {/* Scores Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    <ScoreCard
-                        title="Score Global"
-                        value={displayData.overallScore}
-                        icon={<TrendingUp className="w-5 h-5" />}
-                        color="#94fbdd"
-                        delay={0.1}
-                    />
-                    <ScoreCard
-                        title="Équilibre"
-                        value={displayData.balanceScore}
-                        icon={<Target className="w-5 h-5" />}
-                        color="#a78bfa"
-                        delay={0.2}
-                    />
-                </div>
-
-                {/* Muscle Groups Section */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-500/10 rounded-lg">
-                                <Flame className="w-5 h-5 text-orange-500" />
-                            </div>
-                            <h2 className="text-xl font-bold text-white tracking-tight">
-                                Groupes Musculaires
-                            </h2>
-                        </div>
-                        {hasData && (
-                            <span className="text-sm text-gray-400">
-                                {displayData.muscleStats.length} muscles
-                            </span>
-                        )}
+                {hasData && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <ScoreCard
+                            title="Score Global"
+                            value={displayData.overallScore}
+                            icon={<TrendingUp className="w-5 h-5" />}
+                            color="#94fbdd"
+                            delay={0.1}
+                        />
+                        <ScoreCard
+                            title="Équilibre"
+                            value={displayData.balanceScore}
+                            icon={<Target className="w-5 h-5" />}
+                            color="#a78bfa"
+                            delay={0.2}
+                        />
                     </div>
+                )}
 
-                    {!hasData ? (
-                        <EmptyState />
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            {displayData.muscleStats.map((stat, index) => (
-                                <MuscleCard key={stat.id} stat={stat} delay={index * 0.05} />
-                            ))}
-                        </div>
-                    )}
+                {/* Muscle Groups by Category */}
+                <div className="space-y-4">
+                    {Object.entries(musclesByCategory).map(([category, muscles], index) => (
+                        <CategorySection
+                            key={category}
+                            category={category as MuscleCategory}
+                            muscles={muscles}
+                            delay={index * 0.05}
+                        />
+                    ))}
                 </div>
 
                 {/* Dominant vs Weak Section */}
@@ -128,6 +124,79 @@ export default function BodyAtlasPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// Category Section (Collapsible)
+function CategorySection({ category, muscles, delay }: { category: MuscleCategory; muscles: any[]; delay: number }) {
+    const [isOpen, setIsOpen] = useState(true);
+
+    const categoryConfig: Record<MuscleCategory, { label: string; color: string; emoji: string }> = {
+        CHEST: { label: 'Poitrine', color: '#ef4444', emoji: '🫀' },
+        BACK: { label: 'Dos', color: '#3b82f6', emoji: '💪' },
+        SHOULDERS: { label: 'Épaules', color: '#f59e0b', emoji: '🏋️' },
+        ARMS: { label: 'Bras', color: '#10b981', emoji: '💪' },
+        LEGS: { label: 'Jambes', color: '#a78bfa', emoji: '🦵' },
+        CORE: { label: 'Core', color: '#ec4899', emoji: '🔥' },
+        OTHER: { label: 'Autres', color: '#6b7280', emoji: '📋' },
+    };
+
+    const config = categoryConfig[category];
+    const workedMuscles = muscles.filter(m => m.totalVolume > 0).length;
+    const totalMuscles = muscles.length;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay }}
+            className="space-y-3"
+        >
+            {/* Category Header */}
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-4 bg-[#18181b] border border-white/5 rounded-xl hover:border-white/10 transition-all group"
+            >
+                <div className="flex items-center gap-3">
+                    <div
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: `${config.color}20` }}
+                    >
+                        <div style={{ color: config.color }} className="font-bold text-lg">
+                            {config.emoji}
+                        </div>
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-white">{config.label}</h3>
+                        <p className="text-sm text-gray-400">
+                            {workedMuscles}/{totalMuscles} travaillés
+                        </p>
+                    </div>
+                </div>
+                {isOpen ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                )}
+            </button>
+
+            {/* Muscle Cards */}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-2 gap-3 overflow-hidden"
+                    >
+                        {muscles.map((stat, index) => (
+                            <MuscleCard key={stat.muscleGroupId} stat={stat} delay={delay + index * 0.03} />
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     );
 }
 
@@ -154,14 +223,12 @@ function ScoreCard({
             transition={{ delay }}
             className="relative group"
         >
-            {/* Glow effect on hover */}
             <div
                 className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"
                 style={{ backgroundColor: `${color}20` }}
             />
 
             <div className="relative bg-[#18181b] border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-all">
-                {/* Icon */}
                 <div
                     className="inline-flex p-2.5 rounded-xl mb-4"
                     style={{ backgroundColor: `${color}15` }}
@@ -169,16 +236,13 @@ function ScoreCard({
                     <div style={{ color }}>{icon}</div>
                 </div>
 
-                {/* Title */}
                 <p className="text-gray-400 text-sm font-medium mb-2">{title}</p>
 
-                {/* Value */}
                 <div className="flex items-baseline gap-2 mb-4">
                     <span className="text-4xl font-bold text-white">{value}</span>
                     <span className="text-gray-500 text-lg font-medium">/100</span>
                 </div>
 
-                {/* Progress bar */}
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                     <motion.div
                         initial={{ width: 0 }}
@@ -197,54 +261,81 @@ function ScoreCard({
 
 // Muscle Card Component
 function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
+    const isWorked = stat.totalVolume > 0;
+
     const levelColors = ['#4b5563', '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
     const levelLabels = ['Novice', 'Trained', 'Advanced', 'Expert', 'Master', 'Legend'];
 
     const heatConfig = {
-        HOT: { icon: <Flame className="w-4 h-4" />, color: '#ef4444', label: 'Chaud' },
-        WARM: { icon: <Zap className="w-4 h-4" />, color: '#f97316', label: 'Tiède' },
-        COLD: { icon: <Snowflake className="w-4 h-4" />, color: '#3b82f6', label: 'Froid' },
-        FROZEN: { icon: <Snowflake className="w-4 h-4" />, color: '#06b6d4', label: 'Gelé' },
+        HOT: { icon: <Flame className="w-3.5 h-3.5" />, color: '#ef4444', label: 'Chaud' },
+        WARM: { icon: <Zap className="w-3.5 h-3.5" />, color: '#f97316', label: 'Tiède' },
+        COLD: { icon: <Snowflake className="w-3.5 h-3.5" />, color: '#3b82f6', label: 'Froid' },
+        FROZEN: { icon: <Snowflake className="w-3.5 h-3.5" />, color: '#06b6d4', label: 'Gelé' },
     };
 
-    const heat = heatConfig[stat.heat as MuscleHeat];
+    if (!isWorked) {
+        // Muscle non travaillé
+        return (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay }}
+                className="bg-[#18181b]/50 border border-dashed border-white/10 rounded-xl p-4 hover:border-white/20 transition-all"
+            >
+                <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-gray-500 text-sm leading-tight pr-2">
+                        {stat.muscleGroup?.name || 'Inconnu'}
+                    </h3>
+                    <div className="p-1 bg-gray-700/30 rounded">
+                        <Lock className="w-3 h-3 text-gray-600" />
+                    </div>
+                </div>
+
+                <div className="inline-block px-2 py-1 bg-gray-800/50 rounded text-xs text-gray-600 font-medium">
+                    Non travaillé
+                </div>
+            </motion.div>
+        );
+    }
+
+    // Muscle travaillé
+    const heat = stat.heat ? heatConfig[stat.heat as MuscleHeat] : null;
     const levelColor = levelColors[stat.level];
     const progress = (stat.level / 5) * 100;
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay }}
             className="group relative"
         >
-            {/* Hover glow */}
             <div
-                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"
-                style={{ backgroundColor: `${levelColor}20` }}
+                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"
+                style={{ backgroundColor: `${levelColor}15` }}
             />
 
             <div
-                className="relative bg-[#18181b] border rounded-2xl p-5 hover:border-white/10 transition-all"
+                className="relative bg-[#18181b] border rounded-xl p-4 hover:border-white/10 transition-all"
                 style={{ borderColor: `${levelColor}20` }}
             >
-                {/* Header: Name + Heat */}
-                <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-white text-lg leading-tight pr-2">
-                        {stat.muscleGroup.name}
+                <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-white text-sm leading-tight pr-2">
+                        {stat.muscleGroup?.name || 'Inconnu'}
                     </h3>
-                    <div
-                        className="p-1.5 rounded-lg flex-shrink-0"
-                        style={{ backgroundColor: `${heat.color}15`, color: heat.color }}
-                    >
-                        {heat.icon}
-                    </div>
+                    {heat && (
+                        <div
+                            className="p-1 rounded flex-shrink-0"
+                            style={{ backgroundColor: `${heat.color}15`, color: heat.color }}
+                        >
+                            {heat.icon}
+                        </div>
+                    )}
                 </div>
 
-                {/* Level Badge */}
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-3">
                     <div
-                        className="px-3 py-1 rounded-lg text-xs font-bold"
+                        className="px-2 py-0.5 rounded text-xs font-bold"
                         style={{
                             backgroundColor: `${levelColor}20`,
                             color: levelColor,
@@ -252,19 +343,18 @@ function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
                     >
                         {levelLabels[stat.level]}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5">
                         {[...Array(stat.level)].map((_, i) => (
                             <div
                                 key={i}
-                                className="w-1 h-3 rounded-full"
+                                className="w-1 h-2.5 rounded-full"
                                 style={{ backgroundColor: levelColor }}
                             />
                         ))}
                     </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="h-2 bg-white/5 rounded-full overflow-hidden mb-3">
+                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden mb-2">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
@@ -274,11 +364,12 @@ function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
                     />
                 </div>
 
-                {/* Volume */}
                 <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500 font-medium">Volume total</span>
-                    <span className="text-sm font-bold text-gray-300">
-                        {Math.round(stat.totalVolume).toLocaleString()} kg
+                    <span className="text-xs text-gray-500 font-medium">Volume</span>
+                    <span className="text-xs font-bold text-gray-300">
+                        {stat.totalVolume >= 1000
+                            ? `${(stat.totalVolume / 1000).toFixed(1)}k`
+                            : Math.round(stat.totalVolume)} kg
                     </span>
                 </div>
             </div>
@@ -331,15 +422,15 @@ function DominantWeakCard({
                 <p className="text-sm text-gray-500 italic">Pas encore de données</p>
             ) : (
                 <ul className="space-y-2">
-                    {muscles.map((muscle, index) => (
+                    {muscles.slice(0, 3).map((muscle, index) => (
                         <motion.li
                             key={muscle}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: delay + index * 0.1 }}
-                            className="flex items-center gap-2 text-sm text-gray-300"
+                            className="text-sm text-gray-300 flex items-center gap-2"
                         >
-                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-gray-600" />
                             {muscle}
                         </motion.li>
                     ))}
@@ -349,54 +440,30 @@ function DominantWeakCard({
     );
 }
 
-// Empty State
-function EmptyState() {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gradient-to-br from-[#94fbdd]/5 to-[#18181b] border border-white/5 rounded-2xl p-12 text-center"
-        >
-            <div className="w-20 h-20 mx-auto mb-6 bg-[#94fbdd]/10 rounded-2xl flex items-center justify-center">
-                <Activity className="w-10 h-10 text-[#94fbdd]" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Commence ton aventure</h3>
-            <p className="text-gray-400 text-sm max-w-sm mx-auto mb-6">
-                Complète ta première séance pour voir tes stats musculaires s'afficher ici !
-            </p>
-            <div className="inline-flex items-center gap-2 px-5 py-3 bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-xl text-[#94fbdd] text-sm font-medium">
-                <Zap className="w-4 h-4" />
-                Commence une séance
-            </div>
-        </motion.div>
-    );
-}
-
 // Skeleton Loading
 function BodyAtlasSkeleton() {
     return (
         <div className="min-h-screen bg-[#121214] pb-24">
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-                {/* Header skeleton */}
                 <div className="h-32 bg-[#18181b] border border-white/5 rounded-3xl animate-pulse" />
-
-                {/* Scores skeleton */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="h-40 bg-[#18181b] border border-white/5 rounded-2xl animate-pulse" />
                     <div className="h-40 bg-[#18181b] border border-white/5 rounded-2xl animate-pulse" />
                 </div>
-
-                {/* Muscles skeleton */}
                 <div className="space-y-4">
-                    <div className="h-8 w-48 bg-[#18181b] border border-white/5 rounded-lg animate-pulse" />
-                    <div className="grid grid-cols-2 gap-4">
-                        {[...Array(6)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="h-36 bg-[#18181b] border border-white/5 rounded-2xl animate-pulse"
-                            />
-                        ))}
-                    </div>
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i}>
+                            <div className="h-16 bg-[#18181b] border border-white/5 rounded-xl animate-pulse mb-3" />
+                            <div className="grid grid-cols-2 gap-3">
+                                {[...Array(4)].map((_, j) => (
+                                    <div
+                                        key={j}
+                                        className="h-28 bg-[#18181b] border border-white/5 rounded-xl animate-pulse"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
