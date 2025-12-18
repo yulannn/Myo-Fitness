@@ -84,7 +84,7 @@ export const useBadgeToastStore = create<BadgeToastStore>((set) => ({
             set((state) => ({
                 toasts: state.toasts.filter((t) => t.id !== toastId),
             }));
-        }, 5000);
+        }, 3500);
     },
     removeToast: (id: string) =>
         set((state) => ({

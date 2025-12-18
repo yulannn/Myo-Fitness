@@ -263,8 +263,25 @@ function ScoreCard({
 function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
     const isWorked = stat.totalVolume > 0;
 
-    const levelColors = ['#4b5563', '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
-    const levelLabels = ['Novice', 'Trained', 'Advanced', 'Expert', 'Master', 'Legend'];
+    const levelColors = ['#4b5563', '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#ef4444', '#9333ea', '#ec4899', '#f472b6', '#facc15'];
+
+    // 🏷️ Labels dynamiques pour tous les niveaux
+    const getLevelLabel = (level: number): string => {
+        if (level === 0) return 'Novice';
+        if (level === 1) return 'Débutant';
+        if (level === 2) return 'Apprenti';
+        if (level === 3) return 'Intermédiaire';
+        if (level === 4) return 'Confirmé';
+        if (level === 5) return 'Avancé';
+        if (level === 6) return 'Expert';
+        if (level === 7) return 'Maître';
+        if (level === 8) return 'Élite';
+        if (level === 9) return 'Champion';
+        if (level >= 10 && level < 15) return 'Légende';
+        if (level >= 15 && level < 20) return 'Titan';
+        if (level >= 20) return 'Divin';
+        return 'Inconnu';
+    };
 
     const heatConfig = {
         HOT: { icon: <Flame className="w-3.5 h-3.5" />, color: '#ef4444', label: 'Chaud' },
@@ -300,8 +317,12 @@ function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
 
     // Muscle travaillé
     const heat = stat.heat ? heatConfig[stat.heat as MuscleHeat] : null;
-    const levelColor = levelColors[stat.level];
-    const progress = (stat.level / 5) * 100;
+
+    // Couleur adaptative selon le niveau (cycle si > 9)
+    const levelColor = levelColors[Math.min(stat.level, levelColors.length - 1)] || levelColors[levelColors.length - 1];
+
+    // Barre de progression : montre le niveau actuel sur 10 (reset tous les 10 niveaux pour l'affichage visuel)
+    const progress = ((stat.level % 10) / 10) * 100;
 
     return (
         <motion.div
@@ -341,7 +362,7 @@ function MuscleCard({ stat, delay }: { stat: any; delay: number }) {
                             color: levelColor,
                         }}
                     >
-                        {levelLabels[stat.level]}
+                        {getLevelLabel(stat.level)}
                     </div>
                     <div className="flex items-center gap-0.5">
                         {[...Array(stat.level)].map((_, i) => (
