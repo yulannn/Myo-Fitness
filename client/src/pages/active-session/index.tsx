@@ -81,6 +81,8 @@ export default function ActiveSession() {
         clearSession() // Nettoie tout le store Zustand (performances + activeSession + startTime)
     }
 
+
+
     // Demander confirmation avant de terminer la session
     const handleRequestStopSession = () => {
         setShowCompletionModal(true)
@@ -250,209 +252,141 @@ export default function ActiveSession() {
 
     if (!activeSession) {
         return (
-            <div className="min-h-screen bg-[#121214] flex items-center justify-center p-4 sm:p-6">
-                <div className="relative max-w-md w-full bg-[#252527] rounded-3xl shadow-2xl p-8 sm:p-12 text-center border border-[#94fbdd]/10 overflow-hidden">
-                    {/* Decorative Background */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
-
-                    <div className="relative space-y-6">
-                        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 rounded-3xl flex items-center justify-center shadow-xl">
-                            <PlayIcon className="h-10 w-10 sm:h-12 sm:w-12 text-[#94fbdd]" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">Aucune séance active</h1>
-                            <p className="text-sm sm:text-base text-gray-400 max-w-sm mx-auto">
-                                Démarrez une séance depuis la page Programmes pour commencer votre entraînement
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => navigate('/programs')}
-                            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#94fbdd] text-[#121214] font-bold rounded-2xl shadow-lg shadow-[#94fbdd]/30 hover:bg-[#94fbdd]/90 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95"
-                        >
-                            Aller aux Programmes
-                        </button>
+            <div className="min-h-screen bg-[#121214] flex items-center justify-center p-6 text-white font-[Montserrat]">
+                <div className="max-w-md w-full text-center space-y-6">
+                    <div className="w-16 h-16 mx-auto bg-[#252527] rounded-full flex items-center justify-center border border-[#94fbdd]/20">
+                        <PlayIcon className="h-8 w-8 text-[#94fbdd]" />
                     </div>
+                    <div>
+                        <h1 className="text-xl font-bold text-white mb-2">Aucune séance active</h1>
+                        <p className="text-gray-400">
+                            Sélectionnez un programme pour commencer votre entraînement.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/programs')}
+                        className="inline-flex items-center justify-center px-8 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#7de0c4] transition-colors shadow-lg shadow-[#94fbdd]/20"
+                    >
+                        Aller aux Programmes
+                    </button>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-[#121214] pb-24">
-            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
-                {/* Header avec chrono */}
-                <div className="relative bg-gradient-to-br from-[#252527] to-[#121214] rounded-3xl shadow-2xl overflow-hidden border border-[#94fbdd]/10 p-6 sm:p-8">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#94fbdd]/10 to-transparent rounded-full blur-3xl"></div>
-
-                    <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-6">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <PlayIcon className="h-6 w-6 text-[#94fbdd] animate-pulse" />
-                                    <span className="text-xs sm:text-sm font-bold text-[#94fbdd] uppercase tracking-wide">En cours</span>
-                                </div>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Séance active</h1>
-                                {activeSession.trainingProgram?.name && (
-                                    <p className="text-sm text-gray-400">
-                                        {activeSession.trainingProgram.name}
-                                    </p>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => setShowCancelModal(true)}
-                                className="flex-shrink-0 p-2 sm:p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all active:scale-95 group"
-                                title="Annuler la séance"
-                            >
-                                <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-400 group-hover:text-red-300 transition-colors" />
-                            </button>
+        <div className="min-h-screen bg-[#121214] text-white pb-32 font-[Montserrat]">
+            {/* Header Sticky */}
+            <div className="bg-[#121214]/90 backdrop-blur-md border-b border-[#94fbdd]/10 sticky top-0 z-30">
+                <div className="max-w-3xl mx-auto px-4 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-[#94fbdd] uppercase tracking-widest mb-1">En cours</p>
+                            <h1 className="text-lg font-bold text-white truncate">
+                                {activeSession.trainingProgram?.name || 'Séance'}
+                            </h1>
+                            {activeSession.sessionName && (
+                                <p className="text-sm text-gray-400 truncate">{activeSession.sessionName}</p>
+                            )}
                         </div>
-
-                        {/* Chronomètre */}
-                        <div className="relative bg-[#121214]/40 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-[#94fbdd]/20">
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-2xl"></div>
-                            <div className="relative text-center">
-                                <p className="text-xs sm:text-sm text-gray-400 mb-3 uppercase tracking-wide">Durée</p>
-                                <p className="text-5xl sm:text-6xl font-bold font-mono tracking-wider text-white">
-                                    {formatTime(elapsedTime)}
-                                </p>
-                                <div className="mt-6 flex items-center justify-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-[#94fbdd] rounded-full animate-pulse"></div>
-                                        <span className="text-xs text-gray-400">
-                                            {validatedSets}/{totalSets} séries
-                                        </span>
-                                    </div>
-                                </div>
+                        <div className="text-right flex-shrink-0">
+                            <div className="text-3xl font-mono font-medium tracking-tight tabular-nums text-white">
+                                {formatTime(elapsedTime)}
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Session Name */}
-                {activeSession.sessionName && (
-                    <div className="relative bg-[#252527] rounded-2xl p-4 sm:p-5 border-l-4 border-[#94fbdd] overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#94fbdd]/5 rounded-full blur-2xl"></div>
-                        <p className="relative text-sm text-[#94fbdd] font-medium">{activeSession.sessionName}</p>
+            <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight text-white">Exercices</h2>
+                        <p className="text-sm text-gray-400 mt-1 font-medium">{validatedSets} / {totalSets} séries complétées</p>
                     </div>
-                )}
+                    <button
+                        onClick={() => setShowCancelModal(true)}
+                        className="text-sm text-red-400 hover:text-red-300 font-medium px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
+                    >
+                        Annuler
+                    </button>
+                </div>
 
                 {/* Liste des exercices */}
-                <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h2 className="text-xl sm:text-2xl font-bold text-white">Exercices</h2>
-                        <div className="px-3 py-1.5 bg-[#252527] rounded-xl border border-[#94fbdd]/20">
-                            <span className="text-xs font-bold text-[#94fbdd]">
-                                {validatedSets}/{totalSets}
-                            </span>
-                        </div>
-                    </div>
-
+                <div className="space-y-8">
                     {activeSession.exercices?.map((exerciceSession: any, index: number) => (
-                        <div
-                            key={exerciceSession.id || index}
-                            className="relative bg-[#252527] rounded-2xl sm:rounded-3xl shadow-xl border border-[#94fbdd]/10 overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#94fbdd]/5 to-transparent rounded-full blur-2xl"></div>
-
-                            {/* Header exercice */}
-                            <div className="relative p-4 sm:p-5 border-b border-[#94fbdd]/10">
-                                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+                        <div key={exerciceSession.id || index} className="space-y-4">
+                            <div className="flex items-baseline justify-between border-b border-[#94fbdd]/10 pb-3">
+                                <h3 className="text-lg font-bold text-white">
                                     {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
                                 </h3>
-                                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-400">
-                                    <span className="font-medium">{exerciceSession.sets} séries</span>
-                                    <span className="text-[#94fbdd]/50">•</span>
-                                    <span className="font-medium">{exerciceSession.reps} reps</span>
-                                    {exerciceSession.weight && (
-                                        <>
-                                            <span className="text-[#94fbdd]/50">•</span>
-                                            <span className="font-medium">{exerciceSession.weight} kg</span>
-                                        </>
-                                    )}
+                                <div className="text-sm text-[#94fbdd] font-mono bg-[#252527] px-2 py-1 rounded shadow-sm">
+                                    {exerciceSession.sets} x {exerciceSession.reps}
                                 </div>
                             </div>
 
-                            {/* Séries */}
-                            <div className="relative p-4 sm:p-5 space-y-3">
+                            <div className="space-y-2">
+                                {/* Headers */}
+                                <div className="grid grid-cols-12 gap-3 text-[10px] uppercase tracking-wider text-gray-500 font-bold px-2 mb-2">
+                                    <div className="col-span-1 text-center">#</div>
+                                    <div className="col-span-4 text-center">Reps</div>
+                                    <div className="col-span-4 text-center">Poids (kg)</div>
+                                    <div className="col-span-3 text-center">Statut</div>
+                                </div>
+
                                 {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
                                     const perfKey = `${exerciceSession.id}-${setIndex}`;
                                     const perf = performances[perfKey] || {};
+                                    const isDone = perf.success;
 
                                     return (
                                         <div
                                             key={setIndex}
-                                            className={`relative bg-[#121214]/40 backdrop-blur-sm rounded-2xl p-4 border-2 transition-all ${perf.success
-                                                ? 'border-[#94fbdd]/50 bg-[#94fbdd]/5'
-                                                : 'border-[#94fbdd]/10 hover:border-[#94fbdd]/30'
+                                            className={`grid grid-cols-12 gap-3 items-center p-2 rounded-xl border transition-all duration-200 ${isDone
+                                                ? 'bg-[#94fbdd]/10 border-[#94fbdd]/20'
+                                                : 'bg-[#252527]/50 border-transparent hover:bg-[#252527]'
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                {/* Numéro */}
-                                                <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${perf.success
-                                                    ? 'bg-gradient-to-br from-[#94fbdd] to-[#72e8cc] text-[#121214] shadow-lg shadow-[#94fbdd]/30'
-                                                    : 'bg-[#252527] text-gray-400 border border-[#94fbdd]/20'
-                                                    }`}>
-                                                    {setIndex + 1}
-                                                </div>
+                                            <div className="col-span-1 text-center font-mono text-gray-500 text-sm font-bold">
+                                                {setIndex + 1}
+                                            </div>
 
-                                                {/* Inputs */}
-                                                <div className="flex-1 grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="text-xs text-gray-400 font-medium block mb-1.5">
-                                                            Reps
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            placeholder={exerciceSession.reps.toString()}
-                                                            value={perf.reps_effectuees || ''}
-                                                            onChange={(e) =>
-                                                                handlePerformanceChange(
-                                                                    exerciceSession.id,
-                                                                    setIndex,
-                                                                    'reps_effectuees',
-                                                                    parseInt(e.target.value) || 0
-                                                                )
-                                                            }
-                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                                        />
-                                                    </div>
+                                            <div className="col-span-4">
+                                                <input
+                                                    type="number"
+                                                    placeholder={exerciceSession.reps.toString()}
+                                                    value={perf.reps_effectuees || ''}
+                                                    onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'reps_effectuees', parseInt(e.target.value) || 0)}
+                                                    className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
+                                                        ? 'border-[#94fbdd]/20 text-gray-400'
+                                                        : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
+                                                        }`}
+                                                />
+                                            </div>
 
-                                                    <div>
-                                                        <label className="text-xs text-gray-400 font-medium block mb-1.5">
-                                                            Poids (kg)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.5"
-                                                            placeholder={exerciceSession.weight?.toString() || '0'}
-                                                            value={perf.weight || ''}
-                                                            onChange={(e) =>
-                                                                handlePerformanceChange(
-                                                                    exerciceSession.id,
-                                                                    setIndex,
-                                                                    'weight',
-                                                                    parseFloat(e.target.value) || 0
-                                                                )
-                                                            }
-                                                            className="w-full px-3 py-2.5 bg-[#252527] border border-[#94fbdd]/20 rounded-xl text-white text-center font-semibold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                                        />
-                                                    </div>
-                                                </div>
+                                            <div className="col-span-4">
+                                                <input
+                                                    type="number"
+                                                    step="0.5"
+                                                    placeholder={exerciceSession.weight?.toString() || '0'}
+                                                    value={perf.weight || ''}
+                                                    onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'weight', parseFloat(e.target.value) || 0)}
+                                                    className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
+                                                        ? 'border-[#94fbdd]/20 text-gray-400'
+                                                        : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
+                                                        }`}
+                                                />
+                                            </div>
 
-                                                {/* Bouton validation */}
+                                            <div className="col-span-3 flex justify-center">
                                                 <button
                                                     onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
-                                                    className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-all ${perf.success
-                                                        ? 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/40 hover:shadow-xl hover:shadow-[#94fbdd]/50 active:scale-95'
-                                                        : 'bg-[#252527] border-2 border-[#94fbdd]/30 hover:bg-[#94fbdd]/10 hover:border-[#94fbdd]/50 active:scale-95'
+                                                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${isDone
+                                                        ? 'bg-[#94fbdd] text-[#121214] shadow-md shadow-[#94fbdd]/20'
+                                                        : 'bg-[#121214] text-gray-600 border border-[#252527] hover:border-[#94fbdd]/30 hover:text-gray-400'
                                                         }`}
                                                 >
-                                                    <CheckCircleIcon
-                                                        className={`h-6 w-6 sm:h-7 sm:w-7 transition-colors ${perf.success ? 'text-[#121214]' : 'text-gray-400'
-                                                            }`}
-                                                    />
+                                                    <CheckCircleIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </div>
@@ -463,185 +397,161 @@ export default function ActiveSession() {
                     ))}
                 </div>
 
-                {/* Bouton Terminer */}
-                <div className="fixed bottom-24 left-0 right-0 p-4 sm:px-6 pointer-events-none">
-                    <div className="max-w-5xl mx-auto">
-                        <button
-                            onClick={handleRequestStopSession}
-                            disabled={!allSetsValidated}
-                            className={`w-full font-bold py-4 sm:py-5 rounded-2xl shadow-2xl transition-all flex items-center justify-center gap-3 text-base sm:text-lg pointer-events-auto ${allSetsValidated
-                                ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-red-500/50 active:scale-95'
-                                : 'bg-[#252527] text-gray-500 border-2 border-[#94fbdd]/10 cursor-not-allowed'
-                                }`}
-                        >
-                            <StopIcon className="h-6 w-6" />
-                            {allSetsValidated
-                                ? 'Terminer la séance'
-                                : `Validez toutes les séries (${validatedSets}/${totalSets})`}
-                        </button>
-                    </div>
+                {/* Bouton de fin de séance (intégré au flux) */}
+                <div className="pt-4 pb-8">
+                    <button
+                        onClick={handleRequestStopSession}
+                        disabled={!allSetsValidated}
+                        className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${allSetsValidated
+                            ? 'bg-[#94fbdd] text-[#121214] hover:bg-[#7de0c4] hover:shadow-[#94fbdd]/20'
+                            : 'bg-[#252527] text-gray-500 cursor-not-allowed border border-[#94fbdd]/5'
+                            }`}
+                    >
+                        {allSetsValidated ? (
+                            <>
+                                <StopIcon className="w-5 h-5" />
+                                Terminer la séance
+                            </>
+                        ) : (
+                            <span className="font-mono text-xs">{validatedSets}/{totalSets} séries complétées</span>
+                        )}
+                    </button>
+                    {!allSetsValidated && (
+                        <p className="text-center text-xs text-gray-500 mt-3 font-medium">
+                            Validez toutes les séries pour terminer
+                        </p>
+                    )}
                 </div>
             </div>
 
-            {/* Modal avec carte de résumé */}
+            {/* Modals - Simplified */}
             <Modal isOpen={showSummaryCard} onClose={() => { }} showClose={false}>
-                <ModalHeader>
-                    <div className="flex items-center gap-3 justify-center">
-                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
-                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
+                <div className="p-6 bg-[#252527] text-white">
+                    <div className="text-center space-y-4 mb-6">
+                        <div className="w-12 h-12 bg-[#94fbdd]/10 rounded-full flex items-center justify-center mx-auto">
+                            <CheckCircleIcon className="w-6 h-6 text-[#94fbdd]" />
                         </div>
-                        <ModalTitle className="text-xl sm:text-2xl">Séance terminée ! 🎉</ModalTitle>
+                        <h2 className="text-xl font-bold text-white">Séance terminée</h2>
                     </div>
-                </ModalHeader>
-                <div className="px-3 py-3">
-                    <SessionSummaryCard
-                        sessionData={{
-                            programName: activeSession?.trainingProgram?.name,
-                            duration: finalDuration,
-                            totalExercises: activeSession?.exercices?.length || 0,
-                            totalSets: totalSets,
-                            completedSets: validatedSets,
-                            exercises: (activeSession?.exercices || []).map((ex: any) => ({
-                                name: ex.exercice?.name || 'Exercice',
-                                sets: ex.sets,
-                                reps: ex.reps,
-                                weight: ex.weight
-                            })),
-                            date: new Date()
-                        }}
-                    />
-                </div>
-                <ModalFooter>
+
+                    <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 mb-6">
+                        <SessionSummaryCard
+                            sessionData={{
+                                programName: activeSession?.trainingProgram?.name,
+                                duration: finalDuration,
+                                totalExercises: activeSession?.exercices?.length || 0,
+                                totalSets: totalSets,
+                                completedSets: validatedSets,
+                                exercises: (activeSession?.exercices || []).map((ex: any) => ({
+                                    name: ex.exercice?.name || 'Exercice',
+                                    sets: ex.sets,
+                                    reps: ex.reps,
+                                    weight: ex.weight
+                                })),
+                                date: new Date()
+                            }}
+                        />
+                    </div>
+
                     <button
                         onClick={handleContinueToGeneration}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 shadow-lg shadow-[#94fbdd]/30"
+                        className="w-full py-3.5 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#7de0c4] transition-colors shadow-lg shadow-[#94fbdd]/10"
                     >
                         Continuer
                     </button>
-                </ModalFooter>
+                </div>
             </Modal>
 
-            {/* Modal de génération */}
             <Modal isOpen={showGenerationModal} onClose={() => { }} showClose={false}>
-                <ModalHeader>
-                    <ModalTitle className="text-xl sm:text-2xl text-center">Séance terminée</ModalTitle>
-                </ModalHeader>
-                <div className="px-4 sm:px-6 py-6 sm:py-8">
-                    <p className="text-base sm:text-lg text-gray-300 text-center mb-8">
+                <div className="p-6 bg-[#252527] text-white">
+                    <h2 className="text-xl font-bold text-center mb-2 text-white">Prochaine étape</h2>
+                    <p className="text-gray-400 text-center mb-8 text-sm">
                         Comment voulez-vous générer votre prochaine séance ?
                     </p>
-                    <div className="flex flex-col gap-3 w-full">
+                    <div className="flex flex-col gap-3">
                         <button
                             onClick={handleGenerateAdaptedSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
-                            className="w-full relative flex items-center justify-center px-6 py-4 bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] hover:shadow-xl hover:shadow-[#94fbdd]/40 text-[#121214] font-bold text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#94fbdd]/30"
+                            className="w-full flex items-center justify-center px-4 py-4 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#7de0c4] transition-colors disabled:opacity-50 shadow-lg shadow-[#94fbdd]/10"
                         >
-                            {isAdaptingSession ? (
-                                'Génération...'
-                            ) : (
-                                <>
-                                    <SparklesIcon className="absolute left-5 h-5 w-5" />
-                                    <span>Adapter selon mes performances</span>
-                                </>
+                            {isAdaptingSession ? 'Génération...' : (
+                                <div className="flex items-center gap-2">
+                                    <SparklesIcon className="h-5 w-5" />
+                                    <span>Adapter selon mes perfs</span>
+                                </div>
                             )}
                         </button>
                         <button
                             onClick={handleGenerateSimilarSession}
                             disabled={isAdaptingSession || isCreatingSimilar}
-                            className="w-full relative flex items-center justify-center px-6 py-4 bg-[#252527] hover:bg-[#2a2a2d] text-white font-bold text-base rounded-xl border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center px-4 py-4 bg-transparent border border-[#94fbdd]/20 text-white font-bold rounded-xl hover:bg-[#121214] transition-colors disabled:opacity-50"
                         >
-                            {isCreatingSimilar ? (
-                                'Génération...'
-                            ) : (
-                                <>
-                                    <ArrowPathIcon className="absolute left-5 h-5 w-5" />
+                            {isCreatingSimilar ? 'Génération...' : (
+                                <div className="flex items-center gap-2">
+                                    <ArrowPathIcon className="h-5 w-5" />
                                     <span>Répéter la même séance</span>
-                                </>
+                                </div>
                             )}
                         </button>
                     </div>
                 </div>
             </Modal>
 
-            {/* Modal de confirmation avant terminer */}
             <Modal isOpen={showCompletionModal} onClose={() => setShowCompletionModal(false)}>
-                <ModalHeader>
-                    <div className="flex items-center gap-3 justify-center">
-                        <div className="p-3 bg-[#94fbdd]/10 rounded-2xl">
-                            <CheckCircleIcon className="h-7 w-7 text-[#94fbdd]" />
-                        </div>
-                        <ModalTitle className="text-xl sm:text-2xl">Terminer la séance ?</ModalTitle>
-                    </div>
-                </ModalHeader>
-                <ModalFooter>
-                    <div className="flex flex-col gap-3 w-full">
+                <div className="p-6 bg-[#252527] text-white">
+                    <h2 className="text-lg font-bold text-white mb-6 text-center">Terminer la séance ?</h2>
+                    <div className="flex flex-col gap-3">
                         <button
                             onClick={handleConfirmStopSession}
-                            className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-[#94fbdd] to-[#72e8cc] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/30 hover:shadow-xl hover:shadow-[#94fbdd]/40 transition-all active:scale-95"
+                            className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold hover:bg-[#7de0c4] transition-colors shadow-lg shadow-[#94fbdd]/10"
                         >
-                            Oui, terminer la séance
+                            Oui, terminer
                         </button>
                         <button
                             onClick={() => setShowCompletionModal(false)}
-                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all"
+                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-bold hover:bg-[#121214] transition-colors"
                         >
                             Continuer l'entraînement
                         </button>
                     </div>
-                </ModalFooter>
+                </div>
             </Modal>
 
-            {/* Modal d'annulation */}
             <Modal isOpen={showCancelModal} onClose={() => !isCancelling && setShowCancelModal(false)}>
-                <ModalHeader>
-                    <div className="flex items-center gap-3 justify-center">
-                        <div className="p-3 bg-red-500/10 rounded-2xl">
-                            <XMarkIcon className="h-7 w-7 text-red-400" />
-                        </div>
-                        <ModalTitle className="text-xl sm:text-2xl">Annuler la séance ?</ModalTitle>
+                <div className="p-6 bg-[#252527] text-white">
+                    <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <XMarkIcon className="h-6 w-6 text-red-400" />
                     </div>
-                </ModalHeader>
-                <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
-                    <p className="text-sm sm:text-base text-gray-300 text-center">
-                        Êtes-vous sûr de vouloir annuler cette séance ?
+                    <h2 className="text-lg font-bold text-white text-center mb-2">Annuler la séance ?</h2>
+                    <p className="text-sm text-gray-400 text-center mb-6">
+                        Cette action est irréversible.
                     </p>
+
                     {getAllPerformances().filter(p => p.savedPerformanceId).length > 0 && (
-                        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
-                            <p className="text-sm text-red-300 text-center">
-                                <strong>{getAllPerformances().filter(p => p.savedPerformanceId).length}</strong> performance{getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 's' : ''}
-                                {' '}enregistrée{getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 's' : ''} {getAllPerformances().filter(p => p.savedPerformanceId).length > 1 ? 'seront supprimées' : 'sera supprimée'}.
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
+                            <p className="text-xs text-red-300 text-center">
+                                <strong>{getAllPerformances().filter(p => p.savedPerformanceId).length}</strong> performance(s) enregistrée(s) seront supprimée(s).
                             </p>
                         </div>
                     )}
-                    <p className="text-xs sm:text-sm text-gray-400 text-center">
-                        Cette action est irréversible.
-                    </p>
-                </div>
-                <ModalFooter>
-                    <div className="flex flex-col gap-3 w-full">
+
+                    <div className="flex flex-col gap-3">
                         <button
                             onClick={() => setShowCancelModal(false)}
                             disabled={isCancelling}
-                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
+                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-white font-bold hover:bg-[#121214] transition-colors"
                         >
-                            Continuer la séance
+                            Reprendre la séance
                         </button>
                         <button
                             onClick={handleCancelSession}
                             disabled={isCancelling}
-                            className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors disabled:opacity-50 shadow-lg shadow-red-500/20"
                         >
-                            {isCancelling ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Annulation...
-                                </>
-                            ) : (
-                                'Annuler la séance'
-                            )}
+                            {isCancelling ? 'Annulation...' : 'Annuler définitivement'}
                         </button>
                     </div>
-                </ModalFooter>
+                </div>
             </Modal>
         </div>
     )
