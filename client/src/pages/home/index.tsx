@@ -1,6 +1,7 @@
 import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
 import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
 import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
+import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 import {
   ArrowRightIcon,
 } from '@heroicons/react/24/outline'
@@ -17,6 +18,7 @@ export default function Home() {
   const { data: programs } = useProgramsByUser()
   const { data: sessions } = useGetAllUserSessions()
   const { data: weightHistory } = useWeightHistory()
+  const { data: fitnessProfile } = useFitnessProfilesByUser()
 
   // Calculer les stats
   const stats = useMemo(() => {
@@ -119,6 +121,7 @@ export default function Home() {
                 title="Évolution du poids"
                 unit="kg"
                 color="#94fbdd"
+                targetWeight={fitnessProfile?.targetWeight}
               />
               <PersonalRecords sessions={sessions || []} />
             </div>

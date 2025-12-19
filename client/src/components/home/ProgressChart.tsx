@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
-import { ChartBarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
+import {
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ScaleIcon,
+  TrophyIcon
+} from '@heroicons/react/24/outline';
 
 interface DataPoint {
   date: string;
@@ -11,18 +17,26 @@ interface ProgressChartProps {
   title: string;
   unit: string;
   color?: string;
+  targetWeight?: number | null;
 }
 
-export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: ProgressChartProps) {
+export default function ProgressChart({
+  data,
+  title,
+  unit,
+  color = '#94fbdd',
+  targetWeight
+}: ProgressChartProps) {
   const chartStats = useMemo(() => {
     if (!data || data.length === 0) {
-      return { min: 0, max: 0, avg: 0, trend: 0, trendPercent: 0 };
+      return { min: 0, max: 0, avg: 0, trend: 0, trendPercent: 0, current: 0 };
     }
 
     const values = data.map(d => d.value);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const current = values[values.length - 1];
 
     // Calculate trend (difference between first and last value)
     const first = values[0];
@@ -30,20 +44,28 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
     const trend = last - first;
     const trendPercent = first !== 0 ? ((trend / first) * 100) : 0;
 
-    return { min, max, avg, trend, trendPercent };
+    return { min, max, avg, trend, trendPercent, current };
   }, [data]);
 
+  // Include targetWeight in the normalization
   const normalizedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
-    const { min, max } = chartStats;
+    let { min, max } = chartStats;
+
+    // Ajuster min/max si targetWeight est présent
+    if (targetWeight) {
+      min = Math.min(min, targetWeight);
+      max = Math.max(max, targetWeight);
+    }
+
     const range = max - min;
 
-    // Si toutes les valeurs sont identiques (range = 0), les placer au milieu du graphique
+    // Si toutes les valeurs sont identiques
     if (range === 0) {
       return data.map(point => ({
         ...point,
-        normalized: 50 // Milieu du graphique
+        normalized: 50
       }));
     }
 
@@ -51,49 +73,54 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
       ...point,
       normalized: ((point.value - min) / range) * 100
     }));
-  }, [data, chartStats]);
+  }, [data, chartStats, targetWeight]);
 
-  // Formater les dates pour l'affichage
+  // Normalize target weight for display
+  const normalizedTarget = useMemo(() => {
+    if (!targetWeight || !data || data.length === 0) return null;
+
+    let { min, max } = chartStats;
+
+    if (targetWeight) {
+      min = Math.min(min, targetWeight);
+      max = Math.max(max, targetWeight);
+    }
+
+    const range = max - min;
+    if (range === 0) return 50;
+
+    return ((targetWeight - min) / range) * 100;
+  }, [targetWeight, data, chartStats]);
+
+  // Calculate progress to target
+  const targetProgress = useMemo(() => {
+    if (!targetWeight || !chartStats.current) return null;
+
+    const diff = targetWeight - chartStats.current;
+    const remaining = Math.abs(diff);
+    const isGaining = diff > 0;
+
+    return { diff, remaining, isGaining };
+  }, [targetWeight, chartStats.current]);
+
+  // Formater les dates
   const formattedDates = useMemo(() => {
     if (!data || data.length === 0) return [];
 
     return data.map(point => {
       const date = new Date(point.date);
-      return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     });
   }, [data]);
 
-  // Calculer les valeurs pour l'axe Y
-  const yAxisLabels = useMemo(() => {
-    if (!data || data.length === 0) return [];
-
-    const { min, max } = chartStats;
-    const range = max - min;
-
-    // Si la différence est très petite, ajuster l'échelle
-    if (range < 1) {
-      return [
-        { value: max.toFixed(1), position: 0 },   // Max en haut
-        { value: ((min + max) / 2).toFixed(1), position: 50 },
-        { value: min.toFixed(1), position: 100 }, // Min en bas
-      ];
-    }
-
-    return [
-      { value: max.toFixed(1), position: 0 },   // Max en haut
-      { value: ((min + max) / 2).toFixed(1), position: 50 },
-      { value: min.toFixed(1), position: 100 }, // Min en bas
-    ];
-  }, [data, chartStats]);
-
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[#252527] rounded-2xl p-6 border border-[#94fbdd]/10">
+      <div className="bg-[#18181b] rounded-2xl p-4 sm:p-6 border border-white/5">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-[#94fbdd]/10 rounded-xl">
             <ChartBarIcon className="h-5 w-5 text-[#94fbdd]" />
           </div>
-          <h3 className="text-lg font-bold text-white">{title}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white">{title}</h3>
         </div>
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-500 text-sm">Aucune donnée disponible</p>
@@ -103,68 +130,162 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
   }
 
   return (
-    <div className="bg-[#252527] rounded-2xl py-6 px-4  border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 transition-all group">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#94fbdd]/10 rounded-xl group-hover:bg-[#94fbdd]/20 transition-colors">
-            <ChartBarIcon className="h-5 w-5 text-[#94fbdd]" />
+    <div className="bg-[#18181b] rounded-2xl p-4 sm:p-6 border border-white/5 hover:border-[#94fbdd]/20 transition-all">
+      {/* Header - Mobile First */}
+      <div className="space-y-4 mb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-[#94fbdd]/10 rounded-xl shrink-0">
+              <ScaleIcon className="h-5 w-5 text-[#94fbdd]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-medium text-gray-400">{title}</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-white truncate">
+                {chartStats.current.toFixed(1)} <span className="text-lg text-gray-500">{unit}</span>
+              </p>
+            </div>
           </div>
-          <h3 className="text-lg font-bold text-white">{title}</h3>
+
+          {/* Trend Badge */}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg shrink-0 ${chartStats.trend >= 0
+              ? 'bg-green-500/10 text-green-400'
+              : 'bg-red-500/10 text-red-400'
+            }`}>
+            {chartStats.trend >= 0 ? (
+              <ArrowTrendingUpIcon className="h-4 w-4" />
+            ) : (
+              <ArrowTrendingDownIcon className="h-4 w-4" />
+            )}
+            <span className="text-xs sm:text-sm font-bold">
+              {chartStats.trend >= 0 ? '+' : ''}{chartStats.trendPercent.toFixed(1)}%
+            </span>
+          </div>
         </div>
 
-        {/* Trend Indicator */}
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${chartStats.trend >= 0
-          ? 'bg-green-500/10 text-green-400'
-          : 'bg-red-500/10 text-red-400'
-          }`}>
-          {chartStats.trend >= 0 ? (
-            <ArrowTrendingUpIcon className="h-4 w-4" />
-          ) : (
-            <ArrowTrendingDownIcon className="h-4 w-4" />
-          )}
-          <span className="text-sm font-bold">
-            {chartStats.trend >= 0 ? '+' : ''}{chartStats.trendPercent.toFixed(1)}%
-          </span>
-        </div>
+        {/* Target Weight Indicator */}
+        {targetWeight && targetProgress && (
+          <div className="bg-[#252527] rounded-xl p-3 border border-[#94fbdd]/10">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <TrophyIcon className="h-4 w-4 text-[#94fbdd] shrink-0" />
+                <span className="text-xs text-gray-400">Objectif</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-white">
+                  {targetWeight} {unit}
+                </span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded ${targetProgress.isGaining ? 'bg-green-500/10 text-green-400' : 'bg-orange-500/10 text-orange-400'
+                  }`}>
+                  {targetProgress.isGaining ? '+' : ''}{targetProgress.diff.toFixed(1)} {unit}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Chart Container with Labels */}
-      <div className="relative">
-        {/* Y-Axis Label (Ordonnée) - Vertical */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
-          <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
-            Poids ({unit})
-          </p>
+      {/* Chart with Y-axis ruler */}
+      <div className="relative mb-6">
+        {/* Y-Axis Labels (Ruler) */}
+        <div className="absolute left-0 top-0 h-48 sm:h-56 flex flex-col justify-between text-right pr-2 z-10">
+          {[0, 1, 2, 3, 4].map((i) => {
+            const { min, max } = chartStats;
+            let adjustedMin = min;
+            let adjustedMax = max;
+
+            if (targetWeight) {
+              adjustedMin = Math.min(min, targetWeight);
+              adjustedMax = Math.max(max, targetWeight);
+            }
+
+            const range = adjustedMax - adjustedMin;
+            const value = adjustedMax - (range * i / 4);
+
+            return (
+              <div key={i} className="relative">
+                <span className="text-[10px] sm:text-xs font-medium text-gray-400">
+                  {value.toFixed(1)}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Y-Axis Values */}
-        <div className="absolute left-12 top-0 h-48 flex flex-col justify-between text-right pr-2">
-          {yAxisLabels.map((label, index) => (
-            <div key={index} className="text-[10px] text-gray-400 font-medium">
-              {label.value}
-            </div>
-          ))}
-        </div>
-
-        {/* Chart */}
-        <div className="relative h-48 mb-2 ml-20">
+        {/* Chart Container with margin for Y-axis */}
+        <div className="relative h-48 sm:h-56 ml-12 sm:ml-14">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {/* Grid lines with values */}
+            {/* Grid lines with ruler marks */}
             {[0, 25, 50, 75, 100].map((y) => (
-              <line
-                key={y}
-                x1="0"
-                y1={y}
-                x2="100"
-                y2={y}
-                stroke="#94fbdd"
-                strokeOpacity="0.1"
-                strokeWidth="0.2"
-              />
+              <g key={y}>
+                <line
+                  x1="0"
+                  y1={y}
+                  x2="100"
+                  y2={y}
+                  stroke="#94fbdd"
+                  strokeOpacity="0.08"
+                  strokeWidth="0.3"
+                />
+                {/* Ruler ticks on the left */}
+                <line
+                  x1="-1"
+                  y1={y}
+                  x2="0"
+                  y2={y}
+                  stroke="#94fbdd"
+                  strokeOpacity="0.3"
+                  strokeWidth="0.4"
+                />
+              </g>
             ))}
 
-            {/* Area gradient */}
+            {/* Y-Axis line (ruler) */}
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="100"
+              stroke="#94fbdd"
+              strokeOpacity="0.2"
+              strokeWidth="0.4"
+            />
+
+            {/* Target Weight Line with better visibility */}
+            {normalizedTarget !== null && (
+              <>
+                <line
+                  x1="0"
+                  y1={100 - normalizedTarget}
+                  x2="100"
+                  y2={100 - normalizedTarget}
+                  stroke="#94fbdd"
+                  strokeOpacity="0.5"
+                  strokeWidth="0.4"
+                  strokeDasharray="3,2"
+                />
+                <rect
+                  x="85"
+                  y={100 - normalizedTarget - 3}
+                  width="14"
+                  height="4"
+                  fill="#94fbdd"
+                  fillOpacity="0.1"
+                  rx="0.5"
+                />
+                <text
+                  x="92"
+                  y={100 - normalizedTarget - 0.5}
+                  fontSize="2"
+                  fill="#94fbdd"
+                  textAnchor="middle"
+                  fontWeight="600"
+                >
+                  OBJECTIF
+                </text>
+              </>
+            )}
+
+            {/* Gradient */}
             <defs>
               <linearGradient id={`gradient-${title}`} x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor={color} stopOpacity="0.3" />
@@ -172,24 +293,24 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
               </linearGradient>
             </defs>
 
-            {/* Area path */}
+            {/* Area */}
             {normalizedData.length > 0 && (
               <path
                 d={`
-                M 0,100
-                ${normalizedData.map((point, i) => {
+                  M 0,100
+                  ${normalizedData.map((point, i) => {
                   const x = normalizedData.length === 1 ? 50 : (i / (normalizedData.length - 1)) * 100;
                   const y = 100 - point.normalized;
                   return `L ${x},${y}`;
                 }).join(' ')}
-                L 100,100
-                Z
-              `}
+                  L 100,100
+                  Z
+                `}
                 fill={`url(#gradient-${title})`}
               />
             )}
 
-            {/* Line path */}
+            {/* Line */}
             {normalizedData.length > 0 && (
               <path
                 d={normalizedData.map((point, i) => {
@@ -199,78 +320,115 @@ export default function ProgressChart({ data, title, unit, color = '#94fbdd' }: 
                 }).join(' ')}
                 fill="none"
                 stroke={color}
-                strokeWidth="0.5"
+                strokeWidth="1"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="drop-shadow-lg"
               />
             )}
 
-            {/* Data points */}
+            {/* Points with values on hover */}
             {normalizedData.map((point, i) => {
               const x = normalizedData.length === 1 ? 50 : (i / (normalizedData.length - 1)) * 100;
               const y = 100 - point.normalized;
+              const isLast = i === normalizedData.length - 1;
+              const isFirst = i === 0;
+
               return (
                 <g key={i}>
+                  {/* Outer glow */}
                   <circle
                     cx={x}
                     cy={y}
-                    r="1"
+                    r={isLast ? "2.5" : "1.5"}
                     fill={color}
-                    className="drop-shadow-md"
+                    fillOpacity="0.3"
                   />
+                  {/* Main point */}
                   <circle
                     cx={x}
                     cy={y}
-                    r="0.5"
+                    r={isLast ? "1.8" : "1.2"}
+                    fill={color}
+                  />
+                  {/* Inner highlight */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isLast ? "0.8" : "0.5"}
                     fill="white"
                   />
+
+                  {/* Value label for first and last point */}
+                  {(isFirst || isLast) && (
+                    <>
+                      <rect
+                        x={x - 5}
+                        y={y - 7}
+                        width="10"
+                        height="4"
+                        fill="#121214"
+                        fillOpacity="0.9"
+                        rx="0.5"
+                      />
+                      <text
+                        x={x}
+                        y={y - 4.5}
+                        fontSize="2.5"
+                        fill={isLast ? color : "#94fbdd"}
+                        textAnchor="middle"
+                        fontWeight="700"
+                      >
+                        {point.value.toFixed(1)}
+                      </text>
+                    </>
+                  )}
                 </g>
               );
             })}
           </svg>
         </div>
 
-        {/* X-Axis Dates Labels */}
+        {/* X-Axis Dates - Mobile optimized */}
         {formattedDates.length > 0 && (
-          <div className="flex justify-between px-20 mb-2">
-            <span className="text-[10px] text-gray-500">{formattedDates[0]}</span>
+          <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 mt-2 ml-12 sm:ml-14">
+            <span>{formattedDates[0]}</span>
             {formattedDates.length > 2 && (
-              <span className="text-[10px] text-gray-500">
+              <span className="hidden sm:inline">
                 {formattedDates[Math.floor(formattedDates.length / 2)]}
               </span>
             )}
-            <span className="text-[10px] text-gray-500">
-              {formattedDates[formattedDates.length - 1]}
-            </span>
+            <span>{formattedDates[formattedDates.length - 1]}</span>
           </div>
         )}
-
-        {/* X-Axis Label (Abscisse) */}
-        <div className="text-center">
-          <p className="text-xs font-medium text-gray-400">Date</p>
-        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#94fbdd]/10 mt-4">
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Min</p>
-          <p className="text-base font-bold text-white">
-            {chartStats.min.toFixed(1)} {unit}
+      {/* Stats Grid - Mobile first */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        {/* Min */}
+        <div className="bg-[#252527] rounded-xl p-3 text-center border border-white/5">
+          <p className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Min</p>
+          <p className="text-sm sm:text-base font-bold text-white">
+            {chartStats.min.toFixed(1)}
           </p>
+          <p className="text-[10px] text-gray-600">{unit}</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Moyenne</p>
-          <p className="text-base font-bold text-white">
-            {chartStats.avg.toFixed(1)} {unit}
+
+        {/* Average */}
+        <div className="bg-[#252527] rounded-xl p-3 text-center border border-[#94fbdd]/20">
+          <p className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Moy</p>
+          <p className="text-sm sm:text-base font-bold text-[#94fbdd]">
+            {chartStats.avg.toFixed(1)}
           </p>
+          <p className="text-[10px] text-gray-600">{unit}</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Max</p>
-          <p className="text-base font-bold text-[#94fbdd]">
-            {chartStats.max.toFixed(1)} {unit}
+
+        {/* Max */}
+        <div className="bg-[#252527] rounded-xl p-3 text-center border border-white/5">
+          <p className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Max</p>
+          <p className="text-sm sm:text-base font-bold text-white">
+            {chartStats.max.toFixed(1)}
           </p>
+          <p className="text-[10px] text-gray-600">{unit}</p>
         </div>
       </div>
     </div>
