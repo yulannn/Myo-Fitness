@@ -5,6 +5,12 @@ export type WeekDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY'
 export type MuscleCategory = 'CHEST' | 'BACK' | 'SHOULDERS' | 'ARMS' | 'LEGS' | 'CORE' | 'OTHER';
 export type TrainingEnvironment = 'HOME' | 'GYM';
 
+export interface MuscleGroup {
+    id: number;
+    name: string;
+    category: MuscleCategory;
+}
+
 export interface FitnessProfile {
     id: number;
     userId: number;
@@ -19,7 +25,7 @@ export interface FitnessProfile {
     bodyWeight: boolean;
     trainingDays?: WeekDay[];
     targetWeight?: number | null;
-    musclePriorities: MuscleCategory[];
+    musclePriorities: number[]; // IDs des MuscleGroup
     trainingEnvironment: TrainingEnvironment;
     createdAt?: string;
     updatedAt?: string;
@@ -37,7 +43,7 @@ export interface CreateFitnessProfilePayload {
     bodyWeight: boolean;
     trainingDays?: WeekDay[];
     targetWeight?: number;
-    musclePriorities?: MuscleCategory[];
+    musclePriorities?: number[]; // IDs des MuscleGroup
     trainingEnvironment?: TrainingEnvironment;
 }
 
@@ -53,7 +59,7 @@ export interface UpdateFitnessProfilePayload {
     bodyWeight?: boolean;
     trainingDays?: WeekDay[];
     targetWeight?: number;
-    musclePriorities?: MuscleCategory[];
+    musclePriorities?: number[]; // IDs des MuscleGroup
     trainingEnvironment?: TrainingEnvironment;
 }
 

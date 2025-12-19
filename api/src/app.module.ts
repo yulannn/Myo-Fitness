@@ -34,6 +34,7 @@ import { SentryTestController } from './config/sentry-test.controller';
 import { ActivityModule } from './social/activity/activity.module';
 import { BadgeModule } from './badge/badge.module';
 import { BodyAtlasModule } from './body-atlas/body-atlas.module';
+import { MuscleGroupModule } from './muscle-group/muscle-group.module';
 
 
 
@@ -80,6 +81,7 @@ import { BodyAtlasModule } from './body-atlas/body-atlas.module';
     ActivityModule,
     BadgeModule,
     BodyAtlasModule,
+    MuscleGroupModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon, ChartBarIcon, FireIcon, HomeIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
-import type { UpdateFitnessProfilePayload, FitnessProfile, WeekDay, MuscleCategory } from '../../types/fitness-profile.type';
+import type { UpdateFitnessProfilePayload, FitnessProfile, WeekDay } from '../../types/fitness-profile.type';
 import TrainingDaysSelector from './TrainingDaysSelector';
 import CityAutocomplete from './CityAutocomplete';
+import MusclePrioritiesSelector from './MusclePrioritiesSelector';
+import { useMuscleGroups } from '../../api/hooks/muscle-group/useGetMuscleGroups';
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -33,6 +35,8 @@ export default function EditProfileModal({
         musclePriorities: [],
         trainingEnvironment: 'GYM',
     });
+
+    const { data: muscleGroups = [] } = useMuscleGroups();
 
     useEffect(() => {
         if (isOpen && profile) {
@@ -311,34 +315,11 @@ export default function EditProfileModal({
                     </div>
 
                     {/* Muscle Priorities */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-300">Priorités musculaires <span className="text-gray-500 text-xs">(optionnel)</span></label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['CHEST', 'BACK', 'SHOULDERS', 'ARMS', 'LEGS', 'CORE'] as MuscleCategory[]).map((muscle) => (
-                                <button
-                                    key={muscle}
-                                    type="button"
-                                    onClick={() => {
-                                        const currentPriorities = form.musclePriorities || [];
-                                        const newPriorities = currentPriorities.includes(muscle)
-                                            ? currentPriorities.filter(m => m !== muscle)
-                                            : [...currentPriorities, muscle];
-                                        setForm(prev => ({ ...prev, musclePriorities: newPriorities }));
-                                    }}
-                                    className={`p-2.5 rounded-xl border text-xs font-medium transition-all ${(form.musclePriorities || []).includes(muscle)
-                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd]'
-                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
-                                        }`}
-                                >
-                                    {muscle === 'CHEST' ? 'Pectoraux' :
-                                        muscle === 'BACK' ? 'Dos' :
-                                            muscle === 'SHOULDERS' ? 'Épaules' :
-                                                muscle === 'ARMS' ? 'Bras' :
-                                                    muscle === 'LEGS' ? 'Jambes' : 'Abdos'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <MusclePrioritiesSelector
+                        muscleGroups={muscleGroups}
+                        selectedPriorities={form.musclePriorities || []}
+                        onChange={(priorities) => setForm(prev => ({ ...prev, musclePriorities: priorities }))}
+                    />
 
                     {/* Training Days Selector */}
                     <TrainingDaysSelector

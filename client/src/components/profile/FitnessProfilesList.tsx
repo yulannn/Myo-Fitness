@@ -1,6 +1,7 @@
 import { PencilSquareIcon, PlusIcon, FireIcon, ChartBarIcon, UserIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 import TrainingDaysDisplay from './TrainingDaysDisplay';
+import MusclePrioritiesDisplay from './MusclePrioritiesDisplay';
 
 
 interface FitnessProfilesListProps {
@@ -209,23 +210,7 @@ export default function FitnessProfilesList({
       </div>
 
       {/* Muscle Priorities */}
-      {profiles.musclePriorities && profiles.musclePriorities.length > 0 && (
-        <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5 mt-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Priorités musculaires</h3>
-          <div className="flex flex-wrap gap-2">
-            {profiles.musclePriorities.map((muscle, index) => (
-              <span key={index} className="text-xs font-medium px-3 py-1.5 rounded-full bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/20">
-                {muscle === 'CHEST' ? 'Pectoraux' :
-                  muscle === 'BACK' ? 'Dos' :
-                    muscle === 'SHOULDERS' ? 'Épaules' :
-                      muscle === 'ARMS' ? 'Bras' :
-                        muscle === 'LEGS' ? 'Jambes' :
-                          muscle === 'CORE' ? 'Abdos' : muscle}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <MusclePrioritiesDisplay priorities={profiles.musclePriorities || []} />
     </div>
   );
 }

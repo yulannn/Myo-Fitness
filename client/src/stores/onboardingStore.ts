@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ExperienceLevel, Gender, Goal, WeekDay, MuscleCategory, TrainingEnvironment } from '../types/fitness-profile.type';
+import type { ExperienceLevel, Gender, Goal, WeekDay, TrainingEnvironment } from '../types/fitness-profile.type';
 
 export interface OnboardingData {
     // Step 1: Informations de base
@@ -24,8 +24,8 @@ export interface OnboardingData {
     bodyWeight?: boolean;
     trainingEnvironment?: TrainingEnvironment;
 
-    // Step 6: Priorités musculaires (nouveau)
-    musclePriorities?: MuscleCategory[];
+    // Step 6: Priorités musculaires (IDs des MuscleGroup)
+    musclePriorities?: number[];
 
     // Step 7: Jours d'entraînement
     trainingDays?: WeekDay[];

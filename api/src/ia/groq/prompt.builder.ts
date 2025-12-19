@@ -1,16 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { FitnessProfile, Exercice } from '@prisma/client';
+import { FitnessProfile, Exercice, MuscleGroup } from '@prisma/client';
 
 @Injectable()
 export class PromptBuilder {
-  buildProgramPrompt(fitnessProfile: FitnessProfile, template: string, exercices: Exercice[]): string {
+  buildProgramPrompt(
+    fitnessProfile: FitnessProfile,
+    template: string,
+    exercices: Exercice[],
+    priorityMuscles?: MuscleGroup[]
+  ): string {
     // Construction des informations de personnalisation
     const weightGoalInfo = fitnessProfile.targetWeight
       ? `\n🎯 Objectif de poids: ${fitnessProfile.targetWeight}kg (actuellement ${fitnessProfile.weight}kg, delta: ${(fitnessProfile.targetWeight - fitnessProfile.weight).toFixed(1)}kg).`
       : '';
 
-    const musclePrioritiesInfo = fitnessProfile.musclePriorities && fitnessProfile.musclePriorities.length > 0
-      ? `\n💪 Priorités musculaires: ${fitnessProfile.musclePriorities.join(', ')}. AUGMENTER le volume pour ces groupes musculaires.`
+    const musclePrioritiesInfo = priorityMuscles && priorityMuscles.length > 0
+      ? `\n💪 Priorités musculaires: ${priorityMuscles.map(m => m.name).join(', ')}. AUGMENTER le volume pour ces groupes musculaires.`
       : '';
 
     const environmentInfo = fitnessProfile.trainingEnvironment

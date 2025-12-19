@@ -17,7 +17,7 @@ export class IaService {
     private readonly prisma: PrismaService,
     private readonly groqClient: GroqClient,
     private readonly promptBuilder: PromptBuilder,
-  ) {}
+  ) { }
 
   async generateProgram(fitnessProfile: FitnessProfile) {
     const template = this.templateCreation(fitnessProfile.trainingFrequency);
@@ -28,14 +28,29 @@ export class IaService {
           fitnessProfile.experienceLevel === 'BEGINNER'
             ? { lte: 3 }
             : fitnessProfile.experienceLevel === 'INTERMEDIATE'
-            ? { lte: 4 }
-            : { gte: 3 },
+              ? { lte: 4 }
+              : { gte: 3 },
         bodyWeight: fitnessProfile.bodyWeight ? true : false,
       },
       include: { groupes: true, equipments: true },
     });
 
-    const prompt = this.promptBuilder.buildProgramPrompt(fitnessProfile, template, exercices);
+    // 🎯 Charger les groupes musculaires prioritaires si définis
+    let priorityMuscles: Awaited<ReturnType<typeof this.prisma.muscleGroup.findMany>> | undefined = undefined;
+    if (fitnessProfile.musclePriorities && fitnessProfile.musclePriorities.length > 0) {
+      priorityMuscles = await this.prisma.muscleGroup.findMany({
+        where: {
+          id: { in: fitnessProfile.musclePriorities },
+        },
+      });
+    }
+
+    const prompt = this.promptBuilder.buildProgramPrompt(
+      fitnessProfile,
+      template,
+      exercices,
+      priorityMuscles
+    );
 
     try {
       const result = await this.groqClient.generateJsonResponse(
@@ -65,32 +80,32 @@ export class IaService {
   private async generateProgramBackup(fitnessProfile: FitnessProfile) {
     type ExerciseEntry = { id: number; sets: number; reps: number };
     type SessionEntry = { name: string; exercises: ExerciseEntry[] };
-  
+
     const template = this.templateCreation(fitnessProfile.trainingFrequency);
-  
+
     const allExercises = await this.prisma.exercice.findMany({
       where: {
         difficulty:
           fitnessProfile.experienceLevel === 'BEGINNER'
             ? { lte: 3 }
             : fitnessProfile.experienceLevel === 'INTERMEDIATE'
-            ? { lte: 4 }
-            : { gte: 3 },
+              ? { lte: 4 }
+              : { gte: 3 },
         bodyWeight: fitnessProfile.bodyWeight,
         isDefault: true,
       },
       include: { groupes: { include: { groupe: true } } },
     });
-  
+
     const defaultReps = { BEGINNER: { upper: 12, lower: 15 }, INTERMEDIATE: { upper: 10, lower: 12 }, ADVANCED: { upper: 8, lower: 10 } };
     const defaultSets = { BEGINNER: 3, INTERMEDIATE: 3, ADVANCED: 4 };
-  
+
     const reps = defaultReps[fitnessProfile.experienceLevel];
     const sets = defaultSets[fitnessProfile.experienceLevel];
-  
+
     const upperGroups = ['chest', 'back', 'shoulders', 'biceps', 'triceps'];
     const lowerGroups = ['quads', 'hamstrings', 'glutes', 'calves'];
-  
+
     function pickExercises(groups: string[], count = 5): ExerciseEntry[] {
       const filtered = allExercises.filter(ex =>
         ex.groupes.some(g => groups.includes(g.groupe.name.toLowerCase())),
@@ -104,9 +119,9 @@ export class IaService {
           reps: groups.some(g => upperGroups.includes(g)) ? reps.upper : reps.lower,
         }));
     }
-  
+
     const sessions: SessionEntry[] = [];
-  
+
     switch (template) {
       case 'FULL_BODY':
         sessions.push({
@@ -114,7 +129,7 @@ export class IaService {
           exercises: pickExercises([...upperGroups, ...lowerGroups], 6),
         });
         break;
-  
+
       case 'UPPER_LOWER_UPPER_LOWER':
         sessions.push(
           { name: 'Upper', exercises: pickExercises(upperGroups, 5) },
@@ -123,7 +138,7 @@ export class IaService {
           { name: 'Lower', exercises: pickExercises(lowerGroups, 5) },
         );
         break;
-  
+
       case 'PUSH_PULL_LEGS':
         sessions.push(
           { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 5) },
@@ -131,7 +146,7 @@ export class IaService {
           { name: 'Legs', exercises: pickExercises(lowerGroups, 5) },
         );
         break;
-  
+
       case 'PUSH_PULL_LEGS_UPPER_LOWER':
         sessions.push(
           { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 4) },
@@ -141,7 +156,7 @@ export class IaService {
           { name: 'Lower', exercises: pickExercises(lowerGroups, 4) },
         );
         break;
-  
+
       case 'PUSH_PULL_LEGS_PUSH_PULL_LEGS':
         sessions.push(
           { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 4) },
@@ -152,7 +167,7 @@ export class IaService {
           { name: 'Legs', exercises: pickExercises(lowerGroups, 4) },
         );
         break;
-  
+
       default:
         sessions.push({
           name: 'Full Body',
@@ -160,9 +175,8 @@ export class IaService {
         });
         break;
     }
-  
-    return {template, sessions};
+
+    return { template, sessions };
   }
-  
+
 }
-  

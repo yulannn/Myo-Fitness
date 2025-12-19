@@ -1,4 +1,4 @@
-import { FitnessProfile, Goal, Gender, ExperienceLevel, WeekDay, MuscleCategory, TrainingEnvironment } from '@prisma/client';
+import { FitnessProfile, Goal, Gender, ExperienceLevel, WeekDay, TrainingEnvironment } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FitnessProfileEntity implements FitnessProfile {
@@ -87,12 +87,12 @@ export class FitnessProfileEntity implements FitnessProfile {
   targetWeight: number | null;
 
   @ApiPropertyOptional({
-    description: "Priorités musculaires de l'utilisateur",
-    enum: MuscleCategory,
+    description: "IDs des groupes musculaires prioritaires (Biceps, Triceps, Fessiers, etc.)",
+    type: [Number],
     isArray: true,
-    example: [MuscleCategory.CHEST, MuscleCategory.ARMS],
+    example: [1, 5, 6], // Ex: Pectoraux, Biceps, Triceps
   })
-  musclePriorities: MuscleCategory[];
+  musclePriorities: number[];
 
   @ApiProperty({
     description: "Environnement d'entraînement préféré",
