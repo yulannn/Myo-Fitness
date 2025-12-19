@@ -72,11 +72,17 @@ export const useOnboardingStore = create<OnboardingStore>()(
                     currentStep: Math.max(state.currentStep - 1, 0),
                 })),
 
-            completeOnboarding: () =>
+            completeOnboarding: () => {
+                // Marquer comme complété
                 set({
                     isCompleted: true,
                     currentStep: 0,
-                }),
+                    data: {}, // Vider les données
+                });
+
+                // Nettoyer le localStorage
+                localStorage.removeItem('myo-onboarding-storage');
+            },
 
             resetOnboarding: () =>
                 set({
