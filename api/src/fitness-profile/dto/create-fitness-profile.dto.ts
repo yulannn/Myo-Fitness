@@ -1,6 +1,6 @@
 import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Gender, Goal, ExperienceLevel, WeekDay } from '@prisma/client';
+import { Gender, Goal, ExperienceLevel, WeekDay, MuscleCategory, TrainingEnvironment } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFitnessProfileDto {
@@ -100,4 +100,37 @@ export class CreateFitnessProfileDto {
   @IsEnum(WeekDay, { each: true })
   @IsOptional()
   trainingDays?: WeekDay[];
+
+  @ApiPropertyOptional({
+    description: 'Objectif de poids en kg',
+    example: 75,
+    minimum: 30,
+    maximum: 250,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  @Min(30)
+  @Max(250)
+  @IsOptional()
+  targetWeight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Priorités musculaires de l\'utilisateur',
+    enum: MuscleCategory,
+    isArray: true,
+    example: [MuscleCategory.CHEST, MuscleCategory.ARMS],
+  })
+  @IsArray()
+  @IsEnum(MuscleCategory, { each: true })
+  @IsOptional()
+  musclePriorities?: MuscleCategory[];
+
+  @ApiPropertyOptional({
+    description: 'Environnement d\'entraînement préféré',
+    enum: TrainingEnvironment,
+    example: TrainingEnvironment.GYM,
+  })
+  @IsEnum(TrainingEnvironment)
+  @IsOptional()
+  trainingEnvironment?: TrainingEnvironment;
 }

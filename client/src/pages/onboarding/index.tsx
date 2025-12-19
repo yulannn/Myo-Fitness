@@ -8,9 +8,12 @@ import { logAnalyticsEvent, AnalyticsEvents } from '../../utils/analytics';
 // Steps
 import WelcomeStep from './steps/WelcomeStep.tsx';
 import BasicInfoStep from './steps/BasicInfoStep.tsx';
+import TargetWeightStep from './steps/TargetWeightStep.tsx';
 import GoalsStep from './steps/GoalsStep.tsx';
 import ExperienceStep from './steps/ExperienceStep.tsx';
 import FrequencyStep from './steps/FrequencyStep.tsx';
+import EnvironmentStep from './steps/EnvironmentStep.tsx';
+import MusclePrioritiesStep from './steps/MusclePrioritiesStep.tsx';
 import TrainingDaysStep from './steps/TrainingDaysStep.tsx';
 
 export default function Onboarding() {
@@ -42,7 +45,7 @@ export default function Onboarding() {
 
     const handleComplete = async () => {
         try {
-            // Valider les données
+            // Valider les données obligatoires
             if (
                 !data.age ||
                 !data.gender ||
@@ -68,7 +71,11 @@ export default function Onboarding() {
                 trainingFrequency: data.trainingFrequency,
                 bodyWeight: data.bodyWeight ?? false,
                 goals: data.goals,
-                trainingDays: data.trainingDays,
+                trainingDays: data.trainingDays || [],
+                // Nouveaux champs
+                targetWeight: data.targetWeight,
+                musclePriorities: data.musclePriorities || [],
+                trainingEnvironment: data.trainingEnvironment || 'GYM',
             });
 
             // Marquer comme complété
@@ -78,6 +85,8 @@ export default function Onboarding() {
             logAnalyticsEvent('onboarding_completed', {
                 experience_level: data.experienceLevel,
                 goals: data.goals.join(','),
+                has_target_weight: !!data.targetWeight,
+                training_environment: data.trainingEnvironment,
             });
 
             // Rediriger vers la home
@@ -90,9 +99,12 @@ export default function Onboarding() {
     const steps = [
         <WelcomeStep key="welcome" onStart={nextStep} />,
         <BasicInfoStep key="basic" onNext={nextStep} onBack={previousStep} />,
+        <TargetWeightStep key="targetWeight" onNext={nextStep} onBack={previousStep} />,
         <GoalsStep key="goals" onNext={nextStep} onBack={previousStep} />,
         <ExperienceStep key="experience" onNext={nextStep} onBack={previousStep} />,
         <FrequencyStep key="frequency" onNext={nextStep} onBack={previousStep} />,
+        <EnvironmentStep key="environment" onNext={nextStep} onBack={previousStep} />,
+        <MusclePrioritiesStep key="priorities" onNext={nextStep} onBack={previousStep} />,
         <TrainingDaysStep
             key="days"
             onComplete={handleComplete}

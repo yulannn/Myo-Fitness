@@ -139,8 +139,8 @@ enum ActivityType {
 }
 
 model FitnessProfile {
-  id                Int               @id @default(autoincrement())
-  userId            Int               @unique
+  id                Int             @id @default(autoincrement())
+  userId            Int             @unique
   age               Int
   height            Float
   weight            Float
@@ -148,14 +148,20 @@ model FitnessProfile {
   experienceLevel   ExperienceLevel
   goals             Goal[]
   gender            Gender
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @default(now()) @updatedAt
-  bodyWeight        Boolean           @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @default(now()) @updatedAt
+  bodyWeight        Boolean         @default(true)
   trainingDays      WeekDay[]
   city              String?
-  user              User              @relation(fields: [userId], references: [id])
-  trainingPrograms  TrainingProgram[]
-  weightHistory     WeightHistory[]
+
+  // 🆕 Nouveaux champs pour personnalisation avancée
+  targetWeight        Float?
+  musclePriorities    MuscleCategory[]    @default([])
+  trainingEnvironment TrainingEnvironment @default(GYM)
+
+  user             User              @relation(fields: [userId], references: [id])
+  trainingPrograms TrainingProgram[]
+  weightHistory    WeightHistory[]
 }
 
 model WeightHistory {
@@ -618,6 +624,11 @@ enum WeekDay {
   SATURDAY
   SUNDAY
   CUSTOM
+}
+
+enum TrainingEnvironment {
+  HOME
+  GYM
 }
 
 enum BadgeCategory {

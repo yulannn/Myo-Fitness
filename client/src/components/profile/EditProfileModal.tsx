@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { UpdateFitnessProfilePayload, FitnessProfile, WeekDay } from '../../types/fitness-profile.type';
+import { XMarkIcon, ChartBarIcon, FireIcon, HomeIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
+import type { UpdateFitnessProfilePayload, FitnessProfile, WeekDay, MuscleCategory } from '../../types/fitness-profile.type';
 import TrainingDaysSelector from './TrainingDaysSelector';
 import CityAutocomplete from './CityAutocomplete';
 
@@ -29,6 +29,9 @@ export default function EditProfileModal({
         gender: 'MALE',
         bodyWeight: false,
         trainingDays: [],
+        targetWeight: undefined,
+        musclePriorities: [],
+        trainingEnvironment: 'GYM',
     });
 
     useEffect(() => {
@@ -44,6 +47,9 @@ export default function EditProfileModal({
                 gender: profile.gender,
                 bodyWeight: profile.bodyWeight,
                 trainingDays: profile.trainingDays || [],
+                targetWeight: profile.targetWeight || undefined,
+                musclePriorities: profile.musclePriorities || [],
+                trainingEnvironment: profile.trainingEnvironment || 'GYM',
             });
         }
     }, [isOpen, profile]);
@@ -253,6 +259,86 @@ export default function EditProfileModal({
                         onChange={(city) => setForm(prev => ({ ...prev, city }))}
                         placeholder="Paris, Lyon, Marseille..."
                     />
+
+                    {/* Target Weight */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <ChartBarIcon className="h-4 w-4 text-[#94fbdd]" />
+                            Objectif de poids (kg) <span className="text-gray-500 text-xs">(optionnel)</span>
+                        </label>
+                        <input
+                            type="number"
+                            name="targetWeight"
+                            placeholder="75"
+                            value={form.targetWeight || ''}
+                            onChange={handleChange}
+                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                            min="30"
+                            max="250"
+                        />
+                    </div>
+
+                    {/* Training Environment */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <FireIcon className="h-4 w-4 text-[#94fbdd]" />
+                            Environnement d'entraînement
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'HOME' }))}
+                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'HOME'
+                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                    }`}
+                            >
+                                <HomeIcon className="h-4 w-4" />
+                                <span className="text-sm">Maison</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'GYM' }))}
+                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'GYM'
+                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                    }`}
+                            >
+                                <BuildingOffice2Icon className="h-4 w-4" />
+                                <span className="text-sm">Salle</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Muscle Priorities */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-gray-300">Priorités musculaires <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['CHEST', 'BACK', 'SHOULDERS', 'ARMS', 'LEGS', 'CORE'] as MuscleCategory[]).map((muscle) => (
+                                <button
+                                    key={muscle}
+                                    type="button"
+                                    onClick={() => {
+                                        const currentPriorities = form.musclePriorities || [];
+                                        const newPriorities = currentPriorities.includes(muscle)
+                                            ? currentPriorities.filter(m => m !== muscle)
+                                            : [...currentPriorities, muscle];
+                                        setForm(prev => ({ ...prev, musclePriorities: newPriorities }));
+                                    }}
+                                    className={`p-2.5 rounded-xl border text-xs font-medium transition-all ${(form.musclePriorities || []).includes(muscle)
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd]'
+                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    {muscle === 'CHEST' ? 'Pectoraux' :
+                                        muscle === 'BACK' ? 'Dos' :
+                                            muscle === 'SHOULDERS' ? 'Épaules' :
+                                                muscle === 'ARMS' ? 'Bras' :
+                                                    muscle === 'LEGS' ? 'Jambes' : 'Abdos'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     {/* Training Days Selector */}
                     <TrainingDaysSelector

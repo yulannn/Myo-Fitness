@@ -1,4 +1,4 @@
-import { FitnessProfile, Goal, Gender, ExperienceLevel, WeekDay } from '@prisma/client';
+import { FitnessProfile, Goal, Gender, ExperienceLevel, WeekDay, MuscleCategory, TrainingEnvironment } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FitnessProfileEntity implements FitnessProfile {
@@ -9,13 +9,13 @@ export class FitnessProfileEntity implements FitnessProfile {
   id: number;
 
   @ApiProperty({
-    description: 'ID de l’utilisateur auquel appartient le profil',
+    description: "ID de l'utilisateur auquel appartient le profil",
     example: 2,
   })
   userId: number;
 
   @ApiProperty({
-    description: 'Âge de l’utilisateur',
+    description: "Âge de l'utilisateur",
     example: 28,
   })
   age: number;
@@ -33,11 +33,10 @@ export class FitnessProfileEntity implements FitnessProfile {
   weight: number;
 
   @ApiPropertyOptional({
-    description: 'Ville de l’utilisateur',
+    description: "Ville de l'utilisateur",
     example: 'Paris',
   })
   city: string | null;
-
 
   @ApiProperty({
     description: 'Nombre de séances par semaine',
@@ -46,7 +45,7 @@ export class FitnessProfileEntity implements FitnessProfile {
   trainingFrequency: number;
 
   @ApiProperty({
-    description: 'Jours de la semaine sur lesquels l’utilisateur effectue ses séances',
+    description: "Jours de la semaine sur lesquels l'utilisateur effectue ses séances",
     enum: WeekDay,
     isArray: true,
     example: [WeekDay.MONDAY, WeekDay.TUESDAY],
@@ -54,14 +53,14 @@ export class FitnessProfileEntity implements FitnessProfile {
   trainingDays: WeekDay[];
 
   @ApiProperty({
-    description: 'Niveau d’expérience de l’utilisateur',
+    description: "Niveau d'expérience de l'utilisateur",
     enum: ExperienceLevel,
     example: ExperienceLevel.INTERMEDIATE,
   })
   experienceLevel: ExperienceLevel;
 
   @ApiProperty({
-    description: 'Objectifs de l’utilisateur',
+    description: "Objectifs de l'utilisateur",
     enum: Goal,
     isArray: true,
     example: [Goal.MUSCLE_GAIN, Goal.WEIGHT_LOSS],
@@ -69,17 +68,38 @@ export class FitnessProfileEntity implements FitnessProfile {
   goals: Goal[];
 
   @ApiProperty({
-    description: 'Genre de l’utilisateur',
+    description: "Genre de l'utilisateur",
     enum: Gender,
     example: Gender.MALE,
   })
   gender: Gender;
 
   @ApiProperty({
-    description: 'Indique si l’utilisateur souhaite uniquement des exercices au poids du corps',
+    description: "Indique si l'utilisateur souhaite uniquement des exercices au poids du corps",
     example: true,
   })
   bodyWeight: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Objectif de poids en kg',
+    example: 75,
+  })
+  targetWeight: number | null;
+
+  @ApiPropertyOptional({
+    description: "Priorités musculaires de l'utilisateur",
+    enum: MuscleCategory,
+    isArray: true,
+    example: [MuscleCategory.CHEST, MuscleCategory.ARMS],
+  })
+  musclePriorities: MuscleCategory[];
+
+  @ApiProperty({
+    description: "Environnement d'entraînement préféré",
+    enum: TrainingEnvironment,
+    example: TrainingEnvironment.GYM,
+  })
+  trainingEnvironment: TrainingEnvironment;
 
   @ApiProperty({
     description: 'Date de création du profil',

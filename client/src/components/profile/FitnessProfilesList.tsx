@@ -166,6 +166,66 @@ export default function FitnessProfilesList({
           <TrainingDaysDisplay selectedDays={profiles.trainingDays} />
         </div>
       )}
+
+      {/* New Fields Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {/* Target Weight */}
+        {profiles.targetWeight && (
+          <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+                <ChartBarIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-400">Objectif de poids</p>
+                <p className="text-2xl font-bold text-white mt-1">{profiles.targetWeight} <span className="text-sm text-gray-500 font-normal">kg</span></p>
+                {profiles.weight && (
+                  <p className={`text-xs mt-2 font-medium ${profiles.targetWeight > profiles.weight ? 'text-green-400' : 'text-orange-400'}`}>
+                    {profiles.targetWeight > profiles.weight
+                      ? `+${(profiles.targetWeight - profiles.weight).toFixed(1)} kg à gagner`
+                      : `${Math.abs(profiles.targetWeight - profiles.weight).toFixed(1)} kg à perdre`
+                    }
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Training Environment */}
+        <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-[#27272a] rounded-xl text-gray-400">
+              {profiles.trainingEnvironment === 'HOME' ? <FireIcon className="h-5 w-5" /> : <TrophyIcon className="h-5 w-5" />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-400">Environnement</p>
+              <p className="text-lg font-semibold text-white mt-1">
+                {profiles.trainingEnvironment === 'HOME' ? 'Maison' : 'Salle de sport'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Muscle Priorities */}
+      {profiles.musclePriorities && profiles.musclePriorities.length > 0 && (
+        <div className="bg-[#18181b] p-5 rounded-2xl border border-white/5 mt-4">
+          <h3 className="text-sm font-medium text-gray-400 mb-3">Priorités musculaires</h3>
+          <div className="flex flex-wrap gap-2">
+            {profiles.musclePriorities.map((muscle, index) => (
+              <span key={index} className="text-xs font-medium px-3 py-1.5 rounded-full bg-[#94fbdd]/10 text-[#94fbdd] border border-[#94fbdd]/20">
+                {muscle === 'CHEST' ? 'Pectoraux' :
+                  muscle === 'BACK' ? 'Dos' :
+                    muscle === 'SHOULDERS' ? 'Épaules' :
+                      muscle === 'ARMS' ? 'Bras' :
+                        muscle === 'LEGS' ? 'Jambes' :
+                          muscle === 'CORE' ? 'Abdos' : muscle}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

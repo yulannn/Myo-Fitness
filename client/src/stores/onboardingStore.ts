@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ExperienceLevel, Gender, Goal, WeekDay } from '../types/fitness-profile.type';
+import type { ExperienceLevel, Gender, Goal, WeekDay, MuscleCategory, TrainingEnvironment } from '../types/fitness-profile.type';
 
 export interface OnboardingData {
     // Step 1: Informations de base
@@ -10,15 +10,24 @@ export interface OnboardingData {
     weight?: number;
     city?: string | null;
 
-    // Step 2: Objectifs
+    // Step 2: Objectif de poids (nouveau)
+    targetWeight?: number;
+
+    // Step 3: Objectifs
     goals?: Goal[];
 
-    // Step 3: Expérience & Fréquence
+    // Step 4: Expérience
     experienceLevel?: ExperienceLevel;
+
+    // Step 5: Fréquence & Environnement
     trainingFrequency?: number;
     bodyWeight?: boolean;
+    trainingEnvironment?: TrainingEnvironment;
 
-    // Step 4: Jours d'entraînement
+    // Step 6: Priorités musculaires (nouveau)
+    musclePriorities?: MuscleCategory[];
+
+    // Step 7: Jours d'entraînement
     trainingDays?: WeekDay[];
 }
 
@@ -37,7 +46,7 @@ interface OnboardingStore {
     resetOnboarding: () => void;
 }
 
-const TOTAL_STEPS = 6; // Welcome + 5 steps
+const TOTAL_STEPS = 9; // Welcome + 8 steps
 
 export const useOnboardingStore = create<OnboardingStore>()(
     persist(
