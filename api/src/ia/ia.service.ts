@@ -7,11 +7,6 @@ import { FitnessProfile } from '@prisma/client';
 import { TemplateScorerService } from './scoring/template-scorer.service';
 import { ScoringProfile } from './scoring/types/scoring.types';
 
-const FULL_BODY = 'FULL_BODY';
-const PUSH_PULL_LEGS = 'PUSH_PULL_LEGS';
-const UPPER_LOWER_UPPER_LOWER = 'UPPER_LOWER_UPPER_LOWER';
-const PUSH_PULL_LEGS_UPPER_LOWER = 'PUSH_PULL_LEGS_UPPER_LOWER';
-const PUSH_PULL_LEGS_PUSH_PULL_LEGS = 'PUSH_PULL_LEGS_PUSH_PULL_LEGS';
 
 @Injectable()
 export class IaService {
@@ -116,16 +111,6 @@ export class IaService {
   }
 
 
-  // 🗑️ DEPRECATED: Ancienne méthode de sélection de template (remplacée par scoring)
-  // Conservée temporairement pour référence
-  private templateCreation(frequency: number): string {
-    if (frequency < 3) return FULL_BODY;
-    if (frequency === 3) return PUSH_PULL_LEGS;
-    if (frequency === 4) return UPPER_LOWER_UPPER_LOWER;
-    if (frequency === 5) return PUSH_PULL_LEGS_UPPER_LOWER;
-    if (frequency === 6) return PUSH_PULL_LEGS_PUSH_PULL_LEGS;
-    return FULL_BODY;
-  }
 
   private async generateProgramBackup(fitnessProfile: FitnessProfile, template: string) {
     type ExerciseEntry = { id: number; sets: number; reps: number };
