@@ -576,15 +576,13 @@ enum ExerciceType {
 }
 
 enum ProgramTemplate {
-  FULL_BODY
-  PUSH_PULL_LEGS
-  UPPER_LOWER
-  UPPER_LOWER_PUSH_PULL
-  PUSH_PULL_LEGS_UPPER_LOWER
-  PUSH_PULL_LEGS_PUSH_PULL_LEGS
-  PUSH_PULL_LEGS_CARDIO
-  CUSTOM
-  UPPER_LOWER_UPPER_LOWER
+  FULL_BODY // 1-6j : Tout le corps (flexible, tous niveaux)
+  UPPER_LOWER // 4j : Haut/Bas alterné (intermédiaires)
+  PUSH_PULL_LEGS // 3j ou 6j : Push/Pull/Jambes (inter/avancés)
+  PHAT // 5j : Power + Hypertrophy (inter avancés)
+  BRO_SPLIT // 5-6j : 1 muscle/jour (avancés bodybuilding)
+  ARNOLD_SPLIT // 6j : Antagonistes 2x/semaine (avancés)
+  CUSTOM // Variable : Personnalisé
 }
 
 enum ConversationType {
