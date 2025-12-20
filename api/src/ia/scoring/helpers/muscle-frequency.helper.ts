@@ -28,11 +28,6 @@ export function calculateMuscleFrequency(
             // Chaque groupe (push/pull/legs) travaillé tous les 3 jours
             return trainingFrequency / 3;
 
-        case 'PHAT':
-            // PHAT = 2 jours power + 3 jours hypertrophy (5 jours)
-            // Chaque muscle travaillé 2x/semaine (1x power, 1x hypertrophy)
-            return 2;
-
         case 'BRO_SPLIT':
             // 1 muscle par jour = 1x/semaine par muscle
             // Sauf si 6 jours avec répétition

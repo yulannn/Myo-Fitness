@@ -36,12 +36,6 @@ export function calculateVolumeCapacity(
             // Spécialisation maximale
             return trainingFrequency * 2.5;
 
-        case 'PHAT':
-            // PHAT = Power (faible reps) + Hypertrophy (haut reps)
-            // 5 jours, volume modéré à élevé
-            // Power: 3-5 reps, Hypertrophy: 8-12 reps
-            return 16; // ~16 sets/muscle/semaine
-
         case 'BRO_SPLIT':
             // Bro Split = Volume TRÈS ÉLEVÉ par muscle (1 jour dédié)
             // 15-25 sets par muscle par jour

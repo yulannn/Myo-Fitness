@@ -130,19 +130,7 @@ export class TemplateScorerService {
                 }
             }
 
-            // PHAT : Structure fixe à 5 jours
-            if (template === 'PHAT' && profile.trainingFrequency !== 5) {
-                return {
-                    template,
-                    score: 0,
-                    reasons: [
-                        `❌ PHAT INCOMPATIBLE avec ${profile.trainingFrequency}j/semaine`,
-                        `→ Structure fixe créée par Layne Norton : 5 jours obligatoires`,
-                        `→ 2 jours Power (force) + 3 jours Hypertrophy (volume)`,
-                        `→ Modifier cette structure = ce n'est plus du PHAT`,
-                    ],
-                };
-            }
+
 
             // Arnold Split : Structure fixe à 6 jours
             if (template === 'ARNOLD_SPLIT' && profile.trainingFrequency !== 6) {
@@ -283,7 +271,7 @@ export class TemplateScorerService {
             }
             // 🚫 PÉNALITÉ TRÈS FORTE pour templates avancés
             // Ces programmes nécessitent technique, récupération et mind-muscle connection excellentes
-            if (template === 'PHAT' || template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
+            if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
                 return {
                     score: -30, // Score négatif!
                     reason: `🚫 Template trop avancé pour débutant (technique, volume, récupération)`,
@@ -306,13 +294,7 @@ export class TemplateScorerService {
                 };
             }
             // 🚫 PÉNALITÉ FORTE pour templates très avancés
-            // PHAT/BRO/ARNOLD nécessitent expérience avancée et excellente récupération
-            if (template === 'PHAT') {
-                return {
-                    score: -20, // Pénalité forte
-                    reason: `⚠️ PHAT trop technique pour intermédiaire (power + hypertrophie nécessite maîtrise)`,
-                };
-            }
+            // BRO/ARNOLD nécessitent expérience avancée et excellente récupération
             if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
                 return {
                     score: -25, // Pénalité très forte
@@ -323,7 +305,7 @@ export class TemplateScorerService {
         }
 
         if (level === 'ADVANCED') {
-            if (template === 'PHAT' || template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
+            if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
                 return {
                     score: weight,
                     reason: `✅ Template avancé parfait pour votre niveau`,
@@ -367,13 +349,6 @@ export class TemplateScorerService {
             return {
                 score: weight * 1.4, // Bonus!
                 reason: `✅ Spécialisation maximale pour cibler les priorités musculaires`,
-            };
-        }
-
-        if (template === 'PHAT') {
-            return {
-                score: weight * 1.2,
-                reason: `✅ PHAT excellent pour cibler avec power + volume`,
             };
         }
 

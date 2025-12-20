@@ -31,14 +31,6 @@ export const TEMPLATE_CONSTRAINTS: Record<ProgramTemplate, TemplateConstraints> 
         // 3j = 1x/semaine par muscle, 6j = 2x/semaine (optimal)
     },
 
-    PHAT: {
-        minFrequency: 5,
-        maxFrequency: 5,
-        optimalFrequency: [5],
-        // PHAT (Power Hypertrophy Adaptive Training) par Layne Norton
-        // Structure fixe : 2 jours power + 3 jours hypertrophy
-    },
-
     BRO_SPLIT: {
         minFrequency: 5,
         maxFrequency: 6,
