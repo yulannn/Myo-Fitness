@@ -10,6 +10,7 @@ export function useSendFriendRequest() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['friends'] });
       await qc.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
+      await qc.invalidateQueries({ queryKey: ['sentFriendRequests'] });
     },
   });
   return mutation;

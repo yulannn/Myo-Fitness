@@ -1,5 +1,6 @@
 import Home from "../pages/home";
 import MyProfile from "../pages/my-profile";
+import UserProfile from "../pages/user-profile";
 import Settings from "../pages/settings";
 import Program from "../pages/program";
 import Sessions from "../pages/sessions";
@@ -26,6 +27,7 @@ import {
     HOME,
     SETTINGS,
     MY_PROFILE,
+    USER_PROFILE,
     PROGRAMS,
     ACTIVE_SESSION,
     SESSIONS,
@@ -76,6 +78,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: MY_PROFILE,
         element: <MyProfile />,
+        protected: true
+    },
+    {
+        path: USER_PROFILE,
+        element: <UserProfile />,
         protected: true
     },
     {

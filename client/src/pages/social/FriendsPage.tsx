@@ -6,13 +6,16 @@ import {
     CheckIcon,
     XMarkIcon,
     ChatBubbleLeftRightIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import useFriendsList from '../../api/hooks/friend/useGetFriendsList';
 import useSearchUsers from '../../api/hooks/friend/useSearchUsers';
 import useSendFriendRequest from '../../api/hooks/friend/useSendFriendRequest';
 import useRemoveFriend from '../../api/hooks/friend/useRemoveFriend';
+import useSentFriendRequests from '../../api/hooks/friend/useSentFriendRequests';
+import useCancelFriendRequest from '../../api/hooks/friend/useCancelFriendRequest';
 import { getImageUrl } from '../../utils/imageUtils';
 import ChatService from '../../api/services/chatService';
 import { SOCIAL_CHATS } from '../../utils/paths';
@@ -30,6 +33,8 @@ export default function FriendsPage() {
     const [lastSearchedQuery, setLastSearchedQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [friendRequestSent, setFriendRequestSent] = useState<number | null>(null);
+    const [showSentRequestsModal, setShowSentRequestsModal] = useState(false);
+    const [requestToCancel, setRequestToCancel] = useState<string | null>(null);
     const { user } = useAuth();
     const [copied, setCopied] = useState(false);
 
@@ -43,6 +48,8 @@ export default function FriendsPage() {
 
     // --- FRIENDS ---
     const { data: friends = [] } = useFriendsList();
+    const { data: sentRequests = [] } = useSentFriendRequests();
+    const cancelRequest = useCancelFriendRequest();
     const { data: searchResults = [], isLoading: isLoadingSearch } = useSearchUsers(lastSearchedQuery, { enabled: isSearching });
 
     const handleSearch = () => {
@@ -88,6 +95,18 @@ export default function FriendsPage() {
                         </button>
                         <h1 className="text-2xl font-bold text-white">Mes Amis</h1>
                     </div>
+                    <button
+                        onClick={() => setShowSentRequestsModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#18181b] border border-white/10 rounded-lg hover:bg-[#27272a] transition-colors"
+                    >
+                        <PaperAirplaneIcon className="h-5 w-5 text-gray-400" />
+                        <span className="text-sm text-gray-300">Envoyées</span>
+                        {sentRequests.length > 0 && (
+                            <span className="ml-1 px-2 py-0.5 bg-[#94fbdd]/20 text-[#94fbdd] text-xs rounded-full font-bold">
+                                {sentRequests.length}
+                            </span>
+                        )}
+                    </button>
                 </div>
 
                 {/* Friend Code Card */}
@@ -149,7 +168,7 @@ export default function FriendsPage() {
                             )}
                             {searchResults.map((user: any) => (
                                 <div key={user.id} className="flex items-center justify-between p-3 bg-[#27272a] rounded-lg border border-white/5">
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/user/${user.id}`)}>
                                         <div className="w-10 h-10 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
                                             {user.profilePictureUrl ? (
                                                 <img src={getImageUrl(user.profilePictureUrl)} alt={user.name} className="w-full h-full object-cover" />
@@ -158,7 +177,7 @@ export default function FriendsPage() {
                                             )}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-white text-sm">{user.name}</p>
+                                            <p className="font-bold text-white text-sm hover:text-[#94fbdd] transition-colors">{user.name}</p>
                                         </div>
                                     </div>
                                     {(user.status === 'NONE' || user.status === 'SENT') && (
@@ -209,7 +228,7 @@ export default function FriendsPage() {
                                 >
                                     <div
                                         className="flex items-center gap-3 flex-1 cursor-pointer"
-                                        onClick={() => startChatWithFriend(f.friend.id)}
+                                        onClick={() => navigate(`/user/${f.friend.id}`)}
                                     >
                                         <div className="w-10 h-10 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
                                             {f.friend.profilePictureUrl ? (
@@ -288,6 +307,90 @@ export default function FriendsPage() {
                 )}
 
             </div>
+
+            {/* Sent Friend Requests Modal */}
+            {showSentRequestsModal && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowSentRequestsModal(false)}>
+                    <div className="bg-[#18181b] rounded-xl border border-white/10 max-w-md w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-[#18181b] border-b border-white/10 p-4 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <PaperAirplaneIcon className="h-5 w-5 text-[#94fbdd]" />
+                                Demandes envoyées
+                            </h2>
+                            <button onClick={() => setShowSentRequestsModal(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                <XMarkIcon className="h-5 w-5 text-gray-400" />
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            {sentRequests.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    <PaperAirplaneIcon className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                                    <p>Aucune demande envoyée</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {sentRequests.map((req: any) => (
+                                        <div key={req.id} className="bg-[#27272a] p-4 rounded-lg border border-white/5 flex items-center justify-between">
+                                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => { setShowSentRequestsModal(false); navigate(`/user/${req.receiver.id}`); }}>
+                                                <div className="w-12 h-12 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
+                                                    {req.receiver?.profilePictureUrl ? (
+                                                        <img src={getImageUrl(req.receiver.profilePictureUrl)} alt={req.receiver.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <UsersIcon className="w-6 h-6 m-3 text-gray-500" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-white hover:text-[#94fbdd] transition-colors">{req.receiver?.name || 'Utilisateur'}</p>
+                                                    <p className="text-xs text-gray-500">En attente de réponse</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setRequestToCancel(req.id)}
+                                                className="px-3 py-1.5 text-sm bg-[#18181b] text-gray-400 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                                disabled={cancelRequest.isPending}
+                                            >
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal for Canceling Request */}
+            {requestToCancel && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#18181b] rounded-xl border border-white/10 max-w-sm w-full p-6">
+                        <h3 className="text-lg font-bold text-white mb-2">Annuler la demande ?</h3>
+                        <p className="text-gray-400 text-sm mb-6">Êtes-vous sûr de vouloir annuler cette demande d'ami ?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setRequestToCancel(null)}
+                                className="flex-1 px-4 py-2 bg-[#27272a] text-gray-300 rounded-lg hover:bg-[#3a3a3f] transition-colors"
+                            >
+                                Non
+                            </button>
+                            <button
+                                onClick={() => {
+                                    cancelRequest.mutate(requestToCancel, {
+                                        onSuccess: () => {
+                                            setRequestToCancel(null);
+                                        }
+                                    });
+                                }}
+                                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                disabled={cancelRequest.isPending}
+                            >
+                                {cancelRequest.isPending ? 'Annulation...' : 'Oui, annuler'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div >
     );
 }

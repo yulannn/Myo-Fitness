@@ -31,6 +31,16 @@ export const FriendFetchDataService = {
         const res = await api.get<any[]>('/friend/search', { params: { q: query } });
         return res.data;
     },
+
+    async getSentFriendRequests(): Promise<Friend[]> {
+        const res = await api.get<Friend[]>('/friend/sent');
+        return res.data;
+    },
+
+    async cancelFriendRequest(requestId: string): Promise<{ message: string }> {
+        const res = await api.delete<{ message: string }>(`/friend/request/${requestId}`);
+        return res.data;
+    },
 };
 
 export default FriendFetchDataService;

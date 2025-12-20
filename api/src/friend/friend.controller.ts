@@ -115,6 +115,20 @@ export class FriendController {
     return this.friendService.getPendingFriendRequest(userId);
   }
 
+  @Get('sent')
+  @ApiOperation({
+    summary: 'Récupérer toutes les demandes d\'amitié envoyées par l\'utilisateur',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des demandes envoyées',
+    type: [FriendEntity],
+  })
+  getSentFriendRequests(@Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.getSentFriendRequests(userId);
+  }
+
   @Get('friendlist')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Récupérer la liste des amis de l’utilisateur' })
@@ -167,5 +181,23 @@ export class FriendController {
   removeFriend(@Param('friendId') friendId: string, @Request() req) {
     const userId = req.user.userId;
     return this.friendService.removeFriend(userId, +friendId);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Delete('request/:requestId')
+  @ApiOperation({ summary: 'Annuler une demande d\'amitié envoyée' })
+  @ApiParam({
+    name: 'requestId',
+    description: 'ID de la demande à annuler',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Demande annulée',
+    schema: { example: { message: 'Friend request cancelled successfully' } },
+  })
+  cancelFriendRequest(@Param('requestId') requestId: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.cancelFriendRequest(requestId, userId);
   }
 }

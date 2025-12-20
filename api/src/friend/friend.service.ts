@@ -4,6 +4,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { ChatService } from '../chat/chat.service';
 import { ChatGateway } from '../chat/chat.gateway';
 import { ConversationType } from '@prisma/client';
+import { R2Service } from '../r2/r2.service';
 
 @Injectable()
 export class FriendService {
@@ -11,6 +12,7 @@ export class FriendService {
     private prisma: PrismaService,
     private chatService: ChatService,
     private chatGateway: ChatGateway,
+    private r2Service: R2Service,
   ) { }
 
   async searchUsers(query: string, currentUserId: number) {
@@ -192,7 +194,27 @@ export class FriendService {
     });
 
     // Notifier l'expéditeur que sa demande a été acceptée
-    this.chatGateway.notifyFriendRequestAccepted(request.senderId, request.receiver);
+    // Générer une URL signée pour la photo de profil si elle existe
+    let profilePictureUrl = request.receiver.profilePictureUrl;
+    if (profilePictureUrl && !profilePictureUrl.startsWith('http')) {
+      // Si c'est un chemin relatif (ex: profile-pictures/xxx.jpeg), générer l'URL signée
+      try {
+        // Nettoyer le chemin : enlever le / au début si présent
+        const cleanPath = profilePictureUrl.startsWith('/')
+          ? profilePictureUrl.substring(1)
+          : profilePictureUrl;
+        profilePictureUrl = await this.r2Service.generatePresignedViewUrl(cleanPath);
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        profilePictureUrl = null;
+      }
+    }
+
+    this.chatGateway.notifyFriendRequestAccepted(request.senderId, {
+      id: request.receiver.id,
+      name: request.receiver.name,
+      profilePictureUrl,
+    });
 
     // Créer automatiquement une conversation privée
     try {
@@ -315,5 +337,51 @@ export class FriendService {
     });
 
     return { message: 'Friend removed successfully' };
+  }
+
+  /**
+   * Get all sent friend requests for a user
+   */
+  async getSentFriendRequests(userId: number) {
+    const requests = await this.prisma.friendRequest.findMany({
+      where: {
+        senderId: userId,
+        status: 'PENDING',
+      },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
+    });
+
+    return requests;
+  }
+
+  /**
+   * Cancel a sent friend request
+   */
+  async cancelFriendRequest(requestId: string, userId: number) {
+    const request = await this.prisma.friendRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new Error('Friend request not found');
+    }
+
+    if (request.senderId !== userId) {
+      throw new Error('Unauthorized to cancel this request');
+    }
+
+    await this.prisma.friendRequest.delete({
+      where: { id: requestId },
+    });
+
+    return { message: 'Friend request cancelled successfully' };
   }
 }

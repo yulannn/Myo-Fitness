@@ -537,12 +537,12 @@ export default function ChatsPage() {
                                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                         {groupMembers.map((member: any) => (
                                             <div key={member.id} className="flex justify-between items-center p-2 bg-[#27272a] rounded-lg border border-white/5">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => navigate(`/user/${member.id}`)}>
                                                     <div className="w-8 h-8 bg-[#18181b] rounded-full overflow-hidden border border-white/10">
                                                         {member.profilePictureUrl ? <img src={getImageUrl(member.profilePictureUrl)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs bg-gray-700">{member.name[0]}</div>}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-gray-200 text-sm font-bold">
+                                                        <span className="text-gray-200 text-sm font-bold hover:text-[#94fbdd] transition-colors">
                                                             {member.name} {member.id === user?.id && <span className="text-[#94fbdd] text-xs">(Moi)</span>}
                                                         </span>
                                                         {groupMembersData?.adminId === member.id && (

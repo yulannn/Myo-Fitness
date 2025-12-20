@@ -21,9 +21,9 @@ export function useFriendNotifications() {
 
     // Écouter les demandes acceptées
     const handleFriendRequestAccepted = (_acceptedBy: any) => {
-
       // Invalider les queries pour rafraîchir la liste d'amis et les conversations
       queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['sentFriendRequests'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
 

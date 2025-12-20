@@ -10,6 +10,7 @@ export const SOCIAL_FRIENDS = "/social/friends";
 export const SOCIAL_NOTIFICATIONS = "/social/notifications";
 export const SETTINGS = "/settings";
 export const MY_PROFILE = "/my-profile";
+export const USER_PROFILE = "/user/:userId";
 export const CHANGE_PASSWORD = "/change-password";
 export const PREMIUM = "/premium";
 export const PREMIUM_SUCCESS = "/premium/success";

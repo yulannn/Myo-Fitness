@@ -3,6 +3,9 @@ export interface User {
     email: string;
     name: string;
     profilePictureUrl?: string | null;
+    level?: number;
+    xp?: number;
+    friendCode?: string | null;
     createdAt?: string;
     updatedAt?: string;
 }

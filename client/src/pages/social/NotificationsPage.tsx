@@ -63,7 +63,7 @@ export default function NotificationsPage() {
                                 <div className="space-y-3">
                                     {friendRequests.map((req: any) => (
                                         <div key={req.id} className="bg-[#18181b] p-4 rounded-xl border border-white/5 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => navigate(`/user/${req.sender.id}`)}>
                                                 <div className="w-12 h-12 bg-[#27272a] rounded-full overflow-hidden border border-white/10">
                                                     {req.sender?.profilePictureUrl ? (
                                                         <img src={getImageUrl(req.sender.profilePictureUrl)} alt={req.sender.name} className="w-full h-full object-cover" />
@@ -72,7 +72,7 @@ export default function NotificationsPage() {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-white">{req.sender?.name || 'Utilisateur'}</p>
+                                                    <p className="font-bold text-white hover:text-[#94fbdd] transition-colors">{req.sender?.name || 'Utilisateur'}</p>
                                                     <p className="text-xs text-gray-500">Souhaite vous ajouter</p>
                                                 </div>
                                             </div>
@@ -115,7 +115,7 @@ export default function NotificationsPage() {
                                                 <div>
                                                     <p className="font-bold text-white">{req.group?.name || 'Groupe'}</p>
                                                     <p className="text-xs text-gray-500">
-                                                        Invité par <span className="text-white">{req.sender?.name || 'Un membre'}</span>
+                                                        Invité par <span className="text-white cursor-pointer hover:text-[#94fbdd] transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/user/${req.sender.id}`); }}>{req.sender?.name || 'Un membre'}</span>
                                                     </p>
                                                 </div>
                                             </div>
