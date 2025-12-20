@@ -20,8 +20,7 @@ const Program = () => {
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [automaticOpen, setAutomaticOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
-  const [selectionError, setSelectionError] = useState<string | null>(null);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [expandedPrograms, setExpandedPrograms] = useState<Set<number>>(new Set());
@@ -82,24 +81,15 @@ const Program = () => {
   };
 
   const handleConfirmAutomatic = (name?: string, description?: string, startDate?: string) => {
-    if (!selectedProfileId) {
-      setSelectionError(
-        'Veuillez sélectionner un profil fitness avant de continuer.',
-      );
-      return;
-    }
-    setSelectionError(null);
-
-    const profileIdNumber = Number(selectedProfileId);
-    if (Number.isNaN(profileIdNumber) || profileIdNumber <= 0) {
-      setSelectionError('Profil invalide sélectionné.');
+    if (!fitnessProfile?.id) {
+      console.error('Aucun profil fitness trouvé');
       return;
     }
 
     const payload = {
       name: name || 'Programme généré',
       description: description || 'Programme généré automatiquement',
-      fitnessProfileId: profileIdNumber,
+      fitnessProfileId: fitnessProfile.id,
       status: 'ACTIVE',
       startDate: startDate || new Date().toISOString(),
     } as any;
@@ -110,7 +100,6 @@ const Program = () => {
       onSuccess: () => {
         setIsGenerating(false);
         setAutomaticOpen(false);
-        setSelectedProfileId('');
       },
       onError: () => {
         setIsGenerating(false);
@@ -311,10 +300,7 @@ const Program = () => {
       <Modal
         isOpen={automaticOpen}
         showClose={false}
-        onClose={() => {
-          setAutomaticOpen(false);
-          setSelectedProfileId('');
-        }}
+        onClose={() => setAutomaticOpen(false)}
       >
         <ModalHeader>
           <ModalTitle className="text-lg sm:text-2xl">Personnalisez votre programme</ModalTitle>
@@ -367,28 +353,15 @@ const Program = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Profil Fitness</label>
-            <select
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-              value={selectedProfileId}
-              onChange={(e) => setSelectedProfileId(e.target.value)}
-              disabled={isGenerating}
-              required
-            >
-              <option value="" disabled>
-                Choisir un profil...
-              </option>
-              {fitnessProfile && (
-                <option value={fitnessProfile.id}>
-                  {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg
-                </option>
-              )}
-            </select>
-            {selectionError && (
-              <p className="text-xs text-red-400 mt-2">{selectionError}</p>
-            )}
-          </div>
+          {/* Profil automatiquement sélectionné */}
+          {fitnessProfile && (
+            <div className="p-3 sm:p-4 bg-white/5 rounded-xl border border-[#94fbdd]/20">
+              <p className="text-xs text-gray-400 mb-1">Profil utilisé</p>
+              <p className="text-sm text-white font-medium">
+                {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg – {fitnessProfile.trainingFrequency}j/semaine
+              </p>
+            </div>
+          )}
 
           {isGenerating && (
             <div className="p-3 sm:p-4 bg-[#94fbdd]/10 rounded-xl flex items-center gap-3">
@@ -401,7 +374,7 @@ const Program = () => {
         <ModalFooter>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => { setAutomaticOpen(false); setSelectedProfileId(''); }}
+              onClick={() => setAutomaticOpen(false)}
               disabled={isGenerating}
               className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
             >
@@ -415,7 +388,7 @@ const Program = () => {
                   automaticProgramStartDateRef.current
                 )
               }
-              disabled={isGenerating || !selectedProfileId}
+              disabled={isGenerating || !fitnessProfile}
               className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isGenerating ? 'Génération...' : 'Générer le programme'}
