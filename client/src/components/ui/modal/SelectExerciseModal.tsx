@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 
 interface SelectExerciseModalProps {
@@ -9,7 +9,7 @@ interface SelectExerciseModalProps {
   availableExercises: ExerciceMinimal[];
 }
 
-
+type SortMode = 'alphabetical' | 'muscleGroup';
 
 export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   isOpen,
@@ -18,6 +18,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   availableExercises
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('alphabetical');
   const [isClosing, setIsClosing] = useState(false);
 
   // Handle smooth closing
@@ -26,6 +27,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
     setTimeout(() => {
       setIsClosing(false);
       setSearchQuery('');
+      setSortMode('alphabetical');
       onClose();
     }, 300);
   };
@@ -37,7 +39,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   };
 
   // Filter and sort exercises
-  const filteredExercises = useMemo(() => {
+  const processedExercises = useMemo(() => {
     let filtered = availableExercises;
 
     // Search filter
@@ -48,11 +50,48 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
       );
     }
 
+    if (sortMode === 'alphabetical') {
+      return {
+        type: 'flat' as const,
+        data: [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+      };
+    } else {
+      // Group by muscle group
+      const groups: Record<string, ExerciceMinimal[]> = {};
+      const otherKey = 'Autres';
 
+      filtered.forEach(ex => {
+        const groupName = ex.groupes && ex.groupes.length > 0 && ex.groupes[0].groupe
+          ? ex.groupes[0].groupe.name
+          : otherKey;
 
-    // Sort alphabetically
-    return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [availableExercises, searchQuery]);
+        if (!groups[groupName]) {
+          groups[groupName] = [];
+        }
+        groups[groupName].push(ex);
+      });
+
+      // Sort groups alphabetically
+      const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === otherKey) return 1;
+        if (b === otherKey) return -1;
+        return a.localeCompare(b);
+      });
+
+      // Sort exercises within groups
+      sortedGroupNames.forEach(name => {
+        groups[name].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      return {
+        type: 'grouped' as const,
+        data: sortedGroupNames.map(name => ({
+          name,
+          exercises: groups[name]
+        }))
+      };
+    }
+  }, [availableExercises, searchQuery, sortMode]);
 
   if (!isOpen) return null;
 
@@ -88,6 +127,28 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
             <XMarkIcon className="h-5 w-5" />
           </button>
 
+          {/* Sort Toggle */}
+          <div className="flex p-1 bg-[#121214] rounded-xl border border-[#94fbdd]/10">
+            <button
+              onClick={() => setSortMode('alphabetical')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'alphabetical'
+                ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
+                : 'text-gray-500 hover:text-gray-300'
+                }`}
+            >
+              Alphabétique
+            </button>
+            <button
+              onClick={() => setSortMode('muscleGroup')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'muscleGroup'
+                ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
+                : 'text-gray-500 hover:text-gray-300'
+                }`}
+            >
+              Par Muscle
+            </button>
+          </div>
+
           {/* Search Bar */}
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -107,36 +168,50 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
               </button>
             )}
           </div>
-
-
         </div>
 
         {/* Scrollable Exercise List */}
-        <div className="flex-1 overflow-y-auto px-6 py-2">
-          {filteredExercises.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2">
+        <div className="flex-1 overflow-y-auto">
+          {processedExercises.type === 'flat' && processedExercises.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2 px-6">
+              <MagnifyingGlassIcon className="h-12 w-12 opacity-50" />
+              <p className="text-lg font-medium">Aucun exercice trouvé</p>
+              <p className="text-sm">Essayez une autre recherche</p>
+            </div>
+          ) : processedExercises.type === 'grouped' && processedExercises.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2 px-6">
               <MagnifyingGlassIcon className="h-12 w-12 opacity-50" />
               <p className="text-lg font-medium">Aucun exercice trouvé</p>
               <p className="text-sm">Essayez une autre recherche</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredExercises.map((exercise) => (
-                <button
-                  key={exercise.id}
-                  onClick={() => handleSelectExercise(exercise.id)}
-                  className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#1a1a1c] transition-all text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-medium group-hover:text-[#94fbdd] transition-colors">
-                      {exercise.name}
-                    </span>
-                    <div className="w-6 h-6 rounded-full border-2 border-[#94fbdd]/30 group-hover:border-[#94fbdd] group-hover:bg-[#94fbdd]/20 transition-all flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-transparent group-hover:bg-[#94fbdd] transition-all" />
-                    </div>
+            <div className="space-y-2 pb-6 px-6 pt-2">
+              {processedExercises.type === 'flat' ? (
+                // Flat List
+                processedExercises.data.map((exercise) => (
+                  <ExerciseItem
+                    key={exercise.id}
+                    exercise={exercise}
+                    onSelect={handleSelectExercise}
+                  />
+                ))
+              ) : (
+                // Grouped List
+                processedExercises.data.map((group) => (
+                  <div key={group.name} className="space-y-2 mb-4">
+                    <h3 className="text-[#94fbdd] text-xs font-bold uppercase tracking-wider px-1 sticky top-0 bg-[#252527] py-2 z-10 shadow-sm">
+                      {group.name}
+                    </h3>
+                    {group.exercises.map((exercise) => (
+                      <ExerciseItem
+                        key={exercise.id}
+                        exercise={exercise}
+                        onSelect={handleSelectExercise}
+                      />
+                    ))}
                   </div>
-                </button>
-              ))}
+                ))
+              )}
             </div>
           )}
         </div>
@@ -144,10 +219,33 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
         {/* Footer Info */}
         <div className="flex-shrink-0 px-6 pb-6 pt-4 border-t border-[#94fbdd]/10">
           <p className="text-center text-gray-400 text-sm">
-            {filteredExercises.length} exercice{filteredExercises.length > 1 ? 's' : ''} disponible{filteredExercises.length > 1 ? 's' : ''}
+            {availableExercises.length} exercice{availableExercises.length > 1 ? 's' : ''} disponible{availableExercises.length > 1 ? 's' : ''}
           </p>
         </div>
       </div>
     </div>
   );
 };
+
+// Sub-component for individual exercise items
+const ExerciseItem = ({
+  exercise,
+  onSelect
+}: {
+  exercise: ExerciceMinimal;
+  onSelect: (id: number) => void;
+}) => (
+  <button
+    onClick={() => onSelect(exercise.id)}
+    className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#1a1a1c] transition-all text-left group"
+  >
+    <div className="flex items-center justify-between">
+      <span className="text-white font-medium group-hover:text-[#94fbdd] transition-colors">
+        {exercise.name}
+      </span>
+      <div className="p-1 rounded-full bg-[#94fbdd]/10 group-hover:bg-[#94fbdd]/20 transition-all">
+        <PlusIcon className="h-5 w-5 text-[#94fbdd] group-hover:scale-110 transition-transform" />
+      </div>
+    </div>
+  </button>
+);

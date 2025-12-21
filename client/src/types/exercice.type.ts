@@ -28,6 +28,7 @@ export interface Exercice {
 export interface ExerciceMinimal {
     id: number;
     name: string;
+    groupes?: { groupe: MuscleGroup }[];
 }
 
 export interface CreateExercicePayload {

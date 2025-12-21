@@ -54,7 +54,7 @@ export class ExerciceService {
     return exercices;
   }
 
-  async findAllMinimal(userId: number): Promise<{ id: number; name: string }[]> {
+  async findAllMinimal(userId: number): Promise<{ id: number; name: string; groupes: { groupe: { id: number; name: string } }[] }[]> {
     const exercices = await this.prisma.exercice.findMany({
       where: {
         OR: [
@@ -65,6 +65,16 @@ export class ExerciceService {
       select: {
         id: true,
         name: true,
+        groupes: {
+          select: {
+            groupe: {
+              select: {
+                id: true,
+                name: true,
+              }
+            }
+          }
+        }
       },
     });
 
