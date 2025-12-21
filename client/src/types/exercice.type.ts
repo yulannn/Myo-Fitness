@@ -6,6 +6,7 @@ export interface MuscleGroup {
 export interface ExerciceMuscleGroup {
     exerciceId: number;
     groupeId: number;
+    isPrimary: boolean;
     groupe: MuscleGroup;
 }
 
@@ -28,7 +29,7 @@ export interface Exercice {
 export interface ExerciceMinimal {
     id: number;
     name: string;
-    groupes?: { groupe: MuscleGroup }[];
+    groupes?: { isPrimary: boolean; groupe: MuscleGroup }[];
 }
 
 export interface CreateExercicePayload {

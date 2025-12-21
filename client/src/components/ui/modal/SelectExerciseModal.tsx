@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PlusIcon, XMarkIcon, MagnifyingGlassIcon, ChevronRightIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
+import { sanitizeSearchInput, includesNormalized } from '../../../utils/stringUtils';
 
 interface SelectExerciseModalProps {
   isOpen: boolean;
@@ -21,6 +22,22 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   const [sortMode, setSortMode] = useState<SortMode>('alphabetical');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [hasInvalidChars, setHasInvalidChars] = useState(false);
+
+  // Handle search input with validation
+  const handleSearchChange = (value: string) => {
+    // Sanitize input to allow only valid characters
+    const sanitized = sanitizeSearchInput(value);
+
+    // Detect if invalid characters were filtered
+    if (sanitized !== value) {
+      setHasInvalidChars(true);
+      // Reset warning after 2 seconds
+      setTimeout(() => setHasInvalidChars(false), 2000);
+    }
+
+    setSearchQuery(sanitized);
+  };
 
   // Handle smooth closing
   const handleClose = () => {
@@ -44,11 +61,10 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   const processedExercises = useMemo(() => {
     let filtered = availableExercises;
 
-    // Search filter
+    // Search filter - normalized (accent-insensitive)
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(ex =>
-        ex.name.toLowerCase().includes(query)
+        includesNormalized(ex.name, searchQuery)
       );
     }
 
@@ -58,14 +74,14 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
         data: [...filtered].sort((a, b) => a.name.localeCompare(b.name))
       };
     } else {
-      // Group by muscle group
+      // Group by PRIMARY muscle group (isPrimary: true)
       const groups: Record<string, ExerciceMinimal[]> = {};
       const otherKey = 'Autres';
 
       filtered.forEach(ex => {
-        const groupName = ex.groupes && ex.groupes.length > 0 && ex.groupes[0].groupe
-          ? ex.groupes[0].groupe.name
-          : otherKey;
+        // Find the PRIMARY muscle group (isPrimary = true)
+        const primaryMuscle = ex.groupes?.find(g => g.isPrimary);
+        const groupName = primaryMuscle?.groupe.name ?? otherKey;
 
         if (!groups[groupName]) {
           groups[groupName] = [];
@@ -169,22 +185,31 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
 
           {/* Search Bar - Only show in alphabetical mode or when a muscle group is selected */}
           {(sortMode === 'alphabetical' || selectedMuscleGroup) && (
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher un exercice..."
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#121214] border border-[#94fbdd]/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+            <div className="space-y-2">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Rechercher un exercice..."
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#121214] border border-[#94fbdd]/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Validation feedback */}
+              {hasInvalidChars && (
+                <p className="text-xs text-orange-400 animate-pulse px-1">
+                  ⚠️ Seuls les lettres, chiffres, espaces et tirets sont autorisés
+                </p>
               )}
             </div>
           )}
