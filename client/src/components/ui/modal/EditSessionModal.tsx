@@ -295,6 +295,19 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                             />
                         </div>
 
+                        {/* Add Exercise Button */}
+                        <button
+                            onClick={() => setIsSelectingExercise(true)}
+                            disabled={filteredExercises.length === 0}
+                            className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 hover:bg-[#1a1a1c] transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <PlusIcon className="h-5 w-5 text-[#94fbdd]" />
+                            <span className="font-medium text-white">
+                                {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
+                            </span>
+                        </button>
+
+
                         {/* Exercises List */}
                         {visibleExercises.map((exercise) => {
                             const realIndex = exercises.indexOf(exercise);
@@ -381,19 +394,19 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                             </p>
                         )}
 
-                        {/* Add Exercise Button */}
-                        <button
-                            onClick={() => setIsSelectingExercise(true)}
-                            disabled={filteredExercises.length === 0}
-                            className="w-full p-4 rounded-xl border-2 border-dashed border-[#94fbdd]/30 text-[#94fbdd] hover:bg-[#94fbdd]/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <PlusIcon className="h-5 w-5" />
-                            <span className="font-semibold">
-                                {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
-                            </span>
-                        </button>
+                    </div>
+                    {/* Aesthetic Divider */}
+                    <div className="flex items-center gap-3 py-4 pt-6">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#94fbdd]/20 to-transparent"></div>
+                        <div className="flex gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/30"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/50"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/30"></div>
+                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#94fbdd]/20 to-transparent"></div>
                     </div>
                 </div>
+
 
                 {/* SelectExerciseModal */}
                 <SelectExerciseModal
