@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalTitle, ModalFooter, ModalContent } from './index';
-import { PlusIcon, TrashIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect, useRef } from 'react';
+import { PlusIcon, TrashIcon, XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import type { Session } from '../../../types/session.type';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +13,7 @@ interface EditSessionModalProps {
 }
 
 interface ExerciseRow {
-    id?: number; // L'ID de l'exerciceSession (pas l'exercice lui-même)
+    id?: number;
     exerciceId: number;
     exerciceName: string;
     sets: number;
@@ -33,13 +32,44 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
     const [hasSessionNameChanged, setHasSessionNameChanged] = useState(false);
     const queryClient = useQueryClient();
 
+    // Animation states
+    const [isOpening, setIsOpening] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+
+    // Swipe to dismiss
+    const [dragStartY, setDragStartY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Handle smooth closing animation
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsClosing(false);
+            onClose();
+        }, 300); // Match the transition duration
+    };
+
+    // Trigger opening animation
+    useEffect(() => {
+        if (isOpen) {
+            setIsOpening(true);
+            // Small delay to ensure the initial state is rendered before animating
+            const timer = setTimeout(() => {
+                setIsOpening(false);
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
     // Initialize exercises and sessionName from session
     useEffect(() => {
+        if (isOpen) {
+            setIsClosing(false); // Reset closing state when opening
+        }
         if (session.exercices) {
             const mappedExercises: ExerciseRow[] = session.exercices.map((ex: any) => {
-                // Utiliser exerciceId s'il existe, sinon essayer exercice.id
                 const exerciceId = ex.exerciceId || ex.exercice?.id;
-
                 return {
                     id: ex.id,
                     exerciceId: exerciceId,
@@ -62,30 +92,17 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         mutationFn: async () => {
             const promises = [];
 
-            // Update sessionName if changed
             if (hasSessionNameChanged) {
-                promises.push(
-                    SessionService.updateSessionName(session.id, sessionName)
-                );
+                promises.push(SessionService.updateSessionName(session.id, sessionName));
             }
 
-            // Delete exercises marked for deletion
             for (const exercise of exercises.filter(ex => ex.toDelete && !ex.isNew)) {
-                if (!exercise.exerciceId) {
-                    console.error('❌ Cannot delete exercise with undefined exerciceId:', exercise);
-                    continue;
-                }
-                promises.push(
-                    SessionService.deleteExerciseFromSession(session.id, exercise.exerciceId)
-                );
+                if (!exercise.exerciceId) continue;
+                promises.push(SessionService.deleteExerciseFromSession(session.id, exercise.exerciceId));
             }
 
-            // Add new exercises
             for (const exercise of exercises.filter(ex => ex.isNew && !ex.toDelete)) {
-                if (!exercise.exerciceId) {
-                    console.error('❌ Cannot add exercise with undefined exerciceId:', exercise);
-                    continue;
-                }
+                if (!exercise.exerciceId) continue;
                 promises.push(
                     SessionService.addExerciseToSession(session.id, exercise.exerciceId, {
                         id: exercise.exerciceId,
@@ -96,12 +113,8 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                 );
             }
 
-            // Update modified exercises
             for (const exercise of exercises.filter(ex => ex.isModified && !ex.isNew && !ex.toDelete)) {
-                if (!exercise.exerciceId) {
-                    console.error('❌ Cannot update exercise with undefined exerciceId:', exercise);
-                    continue;
-                }
+                if (!exercise.exerciceId) continue;
                 promises.push(
                     SessionService.updateExerciseInSession(session.id, exercise.exerciceId, {
                         id: exercise.exerciceId,
@@ -117,7 +130,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['program'] });
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
-            onClose();
+            handleClose();
         },
         onError: (error) => {
             console.error('Error saving exercises:', error);
@@ -133,7 +146,6 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
         if (!exercise) return;
 
-        // Check if exercise already exists and is not marked for deletion
         if (exercises.some(ex => ex.exerciceId === exerciceIdNumber && !ex.toDelete)) {
             alert('Cet exercice est déjà dans la séance');
             return;
@@ -159,15 +171,10 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         const exercise = exercises[index];
 
         if (exercise.isNew) {
-            // Just remove from local state
             setExercises(exercises.filter((_, i) => i !== index));
         } else {
-            // Mark for deletion
             const updatedExercises = [...exercises];
-            updatedExercises[index] = {
-                ...updatedExercises[index],
-                toDelete: true,
-            };
+            updatedExercises[index] = { ...updatedExercises[index], toDelete: true };
             setExercises(updatedExercises);
         }
     };
@@ -177,7 +184,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         updatedExercises[index] = {
             ...updatedExercises[index],
             [field]: value,
-            isModified: !updatedExercises[index].isNew, // Only mark as modified if it's not a new exercise
+            isModified: !updatedExercises[index].isNew,
         };
         setExercises(updatedExercises);
     };
@@ -192,204 +199,288 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
 
     const visibleExercises = exercises.filter(ex => !ex.toDelete);
 
+    // Handle drag on header
+    const handleHeaderMouseDown = (e: React.MouseEvent) => {
+        setIsDragging(true);
+        setDragStartY(e.clientY);
+    };
+
+    const handleHeaderTouchStart = (e: React.TouchEvent) => {
+        setIsDragging(true);
+        setDragStartY(e.touches[0].clientY);
+    };
+
+    useEffect(() => {
+        if (!isDragging) return;
+
+        const handleMove = (clientY: number) => {
+            const deltaY = clientY - dragStartY;
+            if (deltaY > 0 && modalRef.current) {
+                modalRef.current.style.transform = `translateY(${deltaY}px)`;
+            }
+        };
+
+        const handleEnd = () => {
+            if (!modalRef.current) return;
+
+            const transform = modalRef.current.style.transform;
+            const match = transform.match(/translateY\((\d+)px\)/);
+            const deltaY = match ? parseInt(match[1]) : 0;
+
+            if (deltaY > 100) {
+                handleClose();
+            } else {
+                modalRef.current.style.transform = '';
+            }
+            setIsDragging(false);
+        };
+
+        const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+        const handleTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientY);
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchmove', handleTouchMove);
+        window.addEventListener('touchend', handleEnd);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleEnd);
+        };
+    }, [isDragging, dragStartY, onClose]);
+
+    if (!isOpen) return null;
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalHeader>
-                <ModalTitle>
-                    <div className="flex items-center gap-2 justify-center text-lg sm:text-2xl">
-                        <PencilSquareIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd]" />
-                        <span>Modifier la séance</span>
+        <div className="fixed inset-0 z-[100] flex items-end">
+            {/* Backdrop */}
+            <div
+                className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${isOpening ? 'opacity-0' : isClosing ? 'opacity-0' : 'opacity-100'
+                    }`}
+                onClick={handleClose}
+            />
+
+            {/* Modal Container */}
+            <div
+                ref={modalRef}
+                className={`relative z-[100] w-full h-[92vh] bg-[#252527] rounded-t-3xl shadow-2xl border-t border-x border-[#94fbdd]/10 flex flex-col transition-all duration-300 ease-out ${isOpening ? 'translate-y-full' : isClosing ? 'translate-y-full' : 'translate-y-0'
+                    }`}
+            >
+                {/* Draggable Header */}
+                <div
+                    className="flex-shrink-0 cursor-grab active:cursor-grabbing px-6 pt-6 pb-4"
+                    onMouseDown={handleHeaderMouseDown}
+                    onTouchStart={handleHeaderTouchStart}
+                >
+                    {/* Drag Handle */}
+                    <div className="flex justify-center mb-4">
+                        <div className="w-12 h-1.5 bg-gray-600 rounded-full" />
                     </div>
-                </ModalTitle>
-            </ModalHeader>
 
-            <ModalContent>
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
+                    {/* Title */}
+                    <h2 className="text-2xl font-bold text-white text-center">
+                        Modifier la séance
+                    </h2>
 
-                    {/* Notes Section */}
-                    <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
-                        <div className="flex items-center gap-2">
-                            <DocumentTextIcon className="h-5 w-5 text-[#94fbdd]" />
-                            <h4 className="text-white font-semibold">Nom de la séance</h4>
-                            {hasSessionNameChanged && (
-                                <span className="ml-auto text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-lg">
-                                    Modifié
-                                </span>
-                            )}
+                    {/* Close Button */}
+                    <button
+                        onClick={handleClose}
+                        className="absolute top-6 right-4 p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-2">
+                    <div className="space-y-4">
+                        {/* Notes Section */}
+                        <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <DocumentTextIcon className="h-5 w-5 text-[#94fbdd]" />
+                                <h4 className="text-white font-semibold">Nom de la séance</h4>
+                                {hasSessionNameChanged && (
+                                    <span className="ml-auto text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-lg">
+                                        Modifié
+                                    </span>
+                                )}
+                            </div>
+                            <input
+                                value={sessionName}
+                                onChange={(e) => {
+                                    setSessionName(e.target.value);
+                                    setHasSessionNameChanged(true);
+                                }}
+                                placeholder="Donnez un nom à cette séance... (ex: Séance Pectoraux, Push Day, etc.)"
+                                className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 resize-none transition-all"
+                            />
                         </div>
-                        <input
-                            value={sessionName}
-                            onChange={(e) => {
-                                setSessionName(e.target.value);
-                                setHasSessionNameChanged(true);
-                            }}
-                            placeholder="Donnez un nom à cette séance... (ex: Séance Pectoraux, Push Day, etc.)"
-                            className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 resize-none transition-all"
-                        />
-                    </div>
 
-                    {/* Exercises List */}
-                    {visibleExercises.map((exercise) => {
-                        // Get the real index in the full exercises array
-                        const realIndex = exercises.indexOf(exercise);
+                        {/* Exercises List */}
+                        {visibleExercises.map((exercise) => {
+                            const realIndex = exercises.indexOf(exercise);
 
-                        return (
-                            <div
-                                key={`${exercise.exerciceId}-${realIndex}`}
-                                className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <h4 className="text-white font-semibold flex-1 break-words">
-                                        {exercise.exerciceName}
-                                        {exercise.isNew && (
-                                            <span className="ml-2 text-xs px-2 py-0.5 bg-[#94fbdd]/20 text-[#94fbdd] rounded-lg">
-                                                Nouveau
-                                            </span>
-                                        )}
-                                        {exercise.isModified && (
-                                            <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-lg">
-                                                Modifié
-                                            </span>
-                                        )}
-                                    </h4>
+                            return (
+                                <div
+                                    key={`${exercise.exerciceId}-${realIndex}`}
+                                    className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <h4 className="text-white font-semibold flex-1 break-words">
+                                            {exercise.exerciceName}
+                                            {exercise.isNew && (
+                                                <span className="ml-2 text-xs px-2 py-0.5 bg-[#94fbdd]/20 text-[#94fbdd] rounded-lg">
+                                                    Nouveau
+                                                </span>
+                                            )}
+                                            {exercise.isModified && (
+                                                <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-lg">
+                                                    Modifié
+                                                </span>
+                                            )}
+                                        </h4>
+                                        <button
+                                            onClick={() => handleRemoveExercise(realIndex)}
+                                            className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                            title="Supprimer l'exercice"
+                                        >
+                                            <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-400">Séries</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={exercise.sets === 0 ? '' : exercise.sets}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleUpdateExercise(realIndex, 'sets', value === '' ? 0 : Number(value));
+                                                }}
+                                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-400">Reps</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={exercise.reps === 0 ? '' : exercise.reps}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleUpdateExercise(realIndex, 'reps', value === '' ? 0 : Number(value));
+                                                }}
+                                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-400">Poids (kg)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.5"
+                                                value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleUpdateExercise(realIndex, 'weight', value === '' ? 0 : Number(value));
+                                                }}
+                                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {visibleExercises.length === 0 && (
+                            <p className="text-center text-gray-500 py-8 italic">
+                                Aucun exercice dans cette séance
+                            </p>
+                        )}
+
+                        {/* Add Exercise Section */}
+                        {isAddingExercise ? (
+                            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/30 space-y-3">
+                                <h4 className="text-white font-semibold">Ajouter un exercice</h4>
+                                <select
+                                    value={selectedExerciseId}
+                                    onChange={(e) => setSelectedExerciseId(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                >
+                                    <option value="">Choisir un exercice...</option>
+                                    {filteredExercises.map((ex) => (
+                                        <option key={ex.id} value={ex.id}>
+                                            {ex.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="flex gap-2">
                                     <button
-                                        onClick={() => handleRemoveExercise(realIndex)}
-                                        className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                                        title="Supprimer l'exercice"
+                                        onClick={() => {
+                                            setIsAddingExercise(false);
+                                            setSelectedExerciseId('');
+                                        }}
+                                        className="flex-1 px-4 py-2 rounded-lg border border-[#94fbdd]/20 text-gray-300 hover:bg-[#252527] transition-all"
                                     >
-                                        <TrashIcon className="h-4 w-4" />
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={handleAddExerciseRow}
+                                        disabled={!selectedExerciseId}
+                                        className="flex-1 px-4 py-2 rounded-lg bg-[#94fbdd] text-[#121214] font-bold hover:bg-[#94fbdd]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Ajouter
                                     </button>
                                 </div>
-
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-gray-400">Séries</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={exercise.sets === 0 ? '' : exercise.sets}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                handleUpdateExercise(realIndex, 'sets', value === '' ? 0 : Number(value));
-                                            }}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-gray-400">Reps</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={exercise.reps === 0 ? '' : exercise.reps}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                handleUpdateExercise(realIndex, 'reps', value === '' ? 0 : Number(value));
-                                            }}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-gray-400">Poids (kg)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.5"
-                                            value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                handleUpdateExercise(realIndex, 'weight', value === '' ? 0 : Number(value));
-                                            }}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    {visibleExercises.length === 0 && (
-                        <p className="text-center text-gray-500 py-8 italic">
-                            Aucun exercice dans cette séance
-                        </p>
-                    )}
-
-                    {/* Add Exercise Section */}
-                    {isAddingExercise ? (
-                        <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/30 space-y-3">
-                            <h4 className="text-white font-semibold">Ajouter un exercice</h4>
-                            <select
-                                value={selectedExerciseId}
-                                onChange={(e) => setSelectedExerciseId(e.target.value)}
-                                className="w-full px-4 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                            >
-                                <option value="">Choisir un exercice...</option>
-                                {filteredExercises.map((ex) => (
-                                    <option key={ex.id} value={ex.id}>
-                                        {ex.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        setIsAddingExercise(false);
-                                        setSelectedExerciseId('');
-                                    }}
-                                    className="flex-1 px-4 py-2 rounded-lg border border-[#94fbdd]/20 text-gray-300 hover:bg-[#252527] transition-all"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    onClick={handleAddExerciseRow}
-                                    disabled={!selectedExerciseId}
-                                    className="flex-1 px-4 py-2 rounded-lg bg-[#94fbdd] text-[#121214] font-bold hover:bg-[#94fbdd]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Ajouter
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setIsAddingExercise(true)}
-                            disabled={filteredExercises.length === 0}
-                            className="w-full p-4 rounded-xl border-2 border-dashed border-[#94fbdd]/30 text-[#94fbdd] hover:bg-[#94fbdd]/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <PlusIcon className="h-5 w-5" />
-                            <span className="font-semibold">
-                                {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
-                            </span>
-                        </button>
-                    )}
-                </div>
-            </ModalContent>
-
-            <ModalFooter>
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={saveMutation.isPending}
-                        className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        onClick={handleSaveAll}
-                        disabled={saveMutation.isPending}
-                        className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {saveMutation.isPending ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#121214] border-t-transparent" />
-                                <span>Enregistrement...</span>
                             </div>
                         ) : (
-                            'Enregistrer les modifications'
+                            <button
+                                onClick={() => setIsAddingExercise(true)}
+                                disabled={filteredExercises.length === 0}
+                                className="w-full p-4 rounded-xl border-2 border-dashed border-[#94fbdd]/30 text-[#94fbdd] hover:bg-[#94fbdd]/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <PlusIcon className="h-5 w-5" />
+                                <span className="font-semibold">
+                                    {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
+                                </span>
+                            </button>
                         )}
-                    </button>
+                    </div>
                 </div>
-            </ModalFooter>
-        </Modal>
+
+                {/* Footer */}
+                <div className="flex-shrink-0 px-6 pb-6 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                            onClick={handleClose}
+                            disabled={saveMutation.isPending}
+                            className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={handleSaveAll}
+                            disabled={saveMutation.isPending}
+                            className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {saveMutation.isPending ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#121214] border-t-transparent" />
+                                    <span>Enregistrement...</span>
+                                </div>
+                            ) : (
+                                'Enregistrer les modifications'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
