@@ -35,6 +35,7 @@ export default function EditProfileModal({
         musclePriorities: [],
         trainingEnvironment: 'GYM',
     });
+    const [isClosing, setIsClosing] = useState(false);
 
     const { data: muscleGroups = [] } = useMuscleGroups();
 
@@ -57,6 +58,15 @@ export default function EditProfileModal({
             });
         }
     }, [isOpen, profile]);
+
+    // Handle smooth closing
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsClosing(false);
+            onClose();
+        }, 300);
+    };
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -91,248 +101,270 @@ export default function EditProfileModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-[#252527] p-6 shadow-2xl border border-[#94fbdd]/20 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#94fbdd]/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-[#94fbdd]/40">
+        <div className="fixed inset-0 z-[100] flex items-end">
+            {/* Backdrop - NO BLUR */}
+            <div
+                className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+                onClick={handleClose}
+            />
 
+            {/* Modal Container */}
+            <div
+                className={`relative z-[100] w-full h-[92vh] bg-[#252527] rounded-t-3xl shadow-2xl border-t border-x border-[#94fbdd]/10 flex flex-col transition-all duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'}`}
+            >
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-white">
-                        Modifier le profil fitness
-                    </h3>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-[#121214] rounded-lg"
-                    >
-                        <XMarkIcon className="h-6 w-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-
-                    {/* Inputs grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Âge</label>
-                            <input
-                                type="number"
-                                name="age"
-                                placeholder="25"
-                                value={form.age || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                required
-                                min="13"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Taille (cm)</label>
-                            <input
-                                type="number"
-                                name="height"
-                                placeholder="175"
-                                value={form.height || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                required
-                                min="100"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Poids (kg)</label>
-                            <input
-                                type="number"
-                                name="weight"
-                                placeholder="70"
-                                value={form.weight || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                required
-                                min="30"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Séances/semaine</label>
-                            <input
-                                type="number"
-                                name="trainingFrequency"
-                                placeholder="3"
-                                value={form.trainingFrequency || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                                required
-                                min="0"
-                                max="7"
-                            />
-                        </div>
+                <div className="flex-shrink-0 px-6 pt-6 pb-4">
+                    {/* Drag Handle */}
+                    <div className="flex justify-center mb-4">
+                        <div className="w-12 h-1.5 bg-gray-600 rounded-full" />
                     </div>
 
-                    {/* Experience level */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Niveau d'expérience</label>
-                        <select
-                            name="experienceLevel"
-                            value={form.experienceLevel}
-                            onChange={handleChange}
-                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                            required
-                        >
-                            <option value="">Sélectionner...</option>
-                            <option value="BEGINNER">Débutant</option>
-                            <option value="INTERMEDIATE">Intermédiaire</option>
-                            <option value="ADVANCED">Avancé</option>
-                        </select>
-                    </div>
-
-                    {/* Goals */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-300">Objectifs</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const currentGoals = form.goals || [];
-                                    const newGoals = currentGoals.includes('MUSCLE_GAIN')
-                                        ? currentGoals.filter(g => g !== 'MUSCLE_GAIN')
-                                        : [...currentGoals, 'MUSCLE_GAIN'];
-                                    setForm(prev => ({ ...prev, goals: newGoals as any }));
-                                }}
-                                className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('MUSCLE_GAIN')
-                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
-                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
-                                    }`}
-                            >
-                                <span className="text-sm">Gain musculaire</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const currentGoals = form.goals || [];
-                                    const newGoals = currentGoals.includes('WEIGHT_LOSS')
-                                        ? currentGoals.filter(g => g !== 'WEIGHT_LOSS')
-                                        : [...currentGoals, 'WEIGHT_LOSS'];
-                                    setForm(prev => ({ ...prev, goals: newGoals as any }));
-                                }}
-                                className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('WEIGHT_LOSS')
-                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
-                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
-                                    }`}
-                            >
-                                <span className="text-sm">Perte de poids</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Gender */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Genre</label>
-                        <select
-                            name="gender"
-                            value={form.gender}
-                            onChange={handleChange}
-                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                            required
-                        >
-                            <option value="">Sélectionner...</option>
-                            <option value="MALE">Homme</option>
-                            <option value="FEMALE">Femme</option>
-                            <option value="OTHER">Autre</option>
-                        </select>
-                    </div>
-
-                    {/* Bodyweight */}
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#121214] border border-[#94fbdd]/10">
-                        <span className="text-sm font-medium text-gray-300">Bodyweight uniquement</span>
+                    {/* Title & Close Button */}
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-bold text-white">
+                            Modifier le profil fitness
+                        </h3>
                         <button
-                            type="button"
-                            onClick={() => setForm(prev => ({ ...prev, bodyWeight: !prev.bodyWeight }))}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#94fbdd] focus:ring-offset-2 focus:ring-offset-[#121214] ${form.bodyWeight ? 'bg-[#94fbdd]' : 'bg-gray-700'
-                                }`}
+                            onClick={handleClose}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors"
                         >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.bodyWeight ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                            />
+                            <XMarkIcon className="h-5 w-5" />
                         </button>
                     </div>
+                </div>
 
-                    {/* City Autocomplete */}
-                    <CityAutocomplete
-                        value={form.city || null}
-                        onChange={(city) => setForm(prev => ({ ...prev, city }))}
-                        placeholder="Paris, Lyon, Marseille..."
-                    />
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-6">
+                    <form onSubmit={handleSubmit} className="space-y-5 pb-6">
 
-                    {/* Target Weight */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                            <ChartBarIcon className="h-4 w-4 text-[#94fbdd]" />
-                            Objectif de poids (kg) <span className="text-gray-500 text-xs">(optionnel)</span>
-                        </label>
-                        <input
-                            type="number"
-                            name="targetWeight"
-                            placeholder="75"
-                            value={form.targetWeight || ''}
-                            onChange={handleChange}
-                            className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                            min="30"
-                            max="250"
-                        />
-                    </div>
+                        {/* Inputs grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Âge</label>
+                                <input
+                                    type="number"
+                                    name="age"
+                                    placeholder="25"
+                                    value={form.age || ''}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                    required
+                                    min="13"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Taille (cm)</label>
+                                <input
+                                    type="number"
+                                    name="height"
+                                    placeholder="175"
+                                    value={form.height || ''}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                    required
+                                    min="100"
+                                />
+                            </div>
 
-                    {/* Training Environment */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                            <FireIcon className="h-4 w-4 text-[#94fbdd]" />
-                            Environnement d'entraînement
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Poids (kg)</label>
+                                <input
+                                    type="number"
+                                    name="weight"
+                                    placeholder="70"
+                                    value={form.weight || ''}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                    required
+                                    min="30"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Séances/semaine</label>
+                                <input
+                                    type="number"
+                                    name="trainingFrequency"
+                                    placeholder="3"
+                                    value={form.trainingFrequency || ''}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                    required
+                                    min="0"
+                                    max="7"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Experience level */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Niveau d'expérience</label>
+                            <select
+                                name="experienceLevel"
+                                value={form.experienceLevel}
+                                onChange={handleChange}
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                required
+                            >
+                                <option value="">Sélectionner...</option>
+                                <option value="BEGINNER">Débutant</option>
+                                <option value="INTERMEDIATE">Intermédiaire</option>
+                                <option value="ADVANCED">Avancé</option>
+                            </select>
+                        </div>
+
+                        {/* Goals */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-medium text-gray-300">Objectifs</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const currentGoals = form.goals || [];
+                                        const newGoals = currentGoals.includes('MUSCLE_GAIN')
+                                            ? currentGoals.filter(g => g !== 'MUSCLE_GAIN')
+                                            : [...currentGoals, 'MUSCLE_GAIN'];
+                                        setForm(prev => ({ ...prev, goals: newGoals as any }));
+                                    }}
+                                    className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('MUSCLE_GAIN')
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="text-sm">Gain musculaire</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const currentGoals = form.goals || [];
+                                        const newGoals = currentGoals.includes('WEIGHT_LOSS')
+                                            ? currentGoals.filter(g => g !== 'WEIGHT_LOSS')
+                                            : [...currentGoals, 'WEIGHT_LOSS'];
+                                        setForm(prev => ({ ...prev, goals: newGoals as any }));
+                                    }}
+                                    className={`flex items-center justify-center p-3 rounded-xl border transition-all ${(form.goals || []).includes('WEIGHT_LOSS')
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="text-sm">Perte de poids</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Gender */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Genre</label>
+                            <select
+                                name="gender"
+                                value={form.gender}
+                                onChange={handleChange}
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                required
+                            >
+                                <option value="">Sélectionner...</option>
+                                <option value="MALE">Homme</option>
+                                <option value="FEMALE">Femme</option>
+                                <option value="OTHER">Autre</option>
+                            </select>
+                        </div>
+
+                        {/* Bodyweight */}
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-[#121214] border border-[#94fbdd]/10">
+                            <span className="text-sm font-medium text-gray-300">Bodyweight uniquement</span>
                             <button
                                 type="button"
-                                onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'HOME' }))}
-                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'HOME'
-                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
-                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                onClick={() => setForm(prev => ({ ...prev, bodyWeight: !prev.bodyWeight }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#94fbdd] focus:ring-offset-2 focus:ring-offset-[#121214] ${form.bodyWeight ? 'bg-[#94fbdd]' : 'bg-gray-700'
                                     }`}
                             >
-                                <HomeIcon className="h-4 w-4" />
-                                <span className="text-sm">Maison</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'GYM' }))}
-                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'GYM'
-                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
-                                    : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
-                                    }`}
-                            >
-                                <BuildingOffice2Icon className="h-4 w-4" />
-                                <span className="text-sm">Salle</span>
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.bodyWeight ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                />
                             </button>
                         </div>
-                    </div>
 
-                    {/* Muscle Priorities */}
-                    <MusclePrioritiesSelector
-                        muscleGroups={muscleGroups}
-                        selectedPriorities={form.musclePriorities || []}
-                        onChange={(priorities) => setForm(prev => ({ ...prev, musclePriorities: priorities }))}
-                    />
+                        {/* City Autocomplete */}
+                        <CityAutocomplete
+                            value={form.city || null}
+                            onChange={(city) => setForm(prev => ({ ...prev, city }))}
+                            placeholder="Paris, Lyon, Marseille..."
+                        />
 
-                    {/* Training Days Selector */}
-                    <TrainingDaysSelector
-                        selectedDays={form.trainingDays || []}
-                        maxSelections={form.trainingFrequency || 0}
-                        onChange={(days: WeekDay[]) => setForm(prev => ({ ...prev, trainingDays: days }))}
-                    />
+                        {/* Target Weight */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <ChartBarIcon className="h-4 w-4 text-[#94fbdd]" />
+                                Objectif de poids (kg) <span className="text-gray-500 text-xs">(optionnel)</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="targetWeight"
+                                placeholder="75"
+                                value={form.targetWeight || ''}
+                                onChange={handleChange}
+                                className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                                min="30"
+                                max="250"
+                            />
+                        </div>
 
-                    {/* Buttons */}
-                    <div className="flex gap-3 pt-4">
+                        {/* Training Environment */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <FireIcon className="h-4 w-4 text-[#94fbdd]" />
+                                Environnement d'entraînement
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'HOME' }))}
+                                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'HOME'
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    <HomeIcon className="h-4 w-4" />
+                                    <span className="text-sm">Maison</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm(prev => ({ ...prev, trainingEnvironment: 'GYM' }))}
+                                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${form.trainingEnvironment === 'GYM'
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] text-[#94fbdd] font-semibold'
+                                        : 'bg-[#121214] border-[#94fbdd]/10 hover:border-[#94fbdd]/30 text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    <BuildingOffice2Icon className="h-4 w-4" />
+                                    <span className="text-sm">Salle</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Muscle Priorities */}
+                        <MusclePrioritiesSelector
+                            muscleGroups={muscleGroups}
+                            selectedPriorities={form.musclePriorities || []}
+                            onChange={(priorities) => setForm(prev => ({ ...prev, musclePriorities: priorities }))}
+                        />
+
+                        {/* Training Days Selector */}
+                        <TrainingDaysSelector
+                            selectedDays={form.trainingDays || []}
+                            maxSelections={form.trainingFrequency || 0}
+                            onChange={(days: WeekDay[]) => setForm(prev => ({ ...prev, trainingDays: days }))}
+                        />
+
+                    </form>
+                </div>
+
+                {/* Fixed Footer with Buttons */}
+                <div className="flex-shrink-0 px-6 pb-6 pt-4 border-t border-[#94fbdd]/10 bg-[#252527]">
+                    <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="flex-1 rounded-xl border border-[#94fbdd]/20 bg-transparent px-4 py-3 text-sm font-semibold text-gray-300 hover:bg-[#121214] transition-all"
                         >
                             Annuler
@@ -340,6 +372,7 @@ export default function EditProfileModal({
                         <button
                             type="submit"
                             disabled={isPending}
+                            onClick={handleSubmit}
                             className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold text-[#121214] bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 ${isPending ? 'opacity-70 cursor-not-allowed' : ''
                                 }`}
                         >
@@ -353,8 +386,7 @@ export default function EditProfileModal({
                             )}
                         </button>
                     </div>
-
-                </form>
+                </div>
             </div>
         </div>
     );
