@@ -32,8 +32,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
     const [hasSessionNameChanged, setHasSessionNameChanged] = useState(false);
     const queryClient = useQueryClient();
 
-    // Animation states
-    const [isOpening, setIsOpening] = useState(false);
+    // Animation state (only closing)
     const [isClosing, setIsClosing] = useState(false);
 
     // Swipe to dismiss
@@ -50,23 +49,8 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         }, 300); // Match the transition duration
     };
 
-    // Trigger opening animation
-    useEffect(() => {
-        if (isOpen) {
-            setIsOpening(true);
-            // Small delay to ensure the initial state is rendered before animating
-            const timer = setTimeout(() => {
-                setIsOpening(false);
-            }, 50);
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen]);
-
     // Initialize exercises and sessionName from session
     useEffect(() => {
-        if (isOpen) {
-            setIsClosing(false); // Reset closing state when opening
-        }
         if (session.exercices) {
             const mappedExercises: ExerciseRow[] = session.exercices.map((ex: any) => {
                 const exerciceId = ex.exerciceId || ex.exercice?.id;
@@ -257,16 +241,14 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         <div className="fixed inset-0 z-[100] flex items-end">
             {/* Backdrop */}
             <div
-                className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${isOpening ? 'opacity-0' : isClosing ? 'opacity-0' : 'opacity-100'
-                    }`}
+                className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={handleClose}
             />
 
             {/* Modal Container */}
             <div
                 ref={modalRef}
-                className={`relative z-[100] w-full h-[92vh] bg-[#252527] rounded-t-3xl shadow-2xl border-t border-x border-[#94fbdd]/10 flex flex-col transition-all duration-300 ease-out ${isOpening ? 'translate-y-full' : isClosing ? 'translate-y-full' : 'translate-y-0'
-                    }`}
+                className={`relative z-[100] w-full h-[92vh] bg-[#252527] rounded-t-3xl shadow-2xl border-t border-x border-[#94fbdd]/10 flex flex-col transition-all duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'}`}
             >
                 {/* Draggable Header */}
                 <div
