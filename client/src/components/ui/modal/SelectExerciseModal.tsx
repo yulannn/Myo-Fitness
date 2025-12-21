@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { PlusIcon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon, MagnifyingGlassIcon, ChevronRightIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 
 interface SelectExerciseModalProps {
@@ -19,6 +19,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('alphabetical');
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
 
   // Handle smooth closing
@@ -28,6 +29,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
       setIsClosing(false);
       setSearchQuery('');
       setSortMode('alphabetical');
+      setSelectedMuscleGroup(null);
       onClose();
     }, 300);
   };
@@ -116,7 +118,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
 
           {/* Title */}
           <h2 className="text-2xl font-bold text-white text-center">
-            Sélectionner un exercice
+            {sortMode === 'muscleGroup' && selectedMuscleGroup ? selectedMuscleGroup : 'Sélectionner un exercice'}
           </h2>
 
           {/* Close Button */}
@@ -127,47 +129,65 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
             <XMarkIcon className="h-5 w-5" />
           </button>
 
-          {/* Sort Toggle */}
-          <div className="flex p-1 bg-[#121214] rounded-xl border border-[#94fbdd]/10">
+          {/* Sort Toggle or Back Button */}
+          {sortMode === 'muscleGroup' && selectedMuscleGroup ? (
             <button
-              onClick={() => setSortMode('alphabetical')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'alphabetical'
-                ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
-                : 'text-gray-500 hover:text-gray-300'
-                }`}
+              onClick={() => setSelectedMuscleGroup(null)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#121214] border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 hover:bg-[#1a1a1c] transition-all text-white"
             >
-              Alphabétique
+              <ChevronLeftIcon className="h-5 w-5 text-[#94fbdd]" />
+              <span className="font-medium">Retour aux groupes musculaires</span>
             </button>
-            <button
-              onClick={() => setSortMode('muscleGroup')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'muscleGroup'
-                ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
-                : 'text-gray-500 hover:text-gray-300'
-                }`}
-            >
-              Par Muscle
-            </button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un exercice..."
-              className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#121214] border border-[#94fbdd]/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
-            />
-            {searchQuery && (
+          ) : (
+            <div className="flex p-1 bg-[#121214] rounded-xl border border-[#94fbdd]/10">
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
+                onClick={() => {
+                  setSortMode('alphabetical');
+                  setSelectedMuscleGroup(null);
+                }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'alphabetical'
+                  ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
+                  : 'text-gray-500 hover:text-gray-300'
+                  }`}
               >
-                <XMarkIcon className="h-4 w-4" />
+                Alphabétique
               </button>
-            )}
-          </div>
+              <button
+                onClick={() => {
+                  setSortMode('muscleGroup');
+                  setSelectedMuscleGroup(null);
+                }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${sortMode === 'muscleGroup'
+                  ? 'bg-[#252527] text-white shadow-sm border border-[#94fbdd]/20'
+                  : 'text-gray-500 hover:text-gray-300'
+                  }`}
+              >
+                Par Muscle
+              </button>
+            </div>
+          )}
+
+          {/* Search Bar - Only show in alphabetical mode or when a muscle group is selected */}
+          {(sortMode === 'alphabetical' || selectedMuscleGroup) && (
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher un exercice..."
+                className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#121214] border border-[#94fbdd]/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Scrollable Exercise List */}
@@ -187,7 +207,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
           ) : (
             <div className="space-y-2 pb-6 px-6 pt-2">
               {processedExercises.type === 'flat' ? (
-                // Flat List
+                // Flat List (Alphabetical)
                 processedExercises.data.map((exercise) => (
                   <ExerciseItem
                     key={exercise.id}
@@ -195,21 +215,26 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
                     onSelect={handleSelectExercise}
                   />
                 ))
+              ) : selectedMuscleGroup ? (
+                // Exercises for selected muscle group
+                processedExercises.data
+                  .find(group => group.name === selectedMuscleGroup)
+                  ?.exercises.map((exercise) => (
+                    <ExerciseItem
+                      key={exercise.id}
+                      exercise={exercise}
+                      onSelect={handleSelectExercise}
+                    />
+                  ))
               ) : (
-                // Grouped List
+                // Muscle Groups List
                 processedExercises.data.map((group) => (
-                  <div key={group.name} className="space-y-2 mb-4">
-                    <h3 className="text-[#94fbdd] text-xs font-bold uppercase tracking-wider px-1 sticky top-0 bg-[#252527] py-2 z-10 shadow-sm">
-                      {group.name}
-                    </h3>
-                    {group.exercises.map((exercise) => (
-                      <ExerciseItem
-                        key={exercise.id}
-                        exercise={exercise}
-                        onSelect={handleSelectExercise}
-                      />
-                    ))}
-                  </div>
+                  <MuscleGroupItem
+                    key={group.name}
+                    groupName={group.name}
+                    exerciseCount={group.exercises.length}
+                    onSelect={() => setSelectedMuscleGroup(group.name)}
+                  />
                 ))
               )}
             </div>
@@ -245,6 +270,36 @@ const ExerciseItem = ({
       </span>
       <div className="p-1 rounded-full bg-[#94fbdd]/10 group-hover:bg-[#94fbdd]/20 transition-all">
         <PlusIcon className="h-5 w-5 text-[#94fbdd] group-hover:scale-110 transition-transform" />
+      </div>
+    </div>
+  </button>
+);
+
+// Sub-component for muscle group items
+const MuscleGroupItem = ({
+  groupName,
+  exerciseCount,
+  onSelect
+}: {
+  groupName: string;
+  exerciseCount: number;
+  onSelect: () => void;
+}) => (
+  <button
+    onClick={onSelect}
+    className="w-full p-5 rounded-xl bg-[#121214] border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#1a1a1c] transition-all text-left group"
+  >
+    <div className="flex items-center justify-between">
+      <div className="flex-1">
+        <h3 className="text-white font-semibold text-base group-hover:text-[#94fbdd] transition-colors mb-1">
+          {groupName}
+        </h3>
+        <p className="text-gray-400 text-sm">
+          {exerciseCount} exercice{exerciseCount > 1 ? 's' : ''}
+        </p>
+      </div>
+      <div className="p-2 rounded-full bg-[#94fbdd]/10 group-hover:bg-[#94fbdd]/20 transition-all">
+        <ChevronRightIcon className="h-5 w-5 text-[#94fbdd] group-hover:translate-x-0.5 transition-transform" />
       </div>
     </div>
   </button>
