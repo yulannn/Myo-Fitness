@@ -4,6 +4,7 @@ import type { Session } from '../../../types/session.type';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import SessionService from '../../../api/services/sessionService';
+import { SelectExerciseModal } from './SelectExerciseModal';
 
 interface EditSessionModalProps {
     isOpen: boolean;
@@ -26,8 +27,7 @@ interface ExerciseRow {
 
 export const EditSessionModal = ({ isOpen, onClose, session, availableExercises }: EditSessionModalProps) => {
     const [exercises, setExercises] = useState<ExerciseRow[]>([]);
-    const [isAddingExercise, setIsAddingExercise] = useState(false);
-    const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
+    const [isSelectingExercise, setIsSelectingExercise] = useState(false);
     const [sessionName, setSessionName] = useState<string>('');
     const [hasSessionNameChanged, setHasSessionNameChanged] = useState(false);
     const queryClient = useQueryClient();
@@ -122,10 +122,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         },
     });
 
-    const handleAddExerciseRow = () => {
-        if (!selectedExerciseId) return;
-
-        const exerciceIdNumber = Number(selectedExerciseId);
+    const handleSelectExercise = (exerciceIdNumber: number) => {
         const exercise = availableExercises.find(ex => ex.id === exerciceIdNumber);
 
         if (!exercise) return;
@@ -147,8 +144,6 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         };
 
         setExercises([...exercises, newExercise]);
-        setSelectedExerciseId('');
-        setIsAddingExercise(false);
     };
 
     const handleRemoveExercise = (index: number) => {
@@ -386,55 +381,27 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                             </p>
                         )}
 
-                        {/* Add Exercise Section */}
-                        {isAddingExercise ? (
-                            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/30 space-y-3">
-                                <h4 className="text-white font-semibold">Ajouter un exercice</h4>
-                                <select
-                                    value={selectedExerciseId}
-                                    onChange={(e) => setSelectedExerciseId(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                >
-                                    <option value="">Choisir un exercice...</option>
-                                    {filteredExercises.map((ex) => (
-                                        <option key={ex.id} value={ex.id}>
-                                            {ex.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setIsAddingExercise(false);
-                                            setSelectedExerciseId('');
-                                        }}
-                                        className="flex-1 px-4 py-2 rounded-lg border border-[#94fbdd]/20 text-gray-300 hover:bg-[#252527] transition-all"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        onClick={handleAddExerciseRow}
-                                        disabled={!selectedExerciseId}
-                                        className="flex-1 px-4 py-2 rounded-lg bg-[#94fbdd] text-[#121214] font-bold hover:bg-[#94fbdd]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Ajouter
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingExercise(true)}
-                                disabled={filteredExercises.length === 0}
-                                className="w-full p-4 rounded-xl border-2 border-dashed border-[#94fbdd]/30 text-[#94fbdd] hover:bg-[#94fbdd]/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <PlusIcon className="h-5 w-5" />
-                                <span className="font-semibold">
-                                    {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
-                                </span>
-                            </button>
-                        )}
+                        {/* Add Exercise Button */}
+                        <button
+                            onClick={() => setIsSelectingExercise(true)}
+                            disabled={filteredExercises.length === 0}
+                            className="w-full p-4 rounded-xl border-2 border-dashed border-[#94fbdd]/30 text-[#94fbdd] hover:bg-[#94fbdd]/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <PlusIcon className="h-5 w-5" />
+                            <span className="font-semibold">
+                                {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
+                            </span>
+                        </button>
                     </div>
                 </div>
+
+                {/* SelectExerciseModal */}
+                <SelectExerciseModal
+                    isOpen={isSelectingExercise}
+                    onClose={() => setIsSelectingExercise(false)}
+                    onSelect={handleSelectExercise}
+                    availableExercises={filteredExercises}
+                />
 
                 {/* Footer */}
                 <div className="flex-shrink-0 px-6 pb-6 pt-4">
