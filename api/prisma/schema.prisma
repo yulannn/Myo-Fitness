@@ -279,6 +279,7 @@ model SetPerformance {
 model ExerciceMuscleGroup {
   exerciceId Int
   groupeId   Int
+  isPrimary  Boolean     @default(false) // 🆕 Identifie le muscle principal ciblé par l'exercice
   exercice   Exercice    @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
   groupe     MuscleGroup @relation(fields: [groupeId], references: [id], onDelete: Cascade)
 

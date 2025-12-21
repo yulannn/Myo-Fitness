@@ -1014,13 +1014,17 @@ async function main() {
     });
 
     // Associer les groupes musculaires
-    for (const muscleGroupName of exercice.muscleGroups) {
+    // 🆕 Le premier muscle dans la liste est le muscle PRINCIPAL (isPrimary: true)
+    // Les autres sont des muscles SECONDAIRES (isPrimary: false)
+    for (let i = 0; i < exercice.muscleGroups.length; i++) {
+      const muscleGroupName = exercice.muscleGroups[i];
       const muscleGroup = createdMuscleGroups.find(mg => mg.name === muscleGroupName);
       if (muscleGroup) {
         await prisma.exerciceMuscleGroup.create({
           data: {
             exerciceId: createdExercice.id,
             groupeId: muscleGroup.id,
+            isPrimary: i === 0, // 🎯 Le premier = muscle principal
           },
         });
       }
