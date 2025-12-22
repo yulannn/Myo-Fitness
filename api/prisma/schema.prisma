@@ -203,6 +203,9 @@ model TrainingSession {
   SharedSessionParticipant SharedSessionParticipant[]
   trainingProgram          TrainingProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
   summary                  SessionSummary?
+
+    @@index([programId, completed])
+  @@index([performedAt])
 }
 
 model SessionSummary {
