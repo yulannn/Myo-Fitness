@@ -28,16 +28,6 @@ export function calculateMuscleFrequency(
             // Chaque groupe (push/pull/legs) travaillé tous les 3 jours
             return trainingFrequency / 3;
 
-        case 'BRO_SPLIT':
-            // 1 muscle par jour = 1x/semaine par muscle
-            // Sauf si 6 jours avec répétition
-            return trainingFrequency >= 6 ? 1.2 : 1;
-
-        case 'ARNOLD_SPLIT':
-            // Chaque combinaison muscle 2x/semaine (6 jours)
-            // Ex: Chest+Back le Lun et Jeu
-            return 2;
-
         case 'CUSTOM':
             // Impossible à déterminer
             return 0;

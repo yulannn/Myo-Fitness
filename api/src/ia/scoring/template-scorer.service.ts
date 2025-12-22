@@ -132,20 +132,6 @@ export class TemplateScorerService {
 
 
 
-            // Arnold Split : Structure fixe à 6 jours
-            if (template === 'ARNOLD_SPLIT' && profile.trainingFrequency !== 6) {
-                return {
-                    template,
-                    score: 0,
-                    reasons: [
-                        `❌ ARNOLD SPLIT INCOMPATIBLE avec ${profile.trainingFrequency}j/semaine`,
-                        `→ Structure fixe : 3 paires de muscles antagonistes`,
-                        `→ Chest+Back / Shoulders+Arms / Legs (chaque paire 2x/semaine)`,
-                        `→ Total obligatoire : 6 jours d'entraînement`,
-                    ],
-                };
-            }
-
             // Si aucune incompatibilité, appliquer la pénalité standard pour fréquence non-optimale
             const partialScore = Math.max(
                 0,
@@ -269,14 +255,7 @@ export class TemplateScorerService {
                     reason: `PPL possible mais complexe pour débutant`,
                 };
             }
-            // 🚫 PÉNALITÉ TRÈS FORTE pour templates avancés
-            // Ces programmes nécessitent technique, récupération et mind-muscle connection excellentes
-            if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
-                return {
-                    score: -30, // Score négatif!
-                    reason: `🚫 Template trop avancé pour débutant (technique, volume, récupération)`,
-                };
-            }
+
             return { score: weight * 0.3, reason: '' };
         }
 
@@ -293,24 +272,11 @@ export class TemplateScorerService {
                     reason: `Full Body toujours efficace pour intermédiaire`,
                 };
             }
-            // 🚫 PÉNALITÉ FORTE pour templates très avancés
-            // BRO/ARNOLD nécessitent expérience avancée et excellente récupération
-            if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
-                return {
-                    score: -25, // Pénalité très forte
-                    reason: `⚠️ Split avancé nécessite expérience (1x/semaine par muscle = risque sous-optimal)`,
-                };
-            }
+
             return { score: weight * 0.7, reason: '' };
         }
 
         if (level === 'ADVANCED') {
-            if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
-                return {
-                    score: weight,
-                    reason: `✅ Template avancé parfait pour votre niveau`,
-                };
-            }
             if (template === 'PUSH_PULL_LEGS') {
                 return {
                     score: weight * 0.9,
@@ -343,14 +309,6 @@ export class TemplateScorerService {
         muscleFrequency: number,
     ): { score: number; reason: string } {
         const weight = SCORING_WEIGHTS.MUSCLE_PRIORITIES;
-
-        // Templates de spécialisation : EXCELLENTS pour ciblage
-        if (template === 'BRO_SPLIT' || template === 'ARNOLD_SPLIT') {
-            return {
-                score: weight * 1.4, // Bonus!
-                reason: `✅ Spécialisation maximale pour cibler les priorités musculaires`,
-            };
-        }
 
         // Splits classiques permettent de mieux cibler
         if (template === 'PUSH_PULL_LEGS' || template === 'UPPER_LOWER') {

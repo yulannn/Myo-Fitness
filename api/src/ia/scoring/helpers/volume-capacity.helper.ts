@@ -36,16 +36,6 @@ export function calculateVolumeCapacity(
             // Spécialisation maximale
             return trainingFrequency * 2.5;
 
-        case 'BRO_SPLIT':
-            // Bro Split = Volume TRÈS ÉLEVÉ par muscle (1 jour dédié)
-            // 15-25 sets par muscle par jour
-            return 20; // Maximum volume
-
-        case 'ARNOLD_SPLIT':
-            // Arnold Split = 2x/semaine par muscle, volume élevé
-            // Antagonistes ensemble = fatigue gérée
-            return 18; // Volume très élevé
-
         case 'CUSTOM':
             return 0;
 

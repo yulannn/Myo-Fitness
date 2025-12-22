@@ -31,24 +31,6 @@ export const TEMPLATE_CONSTRAINTS: Record<ProgramTemplate, TemplateConstraints> 
         // 3j = 1x/semaine par muscle, 6j = 2x/semaine (optimal)
     },
 
-    BRO_SPLIT: {
-        minFrequency: 5,
-        maxFrequency: 6,
-        optimalFrequency: [5, 6],
-        // Bro Split : 1 groupe musculaire majeur par jour
-        // 5j standard (Chest/Back/Shoulders/Arms/Legs)
-        // 6j avec jour supplémentaire (ex: Arms split en Biceps/Triceps)
-    },
-
-    ARNOLD_SPLIT: {
-        minFrequency: 6,
-        maxFrequency: 6,
-        optimalFrequency: [6],
-        // Arnold Split : Chest+Back / Shoulders+Arms / Legs (2x chacun)
-        // Antagonistes entraînés ensemble
-        // Structure fixe à 6 jours
-    },
-
     CUSTOM: {
         minFrequency: 1,
         maxFrequency: 7,
