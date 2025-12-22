@@ -48,6 +48,30 @@ export class ProgramController {
     return this.programService.getProgramsByUser(userId);
   }
 
+  @Get('active')
+  @ApiOperation({ summary: 'Récupérer le programme actif de l’utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programme actif récupéré avec succès',
+    type: TrainingProgramEntity,
+  })
+  getActiveProgram(@Request() req) {
+    const userId = req.user.userId;
+    return this.programService.getActiveProgram(userId);
+  }
+
+  @Get('archived')
+  @ApiOperation({ summary: 'Récupérer les programmes archivés de l’utilisateur' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programmes archivés récupérés avec succès',
+    type: [TrainingProgramEntity],
+  })
+  getArchivedPrograms(@Request() req) {
+    const userId = req.user.userId;
+    return this.programService.getArchivedPrograms(userId);
+  }
+
   @Get(':programId')
   @ApiOperation({ summary: 'Récupérer un programme d’entraînement par ID' })
   @ApiResponse({

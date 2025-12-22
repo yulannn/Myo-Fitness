@@ -2,6 +2,19 @@ import api from '../apiClient';
 import type { Program, CreateProgramPayload, ManualProgramPayload, AddSessionPayload } from '../../types/program.type';
 
 export const ProgramFetchDataService = {
+    // ✅ NOUVEAU: Récupère uniquement le programme ACTIF
+    async getActiveProgram(): Promise<Program | null> {
+        const res = await api.get<Program>('/program/active');
+        return res.data;
+    },
+
+    // ✅ NOUVEAU: Récupère uniquement les programmes ARCHIVÉS
+    async getArchivedPrograms(): Promise<Program[]> {
+        const res = await api.get<Program[]>('/program/archived');
+        return res.data;
+    },
+
+    // 🔧 LEGACY: Garde pour compatibilité
     async getProgramsByUser(): Promise<Program[]> {
         const res = await api.get<Program[]>('/program');
         return res.data;

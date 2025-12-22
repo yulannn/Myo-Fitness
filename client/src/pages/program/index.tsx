@@ -1,4 +1,5 @@
-import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser';
+import useActiveProgram from '../../api/hooks/program/useGetActiveProgram';
+import useArchivedPrograms from '../../api/hooks/program/useGetArchivedPrograms';
 import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
 import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal';
@@ -26,29 +27,29 @@ const Program = () => {
   const [expandedPrograms, setExpandedPrograms] = useState<Set<number>>(new Set());
 
   const { data: fitnessProfile } = useFitnessProfilesByUser();
-  const { data, isLoading } = useProgramsByUser();
+
+  // ✅ OPTIMISATION: Récupère le programme actif au chargement
+  const { data: activeProgram, isLoading: isLoadingActive } = useActiveProgram();
+
+  // ✅ LAZY LOADING: Récupère les programmes archivés seulement si on affiche l'onglet
+  const { data: archivedPrograms = [], isLoading: isLoadingArchived } = useArchivedPrograms(
+    activeTab === 'archived' // Ne charge que si l'onglet est actif
+  );
+
   const { data: exercices = [] } = useExercicesMinimal();
   const { mutate, isPending } = useCreateProgram();
   const { mutate: mutateManual } = useCreateManualProgram();
 
-  const programs = Array.isArray(data) ? data : [];
   const { user } = useAuth();
 
-  // Séparer les programmes actifs et archivés
+  // Construire les tableaux de programmes
   const activePrograms = useMemo(
-    () => programs.filter((p: any) => p.status === 'ACTIVE'),
-    [programs]
+    () => (activeProgram ? [activeProgram] : []),
+    [activeProgram]
   );
-
-  const archivedPrograms = useMemo(
-    () => programs.filter((p: any) => p.status === 'ARCHIVED'),
-    [programs]
-  );
-
-
 
   const hasActiveProgram = activePrograms.length > 0;
-  const activeProgram = activePrograms[0]; // Le premier programme actif (il ne devrait y en avoir qu'un)
+
 
   const automaticProgramNameRef = useRef<string>('');
   const automaticProgramDescriptionRef = useRef<string>('');
@@ -135,6 +136,8 @@ const Program = () => {
     });
   };
 
+  const isLoading = isLoadingActive;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121214]">
@@ -157,7 +160,7 @@ const Program = () => {
             <h1 className="text-3xl font-bold text-white tracking-tight">Mes Programmes</h1>
             <p className="text-gray-400 mt-1">Gérez et suivez votre évolution</p>
           </div>
-          {programs.length > 0 && (
+          {(activePrograms.length > 0 || archivedPrograms.length > 0) && (
             <button
               onClick={openAddFlow}
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#94fbdd] text-[#121214] font-semibold rounded-xl shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95"
@@ -169,7 +172,7 @@ const Program = () => {
         </div>
 
         {/* Tabs - Actifs / Archivés */}
-        {programs.length > 0 && (
+        {(activePrograms.length + archivedPrograms.length) > 0 && (
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => setActiveTab('active')}
@@ -193,7 +196,7 @@ const Program = () => {
         )}
 
         {/* Programs List */}
-        {programs.length === 0 ? (
+        {(activePrograms.length === 0 && archivedPrograms.length === 0) ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center mb-3">
               <SparklesIcon className="h-6 w-6 text-gray-600" />
@@ -217,7 +220,7 @@ const Program = () => {
                 onToggleExpand={() => toggleProgramExpansion(program.id)}
                 exercices={exercices}
                 sortSessions={sortSessions}
-                activeProgram={activeProgram}
+                activeProgram={activePrograms[0]}
               />
             ))}
 

@@ -12,10 +12,13 @@ const MAX_SESSIONS_PER_PROGRAM = 7;
 export class ProgramService {
     constructor(private prisma: PrismaService, private iaService: IaService) { }
 
-    // Recupere tout les programmes d'un utilisateurS
-    async getProgramsByUser(userId: number) {
-        return this.prisma.trainingProgram.findMany({
-            where: { fitnessProfile: { userId } },
+    // ✅ Récupère UNIQUEMENT le programme ACTIF (plus rapide)
+    async getActiveProgram(userId: number) {
+        return this.prisma.trainingProgram.findFirst({
+            where: {
+                fitnessProfile: { userId },
+                status: 'ACTIVE'
+            },
             select: {
                 id: true,
                 name: true,
@@ -24,7 +27,7 @@ export class ProgramService {
                 createdAt: true,
                 template: true,
                 startDate: true,
-                // Sessions avec données minimales
+                // Sessions non complétées uniquement
                 sessions: {
                     where: { completed: false },
                     select: {
@@ -33,7 +36,7 @@ export class ProgramService {
                         date: true,
                         completed: true,
                         performedAt: true,
-                        // Exercices avec seulement le nom (pas toutes les données)
+                        // Exercices avec données minimales
                         exercices: {
                             select: {
                                 id: true,
@@ -44,12 +47,11 @@ export class ProgramService {
                                     select: {
                                         id: true,
                                         name: true,
-                                        imageUrl: true // Pour affichage éventuel
+                                        imageUrl: true
                                     }
                                 }
                             }
                         },
-                        // Compter les exercices pour affichage rapide
                         _count: {
                             select: {
                                 exercices: true
@@ -61,6 +63,121 @@ export class ProgramService {
                     }
                 },
                 // Compter toutes les sessions (pour stats)
+                _count: {
+                    select: {
+                        sessions: true
+                    }
+                }
+            }
+        });
+    }
+
+    // ✅ Récupère les programmes ARCHIVÉS (lazy-loaded)
+    async getArchivedPrograms(userId: number) {
+        return this.prisma.trainingProgram.findMany({
+            where: {
+                fitnessProfile: { userId },
+                status: 'ARCHIVED'
+            },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                template: true,
+                startDate: true,
+                // Pour les programmes archivés, on peut limiter les sessions
+                sessions: {
+                    where: { completed: false },
+                    select: {
+                        id: true,
+                        sessionName: true,
+                        date: true,
+                        completed: true,
+                        performedAt: true,
+                        exercices: {
+                            select: {
+                                id: true,
+                                sets: true,
+                                reps: true,
+                                weight: true,
+                                exercice: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        imageUrl: true
+                                    }
+                                }
+                            }
+                        },
+                        _count: {
+                            select: {
+                                exercices: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        date: 'asc'
+                    }
+                },
+                _count: {
+                    select: {
+                        sessions: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+    }
+
+    // 🔧 LEGACY: Garde pour compatibilité (peut être supprimée plus tard)
+    async getProgramsByUser(userId: number) {
+        return this.prisma.trainingProgram.findMany({
+            where: { fitnessProfile: { userId } },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                template: true,
+                startDate: true,
+                sessions: {
+                    where: { completed: false },
+                    select: {
+                        id: true,
+                        sessionName: true,
+                        date: true,
+                        completed: true,
+                        performedAt: true,
+                        exercices: {
+                            select: {
+                                id: true,
+                                sets: true,
+                                reps: true,
+                                weight: true,
+                                exercice: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        imageUrl: true
+                                    }
+                                }
+                            }
+                        },
+                        _count: {
+                            select: {
+                                exercices: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        date: 'asc'
+                    }
+                },
                 _count: {
                     select: {
                         sessions: true
