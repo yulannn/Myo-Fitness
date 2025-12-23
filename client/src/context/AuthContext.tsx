@@ -5,6 +5,7 @@ import { AuthFetchDataService } from '../api/services/authService';
 import { tokenService } from '../api/services/tokenService';
 import { logAnalyticsEvent, AnalyticsEvents, setAnalyticsUserId } from '../utils/analytics';
 import { setLoggingOut } from '../api/apiClient';
+import { usePerformanceStore } from '../store/usePerformanceStore';
 
 interface MeResponse {
     user: AuthUser;
@@ -117,6 +118,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Nettoyer immédiatement la session locale pour éviter que des requêtes ne se déclenchent
         clearSession();
         tokenService.clear();
+
+        // 🧹 Nettoyer le store de performance (sessions actives, performances, etc.)
+        usePerformanceStore.getState().clearSession();
 
         // Annuler toutes les requêtes en cours et vider le cache
         queryClient.cancelQueries();

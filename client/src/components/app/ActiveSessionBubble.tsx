@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { usePerformanceStore } from '../../store/usePerformanceStore';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ActiveSessionBubble() {
     const navigate = useNavigate();
     const location = useLocation();
     const [elapsedTime, setElapsedTime] = useState(0);
+
+    // Vérifier si l'utilisateur est connecté
+    const { isAuthenticated } = useAuth();
 
     // Utiliser le store unifi\u00e9 au lieu de localStorage
     const { activeSession, startTime } = usePerformanceStore();
@@ -27,11 +31,14 @@ export default function ActiveSessionBubble() {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} `;
     };
 
-    // Ne pas afficher la bulle si pas de session active ou si on est d\u00e9j\u00e0 sur la page active-session
-    if (!activeSession || !startTime || location.pathname === '/active-session') {
+    // Ne pas afficher la bulle si :
+    // - Pas de session active
+    // - Utilisateur d\u00e9connect\u00e9 \u2705 NOUVELLE CONDITION
+    // - D\u00e9j\u00e0 sur la page active-session
+    if (!activeSession || !startTime || !isAuthenticated || location.pathname === '/active-session') {
         return null;
     }
 
