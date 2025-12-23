@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import sessionTemplateService, { ScheduleSessionDto } from '../../services/sessionTemplateService';
+import sessionTemplateService, { type ScheduleSessionDto } from '../../services/sessionTemplateService';
 
 export default function useScheduleFromTemplate() {
   const queryClient = useQueryClient();
@@ -9,8 +9,9 @@ export default function useScheduleFromTemplate() {
       sessionTemplateService.scheduleFromTemplate(templateId, dto),
     onSuccess: () => {
       // Invalider les queries pour rafraîchir les données
-      queryClient.invalidateQueries({ queryKey: ['programs', 'active'] });
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      queryClient.invalidateQueries({ queryKey: ['program', 'active'] }); // ✅ Programme actif
+      queryClient.invalidateQueries({ queryKey: ['program'] }); // ✅ Tous les programmes
+      queryClient.invalidateQueries({ queryKey: ['sessions'] }); // ✅ Calendrier
     },
   });
 }

@@ -8,6 +8,7 @@ export function useUpdateSessionDate(sessionId?: number) {
     return useMutation<Session, unknown, UpdateSessionDatePayload>({
         mutationFn: (payload: UpdateSessionDatePayload) => SessionService.updateSessionDate(sessionId as number, payload),
         onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['program', 'active'] }); // ✅ Programme actif
             qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });

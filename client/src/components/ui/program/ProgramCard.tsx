@@ -164,14 +164,24 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
               Séances
             </p>
-            {program.sessionTemplates.map((template: any) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                programId={program.id}
-                availableExercises={exercices}
-              />
-            ))}
+            {program.sessionTemplates.map((template: any) => {
+              // Trouver l'instance planifiée pour ce template (si elle existe)
+              const scheduledInstance = program.sessions?.find(
+                (session: any) => session.sessionTemplateId === template.id && !session.completed
+              );
+
+              return (
+                <TemplateCard
+                  key={template.id}
+                  template={{
+                    ...template,
+                    instances: scheduledInstance ? [scheduledInstance] : []
+                  }}
+                  programId={program.id}
+                  availableExercises={exercices}
+                />
+              );
+            })}
           </div>
         )}
 
