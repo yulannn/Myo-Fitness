@@ -73,16 +73,20 @@ export class SessionAdaptationService {
 
     /**
      * Crée une nouvelle session similaire sans adaptation
+     * ⚠️ Si la session vient d'un template : NE RIEN FAIRE (l'instance existe déjà !)
+     * Sinon : Cloner la session (legacy)
      */
     async createNewSimilarSession(trainingSessionId: number, userId: number) {
         const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
 
-        // 🆕 Si la session vient d'un template, créer une nouvelle instance depuis ce template
+        // 🎯 Si la session vient d'un template, on ne crée RIEN
+        // L'instance non complétée existe déjà grâce à la règle "1 template = 1 instance max"
+        // Retourner simplement l'ancienne session (qui sera relancée)
         if (oldSession.sessionTemplateId) {
-            return this.createInstanceFromTemplate(oldSession);
+            return oldSession;
         }
 
-        // Sinon, cloner la session (legacy)
+        // Sinon, cloner la session (l legacy - pour sessions manuelles)
         return this.cloneLegacySession(oldSession);
     }
 

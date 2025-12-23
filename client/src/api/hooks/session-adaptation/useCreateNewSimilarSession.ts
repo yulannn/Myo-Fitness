@@ -8,6 +8,8 @@ export function useCreateNewSimilarSession() {
     return useMutation<SessionAdaptation, unknown, number>({
         mutationFn: (trainingSessionId: number) => SessionAdaptationService.createNewSimilarSession(trainingSessionId),
         onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['program', 'active'] }); // ✅ Rafraîchir programme actif
+            qc.invalidateQueries({ queryKey: ['program'] }); // ✅ Tous les programmes
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessionAdaptation'] });
         }

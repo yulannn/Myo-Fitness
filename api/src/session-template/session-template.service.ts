@@ -172,16 +172,11 @@ export class SessionTemplateService {
   }
 
   /**
-   * 📅 Planifie une instance depuis un template
-   * ⚠️ Un template ne peut avoir qu'UNE SEULE instance non complétée à la fois
-   * Si une instance existe déjà, on met juste à jour sa date
+   * 🔍 Méthode privée : Récupère l'instance non complétée d'un template
+   * Réutilisée par scheduleFromTemplate ET startFromTemplate
    */
-  async scheduleFromTemplate(templateId: number, dto: ScheduleSessionDto, userId: number) {
-    const template = await this.getTemplateById(templateId, userId);
-    const sessionDate = dto.date ? new Date(dto.date) : new Date();
-
-    // Vérifier si une instance non complétée existe déjà pour ce template
-    const existingInstance = await this.prisma.trainingSession.findFirst({
+  private async findUncompletedInstance(templateId: number) {
+    return this.prisma.trainingSession.findFirst({
       where: {
         sessionTemplateId: templateId,
         completed: false,
@@ -202,8 +197,20 @@ export class SessionTemplateService {
         sessionTemplate: true,
       },
     });
+  }
 
-    // Si une instance existe, on met à jour sa date
+  /**
+   * 📅 Planifie une instance depuis un template (OPTIMISÉ)
+   * ⚠️ Un template ne peut avoir qu'UNE SEULE instance non complétée à la fois
+   * Si une instance existe déjà, on met juste à jour sa date
+   */
+  async scheduleFromTemplate(templateId: number, dto: ScheduleSessionDto, userId: number) {
+    const sessionDate = dto.date ? new Date(dto.date) : new Date();
+
+    // 1️⃣ Chercher instance existante
+    const existingInstance = await this.findUncompletedInstance(templateId);
+
+    // 2️⃣ Si existe → Mettre à jour la date (pas besoin du template)
     if (existingInstance) {
       return this.prisma.trainingSession.update({
         where: { id: existingInstance.id },
@@ -226,46 +233,26 @@ export class SessionTemplateService {
       });
     }
 
-    // Sinon, on crée une nouvelle instance
+    // 3️⃣ Sinon → Récupérer template et créer nouvelle instance
+    const template = await this.getTemplateById(templateId, userId);
     return this.createInstanceFromTemplate(template.id, template.programId, sessionDate);
   }
 
   /**
-   * 🚀 Démarre une instance immédiatement depuis un template
+   * 🚀 Démarre une instance immédiatement depuis un template (OPTIMISÉ)
    * ⚠️ Si une instance non complétée existe déjà, on la retourne au lieu d'en créer une nouvelle
    */
   async startFromTemplate(templateId: number, userId: number) {
-    const template = await this.getTemplateById(templateId, userId);
+    // 1️⃣ Chercher instance existante
+    const existingInstance = await this.findUncompletedInstance(templateId);
 
-    // Vérifier si une instance non complétée existe déjà pour ce template
-    const existingInstance = await this.prisma.trainingSession.findFirst({
-      where: {
-        sessionTemplateId: templateId,
-        completed: false,
-      },
-      include: {
-        exercices: {
-          include: {
-            exercice: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                bodyWeight: true,
-              },
-            },
-          },
-        },
-        sessionTemplate: true,
-      },
-    });
-
-    // Si une instance existe, on la retourne directement
+    // 2️⃣ Si existe → Retourner directement
     if (existingInstance) {
       return existingInstance;
     }
 
-    // Sinon, on crée une nouvelle instance pour aujourd'hui
+    // 3️⃣ Sinon → Récupérer template et créer nouvelle instance
+    const template = await this.getTemplateById(templateId, userId);
     return this.createInstanceFromTemplate(template.id, template.programId, new Date());
   }
 

@@ -8,6 +8,7 @@ import useStartFromTemplate from '../../../api/hooks/session-template/useStartFr
 import useScheduleFromTemplate from '../../../api/hooks/session-template/useScheduleFromTemplate';
 import { EditTemplateModal } from '../modal/EditTemplateModal';
 import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } from '../modal/BottomSheet';
+import { formatDateToISO } from '../../../utils/dateUtils';
 
 interface TemplateCardProps {
   template: any;
@@ -47,8 +48,8 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
   const handleSchedule = () => {
     if (!selectedDate) return;
 
-    // Convertir Date en string ISO pour l'API
-    const dateString = selectedDate.toISOString().split('T')[0];
+    // ✅ Convertir Date en string YYYY-MM-DD en utilisant l'heure LOCALE (pas UTC)
+    const dateString = formatDateToISO(selectedDate);
 
     scheduleTemplate(
       {
