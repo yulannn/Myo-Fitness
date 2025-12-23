@@ -1077,13 +1077,13 @@ async function main() {
 
   console.log('✅ Profils fitness créés');
 
-  // 6. Ajouter quelques programmes d'exemple
+  // 6. Créer les programmes avec NOUVELLE ARCHITECTURE : SessionTemplate
   const program1 = await prisma.trainingProgram.create({
     data: {
       fitnessProfileId: fitnessProfile1.id,
-      name: 'Programme Intermédiaire 4x/semaine',
-      description: 'Programme complet pour prise de masse',
-      template: 'UPPER_LOWER',
+      name: 'Programme Push/Pull/Legs',
+      description: 'Programme intermédiaire avec templates réutilisables',
+      template: 'PUSH_PULL_LEGS',
       status: 'ACTIVE',
     },
   });
@@ -1091,315 +1091,339 @@ async function main() {
   const program2 = await prisma.trainingProgram.create({
     data: {
       fitnessProfileId: fitnessProfile2.id,
-      name: 'Programme Débutant 3x/semaine',
-      description: 'Programme poids du corps pour débuter',
+      name: 'Programme Full Body',
+      description: 'Programme débutant poids du corps',
       template: 'FULL_BODY',
       status: 'ACTIVE',
     },
   });
 
-  console.log('✅ Programmes d\'exemple créés');
+  console.log('✅ Programmes créés');
 
-  // 7. Créer des sessions d'entraînement avec exercices
-  // Récupérer quelques exercices pour les sessions
+  // Récupérer les exercices pour créer les templates
   const allExercices = await prisma.exercice.findMany();
+  const benchPress = allExercices.find(e => e.name === 'Développé couché');
+  const pullUps = allExercices.find(e => e.name === 'Tractions');
+  const militaryPress = allExercices.find(e => e.name === 'Développé militaire');
+  const squats = allExercices.find(e => e.name === 'Squats');
+  const deadlift = allExercices.find(e => e.name === 'Soulevé de terre');
+  const pushups = allExercices.find(e => e.name === 'Pompes');
+  const plank = allExercices.find(e => e.name === 'Planche');
+  const rowing = allExercices.find(e => e.name === 'Rowing haltères');
 
-  // Session 1 - Upper Body pour User 1
-  const session1 = await prisma.trainingSession.create({
+  console.log('📋 Création des Session Templates...');
+
+  // ===== PROGRAMME 1 : Push/Pull/Legs =====
+
+  // 🆕 Template 1 : Push Day
+  const pushTemplate = await prisma.sessionTemplate.create({
     data: {
       programId: program1.id,
-      date: new Date('2024-11-10'),
-      duration: 60,
-      sessionName: 'Bonne séance, je me sens en forme',
+      name: 'Push Day',
+      description: 'Pectoraux, Épaules, Triceps',
+      exercises: {
+        create: [
+          benchPress && {
+            exerciseId: benchPress.id,
+            sets: 4,
+            reps: 8,
+            weight: 80.0,
+            orderInSession: 1,
+          },
+          militaryPress && {
+            exerciseId: militaryPress.id,
+            sets: 3,
+            reps: 10,
+            weight: 50.0,
+            orderInSession: 2,
+          },
+          pushups && {
+            exerciseId: pushups.id,
+            sets: 3,
+            reps: 15,
+            weight: null,
+            orderInSession: 3,
+          },
+        ].filter(Boolean) as Array<{
+          exerciseId: number;
+          sets: number;
+          reps: number;
+          weight: number | null;
+          orderInSession: number;
+        }>,
+      },
     },
   });
 
-  // Développé couché - 4 séries de 8 reps
-  const benchPress = allExercices.find(e => e.name === 'Développé couché');
-  if (benchPress) {
-    const exerciceSession1 = await prisma.exerciceSession.create({
+  console.log('  ✅ Template "Push Day" créé');
+
+  // 🆕 Template 2 : Pull Day
+  const pullTemplate = await prisma.sessionTemplate.create({
+    data: {
+      programId: program1.id,
+      name: 'Pull Day',
+      description: 'Dos, Biceps',
+      exercises: {
+        create: [
+          pullUps && {
+            exerciseId: pullUps.id,
+            sets: 4,
+            reps: 10,
+            weight: null,
+            orderInSession: 1,
+          },
+          deadlift && {
+            exerciseId: deadlift.id,
+            sets: 4,
+            reps: 5,
+            weight: 120.0,
+            orderInSession: 2,
+          },
+          rowing && {
+            exerciseId: rowing.id,
+            sets: 3,
+            reps: 10,
+            weight: 35.0,
+            orderInSession: 3,
+          },
+        ].filter(Boolean) as Array<{
+          exerciseId: number;
+          sets: number;
+          reps: number;
+          weight: number | null;
+          orderInSession: number;
+        }>,
+      },
+    },
+  });
+
+  console.log('  ✅ Template "Pull Day" créé');
+
+  // 🆕 Template 3 : Leg Day
+  const legTemplate = await prisma.sessionTemplate.create({
+    data: {
+      programId: program1.id,
+      name: 'Leg Day',
+      description: 'Jambes complètes',
+      exercises: {
+        create: [
+          squats && {
+            exerciseId: squats.id,
+            sets: 5,
+            reps: 6,
+            weight: 100.0,
+            orderInSession: 1,
+          },
+          deadlift && {
+            exerciseId: deadlift.id,
+            sets: 4,
+            reps: 5,
+            weight: 140.0,
+            orderInSession: 2,
+          },
+        ].filter(Boolean) as Array<{
+          exerciseId: number;
+          sets: number;
+          reps: number;
+          weight: number | null;
+          orderInSession: number;
+        }>,
+      },
+    },
+  });
+
+  console.log('  ✅ Template "Leg Day" créé');
+
+  // ===== PROGRAMME 2 : Full Body =====
+
+  const fullBodyTemplate = await prisma.sessionTemplate.create({
+    data: {
+      programId: program2.id,
+      name: 'Full Body Routine',
+      description: 'Corps complet avec poids du corps',
+      exercises: {
+        create: [
+          pushups && {
+            exerciseId: pushups.id,
+            sets: 3,
+            reps: 12,
+            weight: null,
+            orderInSession: 1,
+          },
+          squats && {
+            exerciseId: squats.id,
+            sets: 3,
+            reps: 15,
+            weight: null,
+            orderInSession: 2,
+          },
+          plank && {
+            exerciseId: plank.id,
+            sets: 3,
+            reps: 60,
+            weight: null,
+            orderInSession: 3,
+          },
+          pullUps && {
+            exerciseId: pullUps.id,
+            sets: 3,
+            reps: 8,
+            weight: null,
+            orderInSession: 4,
+          },
+        ].filter(Boolean) as Array<{
+          exerciseId: number;
+          sets: number;
+          reps: number;
+          weight: number | null;
+          orderInSession: number;
+        }>,
+      },
+    },
+  });
+
+  console.log('  ✅ Template "Full Body" créé');
+
+  console.log('✅ Tous les templates créés');
+
+  // 🆕 Créer des INSTANCES depuis les templates pour démonstration
+  console.log('📅 Création d\'instances de démonstration...');
+
+  // Instance 1 : Push Day planifiée dans 2 jours
+  const pushInstance = await prisma.trainingSession.create({
+    data: {
+      programId: program1.id,
+      sessionTemplateId: pushTemplate.id,
+      sessionName: pushTemplate.name,
+      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      completed: false,
+    },
+  });
+
+  // Copier les exercices du template vers l'instance
+  const pushTemplateExercises = await prisma.exerciseTemplate.findMany({
+    where: { sessionTemplateId: pushTemplate.id },
+    orderBy: { orderInSession: 'asc' },
+  });
+
+  for (const exTemplate of pushTemplateExercises) {
+    await prisma.exerciceSession.create({
       data: {
-        sessionId: session1.id,
-        exerciceId: benchPress.id,
-        sets: 4,
-        reps: 8,
-        weight: 80.0,
+        sessionId: pushInstance.id,
+        exerciceId: exTemplate.exerciseId,
+        sets: exTemplate.sets,
+        reps: exTemplate.reps,
+        weight: exTemplate.weight,
+      },
+    });
+  }
+
+  console.log('  ✅ Instance "Push Day" planifiée créée');
+
+  // Instance 2 : Pull Day COMPLÉTÉE avec performances (il y a 3 jours)
+  const completedPullInstance = await prisma.trainingSession.create({
+    data: {
+      programId: program1.id,
+      sessionTemplateId: pullTemplate.id,
+      sessionName: pullTemplate.name,
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      duration: 65,
+      completed: true,
+      performedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const pullTemplateExercises = await prisma.exerciseTemplate.findMany({
+    where: { sessionTemplateId: pullTemplate.id },
+    orderBy: { orderInSession: 'asc' },
+  });
+
+  for (const exTemplate of pullTemplateExercises) {
+    const exerciceSession = await prisma.exerciceSession.create({
+      data: {
+        sessionId: completedPullInstance.id,
+        exerciceId: exTemplate.exerciseId,
+        sets: exTemplate.sets,
+        reps: exTemplate.reps,
+        weight: exTemplate.weight,
       },
     });
 
-    // Créer les performances pour chaque série
-    for (let i = 1; i <= 4; i++) {
+    // Créer des performances pour chaque série
+    for (let i = 1; i <= exTemplate.sets; i++) {
       await prisma.setPerformance.create({
         data: {
-          id_exercice_session: exerciceSession1.id,
+          id_exercice_session: exerciceSession.id,
           set_index: i,
-          reps_effectuees: i === 4 ? 7 : 8, // Dernière série un peu plus difficile
-          reps_prevues: 8,
-          weight: 80.0,
-          rpe: i * 2, // RPE augmente avec les séries (2, 4, 6, 8)
-          success: i !== 4, // Dernière série est un échec (7 reps au lieu de 8)
+          reps_effectuees: exTemplate.reps - (i === exTemplate.sets ? 1 : 0),
+          reps_prevues: exTemplate.reps,
+          weight: exTemplate.weight,
+          rpe: 6 + i,
+          success: i < exTemplate.sets,
         },
       });
     }
   }
 
-  // Tractions - 4 séries de 10 reps
-  const pullUps = allExercices.find(e => e.name === 'Tractions');
-  if (pullUps) {
-    const exerciceSession2 = await prisma.exerciceSession.create({
+  console.log('  ✅ Instance "Pull Day" complétée créée avec performances');
+
+  // Instance 3 : Full Body COMPLÉTÉE (il y a 5 jours)
+  const completedFullBodyInstance = await prisma.trainingSession.create({
+    data: {
+      programId: program2.id,
+      sessionTemplateId: fullBodyTemplate.id,
+      sessionName: fullBodyTemplate.name,
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      duration: 45,
+      completed: true,
+      performedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const fullBodyTemplateExercises = await prisma.exerciseTemplate.findMany({
+    where: { sessionTemplateId: fullBodyTemplate.id },
+    orderBy: { orderInSession: 'asc' },
+  });
+
+  for (const exTemplate of fullBodyTemplateExercises) {
+    const exerciceSession = await prisma.exerciceSession.create({
       data: {
-        sessionId: session1.id,
-        exerciceId: pullUps.id,
-        sets: 4,
-        reps: 10,
-        weight: null, // Poids du corps
+        sessionId: completedFullBodyInstance.id,
+        exerciceId: exTemplate.exerciseId,
+        sets: exTemplate.sets,
+        reps: exTemplate.reps,
+        weight: exTemplate.weight,
       },
     });
 
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= exTemplate.sets; i++) {
       await prisma.setPerformance.create({
         data: {
-          id_exercice_session: exerciceSession2.id,
+          id_exercice_session: exerciceSession.id,
           set_index: i,
-          reps_effectuees: [10, 10, 9, 8][i - 1], // Fatigue progressive
-          reps_prevues: 10,
-          weight: null,
-          rpe: [6, 7, 8, 9][i - 1],
-          success: i <= 2, // Seulement les 2 premières séries sont réussies
-        },
-      });
-    }
-  }
-
-  // Développé militaire - 3 séries de 10 reps
-  const militaryPress = allExercices.find(e => e.name === 'Développé militaire');
-  if (militaryPress) {
-    const exerciceSession3 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session1.id,
-        exerciceId: militaryPress.id,
-        sets: 3,
-        reps: 10,
-        weight: 50.0,
-      },
-    });
-
-    for (let i = 1; i <= 3; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession3.id,
-          set_index: i,
-          reps_effectuees: [11, 10, 10][i - 1], // Première série bonus
-          reps_prevues: 10,
-          weight: 50.0,
-          rpe: [7, 8, 8][i - 1],
+          reps_effectuees: exTemplate.reps,
+          reps_prevues: exTemplate.reps,
+          weight: exTemplate.weight,
+          rpe: 7,
           success: true,
         },
       });
     }
   }
 
-  console.log('✅ Session 1 (Upper Body) créée avec performances');
+  console.log('  ✅ Instance "Full Body" complétée créée avec performances');
 
-  // Session 2 - Lower Body pour User 1
-  const session2 = await prisma.trainingSession.create({
-    data: {
-      programId: program1.id,
-      date: new Date('2024-11-12'),
-      duration: 70,
-      sessionName: 'Legs day difficile mais satisfaisant',
-    },
-  });
-
-  // Squats - 5 séries de 6 reps
-  const squats = allExercices.find(e => e.name === 'Squats');
-  if (squats) {
-    const exerciceSession4 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session2.id,
-        exerciceId: squats.id,
-        sets: 5,
-        reps: 6,
-        weight: 100.0,
-      },
-    });
-
-    for (let i = 1; i <= 5; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession4.id,
-          set_index: i,
-          reps_effectuees: [6, 6, 6, 5, 5][i - 1],
-          reps_prevues: 6,
-          weight: 100.0,
-          rpe: [6, 7, 8, 9, 9][i - 1],
-          success: i <= 3,
-        },
-      });
-    }
-  }
-
-  // Soulevé de terre - 4 séries de 5 reps
-  const deadlift = allExercices.find(e => e.name === 'Soulevé de terre');
-  if (deadlift) {
-    const exerciceSession5 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session2.id,
-        exerciceId: deadlift.id,
-        sets: 4,
-        reps: 5,
-        weight: 120.0,
-      },
-    });
-
-    for (let i = 1; i <= 4; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession5.id,
-          set_index: i,
-          reps_effectuees: 5,
-          reps_prevues: 5,
-          weight: 120.0,
-          rpe: [7, 8, 9, 9][i - 1],
-          success: true, // Toutes réussies
-        },
-      });
-    }
-  }
-
-  // Leg press - 3 séries de 12 reps
-  const legPress = allExercices.find(e => e.name === 'Leg press');
-  if (legPress) {
-    const exerciceSession6 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session2.id,
-        exerciceId: legPress.id,
-        sets: 3,
-        reps: 12,
-        weight: 150.0,
-      },
-    });
-
-    for (let i = 1; i <= 3; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession6.id,
-          set_index: i,
-          reps_effectuees: [12, 12, 11][i - 1],
-          reps_prevues: 12,
-          weight: 150.0,
-          rpe: [6, 7, 8][i - 1],
-          success: i <= 2,
-        },
-      });
-    }
-  }
-
-  console.log('✅ Session 2 (Lower Body) créée avec performances');
-
-  // Session 3 - Full Body pour User 2 (poids du corps)
-  const session3 = await prisma.trainingSession.create({
-    data: {
-      programId: program2.id,
-      date: new Date('2024-11-11'),
-      duration: 45,
-      sessionName: 'Premier entraînement, très motivée !',
-    },
-  });
-
-  // Pompes - 3 séries de 12 reps
-  const pushUps = allExercices.find(e => e.name === 'Pompes');
-  if (pushUps) {
-    const exerciceSession7 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session3.id,
-        exerciceId: pushUps.id,
-        sets: 3,
-        reps: 12,
-        weight: null,
-      },
-    });
-
-    for (let i = 1; i <= 3; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession7.id,
-          set_index: i,
-          reps_effectuees: [12, 10, 8][i - 1], // Fatigue importante
-          reps_prevues: 12,
-          weight: null,
-          rpe: [7, 8, 9][i - 1],
-          success: i === 1,
-        },
-      });
-    }
-  }
-
-  // Squats au poids du corps - 3 séries de 15 reps
-  const bodyweightSquats = allExercices.find(e => e.name === 'Squats au poids du corps');
-  if (bodyweightSquats) {
-    const exerciceSession8 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session3.id,
-        exerciceId: bodyweightSquats.id,
-        sets: 3,
-        reps: 15,
-        weight: null,
-      },
-    });
-
-    for (let i = 1; i <= 3; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession8.id,
-          set_index: i,
-          reps_effectuees: [15, 15, 14][i - 1],
-          reps_prevues: 15,
-          weight: null,
-          rpe: [5, 6, 7][i - 1],
-          success: i <= 2,
-        },
-      });
-    }
-  }
-
-  // Planche - 3 séries de 30 secondes (représentées en reps)
-  const plank = allExercices.find(e => e.name === 'Planche');
-  if (plank) {
-    const exerciceSession9 = await prisma.exerciceSession.create({
-      data: {
-        sessionId: session3.id,
-        exerciceId: plank.id,
-        sets: 3,
-        reps: 30, // secondes
-        weight: null,
-      },
-    });
-
-    for (let i = 1; i <= 3; i++) {
-      await prisma.setPerformance.create({
-        data: {
-          id_exercice_session: exerciceSession9.id,
-          set_index: i,
-          reps_effectuees: [30, 28, 25][i - 1], // Temps diminue
-          reps_prevues: 30,
-          weight: null,
-          rpe: [6, 7, 8][i - 1],
-          success: i === 1,
-        },
-      });
-    }
-  }
-
-  console.log('✅ Session 3 (Full Body poids du corps) créée avec performances');
-
-  // Compter les performances créées
-  const totalPerformances = await prisma.setPerformance.count();
+  // Compter les données créées
+  const totalTemplates = await prisma.sessionTemplate.count();
+  const totalExerciseTemplates = await prisma.exerciseTemplate.count();
+  const totalInstances = await prisma.trainingSession.count();
   const totalExerciceSessions = await prisma.exerciceSession.count();
-  const totalSessions = await prisma.trainingSession.count();
+  const totalPerformances = await prisma.setPerformance.count();
 
+  console.log('');
   console.log('🎉 Seeding terminé avec succès !');
-  console.log(`📊 Résumé:`);
+  console.log('');
+  console.log('📊 Résumé:');
   console.log(`- ${muscleGroups.length} groupes musculaires`);
   console.log(`- ${equipments.length} équipements`);
   console.log(`- ${exercices.length} exercices (${exercices.filter(e => e.bodyWeight).length} poids du corps, ${exercices.filter(e => !e.bodyWeight).length} salle)`);
@@ -1412,9 +1436,21 @@ async function main() {
   console.log(`- 2 utilisateurs`);
   console.log(`- 2 profils fitness`);
   console.log(`- 2 programmes d'exemple`);
-  console.log(`- ${totalSessions} sessions d'entraînement`);
-  console.log(`- ${totalExerciceSessions} exercices dans les sessions`);
-  console.log(`- ${totalPerformances} performances (séries complètes avec données)`);
+  console.log('');
+  console.log('🆕 NOUVELLE ARCHITECTURE:');
+  console.log(`- ${totalTemplates} templates de séances (modèles réutilisables)`);
+  console.log(`- ${totalExerciseTemplates} exercices dans les templates`);
+  console.log(`- ${totalInstances} instances (1 planifiée + 2 complétées)`);
+  console.log(`- ${totalExerciceSessions} exercices dans les instances`);
+  console.log(`- ${totalPerformances} performances enregistrées`);
+  console.log('');
+  console.log('🔗 Architecture:');
+  console.log('  SessionTemplate → Modèle réutilisable');
+  console.log('  ExerciseTemplate → Exercices du template');
+  console.log('  TrainingSession → Instance/Historique');
+  console.log('  ExerciceSession → Exercices de l\'instance');
+  console.log('  SetPerformance → Performances par série');
+
 }
 
 main()
