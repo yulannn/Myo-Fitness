@@ -671,4 +671,58 @@ export class SessionService {
     });
   }
 
+  /**
+   * Supprimer une TrainingSession (annulation)
+   * Supprime aussi tous les exercices et performances associés
+   */
+  async deleteSession(sessionId: number, userId: number) {
+    return this.prisma.$transaction(async (prisma) => {
+      // Vérifier que la session existe et appartient à l'utilisateur
+      const session = await prisma.trainingSession.findUnique({
+        where: { id: sessionId },
+        include: {
+          trainingProgram: {
+            include: { fitnessProfile: true },
+          },
+        },
+      });
+
+      if (!session) {
+        throw new NotFoundException('Session introuvable');
+      }
+
+      this.programService.verifyPermissions(
+        session.trainingProgram.fitnessProfile.userId,
+        userId,
+        'cette session'
+      );
+
+      // Supprimer les performances
+      await prisma.setPerformance.deleteMany({
+        where: {
+          exerciceSession: {
+            sessionId,
+          },
+        },
+      });
+
+      // Supprimer les exercices de la session
+      await prisma.exerciceSession.deleteMany({
+        where: { sessionId },
+      });
+
+      // Supprimer le résumé de session s'il existe
+      await prisma.sessionSummary.deleteMany({
+        where: { sessionId },
+      });
+
+      // Supprimer la session elle-même
+      await prisma.trainingSession.delete({
+        where: { id: sessionId },
+      });
+
+      return { message: 'Session supprimée avec succès' };
+    });
+  }
+
 }

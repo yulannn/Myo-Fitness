@@ -234,4 +234,25 @@ export class SessionController {
       userId,
     );
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  @ApiOperation({ summary: 'Supprimer une session (annulation)' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la session à supprimer',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session supprimée avec succès',
+  })
+  @ApiResponse({ status: 404, description: 'Session non trouvée' })
+  async deleteSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.deleteSession(id, userId);
+  }
 }

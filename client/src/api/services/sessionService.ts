@@ -58,6 +58,10 @@ export const SessionFetchDataService = {
         const res = await api.patch<Session>(`/session/${sessionId}/sessionName`, { sessionName });
         return res.data;
     },
+
+    async deleteSession(sessionId: number): Promise<void> {
+        await api.delete(`/session/${sessionId}`);
+    },
 };
 
 export default SessionFetchDataService;

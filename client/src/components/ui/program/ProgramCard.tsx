@@ -1,39 +1,32 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { SessionCard } from '../session';
+import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { TemplateCard } from '../template';
 import { ProgramStatusModal } from '../modal/ProgramStatusModal';
 import { DeleteProgramModal } from '../modal/DeleteProgramModal';
 import { EditProgramModal } from '../modal/EditProgramModal';
-import { AddSessionModal } from '../modal/AddSessionModal';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
 import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
 import useUpdateProgram from '../../../api/hooks/program/useUpdateProgram';
-import useAddSessionToProgram from '../../../api/hooks/program/useAddSessionToProgram';
 
 interface ProgramCardProps {
   program: any;
   isExpanded: boolean;
   onToggleExpand: () => void;
   exercices: ExerciceMinimal[];
-  sortSessions: (sessions: any[]) => any[];
   activeProgram?: any;
 }
 
-export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, sortSessions, activeProgram }: ProgramCardProps) => {
-  const hasSession = program.sessions && program.sessions.length > 0;
+export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, activeProgram }: ProgramCardProps) => {
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateProgramStatus();
   const { mutate: deleteProgram, isPending: isDeleting } = useDeleteProgram();
   const { mutate: updateProgram, isPending: isUpdating } = useUpdateProgram();
-  const { mutate: addSession, isPending: isAddingSession } = useAddSessionToProgram(program.id);
 
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
 
   const isActive = program.status === 'ACTIVE';
-  const showSessions = hasSession && (isActive || isExpanded);
 
   const handleStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,16 +62,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
     });
   };
 
-  const handleAddSessionClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsAddSessionModalOpen(true);
-  };
 
-  const handleConfirmAddSession = (data: any) => {
-    addSession(data, {
-      onSuccess: () => setIsAddSessionModalOpen(false)
-    });
-  };
 
   return (
     <>
@@ -161,7 +145,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
                 )}
               </button>
 
-              {hasSession && !isActive && (
+              {program.sessionTemplates && program.sessionTemplates.length > 0 && !isActive && (
                 <div className="p-1.5 text-gray-500">
                   {isExpanded ? (
                     <ChevronUpIcon className="h-4 w-4" />
@@ -174,35 +158,24 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
           </div>
         </div>
 
-        {/* Sessions */}
-        {showSessions && (
+        {/* Session Templates */}
+        {program.sessionTemplates && program.sessionTemplates.length > 0 && isActive && (
           <div className="border-t border-white/5 p-4 space-y-3 bg-black/20">
-            {sortSessions(program.sessions).map((session: any) => (
-              <SessionCard
-                key={session.id ?? `session-${program.id}-${session.date}`}
-                session={session}
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Séances
+            </p>
+            {program.sessionTemplates.map((template: any) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                programId={program.id}
                 availableExercises={exercices}
-                programStatus={program.status}
               />
             ))}
           </div>
         )}
 
-        {/* Add session */}
-        {hasSession && isActive && (
-          <div className="flex items-center justify-center border-t border-white/5 p-6 text-center bg-black/20">
-            <button
-              onClick={handleAddSessionClick}
-              disabled={isUpdatingStatus || isDeleting || isUpdating || isAddingSession}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Ajouter une séance
-            </button>
-          </div>
-        )}
-
-        {!hasSession && (
+        {(!program.sessionTemplates || program.sessionTemplates.length === 0) && (
           <div className="border-t border-white/5 p-6 text-center bg-black/20">
             <p className="text-xs text-gray-600">Aucune séance</p>
           </div>
@@ -232,14 +205,6 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, so
         onConfirm={handleConfirmEdit}
         program={program}
         isPending={isUpdating}
-      />
-
-      <AddSessionModal
-        isOpen={isAddSessionModalOpen}
-        onClose={() => setIsAddSessionModalOpen(false)}
-        onConfirm={handleConfirmAddSession}
-        availableExercises={exercices}
-        isPending={isAddingSession}
       />
     </>
   );

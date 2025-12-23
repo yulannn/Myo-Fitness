@@ -27,6 +27,41 @@ export class ProgramService {
                 createdAt: true,
                 template: true,
                 startDate: true,
+
+                // 🆕 Templates de séances
+                sessionTemplates: {
+                    select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        orderInProgram: true,
+                        exercises: {
+                            select: {
+                                id: true,
+                                sets: true,
+                                reps: true,
+                                weight: true,
+                                orderInSession: true,
+                                exercise: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        imageUrl: true,
+                                        bodyWeight: true,
+                                    }
+                                }
+                            },
+                            orderBy: { orderInSession: 'asc' }
+                        },
+                        _count: {
+                            select: {
+                                instances: true // Nombre d'instances créées
+                            }
+                        }
+                    },
+                    orderBy: { orderInProgram: 'asc' }
+                },
+
                 // Sessions non complétées uniquement
                 sessions: {
                     where: { completed: false },
@@ -36,6 +71,7 @@ export class ProgramService {
                         date: true,
                         completed: true,
                         performedAt: true,
+                        sessionTemplateId: true, // 🆕 Pour savoir de quel template
                         // Exercices avec données minimales
                         exercices: {
                             select: {
@@ -287,25 +323,31 @@ export class ProgramService {
                 },
             });
 
+            // ✅ Créer UNIQUEMENT les SessionTemplate (modèles réutilisables)
+            // Les TrainingSession seront créées à la demande via startFromTemplate
             for (let i = 0; i < program.sessions.length; i++) {
                 const session = program.sessions[i];
-                const sessionDate = sessionDates[i];
 
-                const createdSession = await prisma.trainingSession.create({
+                // Créer le template
+                const sessionTemplate = await prisma.sessionTemplate.create({
                     data: {
                         programId: createdProgram.id,
-                        sessionName: session.name,
-                        date: sessionDate, // null si pas de planification auto
+                        name: session.name,
+                        orderInProgram: i,
                     },
                 });
 
-                for (const ex of session.exercises) {
-                    await prisma.exerciceSession.create({
+                // Créer les ExerciseTemplate
+                for (let j = 0; j < session.exercises.length; j++) {
+                    const ex = session.exercises[j];
+                    await prisma.exerciseTemplate.create({
                         data: {
-                            sessionId: createdSession.id,
-                            exerciceId: typeof ex === 'number' ? ex : ex.id,
+                            sessionTemplateId: sessionTemplate.id,
+                            exerciseId: typeof ex === 'number' ? ex : ex.id,
                             sets: typeof ex === 'object' ? (ex.sets ?? 3) : 3,
                             reps: typeof ex === 'object' ? (ex.reps ?? 8) : 8,
+                            weight: typeof ex === 'object' ? ex.weight : null,
+                            orderInSession: j,
                         },
                     });
                 }
@@ -313,7 +355,18 @@ export class ProgramService {
 
             return prisma.trainingProgram.findUnique({
                 where: { id: createdProgram.id },
-                include: { sessions: { include: { exercices: true } } },
+                include: {
+                    sessions: { include: { exercices: true } },
+                    sessionTemplates: {
+                        include: {
+                            exercises: {
+                                include: { exercise: true },
+                                orderBy: { orderInSession: 'asc' },
+                            },
+                        },
+                        orderBy: { orderInProgram: 'asc' },
+                    },
+                },
             });
         });
     }
@@ -361,29 +414,33 @@ export class ProgramService {
                 },
             });
 
+            // ✅ Créer UNIQUEMENT les templates (pas d'instances)
             for (let i = 0; i < sessions.length; i++) {
                 const session = sessions[i];
-                const sessionDate = sessionDates[i];
 
-                const createdSession = await prisma.trainingSession.create({
+                // Créer le template
+                const sessionTemplate = await prisma.sessionTemplate.create({
                     data: {
                         programId: createdProgram.id,
-                        sessionName: session.name ?? '',
-                        date: sessionDate, // null si pas de planification auto
+                        name: session.name ?? `Session ${i + 1}`,
+                        orderInProgram: i,
                     },
                 });
 
+                // Créer les ExerciseTemplate
                 if (session.exercises && Array.isArray(session.exercises)) {
-                    for (const ex of session.exercises) {
-                        const exerciceId = typeof ex === 'number' ? ex : ex.id;
-                        if (!exerciceId) continue;
-                        await prisma.exerciceSession.create({
+                    for (let j = 0; j < session.exercises.length; j++) {
+                        const ex = session.exercises[j];
+                        if (!ex.id) continue;
+
+                        await prisma.exerciseTemplate.create({
                             data: {
-                                sessionId: createdSession.id,
-                                exerciceId: ex.id,
+                                sessionTemplateId: sessionTemplate.id,
+                                exerciseId: ex.id,
                                 sets: ex.sets ?? 3,
                                 reps: ex.reps ?? 8,
                                 weight: ex.weight ?? null,
+                                orderInSession: j,
                             },
                         });
                     }
@@ -392,7 +449,18 @@ export class ProgramService {
 
             return prisma.trainingProgram.findUnique({
                 where: { id: createdProgram.id },
-                include: { sessions: { include: { exercices: true } } },
+                include: {
+                    sessions: { include: { exercices: true } },
+                    sessionTemplates: {
+                        include: {
+                            exercises: {
+                                include: { exercise: true },
+                                orderBy: { orderInSession: 'asc' },
+                            },
+                        },
+                        orderBy: { orderInProgram: 'asc' },
+                    },
+                },
             });
         });
     }

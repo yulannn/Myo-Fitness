@@ -8,6 +8,7 @@ export function useCreateAdaptedSession() {
     return useMutation<SessionAdaptation, unknown, number>({
         mutationFn: (trainingSessionId: number) => SessionAdaptationService.createAdaptedSession(trainingSessionId),
         onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessionAdaptation'] });
         }

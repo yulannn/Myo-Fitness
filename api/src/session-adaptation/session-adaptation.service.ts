@@ -76,6 +76,88 @@ export class SessionAdaptationService {
      */
     async createNewSimilarSession(trainingSessionId: number, userId: number) {
         const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
+
+        // 🆕 Si la session vient d'un template, créer une nouvelle instance depuis ce template
+        if (oldSession.sessionTemplateId) {
+            return this.createInstanceFromTemplate(oldSession);
+        }
+
+        // Sinon, cloner la session (legacy)
+        return this.cloneLegacySession(oldSession);
+    }
+
+    /**
+     * 🆕 Crée une instance depuis un template (sans le modifier)
+     */
+    private async createInstanceFromTemplate(oldSession: any) {
+        const templateId = oldSession.sessionTemplateId;
+
+        return this.prisma.$transaction(async (tx) => {
+            // Récupérer le template
+            const template = await tx.sessionTemplate.findUnique({
+                where: { id: templateId },
+                include: {
+                    exercises: {
+                        include: { exercise: true },
+                        orderBy: { orderInSession: 'asc' },
+                    },
+                    trainingProgram: {
+                        include: {
+                            fitnessProfile: { select: { trainingDays: true } },
+                        },
+                    },
+                },
+            });
+
+            if (!template) {
+                throw new NotFoundException('Template not found');
+            }
+
+            // Calculer la prochaine date
+            const trainingDays = template.trainingProgram.fitnessProfile.trainingDays || [];
+            const nextSessionDate = this.calculateNextSessionDate(
+                oldSession.programId,
+                trainingDays
+            );
+
+            // Créer la nouvelle instance
+            const newSession = await tx.trainingSession.create({
+                data: {
+                    programId: oldSession.programId,
+                    sessionTemplateId: templateId,
+                    date: nextSessionDate,
+                    sessionName: template.name,
+                },
+            });
+
+            // Copier les exercices du template (valeurs actuelles, non modifiées)
+            for (const exTemplate of template.exercises) {
+                await tx.exerciceSession.create({
+                    data: {
+                        sessionId: newSession.id,
+                        exerciceId: exTemplate.exerciseId,
+                        sets: exTemplate.sets,
+                        reps: exTemplate.reps,
+                        weight: exTemplate.weight,
+                    },
+                });
+            }
+
+            return tx.trainingSession.findUnique({
+                where: { id: newSession.id },
+                include: {
+                    exercices: {
+                        include: { exercice: true },
+                    },
+                },
+            });
+        });
+    }
+
+    /**
+     * 🔧 Legacy : Clone une session sans template
+     */
+    private async cloneLegacySession(oldSession: any) {
         const originalSessionId = oldSession.originalSessionId || oldSession.id;
 
         const program = await this.prisma.trainingProgram.findUnique({
@@ -127,9 +209,111 @@ export class SessionAdaptationService {
     }
 
     /**
-     * Logique principale d'adaptation avec le nouveau système
+     * Logique principale d'adaptation avec le nouveau système template
      */
     private async createAdaptedSession(previousSession: any) {
+        // 🆕 NOUVEAU COMPORTEMENT : Adapter le TEMPLATE, pas créer une nouvelle session
+
+        // Si la session vient d'un template, on adapte le template
+        if (previousSession.sessionTemplateId) {
+            return this.adaptTemplateAndCreateInstance(previousSession);
+        }
+
+        // Sinon, session manuelle (legacy) - on crée une nouvelle session comme avant
+        return this.createLegacyAdaptedSession(previousSession);
+    }
+
+    /**
+     * 🆕 Adapte UNIQUEMENT le template source (sans créer d'instance)
+     */
+    private async adaptTemplateAndCreateInstance(previousSession: any) {
+        const templateId = previousSession.sessionTemplateId;
+
+        return this.prisma.$transaction(async (tx) => {
+            // Récupérer le template actuel
+            const template = await tx.sessionTemplate.findUnique({
+                where: { id: templateId },
+                include: {
+                    exercises: {
+                        include: { exercise: true },
+                        orderBy: { orderInSession: 'asc' },
+                    },
+                },
+            });
+
+            if (!template) {
+                throw new NotFoundException('Template not found');
+            }
+
+            // Pour chaque exercice du template, l'adapter selon les performances
+            for (const exTemplate of template.exercises) {
+                // Trouver l'exercice correspondant dans la session complétée
+                const performedEx = previousSession.exercices.find(
+                    (ex: any) => ex.exerciceId === exTemplate.exerciseId
+                );
+
+                if (!performedEx?.performances || performedEx.performances.length === 0) {
+                    continue; // Pas de performances, on garde le template tel quel
+                }
+
+                // Calculer le poids moyen depuis les performances RÉELLES
+                const performancesWithWeight = performedEx.performances.filter((p: any) => p.weight != null);
+                const avgWeight = performancesWithWeight.length > 0
+                    ? performancesWithWeight.reduce((sum: number, p: any) => sum + (p.weight || 0), 0) / performancesWithWeight.length
+                    : (performedEx.weight || 0);
+
+                // 1. Analyser les performances
+                const analysis = this.performanceAnalyzer.analyze(
+                    performedEx.performances,
+                    performedEx.reps,
+                    avgWeight, // ✅ Utiliser le poids réel des performances
+                    performedEx.sets
+                );
+
+                // 2. Déterminer la stratégie
+                const strategy = this.strategyEngine.determine(
+                    analysis.recommendation,
+                    exTemplate.exercise.bodyWeight,
+                    avgWeight // ✅ Utiliser le poids réel des performances
+                );
+
+                // 3. Appliquer l'adaptation
+                const adapted = this.exerciseAdapter.adapt(
+                    performedEx.reps,
+                    avgWeight, // ✅ Utiliser le poids réel des performances
+                    performedEx.sets,
+                    strategy,
+                    exTemplate.exercise.bodyWeight
+                );
+
+                // 4. ✅ METTRE À JOUR LE TEMPLATE (seule action, pas de création d'instance)
+                await tx.exerciseTemplate.update({
+                    where: { id: exTemplate.id },
+                    data: {
+                        sets: adapted.sets,
+                        reps: adapted.reps,
+                        weight: adapted.weight,
+                    },
+                });
+            }
+
+            // ✅ Retourner le template mis à jour (pas de nouvelle instance créée)
+            return tx.sessionTemplate.findUnique({
+                where: { id: templateId },
+                include: {
+                    exercises: {
+                        include: { exercise: true },
+                        orderBy: { orderInSession: 'asc' },
+                    },
+                },
+            });
+        });
+    }
+
+    /**
+     * 🔧 Legacy : Crée une session adaptée sans template (ancien comportement)
+     */
+    private async createLegacyAdaptedSession(previousSession: any) {
         const originalSessionId = previousSession.originalSessionId || previousSession.id;
 
         // Calculer la prochaine date

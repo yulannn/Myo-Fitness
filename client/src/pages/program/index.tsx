@@ -125,16 +125,6 @@ const Program = () => {
     });
   };
 
-  const sortSessions = (sessions: any[]) => {
-    if (!sessions || !Array.isArray(sessions)) return [];
-
-    return [...sessions].sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return -1;
-      if (!b.date) return 1;
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-  };
 
   const isLoading = isLoadingActive;
 
@@ -219,7 +209,6 @@ const Program = () => {
                 isExpanded={expandedPrograms.has(program.id)}
                 onToggleExpand={() => toggleProgramExpansion(program.id)}
                 exercices={exercices}
-                sortSessions={sortSessions}
                 activeProgram={activePrograms[0]}
               />
             ))}

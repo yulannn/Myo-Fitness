@@ -183,17 +183,69 @@ model TrainingProgram {
   template         ProgramTemplate?
   startDate        DateTime          @default(now())
   fitnessProfile   FitnessProfile    @relation(fields: [fitnessProfileId], references: [id], onDelete: Cascade)
+  
+  // 🆕 Templates de séances (modèles réutilisables)
+  sessionTemplates SessionTemplate[]
+  
+  // Sessions réelles (instances)
   sessions         TrainingSession[]
+}
+
+// 🆕 Template de session (le modèle réutilisable)
+model SessionTemplate {
+  id              Int                 @id @default(autoincrement())
+  programId       Int
+  name            String
+  description     String?
+  orderInProgram  Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relations
+  trainingProgram TrainingProgram     @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises       ExerciseTemplate[]  // Exercices du template
+  instances       TrainingSession[]   // Instances créées depuis ce template
+  
+  @@index([programId])
+  @@index([programId, orderInProgram])
+}
+
+// 🆕 Exercice dans un template
+model ExerciseTemplate {
+  id                Int              @id @default(autoincrement())
+  sessionTemplateId Int
+  exerciseId        Int
+  orderInSession    Int              @default(0)
+  sets              Int              @default(3)
+  reps              Int              @default(8)
+  weight            Float?
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relations
+  sessionTemplate   SessionTemplate  @relation(fields: [sessionTemplateId], references: [id], onDelete: Cascade)
+  exercise          Exercice         @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  
+  @@index([sessionTemplateId])
+  @@index([sessionTemplateId, orderInSession])
 }
 
 model TrainingSession {
   id                       Int                        @id @default(autoincrement())
   programId                Int
+  
+  // 🆕 Lien vers le template source (null si session manuelle)
+  sessionTemplateId        Int?
+  
   date                     DateTime?
   duration                 Int?
   sessionName              String?
   createdAt                DateTime                   @default(now())
+  
+  // ⚠️ DEPRECATED - Remplacé par sessionTemplateId (garde pour migration)
   originalSessionId        Int?
+  
   updatedAt                DateTime                   @default(now()) @updatedAt
   completed                Boolean                    @default(false)
   performedAt              DateTime?
@@ -202,10 +254,15 @@ model TrainingSession {
   SharedSession            SharedSession[]
   SharedSessionParticipant SharedSessionParticipant[]
   trainingProgram          TrainingProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  
+  // 🆕 Relation vers le template source
+  sessionTemplate          SessionTemplate?           @relation(fields: [sessionTemplateId], references: [id], onDelete: SetNull)
+  
   summary                  SessionSummary?
 
-    @@index([programId, completed])
+  @@index([programId, completed])
   @@index([performedAt])
+  @@index([sessionTemplateId])
 }
 
 model SessionSummary {
@@ -251,6 +308,9 @@ model Exercice {
   equipments      ExerciceEquipment[]
   groupes         ExerciceMuscleGroup[]
   trainingSession ExerciceSession[]
+  
+  // 🆕 Relation vers les templates
+  exerciseTemplates ExerciseTemplate[]
 }
 
 model ExerciceSession {

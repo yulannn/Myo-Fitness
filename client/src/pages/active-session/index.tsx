@@ -4,9 +4,10 @@ import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon, SparklesIcon, ArrowPath
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
 import useDeletePerformance from '../../api/hooks/performance/useDeletePerformance'
 import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
+import useDeleteSession from '../../api/hooks/session/useDeleteSession'
 import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
-import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../../components/ui/modal'
+import { Modal } from '../../components/ui/modal'
 import { usePerformanceStore } from '../../store/usePerformanceStore'
 import SessionSummaryCard from '../../components/session/SessionSummaryCard'
 
@@ -41,6 +42,7 @@ export default function ActiveSession() {
     const { mutate: updateCompletedSession } = useUpdateCompletedSession()
     const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
     const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
+    const { mutate: deleteSession } = useDeleteSession()
 
     // Plus besoin de charger depuis localStorage - Le store Zustand gère toute la persistance !
 
@@ -153,41 +155,58 @@ export default function ActiveSession() {
     const handleCancelSession = async () => {
         setIsCancelling(true)
 
-        // Supprimer toutes les performances sauvegardées en BDD
-        const performancesToDelete = getAllPerformances()
-            .filter(perf => perf.savedPerformanceId)
-            .map(perf => perf.savedPerformanceId!)
-
-        if (performancesToDelete.length > 0) {
-
-            const deletePromises = performancesToDelete.map(
-                (performanceId) =>
-                    new Promise((resolve, reject) => {
-                        deletePerformance(performanceId, {
-                            onSuccess: () => {
-                                resolve(performanceId)
-                            },
-                            onError: (error) => {
-                                console.error('❌ Erreur suppression performance:', performanceId, error)
-                                reject(error)
-                            }
-                        })
+        try {
+            // 1. Supprimer le TrainingSession en premier si on en a un
+            // Cela supprimera automatiquement toutes les performances en cascade
+            if (activeSession?.id) {
+                await new Promise<void>((resolve, reject) => {
+                    deleteSession(activeSession.id, {
+                        onSuccess: () => {
+                            console.log('✅ Session et performances supprimées avec succès')
+                            resolve()
+                        },
+                        onError: (error) => {
+                            console.error('❌ Erreur lors de la suppression de la session:', error)
+                            reject(error)
+                        }
                     })
-            )
+                })
+            } else {
+                // 2. Si pas de sessionId (session non sauvegardée), supprimer les performances manuellement
+                const performancesToDelete = getAllPerformances()
+                    .filter(perf => perf.savedPerformanceId)
+                    .map(perf => perf.savedPerformanceId!)
 
-            try {
-                await Promise.all(deletePromises)
-            } catch (error) {
-                console.error('❌ Erreur lors de la suppression des performances:', error)
-                alert('Certaines performances n\'ont pas pu être supprimées.')
+                if (performancesToDelete.length > 0) {
+                    const deletePromises = performancesToDelete.map(
+                        (performanceId) =>
+                            new Promise((resolve, reject) => {
+                                deletePerformance(performanceId, {
+                                    onSuccess: () => {
+                                        resolve(performanceId)
+                                    },
+                                    onError: (error) => {
+                                        console.error('❌ Erreur suppression performance:', performanceId, error)
+                                        reject(error)
+                                    }
+                                })
+                            })
+                    )
+
+                    await Promise.all(deletePromises)
+                }
             }
-        }
 
-        // Nettoyer tout
-        cleanupSession()
-        setShowCancelModal(false)
-        setIsCancelling(false)
-        navigate('/programs')
+            // 3. Nettoyer tout
+            cleanupSession()
+            setShowCancelModal(false)
+            setIsCancelling(false)
+            navigate('/programs')
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'annulation:', error)
+            alert('Erreur lors de l\'annulation de la session.')
+            setIsCancelling(false)
+        }
     }
 
     const handlePerformanceChange = (
@@ -203,7 +222,7 @@ export default function ActiveSession() {
         updatePerformance(exerciceSessionId, setIndex, { [field]: value })
     }
 
-    const handleValidateSet = (exerciceSessionId: number, setIndex: number) => {
+    const handleValidateSet = (exerciceSessionId: number, setIndex: number, reps_prevues: number, weight_prevue?: number) => {
         const key = `${exerciceSessionId}-${setIndex}`
         const perf = performances[key]
 
@@ -213,9 +232,9 @@ export default function ActiveSession() {
             return
         }
 
-        // ✅ Validation améliorée des données
-        const reps = perf?.reps_effectuees ?? 0
-        const weight = perf?.weight ?? 0
+        // ✅ Utiliser les valeurs prévues comme fallback si non renseignées
+        const reps = perf?.reps_effectuees ?? reps_prevues
+        const weight = perf?.weight ?? (weight_prevue || 0)
 
         // Au moins l'un des deux doit être renseigné et > 0
         if (reps <= 0 && weight <= 0) {
@@ -380,7 +399,7 @@ export default function ActiveSession() {
 
                                             <div className="col-span-3 flex justify-center">
                                                 <button
-                                                    onClick={() => handleValidateSet(exerciceSession.id, setIndex)}
+                                                    onClick={() => handleValidateSet(exerciceSession.id, setIndex, exerciceSession.reps, exerciceSession.weight)}
                                                     className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${isDone
                                                         ? 'bg-[#94fbdd] text-[#121214] shadow-md shadow-[#94fbdd]/20'
                                                         : 'bg-[#121214] text-gray-600 border border-[#252527] hover:border-[#94fbdd]/30 hover:text-gray-400'

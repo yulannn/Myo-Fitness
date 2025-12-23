@@ -35,7 +35,7 @@ import { ActivityModule } from './social/activity/activity.module';
 import { BadgeModule } from './badge/badge.module';
 import { BodyAtlasModule } from './body-atlas/body-atlas.module';
 import { MuscleGroupModule } from './muscle-group/muscle-group.module';
-
+import { SessionTemplateModule } from './session-template/session-template.module';
 
 
 @Module({
@@ -82,6 +82,7 @@ import { MuscleGroupModule } from './muscle-group/muscle-group.module';
     BadgeModule,
     BodyAtlasModule,
     MuscleGroupModule,
+    SessionTemplateModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [
