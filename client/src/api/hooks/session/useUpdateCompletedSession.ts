@@ -16,6 +16,12 @@ export default function useUpdateCompletedSession() {
             qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });
+
+            // 🚀 NOUVEAUX: Invalider les stats, records et streak
+            qc.invalidateQueries({ queryKey: ['sessions', 'stats'] });
+            qc.invalidateQueries({ queryKey: ['sessions', 'records'] });
+            qc.invalidateQueries({ queryKey: ['sessions', 'streak'] });
+
             qc.invalidateQueries({ queryKey: ['user', 'xp'] });
             qc.invalidateQueries({ queryKey: ['body-atlas'] }); // ✅ Rafraîchir le Body Atlas
             if (sessionId) qc.invalidateQueries({ queryKey: ['session', sessionId] });

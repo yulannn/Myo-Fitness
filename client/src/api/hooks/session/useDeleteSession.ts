@@ -11,6 +11,11 @@ export function useDeleteSession() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['program'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+
+      // 🚀 NOUVEAUX: Invalider les stats après suppression
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'records'] }); // Potentiellement affecté
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'streak'] }); // Potentiellement affecté
     },
   });
 }

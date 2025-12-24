@@ -21,6 +21,9 @@ export function useStartFromTemplate() {
       queryClient.invalidateQueries({ queryKey: ['program'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
 
+      // 🚀 NOUVEAU: Invalider stats car totalSessions et upcomingSessions changent
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'stats'] });
+
       // Démarrer la session active
       setSessionId(session.id);
       setActiveSession(session);

@@ -12,6 +12,10 @@ export function useUpdateSessionDate(sessionId?: number) {
             qc.invalidateQueries({ queryKey: ['program'] });
             qc.invalidateQueries({ queryKey: ['sessions'] });
             qc.invalidateQueries({ queryKey: ['sessions', 'all'] });
+
+            // 🚀 NOUVEAUX: Invalider stats car upcomingSessions peut changer
+            qc.invalidateQueries({ queryKey: ['sessions', 'stats'] });
+
             if (sessionId) qc.invalidateQueries({ queryKey: ['session', sessionId] });
         }
     });

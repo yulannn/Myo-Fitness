@@ -12,6 +12,9 @@ export default function useScheduleFromTemplate() {
       queryClient.invalidateQueries({ queryKey: ['program', 'active'] }); // ✅ Programme actif
       queryClient.invalidateQueries({ queryKey: ['program'] }); // ✅ Tous les programmes
       queryClient.invalidateQueries({ queryKey: ['sessions'] }); // ✅ Calendrier
+
+      // 🚀 NOUVEAU: Invalider stats car totalSessions et upcomingSessions changent
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'stats'] });
     },
   });
 }
