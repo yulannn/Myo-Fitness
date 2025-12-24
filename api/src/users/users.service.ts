@@ -42,6 +42,14 @@ export class UsersService {
     });
   }
 
+  async findByFriendCode(friendCode: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { friendCode },
+    });
+    return user;
+  }
+
+
 
   // ========================================
   // SYSTÈME D'XP ET DE NIVEAUX

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Delete, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -38,8 +38,25 @@ export class UsersController {
     description: 'Utilisateur trouvé',
     type: UserEntity,
   })
-  async getUserByEmail(@Param('email') email: string) {
-    return this.usersService.findUserByEmail(email);
+  async getUserByEmail(@Param('email') email: string, @Req() req) {
+    // ✅ SÉCURITÉ : Vérifier que c'est son propre email
+    // Seul l'utilisateur peut consulter ses propres données via son email
+    if (email !== req.user.email) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez consulter que vos propres informations'
+      );
+    }
+
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    // ✅ Retirer les données sensibles
+    const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
+      emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
+
+    return safeUser;
   }
 
   @Get(':id')
@@ -50,8 +67,22 @@ export class UsersController {
     description: 'Utilisateur trouvé',
     type: UserEntity,
   })
-  async getUserById(@Param('id') id: number) {
-    return this.usersService.findUserById(id);
+  async getUserById(@Param('id') id: number, @Req() req) {
+    // ✅ SÉCURITÉ : Vérifier que c'est son propre ID
+    // Seul l'utilisateur peut consulter ses propres données via son ID
+    if (Number(id) !== req.user.userId) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez consulter que vos propres informations'
+      );
+    }
+
+    const user = await this.usersService.findUserById(Number(id));
+
+    // ✅ Retirer les données sensibles
+    const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
+      emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
+
+    return safeUser;
   }
 
   @Post('me/profile-picture/presigned-url')

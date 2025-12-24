@@ -26,7 +26,7 @@ export class AuthService {
     private emailService: EmailService,
   ) { }
 
-  /** Génère un code ami unique de 8 caractères alphanumériques */
+  /** Génère un code ami de 8 caractères alphanumériques (privé) */
   private generateFriendCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -35,6 +35,36 @@ export class AuthService {
     }
     return code;
   }
+
+  /** 
+   * Génère un code ami UNIQUE avec retry en cas de collision
+   * @returns Un friendCode garanti unique
+   * @throws BadRequestException si impossible d'en générer un après 10 tentatives
+   */
+  private async generateUniqueFriendCode(): Promise<string> {
+    const MAX_ATTEMPTS = 10;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const code = this.generateFriendCode();
+
+      // ✅ Vérifier si le code existe déjà
+      const existing = await this.usersService.findByFriendCode(code);
+
+      if (!existing) {
+        // Code unique trouvé !
+        return code;
+      }
+
+      // Log pour debugging (rare)
+      console.warn(`FriendCode collision detected: ${code}, retry ${attempt + 1}/${MAX_ATTEMPTS}`);
+    }
+
+    // Si on arrive ici, on a eu 10 collisions d'affilée (quasi impossible)
+    throw new BadRequestException(
+      'Impossible de générer un code ami unique. Veuillez réessayer dans quelques instants.'
+    );
+  }
+
 
   /** Valide l'utilisateur pour le LocalStrategy */
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
@@ -70,11 +100,11 @@ export class AuthService {
     // Auto-migration: Générer un code ami s'il n'en a pas
     if (!user.friendCode) {
       try {
-        const friendCode = this.generateFriendCode();
+        const friendCode = await this.generateUniqueFriendCode();
         await this.usersService.updateUser(user.id, { friendCode });
         user.friendCode = friendCode;
       } catch (e) {
-        // En cas de collision (très rare), on réessayera au prochain appel
+        // En cas d'erreur (très rare), on réessayera au prochain appel
         console.error('Erreur génération friendCode auto:', e);
       }
     }
@@ -105,11 +135,8 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
 
-    // Essayer de générer un code unique (avec retry manuel simple si collision)
-    let friendCode = this.generateFriendCode();
-    // On pourrait vérifier l'existence ici, mais le @unique de la DB nous protégera
-    // et on laissera l'erreur remonter ou on ferait une boucle. 
-    // Pour simplifier, on assume que la collision est rare sur 8 chars.
+    // ✅ Générer un friendCode unique garanti sans collision
+    const friendCode = await this.generateUniqueFriendCode();
 
     const newUser = await this.usersService.createUser({
       ...signUpDto,
