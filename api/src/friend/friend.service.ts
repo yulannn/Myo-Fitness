@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { ChatService } from '../chat/chat.service';
@@ -162,7 +162,7 @@ export class FriendService {
     return friendRequest;
   }
 
-  async acceptFriendRequest(requestId: string) {
+  async acceptFriendRequest(requestId: string, userId: number) {
     const request = await this.prisma.friendRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -178,6 +178,13 @@ export class FriendService {
 
     if (!request) {
       throw new Error('Friend request not found');
+    }
+
+    // ✅ SÉCURITÉ : Vérifier que c'est bien le destinataire qui accepte
+    if (request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Vous ne pouvez accepter que les demandes qui vous sont adressées'
+      );
     }
 
     // Créer les relations d'amitié
@@ -233,7 +240,7 @@ export class FriendService {
     return { message: 'Friend request accepted' };
   }
 
-  async declineFriendRequest(requestId: string) {
+  async declineFriendRequest(requestId: string, userId: number) {
     const request = await this.prisma.friendRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -249,6 +256,13 @@ export class FriendService {
 
     if (!request) {
       throw new Error('Friend request not found');
+    }
+
+    // ✅ SÉCURITÉ : Vérifier que c'est bien le destinataire qui refuse
+    if (request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Vous ne pouvez refuser que les demandes qui vous sont adressées'
+      );
     }
 
     await this.prisma.friendRequest.delete({

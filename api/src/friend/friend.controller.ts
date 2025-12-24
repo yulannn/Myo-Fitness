@@ -78,8 +78,9 @@ export class FriendController {
     description: 'Demande acceptée',
     schema: { example: { message: 'Demande d’amitié acceptée' } },
   })
-  acceptFriendRequest(@Param('requestId') requestId: string) {
-    return this.friendService.acceptFriendRequest(requestId);
+  acceptFriendRequest(@Param('requestId') requestId: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.acceptFriendRequest(requestId, userId);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -96,8 +97,9 @@ export class FriendController {
     description: 'Demande refusée',
     schema: { example: { message: 'Demande d’amitié refusée' } },
   })
-  declineFriendRequest(@Param('requestId') requestId: string) {
-    return this.friendService.declineFriendRequest(requestId);
+  declineFriendRequest(@Param('requestId') requestId: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.friendService.declineFriendRequest(requestId, userId);
   }
 
   @Get()
