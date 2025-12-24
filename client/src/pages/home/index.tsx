@@ -1,5 +1,7 @@
 import { useProgramsByUser } from '../../api/hooks/program/useGetProgramsByUser'
-import useGetAllUserSessions from '../../api/hooks/session/useGetAllUserSessions'
+import useGetUserStats from '../../api/hooks/session/useGetUserStats'
+import useGetPersonalRecords from '../../api/hooks/session/useGetPersonalRecords'
+import useGetUserStreak from '../../api/hooks/session/useGetUserStreak'
 import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 import {
@@ -16,25 +18,21 @@ import WeekCalendarPreview from '../../components/home/WeekCalendarPreview'
 
 export default function Home() {
   const { data: programs } = useProgramsByUser()
-  const { data: sessions } = useGetAllUserSessions()
+
+  // 🚀 Nouveaux hooks optimisés (calcul côté backend/DB)
+  const { data: stats } = useGetUserStats()
+  const { data: records } = useGetPersonalRecords(3)
+  const { data: streakData } = useGetUserStreak()
+
   const { data: weightHistory } = useWeightHistory()
   const { data: fitnessProfile } = useFitnessProfilesByUser()
 
-  // Calculer les stats
-  const stats = useMemo(() => {
-    const completedSessions = sessions?.filter((s: any) => s.completed).length || 0
-    const activeProgram = Array.isArray(programs)
+  // Calculer l'activeProgram côté client (léger)
+  const activeProgram = useMemo(() => {
+    return Array.isArray(programs)
       ? programs.find((p: any) => p.status === 'ACTIVE')
       : null
-    const upcomingSessions = sessions?.filter((s: any) => !s.completed && s.date).length || 0
-
-    return {
-      completedSessions,
-      activeProgram,
-      upcomingSessions,
-      totalSessions: sessions?.length || 0
-    }
-  }, [programs, sessions])
+  }, [programs])
 
   // Transform weight history data for the chart
   // Limiter aux 90 derniers jours pour éviter la surcharge visuelle
@@ -84,7 +82,7 @@ export default function Home() {
               <div>
                 <p className="text-white font-bold text-lg">Mon Programme</p>
                 <p className="text-gray-400 text-sm mt-1">
-                  {stats.activeProgram ? stats.activeProgram.name : 'Créer un programme'}
+                  {activeProgram ? activeProgram.name : 'Créer un programme'}
                 </p>
               </div>
               <ArrowRightIcon className="h-5 w-5 text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
@@ -99,7 +97,7 @@ export default function Home() {
               <div>
                 <p className="text-white font-bold text-lg">Mes Séances</p>
                 <p className="text-gray-400 text-sm mt-1">
-                  {stats.upcomingSessions} à venir
+                  {stats?.upcomingSessions || 0} à venir
                 </p>
               </div>
               <ArrowRightIcon className="h-5 w-5 text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
@@ -123,13 +121,13 @@ export default function Home() {
                 color="#94fbdd"
                 targetWeight={fitnessProfile?.targetWeight}
               />
-              <PersonalRecords sessions={sessions || []} />
+              <PersonalRecords records={records || []} />
             </div>
 
             {/* Side Column - Insights & Streak */}
             <div className="space-y-6">
-              <StreakTracker sessions={sessions || []} />
-              <AIInsights sessions={sessions || []} programs={programs || []} />
+              <StreakTracker streakData={streakData} />
+              <AIInsights stats={stats} />
             </div>
           </div>
         </div>

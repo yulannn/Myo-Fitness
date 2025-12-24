@@ -1,73 +1,20 @@
-import { useMemo } from 'react';
-import { TrophyIcon, BoltIcon, StarIcon } from '@heroicons/react/24/outline';
+import { TrophyIcon, BoltIcon } from '@heroicons/react/24/outline';
 
 interface PersonalRecord {
   exerciseName: string;
+  exerciseId: number;
   weight: number;
   reps: number;
   date: string;
-  improvement: number;
+  volume: number;
 }
 
 interface PersonalRecordsProps {
-  sessions: any[];
+  records: PersonalRecord[];
 }
 
-export default function PersonalRecords({ sessions }: PersonalRecordsProps) {
-  const records = useMemo(() => {
-    if (!sessions || sessions.length === 0) return [];
-
-    const exerciseRecords: Map<string, PersonalRecord> = new Map();
-
-    sessions.forEach(session => {
-      if (!session.exercices || !session.completed) return;
-
-      session.exercices.forEach((exerciceSession: any) => {
-        const exerciseName = exerciceSession.exercice?.name || 'Unknown';
-
-        // Calculate max weight * reps for this exercise
-        let maxScore = 0;
-        let bestWeight = 0;
-        let bestReps = 0;
-
-        if (exerciceSession.performances && exerciceSession.performances.length > 0) {
-          exerciceSession.performances.forEach((perf: any) => {
-            const score = (perf.weight || 0) * (perf.reps_effectuees || 0);
-            if (score > maxScore) {
-              maxScore = score;
-              bestWeight = perf.weight || 0;
-              bestReps = perf.reps_effectuees || 0;
-            }
-          });
-        }
-
-        if (maxScore > 0) {
-          const existing = exerciseRecords.get(exerciseName);
-          const currentScore = bestWeight * bestReps;
-
-          if (!existing || currentScore > (existing.weight * existing.reps)) {
-            const improvement = existing
-              ? ((currentScore - (existing.weight * existing.reps)) / (existing.weight * existing.reps)) * 100
-              : 0;
-
-            exerciseRecords.set(exerciseName, {
-              exerciseName,
-              weight: bestWeight,
-              reps: bestReps,
-              date: session.performedAt || session.createdAt,
-              improvement
-            });
-          }
-        }
-      });
-    });
-
-    return Array.from(exerciseRecords.values())
-      .sort((a, b) => b.weight * b.reps - a.weight * a.reps)
-      .slice(0, 3);
-  }, [sessions]);
-
-  if (records.length === 0) {
+export default function PersonalRecords({ records }: PersonalRecordsProps) {
+  if (!records || records.length === 0) {
     return (
       <div className="bg-[#252527] rounded-2xl p-6 border border-[#94fbdd]/10">
         <div className="flex items-center gap-3 mb-4">
@@ -152,19 +99,11 @@ export default function PersonalRecords({ sessions }: PersonalRecordsProps) {
                       month: 'short'
                     })}
                   </span>
-                  {record.improvement > 0 && (
-                    <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 rounded-md">
-                      <StarIcon className="h-3 w-3 text-green-400" />
-                      <span className="text-xs font-bold text-green-400">
-                        +{record.improvement.toFixed(0)}%
-                      </span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Volume */}
                 <div className="text-xs text-gray-500">
-                  Volume: <span className="font-bold text-gray-400">{(record.weight * record.reps).toFixed(0)}</span>
+                  Volume: <span className="font-bold text-gray-400">{record.volume.toFixed(0)}</span>
                 </div>
               </div>
             </div>

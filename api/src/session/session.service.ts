@@ -725,4 +725,243 @@ export class SessionService {
     });
   }
 
+  /**
+   * 📊 OPTIMISÉ: Récupère les statistiques utilisateur (calcul côté DB)
+   */
+  async getUserStats(userId: number) {
+    // Utiliser des requêtes SQL optimisées avec comptage côté DB
+    const [totalSessions, completedSessions, upcomingSessions] = await Promise.all([
+      // Total de sessions (programmes actifs uniquement)
+      this.prisma.trainingSession.count({
+        where: {
+          trainingProgram: {
+            fitnessProfile: { userId },
+            status: 'ACTIVE',
+          },
+        },
+      }),
+      // Sessions complétées
+      this.prisma.trainingSession.count({
+        where: {
+          trainingProgram: {
+            fitnessProfile: { userId },
+            status: 'ACTIVE',
+          },
+          completed: true,
+        },
+      }),
+      // Sessions à venir (planifiées et non complétées)
+      this.prisma.trainingSession.count({
+        where: {
+          trainingProgram: {
+            fitnessProfile: { userId },
+            status: 'ACTIVE',
+          },
+          completed: false,
+          date: {
+            not: null,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalSessions,
+      completedSessions,
+      upcomingSessions,
+    };
+  }
+
+  /**
+   * 🏆 OPTIMISÉ: Récupère les top 3 records personnels (calcul côté DB)
+   * Utilise une requête SQL optimisée pour calculer le meilleur volume par exercice
+   */
+  async getPersonalRecords(userId: number, limit = 3) {
+    // Récupérer toutes les exercicesSessions avec leurs performances
+    const exerciseSessions = await this.prisma.exerciceSession.findMany({
+      where: {
+        trainingSession: {
+          trainingProgram: {
+            fitnessProfile: { userId },
+            status: 'ACTIVE',
+          },
+          completed: true,
+        },
+      },
+      select: {
+        exerciceId: true,
+        exercice: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        trainingSession: {
+          select: {
+            performedAt: true,
+            createdAt: true,
+          },
+        },
+        performances: {
+          where: {
+            weight: { gt: 0 },
+            reps_effectuees: { gt: 0 },
+          },
+          select: {
+            weight: true,
+            reps_effectuees: true,
+          },
+        },
+      },
+    });
+
+    // Calculer le meilleur volume par exercice côté backend
+    const exerciseRecords = new Map<number, {
+      exerciseId: number;
+      exerciseName: string;
+      weight: number;
+      reps: number;
+      date: Date;
+      volume: number;
+    }>();
+
+    exerciseSessions.forEach((exSession) => {
+      const exerciseId = exSession.exerciceId;
+      const exerciseName = exSession.exercice.name;
+      const sessionDate = exSession.trainingSession.performedAt || exSession.trainingSession.createdAt;
+
+      // Parcourir toutes les performances de cet exercice
+      exSession.performances.forEach((perf) => {
+        const weight = perf.weight || 0;
+        const reps = perf.reps_effectuees || 0;
+        const volume = weight * reps;
+
+        if (volume > 0) {
+          const existing = exerciseRecords.get(exerciseId);
+          if (!existing || volume > existing.volume) {
+            exerciseRecords.set(exerciseId, {
+              exerciseId,
+              exerciseName,
+              weight,
+              reps,
+              date: sessionDate,
+              volume,
+            });
+          }
+        }
+      });
+    });
+
+    // Retourner les top N records triés par volume
+    return Array.from(exerciseRecords.values())
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, limit);
+  }
+
+  /**
+   * 🔥 OPTIMISÉ: Calcule les données de streak (série de jours consécutifs)
+   * Récupère uniquement les dates de sessions complétées pour calcul côté backend
+   */
+  async getUserStreak(userId: number) {
+    // Récupérer uniquement les dates de sessions complétées (optimisé)
+    const completedSessions = await this.prisma.trainingSession.findMany({
+      where: {
+        trainingProgram: {
+          fitnessProfile: { userId },
+          status: 'ACTIVE',
+        },
+        completed: true,
+        performedAt: { not: null },
+      },
+      select: {
+        performedAt: true,
+      },
+      orderBy: {
+        performedAt: 'desc',
+      },
+    });
+
+    if (completedSessions.length === 0) {
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        weekActivity: Array(7).fill(false),
+        totalCompletedSessions: 0,
+      };
+    }
+
+    // Convertir en dates uniques (un jour = une session max pour le streak)
+    const uniqueDates = new Set<string>();
+    completedSessions.forEach((session) => {
+      // performedAt ne peut pas être null car on filtre dans la query
+      const date = new Date(session.performedAt!);
+      date.setHours(0, 0, 0, 0);
+      uniqueDates.add(date.toISOString());
+    });
+
+    const sortedDates = Array.from(uniqueDates)
+      .map(d => new Date(d))
+      .sort((a, b) => b.getTime() - a.getTime());
+
+    // Calculer la série actuelle
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < sortedDates.length; i++) {
+      const sessionDate = new Date(sortedDates[i]);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      const expectedDate = new Date(today);
+      expectedDate.setDate(expectedDate.getDate() - currentStreak);
+
+      const diffDays = Math.floor((expectedDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        currentStreak++;
+      } else if (diffDays > 1) {
+        break;
+      }
+    }
+
+    // Calculer la plus longue série
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    for (let i = 0; i < sortedDates.length; i++) {
+      if (i === 0) {
+        tempStreak = 1;
+        longestStreak = 1;
+      } else {
+        const diff = Math.floor((sortedDates[i - 1].getTime() - sortedDates[i].getTime()) / (1000 * 60 * 60 * 24));
+        if (diff <= 1) {
+          tempStreak++;
+          longestStreak = Math.max(longestStreak, tempStreak);
+        } else {
+          tempStreak = 1;
+        }
+      }
+    }
+
+    // Calculer l'activité des 7 derniers jours
+    const weekActivity = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      date.setHours(0, 0, 0, 0);
+
+      return sortedDates.some(sessionDate => {
+        const sd = new Date(sessionDate);
+        sd.setHours(0, 0, 0, 0);
+        return sd.getTime() === date.getTime();
+      });
+    });
+
+    return {
+      currentStreak,
+      longestStreak,
+      weekActivity,
+      totalCompletedSessions: completedSessions.length,
+    };
+  }
+
 }

@@ -62,6 +62,46 @@ export const SessionFetchDataService = {
     async deleteSession(sessionId: number): Promise<void> {
         await api.delete(`/session/${sessionId}`);
     },
+
+    /**
+     * 📊 OPTIMISÉ: Récupère les statistiques utilisateur (calcul côté backend)
+     */
+    async getUserStats(): Promise<{
+        totalSessions: number;
+        completedSessions: number;
+        upcomingSessions: number;
+    }> {
+        const res = await api.get('/session/user/stats');
+        return res.data;
+    },
+
+    /**
+     * 🏆 OPTIMISÉ: Récupère les records personnels (calcul côté backend)
+     */
+    async getPersonalRecords(limit = 3): Promise<Array<{
+        exerciseId: number;
+        exerciseName: string;
+        weight: number;
+        reps: number;
+        date: string;
+        volume: number;
+    }>> {
+        const res = await api.get(`/session/user/records?limit=${limit}`);
+        return res.data;
+    },
+
+    /**
+     * 🔥 OPTIMISÉ: Récupère les données de streak (calcul côté backend)
+     */
+    async getUserStreak(): Promise<{
+        currentStreak: number;
+        longestStreak: number;
+        weekActivity: boolean[];
+        totalCompletedSessions: number;
+    }> {
+        const res = await api.get('/session/user/streak');
+        return res.data;
+    },
 };
 
 export default SessionFetchDataService;

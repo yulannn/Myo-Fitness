@@ -75,6 +75,55 @@ export class SessionController {
     return this.sessionService.getAllUserSessions(userId, startDate, endDate);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('user/stats')
+  @ApiOperation({
+    summary: '📊 Récupérer les statistiques utilisateur optimisées',
+    description: 'Calcul optimisé côté DB des statistiques de sessions (total, complétées, à venir)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistiques récupérées avec succès',
+  })
+  getUserStats(@Request() req) {
+    const userId = req.user.userId;
+    return this.sessionService.getUserStats(userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('user/records')
+  @ApiOperation({
+    summary: '🏆 Récupérer les records personnels (top 3)',
+    description: 'Calcul optimisé côté DB des 3 meilleurs records (poids × reps) par exercice',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Records personnels récupérés avec succès',
+  })
+  getPersonalRecords(
+    @Request() req,
+    @Query('limit') limit?: string,
+  ) {
+    const userId = req.user.userId;
+    const limitNum = limit ? parseInt(limit, 10) : 3;
+    return this.sessionService.getPersonalRecords(userId, limitNum);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('user/streak')
+  @ApiOperation({
+    summary: '🔥 Récupérer les données de streak',
+    description: 'Calcul optimisé côté DB de la série de jours consécutifs d\'entraînement',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Données de streak récupérées avec succès',
+  })
+  getUserStreak(@Request() req) {
+    const userId = req.user.userId;
+    return this.sessionService.getUserStreak(userId);
+  }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/completed')

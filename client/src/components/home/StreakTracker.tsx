@@ -1,81 +1,46 @@
 import { useMemo } from 'react';
 import { FireIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
-interface StreakTrackerProps {
-  sessions: any[];
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  weekActivity: boolean[];
+  totalCompletedSessions: number;
 }
 
-export default function StreakTracker({ sessions }: StreakTrackerProps) {
-  const streakData = useMemo(() => {
-    if (!sessions || sessions.length === 0) {
-      return { currentStreak: 0, longestStreak: 0, weekActivity: [] };
-    }
+interface StreakTrackerProps {
+  streakData?: StreakData;
+}
 
-    // Sort sessions by date
-    const completedSessions = sessions
-      .filter(s => s.completed && s.performedAt)
-      .sort((a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime());
-
-    // Calculate current streak
-    let currentStreak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < completedSessions.length; i++) {
-      const sessionDate = new Date(completedSessions[i].performedAt);
-      sessionDate.setHours(0, 0, 0, 0);
-
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - currentStreak);
-
-      const diffDays = Math.floor((expectedDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 0) {
-        currentStreak++;
-      } else if (diffDays > 1) {
-        break;
-      }
-    }
-
-    // Calculate longest streak
-    let longestStreak = 0;
-    let tempStreak = 0;
-    const sessionDates = completedSessions.map(s => {
-      const date = new Date(s.performedAt);
-      date.setHours(0, 0, 0, 0);
-      return date.getTime();
-    });
-
-    for (let i = 0; i < sessionDates.length; i++) {
-      if (i === 0 || sessionDates[i - 1] - sessionDates[i] <= 86400000) {
-        tempStreak++;
-        longestStreak = Math.max(longestStreak, tempStreak);
-      } else {
-        tempStreak = 1;
-      }
-    }
-
-    // Get last 7 days activity
-    const weekActivity = Array.from({ length: 7 }, (_, i) => {
+export default function StreakTracker({ streakData }: StreakTrackerProps) {
+  // Générer les labels des jours de la semaine
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
-      date.setHours(0, 0, 0, 0);
-
-      const hasSession = completedSessions.some(s => {
-        const sessionDate = new Date(s.performedAt);
-        sessionDate.setHours(0, 0, 0, 0);
-        return sessionDate.getTime() === date.getTime();
-      });
-
-      return {
-        date: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
-        active: hasSession,
-        dayIndex: i
-      };
+      return date.toLocaleDateString('fr-FR', { weekday: 'short' });
     });
+  }, []);
 
-    return { currentStreak, longestStreak, weekActivity };
-  }, [sessions]);
+  if (!streakData) {
+    return (
+      <div className="bg-gradient-to-br from-[#94fbdd]/10 to-[#252527] rounded-2xl p-6 border border-[#94fbdd]/20 overflow-hidden relative group">
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-[#94fbdd]/20 rounded-xl">
+                <FireIcon className="h-6 w-6 text-[#94fbdd]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Série en cours</h3>
+                <p className="text-xs text-gray-400">Chargement...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-[#94fbdd]/10 to-[#252527] rounded-2xl p-6 border border-[#94fbdd]/20 overflow-hidden relative group">
@@ -156,13 +121,13 @@ export default function StreakTracker({ sessions }: StreakTrackerProps) {
             <p className="text-xs text-gray-400 font-medium">7 derniers jours</p>
           </div>
           <div className="grid grid-cols-7 gap-2">
-            {streakData.weekActivity.map((day, index) => (
+            {streakData.weekActivity.map((isActive: boolean, index: number) => (
               <div key={index} className="flex flex-col items-center gap-2">
                 <div
                   className={`
                     w-full aspect-square rounded-xl flex items-center justify-center
                     transition-all duration-300
-                    ${day.active
+                    ${isActive
                       ? 'bg-[#94fbdd] shadow-lg shadow-[#94fbdd]/30 scale-105'
                       : 'bg-[#121214] border-2 border-[#94fbdd]/10'
                     }
@@ -171,14 +136,14 @@ export default function StreakTracker({ sessions }: StreakTrackerProps) {
                     animationDelay: `${index * 50}ms`
                   }}
                 >
-                  {day.active && (
+                  {isActive && (
                     <svg className="w-4 h-4 text-[#121214]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </div>
-                <span className={`text-[10px] font-medium ${day.active ? 'text-[#94fbdd]' : 'text-gray-600'}`}>
-                  {day.date}
+                <span className={`text-[10px] font-medium ${isActive ? 'text-[#94fbdd]' : 'text-gray-600'}`}>
+                  {weekDays[index]}
                 </span>
               </div>
             ))}
