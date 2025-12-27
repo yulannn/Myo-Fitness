@@ -270,16 +270,17 @@ model TrainingSession {
 }
 
 model SessionSummary {
-  id           Int             @id @default(autoincrement())
-  sessionId    Int             @unique
-  totalSets    Int
-  totalReps    Int
-  totalVolume  Float
-  avgRPE       Float?
-  duration     Int?
-  muscleGroups String[]
-  createdAt    DateTime        @default(now())
-  session      TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id             Int             @id @default(autoincrement())
+  sessionId      Int             @unique
+  totalSets      Int
+  totalReps      Int
+  totalVolume    Float
+  avgRPE         Float?
+  caloriesBurned Float?
+  duration       Int?
+  muscleGroups   String[]
+  createdAt      DateTime        @default(now())
+  session        TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
 }

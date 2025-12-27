@@ -93,6 +93,7 @@ export class SessionService {
             avgRPE: true,
             duration: true,
             muscleGroups: true,
+            caloriesBurned: true,
           },
         },
       },
@@ -102,7 +103,6 @@ export class SessionService {
   }
 
   /**
-   * 🚀 ULTRA-OPTIMISÉ: Endpoint pour le calendrier
    * Retourne uniquement les données minimales nécessaires pour l'affichage calendrier
    */
   async getSessionsForCalendar(
@@ -172,8 +172,6 @@ export class SessionService {
 
   /**
    * Récupère toutes les sessions d'un utilisateur
-   * ✅ OPTIMISÉ: Utilise select pour charger uniquement les données nécessaires
-   * Utilisé par: Home (PersonalRecords, StreakTracker, AIInsights, WeekCalendarPreview)
    */
   async getAllUserSessions(
     userId: number,
@@ -248,7 +246,7 @@ export class SessionService {
   }
 
   async completedSession(id: number, userId: number) {
-    // 1️⃣ Récupérer et valider la session (en dehors de la transaction pour performance)
+    // 1️ Récupérer et valider la session (en dehors de la transaction pour performance)
     const session = await this.prisma.trainingSession.findUnique({
       where: { id },
       include: {
@@ -282,7 +280,6 @@ export class SessionService {
       throw new BadRequestException('You do not have permission to complete this session');
     }
 
-    // 2️⃣ ✅ TRANSACTION ATOMIQUE pour éviter les race conditions
     const result = await this.prisma.$transaction(async (tx) => {
       // Marquer la séance comme complétée
       const updatedSession = await tx.trainingSession.update({
@@ -324,7 +321,7 @@ export class SessionService {
           canGainXp = today.getTime() > lastGainDay.getTime();
         }
 
-        // ✅ Donner XP seulement si c'est la première séance du jour
+        //  Donner XP seulement si c'est la première séance du jour
         if (canGainXp) {
           const XP_PER_LEVEL = 200;
           const XP_GAIN = 50;
@@ -332,7 +329,7 @@ export class SessionService {
           const newTotalXp = user.xp + XP_GAIN;
           const newLevel = Math.floor(newTotalXp / XP_PER_LEVEL) + 1;
 
-          // ✅ Tout en UNE SEULE opération atomique
+          //  Tout en UNE SEULE opération atomique
           await tx.user.update({
             where: { id: userId },
             data: {
@@ -343,7 +340,7 @@ export class SessionService {
           });
         }
 
-        // 📱 Générer l'activité sociale
+        //  Générer l'activité sociale
         if (updatedSession.completed) {
           await this.activityService.createActivity(
             userId,
@@ -359,14 +356,29 @@ export class SessionService {
         }
       } catch (error) {
         console.error('Erreur lors du gain d\'XP ou activité sociale:', error);
-        // ⚠️ On laisse l'erreur remonter pour rollback la transaction
+        //  On laisse l'erreur remonter pour rollback la transaction
         throw error;
       }
 
       return updatedSession;
     });
 
-    // 🏆 Vérifier les badges et retourner ceux qui sont débloqués
+    // 🔥 Recharger la session avec le summary pour inclure les calories brûlées
+    const sessionWithSummary = await this.prisma.trainingSession.findUnique({
+      where: { id },
+      include: {
+        summary: true,
+        exercices: {
+          include: {
+            exercice: true,
+            performances: true,
+          },
+        },
+        trainingProgram: true,
+      },
+    });
+
+    //  Vérifier les badges et retourner ceux qui sont débloqués
     let unlockedBadges: any[] = [];
     try {
       unlockedBadges = await this.checkBadgesAfterSession(userId, id);
@@ -375,7 +387,7 @@ export class SessionService {
       // On ne fait pas échouer la requête si les badges échouent
     }
 
-    // 🗺️ Mettre à jour les stats musculaires du Body Atlas
+    //  Mettre à jour les stats musculaires du Body Atlas
     try {
       await this.bodyAtlasService.updateMuscleStats(userId, id);
     } catch (error) {
@@ -384,13 +396,12 @@ export class SessionService {
     }
 
     return {
-      ...result,
-      unlockedBadges, // ✨ Retourner les badges débloqués
+      ...sessionWithSummary,
+      unlockedBadges, //  Retourner les badges débloqués
     };
   }
 
   /**
-   * 🏆 Vérifie et débloque tous les badges liés à une session complétée
    * Retourne la liste des badges nouvellement débloqués
    */
   private async checkBadgesAfterSession(userId: number, sessionId: number): Promise<any[]> {
@@ -421,7 +432,7 @@ export class SessionService {
   }
 
   /**
-   * 📊 Créer un résumé de session pour optimiser l'affichage calendrier
+   * 📊Créer un résumé de session pour optimiser l'affichage calendrier
    */
   private async createSessionSummary(session: any, tx?: any) {
     try {
@@ -434,6 +445,10 @@ export class SessionService {
       let totalRPE = 0;
       let rpeCount = 0;
       const muscleGroupsSet = new Set<string>();
+
+      // 🔥 Variables pour le calcul de calories
+      let standardExerciseTime = 0; // Minutes d'exercices standard
+      let cardioExerciseTime = 0;   // Minutes de cardio
 
       // Parcourir tous les exercices
       session.exercices.forEach((ex: any) => {
@@ -464,10 +479,56 @@ export class SessionService {
             }
           });
         }
+
+        // 🔥 Comptabiliser le temps par type d'exercice
+        // Estimation: 3 minutes par exercice (incluant repos entre séries)
+        const estimatedExerciseTime = 3;
+
+        if (ex.exercice?.type === 'CARDIO') {
+          cardioExerciseTime += estimatedExerciseTime;
+        } else {
+          standardExerciseTime += estimatedExerciseTime;
+        }
       });
 
       // Calculer la moyenne RPE
       const avgRPE = rpeCount > 0 ? totalRPE / rpeCount : null;
+
+      // 🔥 CALCUL DES CALORIES BRÛLÉES
+      // Récupérer le poids de l'utilisateur
+      const user = await prisma.user.findUnique({
+        where: { id: session.trainingProgram.fitnessProfile.userId },
+        include: {
+          fitnessProfiles: {
+            where: { id: session.trainingProgram.fitnessProfileId },
+            select: { weight: true },
+          },
+        },
+      });
+
+      const userWeight = user?.fitnessProfiles?.[0]?.weight || 70; // Défaut 70kg
+
+      // Valeurs MET (Metabolic Equivalent of Task)
+      // Source: Compendium of Physical Activities
+      const MET_STRENGTH_TRAINING = 4.5; // Musculation générale
+      const MET_CARDIO = 8.0;             // Cardio modéré-intense
+
+      // Durée réelle de la session (si disponible)
+      const sessionDuration = session.duration || (standardExerciseTime + cardioExerciseTime);
+
+      // Si on a des infos détaillées sur les types d'exercices
+      let caloriesBurned = 0;
+
+      if (cardioExerciseTime > 0 || standardExerciseTime > 0) {
+        // Calcul séparé par type
+        // Formule: MET × poids (kg) × durée (heures)
+        const standardCalories = MET_STRENGTH_TRAINING * userWeight * (standardExerciseTime / 60);
+        const cardioCalories = MET_CARDIO * userWeight * (cardioExerciseTime / 60);
+        caloriesBurned = Math.round(standardCalories + cardioCalories);
+      } else {
+        // Pas d'info détaillée, utiliser la durée globale avec MET moyen
+        caloriesBurned = Math.round(MET_STRENGTH_TRAINING * userWeight * (sessionDuration / 60));
+      }
 
       // Créer ou mettre à jour le résumé
       await prisma.sessionSummary.upsert({
@@ -478,6 +539,7 @@ export class SessionService {
           totalReps,
           totalVolume,
           avgRPE,
+          caloriesBurned,
           duration: session.duration,
           muscleGroups: Array.from(muscleGroupsSet),
         },
@@ -486,6 +548,7 @@ export class SessionService {
           totalReps,
           totalVolume,
           avgRPE,
+          caloriesBurned,
           duration: session.duration,
           muscleGroups: Array.from(muscleGroupsSet),
         },

@@ -532,6 +532,14 @@ function SessionCard({ session }: { session: any }) {
                                                 </p>
                                             </div>
                                         )}
+                                        {fullSession.summary.caloriesBurned && (
+                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
+                                                <p className="text-xs text-gray-500">Calories brûlées</p>
+                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
+                                                    {Math.round(fullSession.summary.caloriesBurned)} kcal
+                                                </p>
+                                            </div>
+                                        )}
                                         {fullSession.summary.avgRPE && (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
                                                 <p className="text-xs text-gray-500">RPE moyen</p>

@@ -27,6 +27,7 @@ export interface SessionSummary {
     totalReps: number;
     totalVolume: number;
     avgRPE: number;
+    caloriesBurned?: number; // 🔥 Calories brûlées estimées
     duration: number;
     muscleGroups: string[];
     createdAt: string;

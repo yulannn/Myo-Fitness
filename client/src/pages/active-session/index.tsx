@@ -443,17 +443,17 @@ export default function ActiveSession() {
                 </div>
             </div>
 
-            {/* Modals - Simplified */}
+            {/* Modals - Mobile-first optimized */}
             <Modal isOpen={showSummaryCard} onClose={() => { }} showClose={false}>
-                <div className="p-6 bg-[#252527] text-white">
-                    <div className="text-center space-y-4 mb-6">
+                <div className="p-4 sm:p-6 bg-[#252527] text-white max-h-[90vh] overflow-y-auto rounded-3xl ">
+                    <div className="text-center space-y-3 mb-4">
                         <div className="w-12 h-12 bg-[#94fbdd]/10 rounded-full flex items-center justify-center mx-auto">
                             <CheckCircleIcon className="w-6 h-6 text-[#94fbdd]" />
                         </div>
-                        <h2 className="text-xl font-bold text-white">Séance terminée</h2>
+                        <h2 className="text-lg sm:text-xl font-bold text-white">Séance terminée</h2>
                     </div>
 
-                    <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 mb-6">
+                    <div className="mb-4">
                         <SessionSummaryCard
                             sessionData={{
                                 programName: activeSession?.trainingProgram?.name,
@@ -461,6 +461,7 @@ export default function ActiveSession() {
                                 totalExercises: activeSession?.exercices?.length || 0,
                                 totalSets: totalSets,
                                 completedSets: validatedSets,
+                                caloriesBurned: activeSession?.summary?.caloriesBurned, // 🔥 Calories brûlées
                                 exercises: (activeSession?.exercices || []).map((ex: any) => ({
                                     name: ex.exercice?.name || 'Exercice',
                                     sets: ex.sets,
@@ -474,7 +475,7 @@ export default function ActiveSession() {
 
                     <button
                         onClick={handleContinueToGeneration}
-                        className="w-full py-3.5 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#7de0c4] transition-colors shadow-lg shadow-[#94fbdd]/10"
+                        className="w-full py-3 sm:py-3.5 bg-[#94fbdd] text-[#121214] font-bold rounded-xl hover:bg-[#7de0c4] transition-colors shadow-lg shadow-[#94fbdd]/10 sticky bottom-0"
                     >
                         Continuer
                     </button>
@@ -482,7 +483,7 @@ export default function ActiveSession() {
             </Modal>
 
             <Modal isOpen={showGenerationModal} onClose={() => { }} showClose={false}>
-                <div className="p-6 bg-[#252527] text-white">
+                <div className="p-6 bg-[#252527] text-white rounded-3xl">
                     <h2 className="text-xl font-bold text-center mb-2 text-white">Prochaine étape</h2>
                     <p className="text-gray-400 text-center mb-8 text-sm">
                         Comment voulez-vous générer votre prochaine séance ?
@@ -517,7 +518,7 @@ export default function ActiveSession() {
             </Modal>
 
             <Modal isOpen={showCompletionModal} onClose={() => setShowCompletionModal(false)}>
-                <div className="p-6 bg-[#252527] text-white">
+                <div className="p-6 bg-[#252527] text-white rounded-3xl">
                     <h2 className="text-lg font-bold text-white mb-6 text-center">Terminer la séance ?</h2>
                     <div className="flex flex-col gap-3">
                         <button
