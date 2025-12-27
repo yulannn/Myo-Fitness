@@ -17,7 +17,17 @@ export function useStartFromTemplate() {
 
   const mutation = useMutation<any, unknown, StartFromTemplateParams>({
     mutationFn: async ({ templateId }: StartFromTemplateParams) => {
-      return SessionTemplateService.startFromTemplate(templateId);
+      // ⏱️ Durée minimale de 2 secondes pour que le loader soit visible
+      const startTime = Date.now();
+      const result = await SessionTemplateService.startFromTemplate(templateId);
+      const elapsed = Date.now() - startTime;
+      const minDuration = 2000; // 2 secondes minimum
+
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+      }
+
+      return result;
     },
     onSuccess: (session) => {
       // Invalider le cache des programmes

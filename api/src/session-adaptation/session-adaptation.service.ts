@@ -73,20 +73,64 @@ export class SessionAdaptationService {
 
     /**
      * Crée une nouvelle session similaire sans adaptation
-     * ⚠️ Si la session vient d'un template : NE RIEN FAIRE (l'instance existe déjà !)
-     * Sinon : Cloner la session (legacy)
+     * 🆕 Avec le système de lazy loading, on doit créer une NOUVELLE TrainingSession
+     * pour permettre de relancer le cycle suivant
      */
     async createNewSimilarSession(trainingSessionId: number, userId: number) {
         const oldSession = await this.getSessionWithPerformances(trainingSessionId, userId);
 
-        // 🎯 Si la session vient d'un template, on ne crée RIEN
-        // L'instance non complétée existe déjà grâce à la règle "1 template = 1 instance max"
-        // Retourner simplement l'ancienne session (qui sera relancée)
+        // 🎯 Si la session vient d'un template, créer une NOUVELLE instance vide
         if (oldSession.sessionTemplateId) {
-            return oldSession;
+            return this.prisma.$transaction(async (tx) => {
+                // Récupérer le template
+                const template = await tx.sessionTemplate.findUnique({
+                    where: { id: oldSession.sessionTemplateId! },
+                    include: {
+                        trainingProgram: {
+                            include: {
+                                fitnessProfile: { select: { trainingDays: true } },
+                            },
+                        },
+                    },
+                });
+
+                if (!template) {
+                    throw new NotFoundException('Template not found');
+                }
+
+                // Calculer la prochaine date
+                const trainingDays = template.trainingProgram.fitnessProfile.trainingDays || [];
+                const nextSessionDate = this.calculateNextSessionDate(
+                    oldSession.programId,
+                    trainingDays
+                );
+
+                // Créer une nouvelle TrainingSession vide pour le prochain cycle
+                const newSession = await tx.trainingSession.create({
+                    data: {
+                        programId: oldSession.programId,
+                        sessionTemplateId: oldSession.sessionTemplateId,
+                        date: nextSessionDate,
+                        sessionName: oldSession.sessionName,
+                        status: 'SCHEDULED', // Nouvelle session planifiée
+                    },
+                });
+
+                // ⚠️ PAS d'ExerciceSession ici (lazy loading)
+                // Elles seront créées au startFromTemplate()
+
+                return tx.trainingSession.findUnique({
+                    where: { id: newSession.id },
+                    include: {
+                        exercices: {
+                            include: { exercice: true },
+                        },
+                    },
+                });
+            });
         }
 
-        // Sinon, cloner la session (l legacy - pour sessions manuelles)
+        // Sinon, cloner la session (legacy - pour sessions manuelles)
         return this.cloneLegacySession(oldSession);
     }
 
@@ -177,7 +221,7 @@ export class SessionAdaptationService {
     }
 
     /**
-     * 🆕 Adapte UNIQUEMENT le template source (sans créer d'instance)
+     * 🆕 Adapte le template source ET crée une nouvelle TrainingSession pour le prochain cycle
      */
     private async adaptTemplateAndCreateInstance(previousSession: any) {
         const templateId = previousSession.sessionTemplateId;
@@ -190,6 +234,11 @@ export class SessionAdaptationService {
                     exercises: {
                         include: { exercise: true },
                         orderBy: { orderInSession: 'asc' },
+                    },
+                    trainingProgram: {
+                        include: {
+                            fitnessProfile: { select: { trainingDays: true } },
+                        },
                     },
                 },
             });
@@ -239,7 +288,7 @@ export class SessionAdaptationService {
                     exTemplate.exercise.bodyWeight
                 );
 
-                // 4. ✅ METTRE À JOUR LE TEMPLATE (seule action, pas de création d'instance)
+                // 4. ✅ METTRE À JOUR LE TEMPLATE
                 await tx.exerciseTemplate.update({
                     where: { id: exTemplate.id },
                     data: {
@@ -250,13 +299,31 @@ export class SessionAdaptationService {
                 });
             }
 
-            // ✅ Retourner le template mis à jour (pas de nouvelle instance créée)
-            return tx.sessionTemplate.findUnique({
-                where: { id: templateId },
+            // 5. 🆕 CRÉER une nouvelle TrainingSession vide pour le prochain cycle
+            const trainingDays = template.trainingProgram.fitnessProfile.trainingDays || [];
+            const nextSessionDate = this.calculateNextSessionDate(
+                previousSession.programId,
+                trainingDays
+            );
+
+            const newSession = await tx.trainingSession.create({
+                data: {
+                    programId: previousSession.programId,
+                    sessionTemplateId: templateId,
+                    date: nextSessionDate,
+                    sessionName: template.name,
+                    status: 'SCHEDULED', // Nouvelle session planifiée avec template adapté
+                },
+            });
+
+            // ⚠️ PAS d'ExerciceSession ici (lazy loading)
+            // Elles seront créées au startFromTemplate() avec les valeurs adaptées du template
+
+            return tx.trainingSession.findUnique({
+                where: { id: newSession.id },
                 include: {
-                    exercises: {
-                        include: { exercise: true },
-                        orderBy: { orderInSession: 'asc' },
+                    exercices: {
+                        include: { exercice: true },
                     },
                 },
             });
