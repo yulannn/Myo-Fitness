@@ -6,6 +6,7 @@ const useGetSessionById = (sessionId: number) => {
         queryKey: ['session', sessionId],
         queryFn: () => SessionFetchDataService.getSessionById(sessionId),
         enabled: !!sessionId,
+        staleTime: 60 * 1000,
     });
 };
 

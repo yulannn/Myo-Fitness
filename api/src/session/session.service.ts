@@ -85,6 +85,30 @@ export class SessionService {
             },
           },
         },
+        // 🆕 Ajouter le template pour les sessions non complétées (lazy loading)
+        sessionTemplate: {
+          select: {
+            name: true,
+            exercises: {
+              select: {
+                exerciseId: true,
+                sets: true,
+                reps: true,
+                weight: true,
+                orderInSession: true,
+                exercise: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+              orderBy: {
+                orderInSession: 'asc',
+              },
+            },
+          },
+        },
         summary: {
           select: {
             totalSets: true,
@@ -156,6 +180,16 @@ export class SessionService {
             totalVolume: true,
             totalSets: true,
             muscleGroups: true,
+          },
+        },
+        // 🆕 Ajouter le template pour vérifier s'il y a des exercices (sessions non complétées)
+        sessionTemplate: {
+          select: {
+            _count: {
+              select: {
+                exercises: true,
+              },
+            },
           },
         },
         _count: {

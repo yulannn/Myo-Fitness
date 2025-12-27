@@ -13,6 +13,13 @@ export interface Session {
     duration?: number;
     sessionName?: string | null;
     exercices?: any[];
+    sessionTemplate?: {
+        name: string;
+        exercises: any[];
+        _count?: {
+            exercises: number;
+        };
+    };
     trainingProgram?: any;
     completed: boolean;
     createdAt?: string;

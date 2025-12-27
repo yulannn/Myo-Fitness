@@ -393,8 +393,11 @@ function SessionCard({ session }: { session: any }) {
     )
 
     // Déterminer si on peut expand (si il y a des exercices)
+    // Pour sessions complétées : vérifier exercices
+    // Pour sessions non complétées : vérifier sessionTemplate.exercises
     const exerciseCount = session._count?.exercices || 0
-    const canExpand = exerciseCount > 0
+    const templateExerciseCount = session.sessionTemplate?._count?.exercises || 0
+    const canExpand = exerciseCount > 0 || templateExerciseCount > 0
 
     return (
         <div className="bg-[#18181b] rounded-lg border border-white/5 overflow-hidden transition-all hover:border-white/10 group">
@@ -455,50 +458,64 @@ function SessionCard({ session }: { session: any }) {
                     ) : fullSession ? (
                         <div className="p-4 space-y-3">
                             <div className="space-y-2">
-                                {fullSession.exercices?.map((ex: any, index: number) => {
-                                    const hasPerformances = fullSession.completed && ex.performances && ex.performances.length > 0
+                                {/* 🔄 Afficher les exercices depuis le template si non complété, sinon depuis exercices */}
+                                {(() => {
+                                    // Pour sessions non complétées : utiliser sessionTemplate.exercises
+                                    const exercises = !fullSession.completed && fullSession.sessionTemplate?.exercises
+                                        ? fullSession.sessionTemplate.exercises.map((exTemplate: any) => ({
+                                            exercice: { name: exTemplate.exercise?.name },
+                                            sets: exTemplate.sets,
+                                            reps: exTemplate.reps,
+                                            weight: exTemplate.weight,
+                                            performances: null
+                                        }))
+                                        : fullSession.exercices || [];
 
-                                    return (
-                                        <div
-                                            key={index}
-                                            className="bg-[#18181b] rounded-md border border-white/5 p-3"
-                                        >
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-white">
-                                                        {ex.exercice?.name || `Exercice ${index + 1}`}
-                                                    </p>
+                                    return exercises.map((ex: any, index: number) => {
+                                        const hasPerformances = fullSession.completed && ex.performances && ex.performances.length > 0
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="bg-[#18181b] rounded-md border border-white/5 p-3"
+                                            >
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-white">
+                                                            {ex.exercice?.name || `Exercice ${index + 1}`}
+                                                        </p>
+                                                    </div>
+
+                                                    {!hasPerformances && (
+                                                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                            {ex.sets && <span>{ex.sets} séries</span>}
+                                                            {ex.reps && <span>{ex.reps} reps</span>}
+                                                            {ex.weight && <span>{ex.weight} kg</span>}
+                                                        </div>
+                                                    )}
                                                 </div>
 
-                                                {!hasPerformances && (
-                                                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                        {ex.sets && <span>{ex.sets} séries</span>}
-                                                        {ex.reps && <span>{ex.reps} reps</span>}
-                                                        {ex.weight && <span>{ex.weight} kg</span>}
+                                                {hasPerformances && (
+                                                    <div className="mt-3 space-y-1">
+                                                        {ex.performances.map((perf: any, perfIndex: number) => (
+                                                            <div
+                                                                key={perfIndex}
+                                                                className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
+                                                            >
+                                                                <span>Série {perfIndex + 1}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
+                                                                    {perf.weight && <span>{perf.weight} kg</span>}
+                                                                    {perf.rpe && <span>RPE {perf.rpe}</span>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {hasPerformances && (
-                                                <div className="mt-3 space-y-1">
-                                                    {ex.performances.map((perf: any, perfIndex: number) => (
-                                                        <div
-                                                            key={perfIndex}
-                                                            className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
-                                                        >
-                                                            <span>Série {perfIndex + 1}</span>
-                                                            <div className="flex items-center gap-3">
-                                                                {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
-                                                                {perf.weight && <span>{perf.weight} kg</span>}
-                                                                {perf.rpe && <span>RPE {perf.rpe}</span>}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    });
+                                })()}
                             </div>
 
                             {/* 📊 Résumé de session (uniquement si complétée ET summary existe) */}
