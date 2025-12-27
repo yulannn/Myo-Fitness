@@ -200,21 +200,69 @@ export class SessionTemplateService {
   }
 
   /**
-   * 📅 Planifie une instance depuis un template (OPTIMISÉ)
-   * ⚠️ Un template ne peut avoir qu'UNE SEULE instance non complétée à la fois
-   * Si une instance existe déjà, on met juste à jour sa date
+   * 📅 Planifie une instance depuis un template (OPTIMISÉ - v2)
+   * ✅ Les sessions sont maintenant créées lors de la génération du programme
+   * Cette méthode met simplement à jour la date de la session existante
    */
   async scheduleFromTemplate(templateId: number, dto: ScheduleSessionDto, userId: number) {
     const sessionDate = dto.date ? new Date(dto.date) : new Date();
 
-    // 1️⃣ Chercher instance existante
-    const existingInstance = await this.findUncompletedInstance(templateId);
+    // 1️⃣ Vérifier permissions
+    await this.getTemplateById(templateId, userId);
 
-    // 2️⃣ Si existe → Mettre à jour la date (pas besoin du template)
-    if (existingInstance) {
-      return this.prisma.trainingSession.update({
-        where: { id: existingInstance.id },
-        data: { date: sessionDate },
+    // 2️⃣ Chercher la TrainingSession existante non complétée
+    const existingInstance = await this.prisma.trainingSession.findFirst({
+      where: {
+        sessionTemplateId: templateId,
+        completed: false,
+      },
+    });
+
+    // 3️⃣ Si aucune session trouvée, erreur de cohérence
+    if (!existingInstance) {
+      throw new NotFoundException(
+        `No training session found for template #${templateId}. This should have been created during program generation.`
+      );
+    }
+
+    // 4️⃣ Mettre à jour la date
+    return this.prisma.trainingSession.update({
+      where: { id: existingInstance.id },
+      data: { date: sessionDate },
+      include: {
+        exercices: {
+          include: {
+            exercice: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                bodyWeight: true,
+              },
+            },
+          },
+        },
+        sessionTemplate: true,
+      },
+    });
+  }
+
+  /**
+   * 🚀 Démarre une instance immédiatement depuis un template (OPTIMISÉ - v3 avec Lazy Loading)
+   * ✅ Les sessions sont créées lors du programme, MAIS les ExerciceSessions sont créées ICI
+   * Cela garantit que les modifications du template sont toujours reflétées
+   */
+  async startFromTemplate(templateId: number, userId: number) {
+    // 1️⃣ Vérifier permissions et récupérer le template
+    const template = await this.getTemplateById(templateId, userId);
+
+    return this.prisma.$transaction(async (tx) => {
+      // 2️⃣ Chercher la TrainingSession existante non complétée pour ce template
+      const existingSession = await tx.trainingSession.findFirst({
+        where: {
+          sessionTemplateId: templateId,
+          status: { not: 'COMPLETED' }, // Toute session non complétée (SCHEDULED, IN_PROGRESS, CANCELLED)
+        },
         include: {
           exercices: {
             include: {
@@ -231,33 +279,71 @@ export class SessionTemplateService {
           sessionTemplate: true,
         },
       });
-    }
 
-    // 3️⃣ Sinon → Récupérer template et créer nouvelle instance
-    const template = await this.getTemplateById(templateId, userId);
-    return this.createInstanceFromTemplate(template.id, template.programId, sessionDate);
-  }
+      // 3️⃣ Si aucune session trouvée, c'est un problème de cohérence
+      if (!existingSession) {
+        throw new NotFoundException(
+          `No training session found for template #${templateId}. This should have been created during program generation.`
+        );
+      }
 
-  /**
-   * 🚀 Démarre une instance immédiatement depuis un template (OPTIMISÉ)
-   * ⚠️ Si une instance non complétée existe déjà, on la retourne au lieu d'en créer une nouvelle
-   */
-  async startFromTemplate(templateId: number, userId: number) {
-    // 1️⃣ Chercher instance existante
-    const existingInstance = await this.findUncompletedInstance(templateId);
+      // 4️⃣ 🆕 LAZY LOADING : Créer ou recréer les ExerciceSessions depuis le template
+      // Cela garantit la synchronisation avec les modifications du template (Problème 1 résolu ✅)
 
-    // 2️⃣ Si existe → Retourner directement
-    if (existingInstance) {
-      return existingInstance;
-    }
+      // Si la session a été annulée ou n'a jamais été démarrée, (re)créer les ExerciceSessions
+      if (existingSession.status === 'CANCELLED' || existingSession.status === 'SCHEDULED') {
+        // Supprimer les anciennes ExerciceSessions si elles existent
+        await tx.exerciceSession.deleteMany({
+          where: { sessionId: existingSession.id },
+        });
 
-    // 3️⃣ Sinon → Récupérer template et créer nouvelle instance
-    const template = await this.getTemplateById(templateId, userId);
-    return this.createInstanceFromTemplate(template.id, template.programId, new Date());
+        // Créer les ExerciceSessions depuis le template (toujours à jour)
+        for (const exTemplate of template.exercises) {
+          await tx.exerciceSession.create({
+            data: {
+              sessionId: existingSession.id,
+              exerciceId: exTemplate.exerciseId,
+              sets: exTemplate.sets,
+              reps: exTemplate.reps,
+              weight: exTemplate.weight || null,
+            },
+          });
+        }
+
+        // Mettre à jour le statut vers IN_PROGRESS
+        await tx.trainingSession.update({
+          where: { id: existingSession.id },
+          data: { status: 'IN_PROGRESS' },
+        });
+      }
+
+      // 5️⃣ Retourner la session avec les ExerciceSessions fraîchement créées
+      return tx.trainingSession.findUnique({
+        where: { id: existingSession.id },
+        include: {
+          exercices: {
+            include: {
+              exercice: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                  bodyWeight: true,
+                },
+              },
+            },
+          },
+          sessionTemplate: true,
+        },
+      });
+    });
   }
 
   /**
    * 🔧 Helper : Crée une TrainingSession depuis un template
+   * @deprecated Cette méthode n'est plus utilisée depuis la v2
+   * Les TrainingSessions sont maintenant créées lors de la génération du programme
+   * pour éviter les sessions zombies. Conservée pour référence historique.
    */
   private async createInstanceFromTemplate(
     templateId: number,

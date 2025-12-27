@@ -2,6 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import SessionTemplateService from '../../services/sessionTemplateService';
 import { usePerformanceStore } from '../../../store/usePerformanceStore';
+import SessionLoadingOverlay from '../../../components/ui/SessionLoadingOverlay';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 
 interface StartFromTemplateParams {
   templateId: number;
@@ -12,7 +15,7 @@ export function useStartFromTemplate() {
   const navigate = useNavigate();
   const { setSessionId, setActiveSession, setStartTime } = usePerformanceStore();
 
-  return useMutation<any, unknown, StartFromTemplateParams>({
+  const mutation = useMutation<any, unknown, StartFromTemplateParams>({
     mutationFn: async ({ templateId }: StartFromTemplateParams) => {
       return SessionTemplateService.startFromTemplate(templateId);
     },
@@ -37,6 +40,21 @@ export function useStartFromTemplate() {
       alert('Impossible de démarrer la session. Veuillez réessayer.');
     },
   });
+
+  // Render loading overlay in a portal
+  if (typeof window !== 'undefined') {
+    let overlayRoot = document.getElementById('session-loading-overlay-root');
+    if (!overlayRoot) {
+      overlayRoot = document.createElement('div');
+      overlayRoot.id = 'session-loading-overlay-root';
+      document.body.appendChild(overlayRoot);
+    }
+
+    const root = createRoot(overlayRoot);
+    root.render(createElement(SessionLoadingOverlay, { isLoading: mutation.isPending }));
+  }
+
+  return mutation;
 }
 
 export default useStartFromTemplate;

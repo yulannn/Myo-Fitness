@@ -92,70 +92,19 @@ export class SessionAdaptationService {
 
     /**
      * 🆕 Crée une instance depuis un template (sans le modifier)
+     * @deprecated Cette méthode n'est plus utilisée depuis la v2
+     * Les TrainingSessions sont maintenant créées lors de la génération du programme
+     * Cette méthode ne devrait jamais être appelée
      */
     private async createInstanceFromTemplate(oldSession: any) {
-        const templateId = oldSession.sessionTemplateId;
-
-        return this.prisma.$transaction(async (tx) => {
-            // Récupérer le template
-            const template = await tx.sessionTemplate.findUnique({
-                where: { id: templateId },
-                include: {
-                    exercises: {
-                        include: { exercise: true },
-                        orderBy: { orderInSession: 'asc' },
-                    },
-                    trainingProgram: {
-                        include: {
-                            fitnessProfile: { select: { trainingDays: true } },
-                        },
-                    },
-                },
-            });
-
-            if (!template) {
-                throw new NotFoundException('Template not found');
-            }
-
-            // Calculer la prochaine date
-            const trainingDays = template.trainingProgram.fitnessProfile.trainingDays || [];
-            const nextSessionDate = this.calculateNextSessionDate(
-                oldSession.programId,
-                trainingDays
-            );
-
-            // Créer la nouvelle instance
-            const newSession = await tx.trainingSession.create({
-                data: {
-                    programId: oldSession.programId,
-                    sessionTemplateId: templateId,
-                    date: nextSessionDate,
-                    sessionName: template.name,
-                },
-            });
-
-            // Copier les exercices du template (valeurs actuelles, non modifiées)
-            for (const exTemplate of template.exercises) {
-                await tx.exerciceSession.create({
-                    data: {
-                        sessionId: newSession.id,
-                        exerciceId: exTemplate.exerciseId,
-                        sets: exTemplate.sets,
-                        reps: exTemplate.reps,
-                        weight: exTemplate.weight,
-                    },
-                });
-            }
-
-            return tx.trainingSession.findUnique({
-                where: { id: newSession.id },
-                include: {
-                    exercices: {
-                        include: { exercice: true },
-                    },
-                },
-            });
-        });
+        // ⚠️ Cette méthode ne devrait plus être utilisée
+        // Les instances sont créées lors de la génération du programme
+        // Retourner simplement l'ancienne session
+        console.warn(
+            '[DEPRECATED] createInstanceFromTemplate called but should not be used anymore. ' +
+            'TrainingSessions are now created during program generation.'
+        );
+        return oldSession;
     }
 
     /**

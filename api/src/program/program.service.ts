@@ -323,12 +323,13 @@ export class ProgramService {
                 },
             });
 
-            // ✅ Créer UNIQUEMENT les SessionTemplate (modèles réutilisables)
-            // Les TrainingSession seront créées à la demande via startFromTemplate
+            // 🆕 LAZY LOADING : Créer SessionTemplates + TrainingSessions SANS ExerciceSessions
+            // Les ExerciceSessions seront créées dynamiquement au startFromTemplate()
+            // Cela garantit la synchronisation avec le template (Problème 1 résolu ✅)
             for (let i = 0; i < program.sessions.length; i++) {
                 const session = program.sessions[i];
 
-                // Créer le template
+                // 1️⃣ Créer le template
                 const sessionTemplate = await prisma.sessionTemplate.create({
                     data: {
                         programId: createdProgram.id,
@@ -337,7 +338,7 @@ export class ProgramService {
                     },
                 });
 
-                // Créer les ExerciseTemplate
+                // 2️⃣ Créer les ExerciseTemplates
                 for (let j = 0; j < session.exercises.length; j++) {
                     const ex = session.exercises[j];
                     await prisma.exerciseTemplate.create({
@@ -351,6 +352,19 @@ export class ProgramService {
                         },
                     });
                 }
+
+                // 3️⃣ Créer la TrainingSession (avec date si trainingDays définis)
+                // ⚠️ IMPORTANT : PAS de création d'ExerciceSession ici (lazy loading)
+                const sessionDate = sessionDates[i] || null;
+                await prisma.trainingSession.create({
+                    data: {
+                        programId: createdProgram.id,
+                        sessionTemplateId: sessionTemplate.id,
+                        sessionName: session.name,
+                        date: sessionDate,
+                        status: 'SCHEDULED', // 🆕 Nouveau statut
+                    },
+                });
             }
 
             return prisma.trainingProgram.findUnique({
@@ -414,11 +428,11 @@ export class ProgramService {
                 },
             });
 
-            // ✅ Créer UNIQUEMENT les templates (pas d'instances)
+            // 🆕 LAZY LOADING : Créer templates + TrainingSessions SANS ExerciceSessions
             for (let i = 0; i < sessions.length; i++) {
                 const session = sessions[i];
 
-                // Créer le template
+                // 1️⃣ Créer le template
                 const sessionTemplate = await prisma.sessionTemplate.create({
                     data: {
                         programId: createdProgram.id,
@@ -427,7 +441,7 @@ export class ProgramService {
                     },
                 });
 
-                // Créer les ExerciseTemplate
+                // 2️⃣ Créer les ExerciseTemplates
                 if (session.exercises && Array.isArray(session.exercises)) {
                     for (let j = 0; j < session.exercises.length; j++) {
                         const ex = session.exercises[j];
@@ -445,6 +459,19 @@ export class ProgramService {
                         });
                     }
                 }
+
+                // 3️⃣ Créer la TrainingSession (date null par défaut)
+                // ⚠️ PAS d'ExerciceSession (lazy loading)
+                const sessionDate = sessionDates[i] || null;
+                await prisma.trainingSession.create({
+                    data: {
+                        programId: createdProgram.id,
+                        sessionTemplateId: sessionTemplate.id,
+                        sessionName: session.name ?? `Session ${i + 1}`,
+                        date: sessionDate,
+                        status: 'SCHEDULED',
+                    },
+                });
             }
 
             return prisma.trainingProgram.findUnique({
@@ -491,22 +518,41 @@ export class ProgramService {
             throw new BadRequestException(`Le programme a déjà ${MAX_SESSIONS_PER_PROGRAM} sessions actives. Complétez-en une avant d'en ajouter.`);
 
         return this.prisma.$transaction(async (prisma) => {
-            const createdSession = await prisma.trainingSession.create({
-                data: { programId, sessionName: sessionData.name ?? '' },
+            // 1️⃣ Créer d'abord le SessionTemplate
+            const sessionTemplate = await prisma.sessionTemplate.create({
+                data: {
+                    programId: programId,
+                    name: sessionData.name ?? 'Session manuelle',
+                    orderInProgram: sessionNumber, // Position dans le programme
+                },
             });
 
-            for (const ex of sessionData.exercises) {
-                await prisma.exerciceSession.create({
+            // 2️⃣ Créer les ExerciseTemplates
+            for (let i = 0; i < sessionData.exercises.length; i++) {
+                const ex = sessionData.exercises[i];
+                await prisma.exerciseTemplate.create({
                     data: {
-                        sessionId: createdSession.id,
-                        exerciceId: ex.id,
+                        sessionTemplateId: sessionTemplate.id,
+                        exerciseId: ex.id,
                         sets: ex.sets ?? 3,
                         reps: ex.reps ?? 8,
                         weight: ex.weight ?? null,
+                        orderInSession: i,
                     },
                 });
             }
 
+            // 3️⃣ Créer la TrainingSession vide (lazy loading)
+            // ⚠️ PAS d'ExerciceSession - elles seront créées au startFromTemplate()
+            await prisma.trainingSession.create({
+                data: {
+                    programId,
+                    sessionTemplateId: sessionTemplate.id,
+                    sessionName: sessionData.name ?? 'Session manuelle',
+                    date: null, // L'utilisateur planifiera la date manuellement
+                    status: 'SCHEDULED',
+                },
+            });
 
             return prisma.trainingProgram.findUnique({
                 where: { id: programId },

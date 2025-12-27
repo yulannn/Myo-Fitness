@@ -289,7 +289,8 @@ export class SessionService {
         where: { id },
         data: {
           performedAt: new Date(),
-          completed: true
+          completed: true,
+          status: 'COMPLETED', // 🆕 Nouveau statut
         },
       });
 
@@ -672,8 +673,9 @@ export class SessionService {
   }
 
   /**
-   * Supprimer une TrainingSession (annulation)
-   * Supprime aussi tous les exercices et performances associés
+   * Annuler une TrainingSession (soft delete avec status CANCELLED)
+   * ✅ Problème 2 résolu : La session n'est plus supprimée mais marquée comme annulée
+   * Permet de la relancer plus tard via startFromTemplate()
    */
   async deleteSession(sessionId: number, userId: number) {
     return this.prisma.$transaction(async (prisma) => {
@@ -697,6 +699,7 @@ export class SessionService {
         'cette session'
       );
 
+      // 🆕 SOFT DELETE : Au lieu de supprimer, on marque comme CANCELLED
       // Supprimer les performances
       await prisma.setPerformance.deleteMany({
         where: {
@@ -716,12 +719,17 @@ export class SessionService {
         where: { sessionId },
       });
 
-      // Supprimer la session elle-même
-      await prisma.trainingSession.delete({
+      // ✅ Marquer la session comme CANCELLED au lieu de la supprimer
+      await prisma.trainingSession.update({
         where: { id: sessionId },
+        data: {
+          status: 'CANCELLED',
+          completed: false, // Reset
+          performedAt: null, // Reset
+        },
       });
 
-      return { message: 'Session supprimée avec succès' };
+      return { message: 'Session annulée avec succès. Vous pouvez la relancer plus tard.' };
     });
   }
 
