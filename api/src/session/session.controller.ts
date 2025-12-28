@@ -304,4 +304,43 @@ export class SessionController {
     const userId = req.user.userId;
     return this.sessionService.deleteSession(id, userId);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('exercice-session/:id/sets')
+  @ApiOperation({
+    summary: '🔧 Modifier le nombre de séries d\'un exercice pendant la session',
+    description: 'Permet d\'ajouter ou enlever des séries à un exercice en cours de session'
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de l\'ExerciceSession',
+    type: Number,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sets: {
+          type: 'number',
+          description: 'Nouveau nombre de séries (1-20)',
+          minimum: 1,
+          maximum: 20
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Nombre de séries mis à jour avec succès',
+  })
+  @ApiResponse({ status: 400, description: 'Données invalides ou session déjà terminée' })
+  @ApiResponse({ status: 404, description: 'Exercice de session non trouvé' })
+  async updateExerciceSessionSets(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('sets', ParseIntPipe) sets: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.updateExerciceSessionSets(id, sets, userId);
+  }
 }

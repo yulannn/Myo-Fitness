@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid'
+import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon, SparklesIcon, ArrowPathIcon, MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
 import useDeletePerformance from '../../api/hooks/performance/useDeletePerformance'
 import useUpdateCompletedSession from '../../api/hooks/session/useUpdateCompletedSession'
 import useDeleteSession from '../../api/hooks/session/useDeleteSession'
 import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
+import useUpdateExerciceSets from '../../api/hooks/session/useUpdateExerciceSets'
 import { Modal } from '../../components/ui/modal'
 import { usePerformanceStore } from '../../store/usePerformanceStore'
 import SessionSummaryCard from '../../components/session/SessionSummaryCard'
@@ -37,12 +38,15 @@ export default function ActiveSession() {
         getAllPerformances,
     } = usePerformanceStore()
 
+
     const { mutate: createPerformance } = useCreatePerformance()
     const { mutate: deletePerformance } = useDeletePerformance()
     const { mutate: updateCompletedSession } = useUpdateCompletedSession()
     const { mutate: createAdaptedSession, isPending: isAdaptingSession } = useCreateAdaptedSession()
     const { mutate: createSimilarSession, isPending: isCreatingSimilar } = useCreateNewSimilarSession()
     const { mutate: deleteSession } = useDeleteSession()
+    const { mutate: updateExerciceSets, isPending: isUpdatingSets } = useUpdateExerciceSets()
+
 
     // Plus besoin de charger depuis localStorage - Le store Zustand gère toute la persistance !
 
@@ -75,6 +79,13 @@ export default function ActiveSession() {
     const validatedSets = useMemo(() => {
         return Object.values(performances).filter((perf: any) => perf.success === true).length
     }, [performances])
+
+    // Compter combien de séries sont validées pour un exercice donné
+    const getValidatedSetsCount = (exerciceSessionId: number) => {
+        return Object.values(performances).filter(
+            (perf: any) => perf.exerciceSessionId === exerciceSessionId && perf.success === true
+        ).length
+    }
 
     const allSetsValidated = totalSets > 0 && validatedSets === totalSets
 
@@ -335,12 +346,51 @@ export default function ActiveSession() {
                 <div className="space-y-8">
                     {activeSession.exercices?.map((exerciceSession: any, index: number) => (
                         <div key={exerciceSession.id || index} className="space-y-4">
-                            <div className="flex items-baseline justify-between border-b border-[#94fbdd]/10 pb-3">
-                                <h3 className="text-lg font-bold text-white">
+                            <div className="flex items-center justify-between border-b border-[#94fbdd]/10 pb-3 gap-4">
+                                <h3 className="text-lg font-bold text-white flex-1 min-w-0 truncate">
                                     {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
                                 </h3>
-                                <div className="text-sm text-[#94fbdd] font-mono bg-[#252527] px-2 py-1 rounded shadow-sm">
-                                    {exerciceSession.sets} x {exerciceSession.reps}
+
+                                {/* 🔧 Boutons +/- pour ajuster les séries */}
+                                <div className="flex items-center gap-2 flex-shrink-0 group">
+                                    {(() => {
+                                        const validatedCount = getValidatedSetsCount(exerciceSession.id);
+                                        const canDecrease = exerciceSession.sets > validatedCount && exerciceSession.sets > 1;
+
+                                        return (
+                                            <button
+                                                onClick={() => updateExerciceSets({
+                                                    exerciceSessionId: exerciceSession.id,
+                                                    sets: Math.max(validatedCount, exerciceSession.sets - 1)
+                                                })}
+                                                disabled={!canDecrease || isUpdatingSets}
+                                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#252527] border border-white/5 flex items-center justify-center hover:bg-[#2a2a2d] hover:border-[#94fbdd]/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95"
+                                                title={validatedCount > 0 && exerciceSession.sets <= validatedCount
+                                                    ? `${validatedCount} série${validatedCount > 1 ? 's' : ''} déjà validée${validatedCount > 1 ? 's' : ''}`
+                                                    : "Retirer une série"}
+                                            >
+                                                <MinusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-red-400" />
+                                            </button>
+                                        );
+                                    })()}
+
+                                    <div className="text-sm sm:text-base font-mono bg-[#252527] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-white/5 min-w-[70px] sm:min-w-[80px] text-center">
+                                        <span className="text-[#94fbdd] font-bold tabular-nums">{exerciceSession.sets}</span>
+                                        <span className="text-gray-500 mx-1">×</span>
+                                        <span className="text-white font-semibold tabular-nums">{exerciceSession.reps}</span>
+                                    </div>
+
+                                    <button
+                                        onClick={() => updateExerciceSets({
+                                            exerciceSessionId: exerciceSession.id,
+                                            sets: Math.min(20, exerciceSession.sets + 1)
+                                        })}
+                                        disabled={exerciceSession.sets >= 20 || isUpdatingSets}
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#252527] border border-white/5 flex items-center justify-center hover:bg-[#2a2a2d] hover:border-[#94fbdd]/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95"
+                                        title="Ajouter une série"
+                                    >
+                                        <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-[#94fbdd]" />
+                                    </button>
                                 </div>
                             </div>
 
@@ -573,6 +623,6 @@ export default function ActiveSession() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     )
 }

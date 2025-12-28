@@ -1069,4 +1069,65 @@ export class SessionService {
     };
   }
 
+  /**
+   * 🔧 Modifier le nombre de séries d'un exercice pendant une session active
+   */
+  async updateExerciceSessionSets(
+    exerciceSessionId: number,
+    newSets: number,
+    userId: number
+  ) {
+    // Valider que newSets est positif
+    if (newSets < 1) {
+      throw new BadRequestException('Le nombre de séries doit être au moins 1');
+    }
+
+    if (newSets > 20) {
+      throw new BadRequestException('Le nombre de séries ne peut pas dépasser 20');
+    }
+
+    // Récupérer l'ExerciceSession avec la session pour vérifier les permissions
+    const exerciceSession = await this.prisma.exerciceSession.findUnique({
+      where: { id: exerciceSessionId },
+      include: {
+        trainingSession: {
+          include: {
+            trainingProgram: {
+              include: {
+                fitnessProfile: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!exerciceSession) {
+      throw new NotFoundException('Exercice de session non trouvé');
+    }
+
+    // Vérifier que l'utilisateur a le droit de modifier cette session
+    if (exerciceSession.trainingSession.trainingProgram.fitnessProfile.userId !== userId) {
+      throw new BadRequestException('Vous n\'avez pas la permission de modifier cette session');
+    }
+
+    // Vérifier que la session n'est pas déjà complétée
+    if (exerciceSession.trainingSession.completed) {
+      throw new BadRequestException('Impossible de modifier une session déjà terminée');
+    }
+
+    // Mettre à jour le nombre de séries
+    return await this.prisma.exerciceSession.update({
+      where: { id: exerciceSessionId },
+      data: { sets: newSets },
+      include: {
+        exercice: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
 }

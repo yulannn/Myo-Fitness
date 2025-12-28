@@ -102,6 +102,14 @@ export const SessionFetchDataService = {
         const res = await api.get('/session/user/streak');
         return res.data;
     },
+
+    /**
+     * 🔧 Modifier le nombre de séries d'un exercice pendant une session
+     */
+    async updateExerciceSets(exerciceSessionId: number, sets: number): Promise<any> {
+        const res = await api.patch(`/session/exercice-session/${exerciceSessionId}/sets`, { sets });
+        return res.data;
+    },
 };
 
 export default SessionFetchDataService;
