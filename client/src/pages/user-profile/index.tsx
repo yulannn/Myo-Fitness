@@ -1,13 +1,21 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, UsersIcon, UserCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
-import { useUserById } from '../../api/hooks/user/useGetUserById';
+import { usePublicProfile } from '../../api/hooks/user/usePublicProfile';
 import { getImageUrl } from '../../utils/imageUtils';
 import XpBar from '../../components/common/XpBar';
 
+/**
+ * 🔒 Page de profil utilisateur sécurisée
+ * 
+ * Utilise l'endpoint /users/:id/public-profile pour afficher
+ * uniquement les données publiques non-sensibles des autres utilisateurs
+ */
 export default function UserProfilePage() {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const { data: user, isLoading, error } = useUserById(userId ? parseInt(userId) : undefined);
+
+    // 🔒 Utilise le hook de profil PUBLIC sécurisé
+    const { data: user, isLoading, error } = usePublicProfile(userId ? parseInt(userId) : undefined);
 
     if (isLoading) {
         return (
@@ -127,7 +135,16 @@ export default function UserProfilePage() {
                                     <p className="text-2xl font-bold text-[#94fbdd]">{user.xp || 0} XP</p>
                                 </div>
                             </div>
-                            <XpBar variant="compact" showLevel={false} />
+                            {/* Barre de progression basée sur les données publiques */}
+                            <div className="h-2 bg-[#27272a] rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-[#94fbdd] to-[#7dfbc9] rounded-full transition-all duration-500"
+                                    style={{ width: `${((user.xp || 0) % 200) / 2}%` }}
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 text-center">
+                                {200 - ((user.xp || 0) % 200)} XP jusqu'au niveau {(user.level || 1) + 1}
+                            </p>
                         </div>
                     </div>
                 )}

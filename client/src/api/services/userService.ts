@@ -19,6 +19,24 @@ export const UserFetchDataService = {
     },
 
     /**
+     * 🔒 Récupère le profil PUBLIC d'un utilisateur (pour voir le profil des amis)
+     * Retourne uniquement les données non-sensibles
+     */
+    async getPublicProfile(userId: number): Promise<{
+        id: number;
+        name: string;
+        profilePictureUrl: string | null;
+        level: number;
+        xp: number;
+        friendCode: string | null;
+        createdAt: string;
+    }> {
+        const res = await api.get(`/users/${userId}/public-profile`);
+        return res.data;
+    },
+
+
+    /**
      * Upload d'une photo de profil via URL présignée R2
      * 1. Demande une URL présignée au backend
      * 2. Upload le fichier directement vers R2

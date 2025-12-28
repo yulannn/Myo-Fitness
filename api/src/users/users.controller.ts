@@ -85,6 +85,56 @@ export class UsersController {
     return safeUser;
   }
 
+  /**
+   * 🔒 ENDPOINT SÉCURISÉ: Profil public d'un autre utilisateur
+   * 
+   * Sécurité:
+   * - L'utilisateur DOIT être authentifié (AuthGuard)
+   * - Retourne UNIQUEMENT les données publiques non-sensibles
+   * - Validation de l'ID (doit être un nombre positif)
+   */
+  @Get(':id/public-profile')
+  @ApiOperation({ summary: 'Récupérer le profil public d\'un utilisateur' })
+  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur', example: 1 })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil public de l\'utilisateur',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        name: { type: 'string', example: 'Jean Dupont' },
+        profilePictureUrl: { type: 'string', nullable: true },
+        level: { type: 'number', example: 5 },
+        xp: { type: 'number', example: 850 },
+        friendCode: { type: 'string', nullable: true },
+        createdAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Utilisateur non trouvé',
+  })
+  async getPublicProfile(@Param('id') id: number): Promise<{
+    id: number;
+    name: string;
+    profilePictureUrl: string | null;
+    level: number;
+    xp: number;
+    friendCode: string | null;
+    createdAt: Date;
+  }> {
+    // ✅ Validation de l'ID
+    const userId = Number(id);
+    if (isNaN(userId) || userId <= 0) {
+      throw new BadRequestException('ID utilisateur invalide');
+    }
+
+    // ✅ Retourne uniquement les données publiques via le service sécurisé
+    return this.usersService.getPublicProfile(userId);
+  }
+
   @Post('me/profile-picture/presigned-url')
   @ApiOperation({ summary: 'Générer une URL présignée pour uploader une photo de profil' })
   @ApiBody({

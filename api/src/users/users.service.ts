@@ -49,7 +49,52 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * 🔒 SÉCURISÉ: Récupère le profil public d'un utilisateur
+   * Retourne UNIQUEMENT les données non-sensibles visibles par d'autres utilisateurs
+   * 
+   * Champs autorisés:
+   * - id, name, profilePictureUrl (identité publique)
+   * - level, xp (progression)
+   * - createdAt (ancienneté)
+   * - friendCode (pour ajouter en ami)
+   * 
+   * Champs EXCLUS (sensibles):
+   * - email, password, refreshToken
+   * - resetPasswordCode, resetPasswordExpires
+   * - emailVerificationCode, emailVerificationExpires
+   * - emailVerified, lastXpGainDate
+   */
+  async getPublicProfile(userId: number): Promise<{
+    id: number;
+    name: string;
+    profilePictureUrl: string | null;
+    level: number;
+    xp: number;
+    friendCode: string | null;
+    createdAt: Date;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        // ✅ Uniquement les champs publics non-sensibles
+        id: true,
+        name: true,
+        profilePictureUrl: true,
+        level: true,
+        xp: true,
+        friendCode: true,
+        createdAt: true,
+        // ❌ Exclus: email, password, tokens, codes de vérification, etc.
+      },
+    });
 
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    return user;
+  }
 
   // ========================================
   // SYSTÈME D'XP ET DE NIVEAUX
