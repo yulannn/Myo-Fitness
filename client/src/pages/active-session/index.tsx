@@ -25,12 +25,8 @@ export default function ActiveSession() {
     // Zustand store unifié - Plus de localStorage manuel !
     const {
         performances,
-        sessionId,
         activeSession,
         startTime,
-        setSessionId,
-        setActiveSession,
-        setStartTime,
         updatePerformance,
         toggleSuccess,
         markAsSaved,
@@ -237,9 +233,25 @@ export default function ActiveSession() {
         const key = `${exerciceSessionId}-${setIndex}`
         const perf = performances[key]
 
-        // Si déjà validé, on peut juste toggle (dévalider)
+        // Si déjà validé, on dévalide et on supprime de la BDD
         if (perf?.success) {
+            // Dévalider dans le store
             toggleSuccess(exerciceSessionId, setIndex)
+
+            // Supprimer de la BDD si elle était sauvegardée
+            if (perf.savedPerformanceId) {
+                deletePerformance(perf.savedPerformanceId, {
+                    onSuccess: () => {
+                        // Nettoyer le savedPerformanceId du store
+                        updatePerformance(exerciceSessionId, setIndex, { savedPerformanceId: undefined })
+                    },
+                    onError: (error) => {
+                        console.error('❌ Erreur suppression performance:', error)
+                        // En cas d'erreur, on revalide dans le store
+                        toggleSuccess(exerciceSessionId, setIndex)
+                    }
+                })
+            }
             return
         }
 
