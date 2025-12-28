@@ -1086,15 +1086,21 @@ export class SessionService {
       throw new BadRequestException('Le nombre de séries ne peut pas dépasser 20');
     }
 
-    // Récupérer l'ExerciceSession avec la session pour vérifier les permissions
+    // 🚀 OPTIMISÉ: Requête légère pour récupérer uniquement le userId et le status de session
     const exerciceSession = await this.prisma.exerciceSession.findUnique({
       where: { id: exerciceSessionId },
-      include: {
+      select: {
+        id: true,
         trainingSession: {
-          include: {
+          select: {
+            completed: true,
             trainingProgram: {
-              include: {
-                fitnessProfile: true,
+              select: {
+                fitnessProfile: {
+                  select: {
+                    userId: true,
+                  },
+                },
               },
             },
           },
@@ -1107,7 +1113,8 @@ export class SessionService {
     }
 
     // Vérifier que l'utilisateur a le droit de modifier cette session
-    if (exerciceSession.trainingSession.trainingProgram.fitnessProfile.userId !== userId) {
+    const ownerId = exerciceSession.trainingSession.trainingProgram.fitnessProfile.userId;
+    if (ownerId !== userId) {
       throw new BadRequestException('Vous n\'avez pas la permission de modifier cette session');
     }
 
@@ -1116,18 +1123,14 @@ export class SessionService {
       throw new BadRequestException('Impossible de modifier une session déjà terminée');
     }
 
-    // Mettre à jour le nombre de séries
-    return await this.prisma.exerciceSession.update({
+    // 🚀 OPTIMISÉ: Update simple sans include inutile
+    // Le frontend n'utilise pas la réponse, il met à jour son state local
+    await this.prisma.exerciceSession.update({
       where: { id: exerciceSessionId },
       data: { sets: newSets },
-      include: {
-        exercice: {
-          select: {
-            name: true,
-          },
-        },
-      },
     });
+
+    return { id: exerciceSessionId, sets: newSets };
   }
 
 }
