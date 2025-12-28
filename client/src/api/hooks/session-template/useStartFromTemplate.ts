@@ -4,11 +4,14 @@ import SessionTemplateService from '../../services/sessionTemplateService';
 import { usePerformanceStore } from '../../../store/usePerformanceStore';
 import SessionLoadingOverlay from '../../../components/ui/SessionLoadingOverlay';
 import { createElement } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, type Root } from 'react-dom/client';
 
 interface StartFromTemplateParams {
   templateId: number;
 }
+
+// 🔧 Stocker la référence du root pour éviter les appels multiples à createRoot()
+let overlayRoot: Root | null = null;
 
 export function useStartFromTemplate() {
   const queryClient = useQueryClient();
@@ -51,17 +54,23 @@ export function useStartFromTemplate() {
     },
   });
 
-  // Render loading overlay in a portal
+  // 🔧 FIX: Render loading overlay in a portal - réutiliser le root existant
   if (typeof window !== 'undefined') {
-    let overlayRoot = document.getElementById('session-loading-overlay-root');
-    if (!overlayRoot) {
-      overlayRoot = document.createElement('div');
-      overlayRoot.id = 'session-loading-overlay-root';
-      document.body.appendChild(overlayRoot);
+    let container = document.getElementById('session-loading-overlay-root');
+
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'session-loading-overlay-root';
+      document.body.appendChild(container);
     }
 
-    const root = createRoot(overlayRoot);
-    root.render(createElement(SessionLoadingOverlay, { isLoading: mutation.isPending }));
+    // Créer le root UNE SEULE FOIS
+    if (!overlayRoot) {
+      overlayRoot = createRoot(container);
+    }
+
+    // Utiliser render() sur le root existant
+    overlayRoot.render(createElement(SessionLoadingOverlay, { isLoading: mutation.isPending }));
   }
 
   return mutation;
