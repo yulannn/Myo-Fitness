@@ -50,20 +50,7 @@ export class UsersService {
   }
 
   /**
-   * 🔒 SÉCURISÉ: Récupère le profil public d'un utilisateur
-   * Retourne UNIQUEMENT les données non-sensibles visibles par d'autres utilisateurs
-   * 
-   * Champs autorisés:
-   * - id, name, profilePictureUrl (identité publique)
-   * - level, xp (progression)
-   * - createdAt (ancienneté)
-   * - friendCode (pour ajouter en ami)
-   * 
-   * Champs EXCLUS (sensibles):
-   * - email, password, refreshToken
-   * - resetPasswordCode, resetPasswordExpires
-   * - emailVerificationCode, emailVerificationExpires
-   * - emailVerified, lastXpGainDate
+   * Récupère le profil public d'un utilisateur
    */
   async getPublicProfile(userId: number): Promise<{
     id: number;
@@ -77,7 +64,6 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        // ✅ Uniquement les champs publics non-sensibles
         id: true,
         name: true,
         profilePictureUrl: true,
@@ -85,7 +71,6 @@ export class UsersService {
         xp: true,
         friendCode: true,
         createdAt: true,
-        // ❌ Exclus: email, password, tokens, codes de vérification, etc.
       },
     });
 
@@ -100,14 +85,11 @@ export class UsersService {
   // SYSTÈME D'XP ET DE NIVEAUX
   // ========================================
 
-  /**
-   * Configuration du système d'XP
-   */
+
   private readonly XP_PER_LEVEL = 200; // XP nécessaire pour passer au niveau supérieur
 
   /**
    * Calcule le niveau en fonction de l'XP total
-   * Formule : niveau = floor(xp / XP_PER_LEVEL) + 1
    */
   private calculateLevel(totalXp: number): number {
     return Math.floor(totalXp / this.XP_PER_LEVEL) + 1;
@@ -115,10 +97,6 @@ export class UsersService {
 
   /**
    * Calcule l'XP dans le niveau actuel
-   * Exemple : Si user a 450 XP total
-   * - Niveau = 3 (car 450 / 200 = 2.25, floor = 2, +1 = 3)
-   * - XP dans niveau actuel = 450 % 200 = 50 XP
-   * - XP pour prochain niveau = 200 - 50 = 150 XP
    */
   private calculateCurrentLevelXp(totalXp: number): {
     currentLevelXp: number;
@@ -159,9 +137,6 @@ export class UsersService {
 
   /**
    * Ajoute de l'XP à un utilisateur et gère automatiquement les montées de niveau
-   * @param id - ID de l'utilisateur
-   * @param xpGained - Quantité d'XP à ajouter
-   * @returns Informations sur le niveau et l'XP après l'ajout
    */
   async gainXp(id: number, xpGained: number): Promise<{
     level: number;

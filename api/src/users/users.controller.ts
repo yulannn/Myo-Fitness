@@ -39,8 +39,6 @@ export class UsersController {
     type: UserEntity,
   })
   async getUserByEmail(@Param('email') email: string, @Req() req) {
-    // ✅ SÉCURITÉ : Vérifier que c'est son propre email
-    // Seul l'utilisateur peut consulter ses propres données via son email
     if (email !== req.user.email) {
       throw new UnauthorizedException(
         'Vous ne pouvez consulter que vos propres informations'
@@ -52,7 +50,7 @@ export class UsersController {
       throw new NotFoundException('Utilisateur non trouvé');
     }
 
-    // ✅ Retirer les données sensibles
+
     const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
       emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
 
@@ -68,8 +66,6 @@ export class UsersController {
     type: UserEntity,
   })
   async getUserById(@Param('id') id: number, @Req() req) {
-    // ✅ SÉCURITÉ : Vérifier que c'est son propre ID
-    // Seul l'utilisateur peut consulter ses propres données via son ID
     if (Number(id) !== req.user.userId) {
       throw new UnauthorizedException(
         'Vous ne pouvez consulter que vos propres informations'
@@ -78,7 +74,6 @@ export class UsersController {
 
     const user = await this.usersService.findUserById(Number(id));
 
-    // ✅ Retirer les données sensibles
     const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
       emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
 
@@ -86,12 +81,7 @@ export class UsersController {
   }
 
   /**
-   * 🔒 ENDPOINT SÉCURISÉ: Profil public d'un autre utilisateur
-   * 
-   * Sécurité:
-   * - L'utilisateur DOIT être authentifié (AuthGuard)
-   * - Retourne UNIQUEMENT les données publiques non-sensibles
-   * - Validation de l'ID (doit être un nombre positif)
+   *  Profil public d'un autre utilisateur
    */
   @Get(':id/public-profile')
   @ApiOperation({ summary: 'Récupérer le profil public d\'un utilisateur' })
@@ -125,13 +115,12 @@ export class UsersController {
     friendCode: string | null;
     createdAt: Date;
   }> {
-    // ✅ Validation de l'ID
+
     const userId = Number(id);
     if (isNaN(userId) || userId <= 0) {
       throw new BadRequestException('ID utilisateur invalide');
     }
 
-    // ✅ Retourne uniquement les données publiques via le service sécurisé
     return this.usersService.getPublicProfile(userId);
   }
 
@@ -189,11 +178,10 @@ export class UsersController {
     // Générer la clé du fichier
     const key = this.r2Service.generateProfilePictureKey(userId, fileExtension);
 
-    // Générer l'URL présignée (valide pendant 5 minutes)
     const presignedData = await this.r2Service.generatePresignedUploadUrl(
       key,
       contentType,
-      300, // 5 minutes
+      300,
     );
 
     return presignedData;
