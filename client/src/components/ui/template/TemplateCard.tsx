@@ -8,6 +8,7 @@ import useStartFromTemplate from '../../../api/hooks/session-template/useStartFr
 import useScheduleFromTemplate from '../../../api/hooks/session-template/useScheduleFromTemplate';
 import { EditTemplateModal } from '../modal/EditTemplateModal';
 import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } from '../modal/BottomSheet';
+import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../modal';
 import { formatDateToISO } from '../../../utils/dateUtils';
 
 interface TemplateCardProps {
@@ -20,6 +21,7 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isConfirmStartModalOpen, setIsConfirmStartModalOpen] = useState(false);
 
   const { mutate: startTemplate, isPending: isStarting } = useStartFromTemplate();
   const { mutate: scheduleTemplate, isPending: isScheduling } = useScheduleFromTemplate();
@@ -41,8 +43,13 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
     }
   }, [scheduledInstance?.date]);
 
-  const handleStart = () => {
+  const handleStartClick = () => {
+    setIsConfirmStartModalOpen(true);
+  };
+
+  const handleConfirmStart = () => {
     startTemplate({ templateId: template.id });
+    setIsConfirmStartModalOpen(false);
   };
 
   const handleSchedule = () => {
@@ -64,7 +71,6 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
     );
   };
 
-  // Formatter la date pour l'affichage
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', {
@@ -73,8 +79,6 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
       month: 'short',
     }).format(date);
   };
-
-  const isToday = scheduledInstance?.date && new Date(scheduledInstance.date).toDateString() === new Date().toDateString();
 
   // Styles CSS pour le DayPicker (identiques à la page sessions)
   const calendarStyles = `
@@ -176,51 +180,36 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
   return (
     <>
       <style>{calendarStyles}</style>
-      <div className={`
-        relative rounded-xl overflow-hidden bg-[#252527] border transition-all
-        ${scheduledInstance
-          ? isToday
-            ? 'border-[#94fbdd]/50 shadow-lg shadow-[#94fbdd]/10'
-            : 'border-[#94fbdd]/30'
-          : 'border-white/5 hover:border-white/10'
-        }
-      `}>
+      <div className="relative rounded-lg overflow-hidden bg-[#1a1a1c] border border-white/5 hover:border-white/10 transition-all">
         {/* Content */}
-        <div className="p-5">
+        <div className="p-3">
           {/* Header : Titre + Expand button */}
-          <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white mb-1 truncate">
+              <h3 className="text-base font-semibold text-white truncate">
                 {template.name}
               </h3>
 
               {template.description && (
-                <p className="text-sm text-gray-500 line-clamp-1 mb-3">
+                <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
                   {template.description}
                 </p>
               )}
 
               {/* Métadonnées : Date planifiée + Nombre d'exercices */}
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
                 {/* Date planifiée */}
                 {scheduledInstance?.date && (
-                  <div className="flex items-center gap-1.5">
-                    <CalendarIcon className={`w-4 h-4 ${isToday ? 'text-[#94fbdd]' : 'text-gray-400'}`} />
-                    <span className={`font-medium ${isToday ? 'text-[#94fbdd]' : 'text-gray-300'}`}>
-                      {formatDate(scheduledInstance.date)}
-                    </span>
-                    {isToday && (
-                      <span className="ml-1 px-2 py-0.5 bg-[#94fbdd]/20 text-[#94fbdd] text-xs font-bold rounded">
-                        Aujourd'hui
-                      </span>
-                    )}
+                  <div className="flex items-center gap-1">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <span>{formatDate(scheduledInstance.date)}</span>
                   </div>
                 )}
 
-                {scheduledInstance?.date && <span className="text-gray-600">•</span>}
+                {scheduledInstance?.date && <span>•</span>}
 
                 {/* Nombre d'exercices */}
-                <span className="text-gray-500">
+                <span>
                   {template.exercises?.length || 0} exercice{(template.exercises?.length || 0) > 1 ? 's' : ''}
                 </span>
               </div>
@@ -230,49 +219,52 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
             {template.exercises && template.exercises.length > 0 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors flex-shrink-0"
+                className="p-1.5 rounded text-gray-500 hover:text-white transition-colors flex-shrink-0"
                 title={isExpanded ? 'Masquer' : 'Voir les exercices'}
               >
                 {isExpanded ? (
-                  <ChevronUpIcon className="w-5 h-5" />
+                  <ChevronUpIcon className="w-4 h-4" />
                 ) : (
-                  <ChevronDownIcon className="w-5 h-5" />
+                  <ChevronDownIcon className="w-4 h-4" />
                 )}
               </button>
             )}
           </div>
 
           {/* Actions : 3 boutons alignés horizontalement */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center gap-1.5 mt-2">
             {/* Modifier */}
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-colors font-medium text-sm"
+              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-gray-300 rounded transition-colors"
               title="Modifier"
             >
               <PencilSquareIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Modifier</span>
             </button>
 
             {/* Planifier/Modifier date */}
             <button
               onClick={() => setIsScheduleModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors font-medium text-sm"
+              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-gray-300 rounded transition-colors"
               title={scheduledInstance ? "Modifier la date" : "Planifier"}
             >
               <CalendarIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">{scheduledInstance ? 'Date' : 'Planifier'}</span>
             </button>
 
-            {/* Démarrer */}
+            <div className="flex-1" />
+
+            {/* Démarrer - Icône seule */}
             <button
-              onClick={handleStart}
+              onClick={handleStartClick}
               disabled={isStarting}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] rounded-lg transition-colors font-bold text-sm disabled:opacity-50 shadow-lg shadow-[#94fbdd]/20"
-              title="Démarrer"
+              className="p-1.5 bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] rounded transition-colors disabled:opacity-50"
+              title="Démarrer la séance"
             >
-              <PlayIcon className="w-4 h-4" />
-              <span>{isStarting ? '...' : 'Démarrer'}</span>
+              {isStarting ? (
+                <div className="w-4 h-4 border-2 border-[#121214] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <PlayIcon className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
@@ -362,6 +354,35 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
           </BottomSheetFooter>
         </div>
       </BottomSheet>
+
+      {/* Modal de confirmation pour démarrer */}
+      <Modal isOpen={isConfirmStartModalOpen} onClose={() => setIsConfirmStartModalOpen(false)}>
+        <ModalHeader>
+          <ModalTitle className="text-lg">Démarrer la séance ?</ModalTitle>
+        </ModalHeader>
+        <div className="px-6 py-4 text-center">
+          <p className="text-gray-300 text-sm">
+            Vous allez démarrer la séance <span className="font-semibold text-white">{template.name}</span>
+          </p>
+        </div>
+        <ModalFooter>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsConfirmStartModalOpen(false)}
+              className="flex-1 px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleConfirmStart}
+              disabled={isStarting}
+              className="flex-1 px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isStarting ? 'Démarrage...' : 'Démarrer'}
+            </button>
+          </div>
+        </ModalFooter>
+      </Modal>
     </>
   );
 };

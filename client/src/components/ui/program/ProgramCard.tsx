@@ -99,7 +99,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
               <div className="flex items-center gap-3 text-xs text-gray-600">
                 <div className="flex items-center gap-1.5">
                   <CalendarDaysIcon className="h-3.5 w-3.5" />
-                  <span>{program.sessions?.length || 0} séance{(program.sessions?.length || 0) > 1 ? 's' : ''}</span>
+                  <span>{program.sessionTemplates?.length || 0} séance{(program.sessionTemplates?.length || 0) > 1 ? 's' : ''}</span>
                 </div>
                 <span>•</span>
                 <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}</span>
@@ -145,27 +145,30 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
                 )}
               </button>
 
-              {program.sessionTemplates && program.sessionTemplates.length > 0 && !isActive && (
-                <div className="p-1.5 text-gray-500">
+              {((program.sessionTemplates && program.sessionTemplates.length > 0) || (program.sessions && program.sessions.length > 0)) && !isActive && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+                  className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                  title={isExpanded ? 'Masquer les séances' : 'Voir les séances'}
+                >
                   {isExpanded ? (
                     <ChevronUpIcon className="h-4 w-4" />
                   ) : (
                     <ChevronDownIcon className="h-4 w-4" />
                   )}
-                </div>
+                </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Session Templates */}
+        {/* Session Templates - Programmes actifs: toujours visible */}
         {program.sessionTemplates && program.sessionTemplates.length > 0 && isActive && (
           <div className="border-t border-white/5 p-4 space-y-3 bg-black/20">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
               Séances
             </p>
             {program.sessionTemplates.map((template: any) => {
-              // Trouver l'instance planifiée pour ce template (si elle existe)
               const scheduledInstance = program.sessions?.find(
                 (session: any) => session.sessionTemplateId === template.id && !session.completed
               );
@@ -185,7 +188,27 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
           </div>
         )}
 
-        {(!program.sessionTemplates || program.sessionTemplates.length === 0) && (
+        {/* Session Templates - Programmes archivés: visible si expanded, read-only */}
+        {program.sessionTemplates && program.sessionTemplates.length > 0 && !isActive && isExpanded && (
+          <div className="border-t border-white/5 p-4 space-y-2 bg-black/20">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Séances
+            </p>
+            {program.sessionTemplates.map((template: any) => (
+              <div
+                key={template.id}
+                className="p-3 bg-[#121214] rounded-lg border border-white/5"
+              >
+                <p className="text-sm font-medium text-gray-400">{template.name}</p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {template.exercises?.length || 0} exercice{(template.exercises?.length || 0) > 1 ? 's' : ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(!program.sessionTemplates || program.sessionTemplates.length === 0) && isActive && (
           <div className="border-t border-white/5 p-6 text-center bg-black/20">
             <p className="text-xs text-gray-600">Aucune séance</p>
           </div>

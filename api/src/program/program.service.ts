@@ -123,43 +123,36 @@ export class ProgramService {
                 createdAt: true,
                 template: true,
                 startDate: true,
-                // Pour les programmes archivés, on peut limiter les sessions
-                sessions: {
-                    where: { completed: false },
+                // 🆕 Templates de séances (pour afficher le contenu en lecture seule)
+                sessionTemplates: {
                     select: {
                         id: true,
-                        sessionName: true,
-                        date: true,
-                        completed: true,
-                        performedAt: true,
-                        exercices: {
+                        name: true,
+                        description: true,
+                        orderInProgram: true,
+                        exercises: {
                             select: {
                                 id: true,
                                 sets: true,
                                 reps: true,
                                 weight: true,
-                                exercice: {
+                                orderInSession: true,
+                                exercise: {
                                     select: {
                                         id: true,
                                         name: true,
-                                        imageUrl: true
                                     }
                                 }
-                            }
+                            },
+                            orderBy: { orderInSession: 'asc' }
                         },
-                        _count: {
-                            select: {
-                                exercices: true
-                            }
-                        }
                     },
-                    orderBy: {
-                        date: 'asc'
-                    }
+                    orderBy: { orderInProgram: 'asc' }
                 },
                 _count: {
                     select: {
-                        sessions: true
+                        sessions: true,
+                        sessionTemplates: true
                     }
                 }
             },

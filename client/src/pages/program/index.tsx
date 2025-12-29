@@ -31,10 +31,8 @@ const Program = () => {
   // ✅ OPTIMISATION: Récupère le programme actif au chargement
   const { data: activeProgram, isLoading: isLoadingActive } = useActiveProgram();
 
-  // ✅ LAZY LOADING: Récupère les programmes archivés seulement si on affiche l'onglet
-  const { data: archivedPrograms = [], isLoading: isLoadingArchived } = useArchivedPrograms(
-    activeTab === 'archived' // Ne charge que si l'onglet est actif
-  );
+  // Récupère les programmes archivés (toujours chargés pour le compteur)
+  const { data: archivedPrograms = [] } = useArchivedPrograms(true);
 
   const { data: exercices = [] } = useExercicesMinimal();
   const { mutate, isPending } = useCreateProgram();
@@ -214,9 +212,25 @@ const Program = () => {
             ))}
 
             {(activeTab === 'active' ? activePrograms : archivedPrograms).length === 0 && (
-              <div className="flex flex-col items-center py-12 text-center">
-                <ArchiveBoxIcon className="h-10 w-10 text-gray-700 mb-2" />
-                <p className="text-sm text-gray-500">Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}</p>
+              <div className="flex flex-col items-center py-16 text-center">
+                <ArchiveBoxIcon className="h-12 w-12 text-gray-700 mb-3" />
+                <h3 className="text-base font-semibold text-white mb-1">
+                  Aucun programme {activeTab === 'active' ? 'actif' : 'archivé'}
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  {activeTab === 'active'
+                    ? 'Créez un nouveau programme pour commencer'
+                    : 'Les programmes archivés apparaîtront ici'
+                  }
+                </p>
+                {activeTab === 'active' && (
+                  <button
+                    onClick={openAddFlow}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Nouveau programme
+                  </button>
+                )}
               </div>
             )}
           </div>
