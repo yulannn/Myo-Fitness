@@ -47,6 +47,7 @@ export class CreateExerciceDto {
     example: [1, 3, 5],
     type: [Number],
   })
+  @IsOptional()
   @IsArray()
   @IsInt({ each: true, message: 'Chaque groupe musculaire doit être un entier (id).' })
   muscleGroupIds?: number[];

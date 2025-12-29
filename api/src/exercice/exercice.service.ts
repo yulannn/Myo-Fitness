@@ -16,15 +16,21 @@ export class ExerciceService {
         ...exerciceData,
         isDefault: false,
         createdByUserId: userId,
-        groupes: {
-          create: muscleGroupIds?.map((groupeId) => ({ groupeId })) || [],
-        },
-        equipments: {
-          create: equipmentIds?.map((equipmentId) => ({
-            equipment: { connect: { id: equipmentId } },
-          })) || [],
-        },
-
+        groupes: muscleGroupIds && muscleGroupIds.length > 0
+          ? {
+            create: muscleGroupIds.map((groupeId, index) => ({
+              groupeId: groupeId,
+              isPrimary: index === 0,
+            })),
+          }
+          : undefined,
+        equipments: equipmentIds && equipmentIds.length > 0
+          ? {
+            create: equipmentIds.map((equipmentId) => ({
+              equipment: { connect: { id: equipmentId } },
+            })),
+          }
+          : undefined,
       },
       include: {
         groupes: { include: { groupe: true } },

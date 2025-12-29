@@ -29,7 +29,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   // Create exercise mode
   const [isCreatingExercise, setIsCreatingExercise] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseMuscleGroupId, setNewExerciseMuscleGroupId] = useState<number | null>(null);
+  const [newExerciseMuscleGroupIds, setNewExerciseMuscleGroupIds] = useState<number[]>([]);
   const [newExerciseIsBodyweight, setNewExerciseIsBodyweight] = useState(false);
 
   const createExerciseMutation = useCreateExercice();
@@ -60,7 +60,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
       setSelectedMuscleGroup(null);
       setIsCreatingExercise(false);
       setNewExerciseName('');
-      setNewExerciseMuscleGroupId(null);
+      setNewExerciseMuscleGroupIds([]);
       setNewExerciseIsBodyweight(false);
       onClose();
     }, 300);
@@ -74,7 +74,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
 
   // Handle create exercise
   const handleCreateExercise = async () => {
-    if (!newExerciseName.trim() || !newExerciseMuscleGroupId) return;
+    if (!newExerciseName.trim() || newExerciseMuscleGroupIds.length === 0) return;
 
     try {
       await createExerciseMutation.mutateAsync({
@@ -82,7 +82,7 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
         difficulty: 3, // Default difficulty
         bodyWeight: newExerciseIsBodyweight,
         Materials: !newExerciseIsBodyweight,
-        muscleGroupIds: [newExerciseMuscleGroupId],
+        muscleGroupIds: newExerciseMuscleGroupIds,
       });
 
       // Return to the exercise list after successful creation
@@ -96,8 +96,17 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   const resetCreateMode = () => {
     setIsCreatingExercise(false);
     setNewExerciseName('');
-    setNewExerciseMuscleGroupId(null);
+    setNewExerciseMuscleGroupIds([]);
     setNewExerciseIsBodyweight(false);
+  };
+
+  // Toggle muscle group selection
+  const toggleMuscleGroup = (groupId: number) => {
+    setNewExerciseMuscleGroupIds(prev =>
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
   };
 
   // Filter and sort exercises
@@ -296,23 +305,40 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
                 />
               </div>
 
-              {/* Primary Muscle Group */}
+              {/* Muscle Groups - Multiple Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">Groupe musculaire principal *</label>
+                <label className="text-sm font-medium text-gray-400">
+                  Groupes musculaires ciblés *
+                </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {muscleGroups.map((group) => (
-                    <button
-                      key={group.id}
-                      onClick={() => setNewExerciseMuscleGroupId(group.id)}
-                      className={`p-3 rounded-xl text-sm font-medium transition-all ${newExerciseMuscleGroupId === group.id
-                        ? 'bg-[#94fbdd] text-[#09090b]'
-                        : 'bg-[#121214] border border-[#94fbdd]/10 text-gray-300 hover:border-[#94fbdd]/30'
-                        }`}
-                    >
-                      {group.name}
-                    </button>
-                  ))}
+                  {muscleGroups.map((group) => {
+                    const isSelected = newExerciseMuscleGroupIds.includes(group.id);
+                    const isPrimary = newExerciseMuscleGroupIds[0] === group.id;
+                    return (
+                      <button
+                        key={group.id}
+                        onClick={() => toggleMuscleGroup(group.id)}
+                        className={`relative p-3 rounded-xl text-sm font-medium transition-all ${isSelected
+                          ? 'bg-[#94fbdd] text-[#09090b]'
+                          : 'bg-[#121214] border border-[#94fbdd]/10 text-gray-300 hover:border-[#94fbdd]/30'
+                          }`}
+                      >
+                        {group.name}
+                        {isPrimary && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#09090b] text-[#94fbdd] text-[10px] font-bold rounded-full flex items-center justify-center">
+                            1
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+                {newExerciseMuscleGroupIds.length > 0 && (
+                  <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <span className="w-3 h-3 bg-[#09090b] text-[#94fbdd] text-[8px] font-bold rounded-full flex items-center justify-center">1</span>
+                    muscle principal
+                  </p>
+                )}
               </div>
 
               {/* Bodyweight Toggle */}
@@ -336,8 +362,8 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
               {/* Create Button */}
               <button
                 onClick={handleCreateExercise}
-                disabled={!newExerciseName.trim() || !newExerciseMuscleGroupId || createExerciseMutation.isPending}
-                className={`w-full py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 ${!newExerciseName.trim() || !newExerciseMuscleGroupId || createExerciseMutation.isPending
+                disabled={!newExerciseName.trim() || newExerciseMuscleGroupIds.length === 0 || createExerciseMutation.isPending}
+                className={`w-full py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 ${!newExerciseName.trim() || newExerciseMuscleGroupIds.length === 0 || createExerciseMutation.isPending
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   : 'bg-[#94fbdd] text-[#09090b] hover:bg-[#7de0c4] active:scale-[0.98]'
                   }`}
