@@ -147,27 +147,44 @@ export class SessionTemplateService {
   }
 
   /**
-   * 🗑️ Supprime un template
+   * 🗑️ Supprime un template et ses sessions en attente
    */
   async deleteTemplate(templateId: number, userId: number) {
     await this.getTemplateById(templateId, userId);
 
-    // Vérifier qu'il n'y a pas de sessions non complétées basées sur ce template
-    const pendingSessions = await this.prisma.trainingSession.count({
-      where: {
-        sessionTemplateId: templateId,
-        completed: false,
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      // 1️⃣ Supprimer les ExerciceSessions des sessions non complétées liées à ce template
+      const pendingSessions = await tx.trainingSession.findMany({
+        where: {
+          sessionTemplateId: templateId,
+          completed: false,
+        },
+        select: { id: true },
+      });
 
-    if (pendingSessions > 0) {
-      throw new BadRequestException(
-        `Cannot delete template: ${pendingSessions} pending session(s) are based on it. Complete or delete them first.`,
-      );
-    }
+      for (const session of pendingSessions) {
+        await tx.exerciceSession.deleteMany({
+          where: { sessionId: session.id },
+        });
+      }
 
-    return this.prisma.sessionTemplate.delete({
-      where: { id: templateId },
+      // 2️⃣ Supprimer les sessions non complétées liées à ce template
+      await tx.trainingSession.deleteMany({
+        where: {
+          sessionTemplateId: templateId,
+          completed: false,
+        },
+      });
+
+      // 3️⃣ Supprimer les ExerciseTemplates du template
+      await tx.exerciseTemplate.deleteMany({
+        where: { sessionTemplateId: templateId },
+      });
+
+      // 4️⃣ Supprimer le template lui-même
+      return tx.sessionTemplate.delete({
+        where: { id: templateId },
+      });
     });
   }
 

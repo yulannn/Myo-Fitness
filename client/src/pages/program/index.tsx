@@ -6,9 +6,7 @@ import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal
 import { useState, useMemo, useRef } from 'react';
 import {
   Modal,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
+  ModalContent,
 } from '../../components/ui/modal';
 import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal';
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
@@ -238,169 +236,195 @@ const Program = () => {
       </div>
 
       {/* Modals */}
-      <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <ModalHeader>
-          <div className="flex items-center gap-2 sm:gap-3 justify-center">
-            <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#94fbdd]" />
-            <ModalTitle className="text-lg sm:text-2xl">Programme actif détecté</ModalTitle>
+      <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} className="max-w-sm bg-[#18181b] border border-white/10 rounded-2xl">
+        <ModalContent className="!p-0 overflow-visible">
+          <div className="p-5">
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="p-3 bg-[#94fbdd]/10 rounded-full">
+                <ExclamationTriangleIcon className="h-6 w-6 text-[#94fbdd]" />
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-white">
+                  Programme actif détecté
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Un programme est déjà actif. Il sera archivé et remplacé par le nouveau.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirmContinue}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] shadow-lg shadow-[#94fbdd]/20 transition-all flex items-center justify-center gap-2"
+              >
+                Continuer
+              </button>
+            </div>
           </div>
-        </ModalHeader>
-        <div className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300 text-center">
-          Vous avez déjà un programme actif. Si vous continuez, le programme actuel sera archivé et remplacé par le nouveau.
-        </div>
-        <ModalFooter>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => setConfirmOpen(false)}
-              className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleConfirmContinue}
-              className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95"
-            >
-              Continuer
-            </button>
-          </div>
-        </ModalFooter>
+        </ModalContent>
       </Modal>
 
-      <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)}>
-        <ModalHeader>
-          <ModalTitle className="text-lg sm:text-2xl">Créer un programme</ModalTitle>
-        </ModalHeader>
-        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3">
-          <button
-            onClick={() => {
-              setAutomaticOpen(true);
-              setChoiceOpen(false);
-            }}
-            disabled={isPending}
-            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-[#94fbdd]/30 bg-[#94fbdd]/5 hover:bg-[#94fbdd]/10 flex items-center gap-3 sm:gap-4 transition-all group"
-          >
-            <div className="p-2 sm:p-3 bg-[#94fbdd]/20 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
-              <SparklesIcon className="h-6 w-6 sm:h-7 sm:w-7 text-[#94fbdd]" />
-            </div>
-            <div className="text-left flex-1 min-w-0">
-              <h4 className="font-bold text-white text-base sm:text-lg">Générer automatiquement</h4>
-              <p className="text-xs sm:text-sm text-gray-400 break-words">L'IA crée un programme adapté à votre profil</p>
-            </div>
-          </button>
+      <Modal isOpen={choiceOpen} onClose={() => setChoiceOpen(false)} className="max-w-sm bg-[#18181b] border border-white/10 rounded-2xl">
+        <ModalContent className="!p-0 overflow-visible">
+          <div className="p-5">
+            <h3 className="text-lg font-semibold text-white text-center mb-6">
+              Créer un programme
+            </h3>
 
-          <button
-            onClick={handleCreateManual}
-            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-600 hover:border-gray-500 bg-[#121214] hover:bg-[#252527] flex items-center gap-3 sm:gap-4 transition-all group"
-          >
-            <div className="p-2 sm:p-3 bg-gray-700 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
-              <ClipboardDocumentListIcon className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400" />
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setAutomaticOpen(true);
+                  setChoiceOpen(false);
+                }}
+                disabled={isPending}
+                className="w-full p-4 rounded-xl bg-[#94fbdd]/10 hover:bg-[#94fbdd]/20 border border-[#94fbdd]/20 flex items-center gap-4 transition-all group"
+              >
+                <div className="p-2 bg-[#94fbdd]/20 rounded-lg group-hover:scale-110 transition-transform">
+                  <SparklesIcon className="h-5 w-5 text-[#94fbdd]" />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold text-white text-sm">Automatique (IA)</h4>
+                  <p className="text-xs text-gray-400">Généré selon votre profil</p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleCreateManual}
+                className="w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-4 transition-all group"
+              >
+                <div className="p-2 bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
+                  <ClipboardDocumentListIcon className="h-5 w-5 text-gray-300" />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold text-white text-sm">Manuel</h4>
+                  <p className="text-xs text-gray-400">Créez de zéro</p>
+                </div>
+              </button>
             </div>
-            <div className="text-left flex-1 min-w-0">
-              <h4 className="font-bold text-white text-base sm:text-lg">Créer manuellement</h4>
-              <p className="text-xs sm:text-sm text-gray-400 break-words">Construisez votre programme exercice par exercice</p>
-            </div>
-          </button>
-        </div>
+          </div>
+        </ModalContent>
       </Modal>
 
       <Modal
         isOpen={automaticOpen}
         showClose={false}
         onClose={() => setAutomaticOpen(false)}
+        className="max-w-md bg-[#18181b] border border-white/10 rounded-2xl"
       >
-        <ModalHeader>
-          <ModalTitle className="text-lg sm:text-2xl">Personnalisez votre programme</ModalTitle>
-        </ModalHeader>
-        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5">
-          <div className="space-y-2">
-            <label htmlFor="program-name" className="text-sm font-medium text-gray-300">
-              Nom du programme
-            </label>
-            <input
-              id="program-name"
-              type="text"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-              placeholder="Ex: Prise de masse estivale"
-              onChange={(e) =>
-                (automaticProgramNameRef.current = e.target.value)
-              }
-              disabled={isGenerating}
-            />
-          </div>
+        <ModalContent className="!p-0 overflow-visible">
+          <div className="p-5">
+            <h3 className="text-lg font-semibold text-white text-center mb-6">
+              Personnaliser le programme
+            </h3>
 
-          <div className="space-y-2">
-            <label htmlFor="program-description" className="text-sm font-medium text-gray-300">
-              Description
-            </label>
-            <textarea
-              id="program-description"
-              className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px]"
-              placeholder="Objectifs, focus particulier..."
-              onChange={(e) =>
-                (automaticProgramDescriptionRef.current = e.target.value)
-              }
-              disabled={isGenerating}
-            />
-          </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="program-name" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Nom du programme
+                </label>
+                <input
+                  id="program-name"
+                  type="text"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+                  placeholder="Ex: Prise de masse estivale"
+                  onChange={(e) =>
+                    (automaticProgramNameRef.current = e.target.value)
+                  }
+                  disabled={isGenerating}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <label htmlFor="program-start-date" className="text-sm font-medium text-gray-300">
-              Date de début
-            </label>
-            <input
-              id="program-start-date"
-              type="date"
-              className="w-full min-w-0 appearance-none rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
-              defaultValue={new Date().toISOString().split('T')[0]}
-              onChange={(e) =>
-                (automaticProgramStartDateRef.current = e.target.value)
-              }
-              disabled={isGenerating}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <label htmlFor="program-description" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Description
+                </label>
+                <textarea
+                  id="program-description"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px] resize-none"
+                  placeholder="Objectifs, focus particulier..."
+                  onChange={(e) =>
+                    (automaticProgramDescriptionRef.current = e.target.value)
+                  }
+                  disabled={isGenerating}
+                />
+              </div>
 
-          {/* Profil automatiquement sélectionné */}
-          {fitnessProfile && (
-            <div className="p-3 sm:p-4 bg-white/5 rounded-xl border border-[#94fbdd]/20">
-              <p className="text-xs text-gray-400 mb-1">Profil utilisé</p>
-              <p className="text-sm text-white font-medium">
-                {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg – {fitnessProfile.trainingFrequency}j/semaine
-              </p>
+              <div className="space-y-1.5">
+                <label htmlFor="program-start-date" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Date de début
+                </label>
+                <input
+                  id="program-start-date"
+                  type="date"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                  onChange={(e) =>
+                    (automaticProgramStartDateRef.current = e.target.value)
+                  }
+                  disabled={isGenerating}
+                />
+              </div>
+
+              {/* Profil automatiquement sélectionné */}
+              {fitnessProfile && (
+                <div className="p-3 bg-[#94fbdd]/5 rounded-lg border border-[#94fbdd]/10">
+                  <p className="text-xs text-[#94fbdd] mb-0.5 font-medium">Profil utilisé</p>
+                  <p className="text-xs text-gray-300">
+                    {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg – {fitnessProfile.trainingFrequency}j/semaine
+                  </p>
+                </div>
+              )}
+
+              {isGenerating && (
+                <div className="p-3 bg-[#94fbdd]/10 rounded-lg flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                  <p className="text-xs text-[#94fbdd] font-medium">L'IA génère votre programme...</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 mt-6 pt-2">
+                <button
+                  onClick={() => setAutomaticOpen(false)}
+                  disabled={isGenerating}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+                  type="button"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() =>
+                    handleConfirmAutomatic(
+                      automaticProgramNameRef.current,
+                      automaticProgramDescriptionRef.current,
+                      automaticProgramStartDateRef.current
+                    )
+                  }
+                  disabled={isGenerating || !fitnessProfile}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] shadow-lg shadow-[#94fbdd]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  type="button"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span>Génération...</span>
+                    </>
+                  ) : (
+                    'Générer'
+                  )}
+                </button>
+              </div>
             </div>
-          )}
-
-          {isGenerating && (
-            <div className="p-3 sm:p-4 bg-[#94fbdd]/10 rounded-xl flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-              <p className="text-xs sm:text-sm text-[#94fbdd] font-medium">L'IA génère votre programme sur mesure...</p>
-            </div>
-          )}
-        </div>
-
-        <ModalFooter>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => setAutomaticOpen(false)}
-              disabled={isGenerating}
-              className="w-full px-4 py-3 rounded-xl border border-[#94fbdd]/20 text-gray-300 font-semibold hover:bg-[#121214] transition-all disabled:opacity-50"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={() =>
-                handleConfirmAutomatic(
-                  automaticProgramNameRef.current,
-                  automaticProgramDescriptionRef.current,
-                  automaticProgramStartDateRef.current
-                )
-              }
-              disabled={isGenerating || !fitnessProfile}
-              className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isGenerating ? 'Génération...' : 'Générer le programme'}
-            </button>
           </div>
-        </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {fitnessProfile && (

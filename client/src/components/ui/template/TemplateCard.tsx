@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { PlayIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon, CalendarIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon, CalendarIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { DayPicker } from 'react-day-picker';
 import { fr } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useStartFromTemplate from '../../../api/hooks/session-template/useStartFromTemplate';
 import useScheduleFromTemplate from '../../../api/hooks/session-template/useScheduleFromTemplate';
+import useDeleteSessionTemplate from '../../../api/hooks/session-template/useDeleteSessionTemplate';
 import { EditTemplateModal } from '../modal/EditTemplateModal';
 import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } from '../modal/BottomSheet';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../modal';
@@ -22,9 +23,11 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isConfirmStartModalOpen, setIsConfirmStartModalOpen] = useState(false);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
 
   const { mutate: startTemplate, isPending: isStarting } = useStartFromTemplate();
   const { mutate: scheduleTemplate, isPending: isScheduling } = useScheduleFromTemplate();
+  const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteSessionTemplate();
 
   // 🔍 Chercher l'instance planifiée (non complétée) pour ce template
   const scheduledInstance = template.instances?.find((instance: any) => !instance.completed);
@@ -251,6 +254,20 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
               <CalendarIcon className="w-4 h-4" />
             </button>
 
+            {/* Supprimer */}
+            <button
+              onClick={() => setIsConfirmDeleteModalOpen(true)}
+              disabled={isDeleting}
+              className="p-1.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded transition-colors disabled:opacity-50"
+              title="Supprimer la séance"
+            >
+              {isDeleting ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <TrashIcon className="w-4 h-4" />
+              )}
+            </button>
+
             <div className="flex-1" />
 
             {/* Démarrer - Icône seule */}
@@ -379,6 +396,40 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
               className="flex-1 px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50"
             >
               {isStarting ? 'Démarrage...' : 'Démarrer'}
+            </button>
+          </div>
+        </ModalFooter>
+      </Modal>
+
+      {/* Modal de confirmation pour supprimer */}
+      <Modal isOpen={isConfirmDeleteModalOpen} onClose={() => setIsConfirmDeleteModalOpen(false)}>
+        <ModalHeader>
+          <ModalTitle className="text-lg">Supprimer la séance ?</ModalTitle>
+        </ModalHeader>
+        <div className="px-6 py-4 text-center">
+          <p className="text-gray-300 text-sm">
+            Voulez-vous vraiment supprimer <span className="font-semibold text-white">{template.name}</span> ?
+          </p>
+          <p className="text-gray-500 text-xs mt-2">Cette action est irréversible.</p>
+        </div>
+        <ModalFooter>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsConfirmDeleteModalOpen(false)}
+              className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-gray-300 font-semibold hover:bg-white/5 transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={() => {
+                deleteTemplate(template.id, {
+                  onSuccess: () => setIsConfirmDeleteModalOpen(false)
+                });
+              }}
+              disabled={isDeleting}
+              className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
             </button>
           </div>
         </ModalFooter>

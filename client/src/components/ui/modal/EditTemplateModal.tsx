@@ -26,6 +26,7 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
   const [isSelectingExercise, setIsSelectingExercise] = useState(false);
   const [templateName, setTemplateName] = useState<string>('');
   const [templateDescription, setTemplateDescription] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'details' | 'exercises'>('details');
   const queryClient = useQueryClient();
 
   // Animation state (only closing)
@@ -245,129 +246,166 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
           </button>
         </div>
 
+        {/* Tabs Toggle */}
+        <div className="px-6 pb-2">
+          <div className="bg-[#121214] p-1.5 rounded-xl flex border border-white/5 relative">
+            {/* Active Tab Indicator Background */}
+            <div
+              className={`absolute inset-y-1.5 w-[calc(50%-6px)] bg-[#252527] rounded-lg shadow-sm border border-white/10 transition-all duration-300 ease-out ${activeTab === 'details' ? 'left-1.5' : 'left-[calc(50%+3px)]'
+                }`}
+            />
+
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`flex-1 relative z-10 py-2 text-sm font-medium transition-colors duration-300 ${activeTab === 'details' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                }`}
+            >
+              Détails
+            </button>
+            <button
+              onClick={() => setActiveTab('exercises')}
+              className={`flex-1 relative z-10 py-2 text-sm font-medium transition-colors duration-300 ${activeTab === 'exercises' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                }`}
+            >
+              Exercices {exercises.length > 0 && `(${exercises.length})`}
+            </button>
+          </div>
+        </div>
+
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-2">
           <div className="space-y-4">
-            {/* Template Name*/}
-            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
-              <div className="flex items-center gap-2">
-                <DocumentTextIcon className="h-5 w-5 text-[#94fbdd]" />
-                <h4 className="text-white font-semibold">Nom du template</h4>
-              </div>
-              <input
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="Nom du template... (ex: Push Day, Jour A, etc.)"
-                className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
-              />
-            </div>
 
-            {/* Template Description */}
-            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
-              <h4 className="text-white font-semibold">Description (optionnel)</h4>
-              <textarea
-                value={templateDescription}
-                onChange={(e) => setTemplateDescription(e.target.value)}
-                placeholder="Description du template..."
-                rows={2}
-                className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 resize-none transition-all"
-              />
-            </div>
-
-            {/* Add Exercise Button */}
-            <button
-              onClick={() => setIsSelectingExercise(true)}
-              disabled={filteredExercises.length === 0}
-              className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 hover:bg-[#1a1a1c] transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <PlusIcon className="h-5 w-5 text-[#94fbdd]" />
-              <span className="font-medium text-white">
-                {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
-              </span>
-            </button>
-
-            {/* Exercises List */}
-            {exercises.map((exercise, index) => (
-              <div
-                key={`${exercise.exerciseId}-${index}`}
-                className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h4 className="text-white font-semibold flex-1 break-words">
-                    {exercise.exerciseName}
-                  </h4>
-                  <button
-                    onClick={() => handleRemoveExercise(index)}
-                    className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                    title="Supprimer l'exercice"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
+            {/* View: Details */}
+            {activeTab === 'details' && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Template Name*/}
+                <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <DocumentTextIcon className="h-5 w-5 text-[#94fbdd]" />
+                    <h4 className="text-white font-semibold">Nom du template</h4>
+                  </div>
+                  <input
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Nom du template... (ex: Push Day, Jour A, etc.)"
+                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
+                  />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400">Séries</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={exercise.sets === 0 ? '' : exercise.sets}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleUpdateExercise(index, 'sets', value === '' ? 1 : Number(value));
-                      }}
-                      className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400">Reps</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={exercise.reps === 0 ? '' : exercise.reps}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleUpdateExercise(index, 'reps', value === '' ? 1 : Number(value));
-                      }}
-                      className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400">Poids (kg)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleUpdateExercise(index, 'weight', value === '' ? 0 : Number(value));
-                      }}
-                      className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                    />
-                  </div>
+                {/* Template Description */}
+                <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
+                  <h4 className="text-white font-semibold">Description (optionnel)</h4>
+                  <textarea
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    placeholder="Description du template..."
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 resize-none transition-all"
+                  />
                 </div>
               </div>
-            ))}
-
-            {exercises.length === 0 && (
-              <p className="text-center text-gray-500 py-8 italic">
-                Aucun exercice dans ce template
-              </p>
             )}
+
+            {/* View: Exercises */}
+            {activeTab === 'exercises' && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                {/* Add Exercise Button */}
+                <button
+                  onClick={() => setIsSelectingExercise(true)}
+                  disabled={filteredExercises.length === 0}
+                  className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/20 hover:border-[#94fbdd]/40 hover:bg-[#1a1a1c] transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="p-1 bg-[#94fbdd]/10 rounded-lg group-hover:scale-110 transition-transform">
+                    <PlusIcon className="h-5 w-5 text-[#94fbdd]" />
+                  </div>
+                  <span className="font-medium text-white">
+                    {filteredExercises.length === 0 ? 'Tous les exercices sont déjà ajoutés' : 'Ajouter un exercice'}
+                  </span>
+                </button>
+
+                {/* Exercises List */}
+                <div className="space-y-3">
+                  {exercises.map((exercise, index) => (
+                    <div
+                      key={`${exercise.exerciseId}-${index}`}
+                      className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="text-white font-semibold flex-1 break-words">
+                          {exercise.exerciseName}
+                        </h4>
+                        <button
+                          onClick={() => handleRemoveExercise(index)}
+                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                          title="Supprimer l'exercice"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-400">Séries</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={exercise.sets === 0 ? '' : exercise.sets}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleUpdateExercise(index, 'sets', value === '' ? 1 : Number(value));
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-400">Reps</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={exercise.reps === 0 ? '' : exercise.reps}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleUpdateExercise(index, 'reps', value === '' ? 1 : Number(value));
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-400">Poids (kg)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleUpdateExercise(index, 'weight', value === '' ? 0 : Number(value));
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {exercises.length === 0 && (
+                  <div className="text-center py-12 flex flex-col items-center">
+                    <div className="bg-[#252527] p-4 rounded-full mb-3 border border-white/5">
+                      <PlusIcon className="h-6 w-6 text-gray-500" />
+                    </div>
+                    <p className="text-gray-400 font-medium">Aucun exercice</p>
+                    <p className="text-xs text-gray-500 mt-1">Commencez par ajouter un exercice ci-dessus</p>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
-          {/* Aesthetic Divider */}
-          <div className="flex items-center gap-3 py-4 pt-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#94fbdd]/20 to-transparent"></div>
-            <div className="flex gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/30"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/50"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#94fbdd]/30"></div>
-            </div>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#94fbdd]/20 to-transparent"></div>
-          </div>
+          {/* Aesthetic Divider only visible if needed, or remove it as it's less relevant with tabs */}
         </div>
 
         {/* SelectExerciseModal */}

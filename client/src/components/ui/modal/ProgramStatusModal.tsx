@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, ModalContent, ModalHeader, ModalTitle, ModalFooter } from './index';
-import { ArchiveBoxIcon, ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Modal, ModalContent } from './index';
+import { ArchiveBoxIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
 
 interface ProgramStatusModalProps {
     isOpen: boolean;
@@ -22,77 +22,69 @@ export const ProgramStatusModal: React.FC<ProgramStatusModalProps> = ({
     const isActivating = program.status !== 'ACTIVE';
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalContent className="max-w-md mx-4">
-                <ModalHeader>
-                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl ${isActivating ? 'bg-[#94fbdd]/10 border border-[#94fbdd]/20' : 'bg-[#94fbdd]/10 border border-[#94fbdd]/20'} mb-4`}>
-                        {isActivating ? (
-                            <ArrowUturnLeftIcon className="h-6 w-6 text-[#94fbdd]" aria-hidden="true" />
-                        ) : (
-                            <ArchiveBoxIcon className="h-6 w-6 text-[#94fbdd]" aria-hidden="true" />
-                        )}
-                    </div>
-                    <ModalTitle className="text-center text-lg sm:text-xl">
-                        {isActivating ? 'Activer ce programme ?' : 'Archiver ce programme ?'}
-                    </ModalTitle>
-                </ModalHeader>
+        <Modal isOpen={isOpen} onClose={onClose} className="max-w-sm bg-[#18181b] border border-white/10 rounded-2xl">
+            <ModalContent className="!p-0 overflow-visible">
+                <div className="p-5">
+                    <div className="flex flex-col items-center text-center gap-3">
+                        <div className={`p-3 rounded-full ${isActivating ? 'bg-[#94fbdd]/10' : 'bg-gray-500/10'}`}>
+                            {isActivating ? (
+                                <ArrowUturnLeftIcon className="h-6 w-6 text-[#94fbdd]" />
+                            ) : (
+                                <ArchiveBoxIcon className="h-6 w-6 text-gray-400" />
+                            )}
+                        </div>
 
-                <div className="px-4 sm:px-6 pb-4">
-                    <p className="text-sm sm:text-base text-gray-400 text-center leading-relaxed">
-                        {isActivating ? (
-                            <>
-                                Vous êtes sur le point d'activer <strong className="text-white">{program.name}</strong>.
-                                {activeProgram && (
-                                    <div className="mt-4 p-3 bg-[#94fbdd]/10 border border-[#94fbdd]/20 rounded-lg text-left">
-                                        <div className="flex gap-2">
-                                            <ExclamationTriangleIcon className="h-5 w-5 text-[#94fbdd] flex-shrink-0 mt-0.5" />
-                                            <span className="text-[#94fbdd] text-xs sm:text-sm">
-                                                Attention : Le programme actuel <strong>{activeProgram.name}</strong> sera automatiquement archivé.
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-semibold text-white">
+                                {isActivating ? 'Activer le programme' : 'Archiver le programme'}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                                {isActivating ? (
+                                    <>
+                                        Activer <span className="text-white font-medium">"{program.name}"</span> ?
+                                        {activeProgram && (
+                                            <span className="block mt-1 text-xs text-[#94fbdd]">
+                                                (Archivera "{activeProgram.name}")
                                             </span>
-                                        </div>
-                                    </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        Archiver <span className="text-white font-medium">"{program.name}"</span> ?
+                                    </>
                                 )}
-                            </>
-                        ) : (
-                            <>
-                                Le programme <strong className="text-white">{program.name}</strong> sera déplacé dans vos archives.
-                                <br />
-                                <span className="text-xs sm:text-sm">
-                                    Vous ne pourrez plus lancer de séances tant qu'il ne sera pas réactivé.
-                                </span>
-                            </>
-                        )}
-                    </p>
-                </div>
+                            </p>
+                        </div>
+                    </div>
 
-                <ModalFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
-                    <button
-                        type="button"
-                        className="w-full sm:flex-1 px-4 py-2.5 rounded-lg bg-[#252527] text-white text-sm font-semibold hover:bg-[#2a2a2d] border border-white/10 transition-colors disabled:opacity-50"
-                        onClick={onClose}
-                        disabled={isPending}
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        type="button"
-                        className={`w-full sm:flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 ${isActivating
-                            ? 'bg-[#94fbdd] text-[#121214] hover:bg-[#94fbdd]/90'
-                            : 'bg-[#94fbdd] text-[#121214] hover:bg-[#94fbdd]/90'
-                            }`}
-                        onClick={onConfirm}
-                        disabled={isPending}
-                    >
-                        {isPending ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                <span>Traitement...</span>
-                            </div>
-                        ) : (
-                            isActivating ? "Confirmer l'activation" : "Confirmer l'archivage"
-                        )}
-                    </button>
-                </ModalFooter>
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                        <button
+                            onClick={onClose}
+                            disabled={isPending}
+                            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            disabled={isPending}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2
+                                ${isActivating
+                                    ? 'bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
+                                    : 'bg-white/10 hover:bg-white/20 text-white'
+                                }`}
+                        >
+                            {isPending ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    <span>Traitement...</span>
+                                </>
+                            ) : (
+                                isActivating ? 'Activer' : 'Archiver'
+                            )}
+                        </button>
+                    </div>
+                </div>
             </ModalContent>
         </Modal>
     );

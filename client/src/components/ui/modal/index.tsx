@@ -7,9 +7,10 @@ interface ModalProps {
     onClose: () => void;
     children: React.ReactNode;
     showClose?: boolean;
+    className?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClose = true }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClose = true, className }) => {
     if (!isOpen) return null;
 
     return (
@@ -25,11 +26,15 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClo
 
             <div
                 className={clsx(
-                    "relative z-[100] w-full max-w-lg",
-                    "rounded-3xl bg-[#252527]",
-                    "shadow-2xl border border-[#94fbdd]/10",
+                    "relative z-[100] w-full",
+                    !className?.includes('max-w-') && "max-w-lg",
+                    !className?.includes('bg-') && "bg-[#252527]",
+                    !className?.includes('rounded-') && "rounded-3xl",
+                    !className?.includes('border') && "border border-[#94fbdd]/10",
+                    "shadow-2xl",
                     "max-h-[80vh]",
-                    "flex flex-col"
+                    "flex flex-col",
+                    className
                 )}
             >
                 {/* Close Button */}
