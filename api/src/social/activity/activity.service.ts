@@ -48,11 +48,15 @@ export class ActivityService {
             f.userId === userId ? f.friendId : f.userId,
         );
 
-        // Always include own activities in feed? Or just friends? Spec says "Les activités des amis". 
-        // Usually strava includes own too. Let's include both for now? Spec says: "Activités des amis".
-        // Let's stick to friends + self for a good feed experience if friends count is low.
-
+        // Include own activities + friends activities
         const targetIds = [...friendIds, userId];
+
+        // Get total count for pagination
+        const total = await this.prisma.activity.count({
+            where: {
+                userId: { in: targetIds },
+            },
+        });
 
         const activities = await this.prisma.activity.findMany({
             where: {
@@ -85,7 +89,15 @@ export class ActivityService {
             },
         });
 
-        return activities;
+        return {
+            data: activities,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            }
+        };
     }
 
     async toggleReaction(userId: number, activityId: number, emoji: string) {
