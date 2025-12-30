@@ -184,11 +184,10 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
                             {ex.performances.length > 0 ? (
                                 <div className="px-3 py-2">
                                     {/* Table Header */}
-                                    <div className="grid grid-cols-4 gap-2 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
+                                    <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
                                         <span>Série</span>
                                         <span className="text-center">Reps</span>
                                         <span className="text-center">Poids</span>
-                                        <span className="text-right">RPE</span>
                                     </div>
 
                                     {/* Performance Rows */}
@@ -196,7 +195,7 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
                                         {ex.performances.map((perf, idx) => (
                                             <div
                                                 key={idx}
-                                                className={`grid grid-cols-4 gap-2 items-center py-1.5 px-1 rounded-lg transition-colors ${perf.success === false
+                                                className={`grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg transition-colors ${perf.success === false
                                                     ? 'bg-red-500/10'
                                                     : 'hover:bg-white/5'
                                                     }`}
@@ -222,29 +221,46 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
                                                     {perf.weight ? `${perf.weight} kg` : '-'}
                                                 </span>
 
-                                                {/* RPE */}
-                                                <span className="text-right">
-                                                    {perf.rpe ? (
-                                                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${perf.rpe >= 9
-                                                            ? 'bg-orange-500/20 text-orange-400'
-                                                            : perf.rpe >= 7
-                                                                ? 'bg-yellow-500/20 text-yellow-400'
-                                                                : 'bg-green-500/20 text-green-400'
-                                                            }`}>
-                                                            @{perf.rpe}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-600">-</span>
-                                                    )}
-                                                </span>
+
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="px-3 py-2 text-sm text-gray-400">
-                                    <span className="font-medium text-white">{ex.sets}</span> séries × <span className="font-medium text-white">{ex.reps}</span> reps
-                                    {ex.weight ? <span className="text-gray-500"> @ {ex.weight} kg</span> : <span className="text-gray-600"> (poids du corps)</span>}
+                                <div className="px-3 py-2">
+                                    {/* Table Header */}
+                                    <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
+                                        <span>Série</span>
+                                        <span className="text-center">Reps</span>
+                                        <span className="text-center">Poids</span>
+                                    </div>
+
+                                    {/* Planned Sets Rows */}
+                                    <div className="space-y-1.5">
+                                        {Array.from({ length: ex.sets }, (_, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg hover:bg-white/5 transition-colors"
+                                            >
+                                                {/* Set Number */}
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/10 text-gray-400">
+                                                        {idx + 1}
+                                                    </span>
+                                                </div>
+
+                                                {/* Reps */}
+                                                <span className="text-center text-sm font-semibold text-white">
+                                                    {ex.reps}
+                                                </span>
+
+                                                {/* Weight */}
+                                                <span className="text-center text-sm text-gray-300">
+                                                    {ex.weight ? `${ex.weight} kg` : '-'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
