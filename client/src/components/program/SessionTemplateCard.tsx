@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PlayIcon, CalendarIcon, PencilIcon } from '@heroicons/react/24/solid';
-import { SessionTemplateDto } from '../../api/services/sessionTemplateService';
+import type { SessionTemplateDto } from '../../api/services/sessionTemplateService';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../ui/modal';
 import useScheduleFromTemplate from '../../api/hooks/session-template/useScheduleFromTemplate';
 import useStartFromTemplate from '../../api/hooks/session-template/useStartFromTemplate';
@@ -32,7 +32,7 @@ export default function SessionTemplateCard({ template, onEdit }: SessionTemplat
   };
 
   const handleStartNow = () => {
-    startSession(template.id);
+    startSession({ templateId: template.id });
   };
 
   // Date minimale = aujourd'hui
@@ -63,20 +63,30 @@ export default function SessionTemplateCard({ template, onEdit }: SessionTemplat
 
         {/* Liste des exercices */}
         <div className="space-y-2 mb-4">
-          {template.exercises.map((ex, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-2 bg-[#121214] rounded-lg"
-            >
-              <span className="text-sm text-white font-medium">
-                {ex.exercise?.name || 'Exercice'}
-              </span>
-              <span className="text-xs text-[#94fbdd] font-mono bg-[#252527] px-2 py-1 rounded">
-                {ex.sets} × {ex.reps}
-                {ex.weight ? ` @ ${ex.weight}kg` : ''}
-              </span>
-            </div>
-          ))}
+          {template.exercises.map((ex, idx) => {
+            const isCardio = ex.exercise?.type === 'CARDIO';
+
+            return (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2 bg-[#121214] rounded-lg"
+              >
+                <span className="text-sm text-white font-medium">
+                  {ex.exercise?.name || 'Exercice'}
+                </span>
+                <span className="text-xs text-[#94fbdd] font-mono bg-[#252527] px-2 py-1 rounded">
+                  {isCardio ? (
+                    `${ex.duration || 15} min`
+                  ) : (
+                    <>
+                      {ex.sets} × {ex.reps}
+                      {ex.weight ? ` @ ${ex.weight}kg` : ''}
+                    </>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Actions */}

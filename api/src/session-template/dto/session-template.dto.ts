@@ -18,6 +18,11 @@ export class ExerciseTemplateDto {
   weight?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  duration?: number; // 🆕 Durée en minutes pour exercices cardio
+
+  @IsOptional()
   @IsString()
   notes?: string;
 

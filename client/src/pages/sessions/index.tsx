@@ -463,16 +463,27 @@ function SessionCard({ session }: { session: any }) {
                                     // Pour sessions non complétées : utiliser sessionTemplate.exercises
                                     const exercises = !fullSession.completed && fullSession.sessionTemplate?.exercises
                                         ? fullSession.sessionTemplate.exercises.map((exTemplate: any) => ({
-                                            exercice: { name: exTemplate.exercise?.name },
+                                            exercice: {
+                                                name: exTemplate.exercise?.name,
+                                                type: exTemplate.exercise?.type
+                                            },
                                             sets: exTemplate.sets,
                                             reps: exTemplate.reps,
                                             weight: exTemplate.weight,
+                                            duration: exTemplate.duration,
                                             performances: null
                                         }))
-                                        : fullSession.exercices || [];
+                                        : (fullSession.exercices || []).map((ex: any) => ({
+                                            ...ex,
+                                            exercice: {
+                                                ...ex.exercice,
+                                                type: ex.exercice?.type
+                                            }
+                                        }));
 
                                     return exercises.map((ex: any, index: number) => {
                                         const hasPerformances = fullSession.completed && ex.performances && ex.performances.length > 0
+                                        const isCardio = ex.exercice?.type === 'CARDIO'
 
                                         return (
                                             <div
@@ -488,9 +499,15 @@ function SessionCard({ session }: { session: any }) {
 
                                                     {!hasPerformances && (
                                                         <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                            {ex.sets && <span>{ex.sets} séries</span>}
-                                                            {ex.reps && <span>{ex.reps} reps</span>}
-                                                            {ex.weight && <span>{ex.weight} kg</span>}
+                                                            {isCardio ? (
+                                                                <span>{ex.duration || 15} min</span>
+                                                            ) : (
+                                                                <>
+                                                                    {ex.sets && <span>{ex.sets} séries</span>}
+                                                                    {ex.reps && <span>{ex.reps} reps</span>}
+                                                                    {ex.weight && <span>{ex.weight} kg</span>}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -502,11 +519,17 @@ function SessionCard({ session }: { session: any }) {
                                                                 key={perfIndex}
                                                                 className="flex items-center justify-between text-xs text-gray-500 py-1 border-t border-white/5 first:border-0"
                                                             >
-                                                                <span>Série {perfIndex + 1}</span>
+                                                                <span>{isCardio ? 'Cardio' : `Série ${perfIndex + 1}`}</span>
                                                                 <div className="flex items-center gap-3">
-                                                                    {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
-                                                                    {perf.weight && <span>{perf.weight} kg</span>}
-                                                                    {perf.rpe && <span>RPE {perf.rpe}</span>}
+                                                                    {isCardio ? (
+                                                                        perf.reps_effectuees && <span>{perf.reps_effectuees} min</span>
+                                                                    ) : (
+                                                                        <>
+                                                                            {perf.reps_effectuees && <span>{perf.reps_effectuees} reps</span>}
+                                                                            {perf.weight && <span>{perf.weight} kg</span>}
+                                                                            {perf.rpe && <span>RPE {perf.rpe}</span>}
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))}

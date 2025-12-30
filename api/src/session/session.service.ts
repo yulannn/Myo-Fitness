@@ -72,6 +72,7 @@ export class SessionService {
             exercice: {
               select: {
                 name: true,
+                type: true, // 🆕 Pour distinguer cardio
               },
             },
             performances: {
@@ -95,11 +96,13 @@ export class SessionService {
                 sets: true,
                 reps: true,
                 weight: true,
+                duration: true, // 🆕 Pour cardio
                 orderInSession: true,
                 exercise: {
                   select: {
                     id: true,
                     name: true,
+                    type: true, // 🆕 Pour distinguer cardio
                   },
                 },
               },

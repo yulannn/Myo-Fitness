@@ -356,126 +356,168 @@ export default function ActiveSession() {
 
                 {/* Liste des exercices */}
                 <div className="space-y-8">
-                    {activeSession.exercices?.map((exerciceSession: any, index: number) => (
-                        <div key={exerciceSession.id || index} className="space-y-4">
-                            <div className="flex items-center justify-between border-b border-[#94fbdd]/10 pb-3 gap-4">
-                                <h3 className="text-lg font-bold text-white flex-1 min-w-0 truncate">
-                                    {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
-                                </h3>
+                    {activeSession.exercices?.map((exerciceSession: any, index: number) => {
+                        const isCardio = exerciceSession.exercice?.type === 'CARDIO';
 
-                                {/* 🔧 Boutons +/- pour ajuster les séries */}
-                                <div className="flex items-center gap-2 flex-shrink-0 group">
-                                    {(() => {
-                                        const validatedCount = getValidatedSetsCount(exerciceSession.id);
-                                        const canDecrease = exerciceSession.sets > validatedCount && exerciceSession.sets > 1;
+                        return (
+                            <div key={exerciceSession.id || index} className="space-y-4">
+                                <div className="flex items-center justify-between border-b border-[#94fbdd]/10 pb-3 gap-4">
+                                    <h3 className="text-lg font-bold text-white flex-1 min-w-0 truncate">
+                                        {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
+                                    </h3>
 
-                                        return (
+                                    {/* Pour cardio : afficher durée, sinon sets × reps */}
+                                    {isCardio ? (
+                                        <div className="text-sm sm:text-base font-mono bg-[#252527] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-white/5 text-center">
+                                            <span className="text-[#94fbdd] font-bold tabular-nums">{exerciceSession.reps}</span>
+                                            <span className="text-gray-500 ml-1">min</span>
+                                        </div>
+                                    ) : (
+                                        /* 🔧 Boutons +/- pour ajuster les séries */
+                                        <div className="flex items-center gap-2 flex-shrink-0 group">
+                                            {(() => {
+                                                const validatedCount = getValidatedSetsCount(exerciceSession.id);
+                                                const canDecrease = exerciceSession.sets > validatedCount && exerciceSession.sets > 1;
+
+                                                return (
+                                                    <button
+                                                        onClick={() => updateExerciceSets({
+                                                            exerciceSessionId: exerciceSession.id,
+                                                            sets: Math.max(validatedCount, exerciceSession.sets - 1)
+                                                        })}
+                                                        disabled={!canDecrease || isUpdatingSets}
+                                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#252527] border border-white/5 flex items-center justify-center hover:bg-[#2a2a2d] hover:border-[#94fbdd]/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95"
+                                                        title={validatedCount > 0 && exerciceSession.sets <= validatedCount
+                                                            ? `${validatedCount} série${validatedCount > 1 ? 's' : ''} déjà validée${validatedCount > 1 ? 's' : ''}`
+                                                            : "Retirer une série"}
+                                                    >
+                                                        <MinusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-red-400" />
+                                                    </button>
+                                                );
+                                            })()}
+
+                                            <div className="text-sm sm:text-base font-mono bg-[#252527] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-white/5 min-w-[70px] sm:min-w-[80px] text-center">
+                                                <span className="text-[#94fbdd] font-bold tabular-nums">{exerciceSession.sets}</span>
+                                                <span className="text-gray-500 mx-1">×</span>
+                                                <span className="text-white font-semibold tabular-nums">{exerciceSession.reps}</span>
+                                            </div>
+
                                             <button
                                                 onClick={() => updateExerciceSets({
                                                     exerciceSessionId: exerciceSession.id,
-                                                    sets: Math.max(validatedCount, exerciceSession.sets - 1)
+                                                    sets: Math.min(20, exerciceSession.sets + 1)
                                                 })}
-                                                disabled={!canDecrease || isUpdatingSets}
+                                                disabled={exerciceSession.sets >= 20 || isUpdatingSets}
                                                 className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#252527] border border-white/5 flex items-center justify-center hover:bg-[#2a2a2d] hover:border-[#94fbdd]/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95"
-                                                title={validatedCount > 0 && exerciceSession.sets <= validatedCount
-                                                    ? `${validatedCount} série${validatedCount > 1 ? 's' : ''} déjà validée${validatedCount > 1 ? 's' : ''}`
-                                                    : "Retirer une série"}
+                                                title="Ajouter une série"
                                             >
-                                                <MinusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-red-400" />
+                                                <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-[#94fbdd]" />
                                             </button>
-                                        );
-                                    })()}
-
-                                    <div className="text-sm sm:text-base font-mono bg-[#252527] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-white/5 min-w-[70px] sm:min-w-[80px] text-center">
-                                        <span className="text-[#94fbdd] font-bold tabular-nums">{exerciceSession.sets}</span>
-                                        <span className="text-gray-500 mx-1">×</span>
-                                        <span className="text-white font-semibold tabular-nums">{exerciceSession.reps}</span>
-                                    </div>
-
-                                    <button
-                                        onClick={() => updateExerciceSets({
-                                            exerciceSessionId: exerciceSession.id,
-                                            sets: Math.min(20, exerciceSession.sets + 1)
-                                        })}
-                                        disabled={exerciceSession.sets >= 20 || isUpdatingSets}
-                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#252527] border border-white/5 flex items-center justify-center hover:bg-[#2a2a2d] hover:border-[#94fbdd]/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95"
-                                        title="Ajouter une série"
-                                    >
-                                        <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-[#94fbdd]" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                {/* Headers */}
-                                <div className="grid grid-cols-12 gap-3 text-[10px] uppercase tracking-wider text-gray-500 font-bold px-2 mb-2">
-                                    <div className="col-span-1 text-center">#</div>
-                                    <div className="col-span-4 text-center">Reps</div>
-                                    <div className="col-span-4 text-center">Poids (kg)</div>
-                                    <div className="col-span-3 text-center">Statut</div>
-                                </div>
-
-                                {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
-                                    const perfKey = `${exerciceSession.id}-${setIndex}`;
-                                    const perf = performances[perfKey] || {};
-                                    const isDone = perf.success;
-
-                                    return (
-                                        <div
-                                            key={setIndex}
-                                            className={`grid grid-cols-12 gap-3 items-center p-2 rounded-xl border transition-all duration-200 ${isDone
-                                                ? 'bg-[#94fbdd]/10 border-[#94fbdd]/20'
-                                                : 'bg-[#252527]/50 border-transparent hover:bg-[#252527]'
-                                                }`}
-                                        >
-                                            <div className="col-span-1 text-center font-mono text-gray-500 text-sm font-bold">
-                                                {setIndex + 1}
-                                            </div>
-
-                                            <div className="col-span-4">
-                                                <input
-                                                    type="number"
-                                                    placeholder={exerciceSession.reps.toString()}
-                                                    value={perf.reps_effectuees || ''}
-                                                    onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'reps_effectuees', parseInt(e.target.value) || 0)}
-                                                    className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
-                                                        ? 'border-[#94fbdd]/20 text-gray-400'
-                                                        : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
-                                                        }`}
-                                                />
-                                            </div>
-
-                                            <div className="col-span-4">
-                                                <input
-                                                    type="number"
-                                                    step="0.5"
-                                                    placeholder={exerciceSession.weight?.toString() || '0'}
-                                                    value={perf.weight || ''}
-                                                    onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'weight', parseFloat(e.target.value) || 0)}
-                                                    className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
-                                                        ? 'border-[#94fbdd]/20 text-gray-400'
-                                                        : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
-                                                        }`}
-                                                />
-                                            </div>
-
-                                            <div className="col-span-3 flex justify-center">
-                                                <button
-                                                    onClick={() => handleValidateSet(exerciceSession.id, setIndex, exerciceSession.reps, exerciceSession.weight)}
-                                                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${isDone
-                                                        ? 'bg-[#94fbdd] text-[#121214] shadow-md shadow-[#94fbdd]/20'
-                                                        : 'bg-[#121214] text-gray-600 border border-[#252527] hover:border-[#94fbdd]/30 hover:text-gray-400'
-                                                        }`}
-                                                >
-                                                    <CheckCircleIcon className="w-5 h-5" />
-                                                </button>
-                                            </div>
                                         </div>
-                                    );
-                                })}
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    {/* Headers - différent pour cardio */}
+                                    {isCardio ? (
+                                        <div className="grid grid-cols-12 gap-3 text-[10px] uppercase tracking-wider text-gray-500 font-bold px-2 mb-2">
+                                            <div className="col-span-2 text-center">#</div>
+                                            <div className="col-span-7 text-center">Minutes</div>
+                                            <div className="col-span-3 text-center">Statut</div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-12 gap-3 text-[10px] uppercase tracking-wider text-gray-500 font-bold px-2 mb-2">
+                                            <div className="col-span-1 text-center">#</div>
+                                            <div className="col-span-4 text-center">Reps</div>
+                                            <div className="col-span-4 text-center">Poids (kg)</div>
+                                            <div className="col-span-3 text-center">Statut</div>
+                                        </div>
+                                    )}
+
+                                    {Array.from({ length: exerciceSession.sets }).map((_, setIndex) => {
+                                        const perfKey = `${exerciceSession.id}-${setIndex}`;
+                                        const perf = performances[perfKey] || {};
+                                        const isDone = perf.success;
+
+                                        // Pour cardio : reps contient maintenant la durée
+                                        const defaultValue = exerciceSession.reps;
+
+                                        return (
+                                            <div
+                                                key={setIndex}
+                                                className={`grid grid-cols-12 gap-3 items-center p-2 rounded-xl border transition-all duration-200 ${isDone
+                                                    ? 'bg-[#94fbdd]/10 border-[#94fbdd]/20'
+                                                    : 'bg-[#252527]/50 border-transparent hover:bg-[#252527]'
+                                                    }`}
+                                            >
+                                                <div className={`${isCardio ? 'col-span-2' : 'col-span-1'} text-center font-mono text-gray-500 text-sm font-bold`}>
+                                                    {setIndex + 1}
+                                                </div>
+
+                                                {isCardio ? (
+                                                    /* Input minutes pour cardio */
+                                                    <div className="col-span-7">
+                                                        <input
+                                                            type="number"
+                                                            placeholder={defaultValue.toString()}
+                                                            value={perf.reps_effectuees || ''}
+                                                            onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'reps_effectuees', parseInt(e.target.value) || 0)}
+                                                            className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
+                                                                ? 'border-[#94fbdd]/20 text-gray-400'
+                                                                : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    /* Inputs reps et poids pour exercices normaux */
+                                                    <>
+                                                        <div className="col-span-4">
+                                                            <input
+                                                                type="number"
+                                                                placeholder={exerciceSession.reps.toString()}
+                                                                value={perf.reps_effectuees || ''}
+                                                                onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'reps_effectuees', parseInt(e.target.value) || 0)}
+                                                                className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
+                                                                    ? 'border-[#94fbdd]/20 text-gray-400'
+                                                                    : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
+                                                                    }`}
+                                                            />
+                                                        </div>
+
+                                                        <div className="col-span-4">
+                                                            <input
+                                                                type="number"
+                                                                step="0.5"
+                                                                placeholder={exerciceSession.weight?.toString() || '0'}
+                                                                value={perf.weight || ''}
+                                                                onChange={(e) => handlePerformanceChange(exerciceSession.id, setIndex, 'weight', parseFloat(e.target.value) || 0)}
+                                                                className={`w-full bg-[#121214] border text-center rounded-lg py-2 text-sm font-semibold focus:ring-1 focus:ring-[#94fbdd] transition-all outline-none tabular-nums ${isDone
+                                                                    ? 'border-[#94fbdd]/20 text-gray-400'
+                                                                    : 'border-[#94fbdd]/10 text-white focus:border-[#94fbdd]/50'
+                                                                    }`}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                <div className="col-span-3 flex justify-center">
+                                                    <button
+                                                        onClick={() => handleValidateSet(exerciceSession.id, setIndex, defaultValue, isCardio ? 0 : exerciceSession.weight)}
+                                                        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${isDone
+                                                            ? 'bg-[#94fbdd] text-[#121214] shadow-md shadow-[#94fbdd]/20'
+                                                            : 'bg-[#121214] text-gray-600 border border-[#252527] hover:border-[#94fbdd]/30 hover:text-gray-400'
+                                                            }`}
+                                                    >
+                                                        <CheckCircleIcon className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Bouton de fin de séance (intégré au flux) */}

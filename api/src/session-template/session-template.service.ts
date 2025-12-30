@@ -23,6 +23,7 @@ export class SessionTemplateService {
                 imageUrl: true,
                 bodyWeight: true,
                 difficulty: true,
+                type: true, // 🆕 Pour distinguer cardio
               },
             },
           },
@@ -83,6 +84,7 @@ export class SessionTemplateService {
             sets: ex.sets,
             reps: ex.reps,
             weight: ex.weight,
+            duration: ex.duration, // 🆕 Pour cardio
             notes: ex.notes,
             orderInSession: ex.orderInSession ?? index,
           })),
@@ -127,6 +129,7 @@ export class SessionTemplateService {
             sets: ex.sets,
             reps: ex.reps,
             weight: ex.weight,
+            duration: ex.duration, // 🆕 Pour cardio
             notes: ex.notes,
             orderInSession: ex.orderInSession ?? index,
           })),
@@ -207,6 +210,7 @@ export class SessionTemplateService {
                 name: true,
                 imageUrl: true,
                 bodyWeight: true,
+                type: true, // 🆕 Pour distinguer cardio
               },
             },
           },
@@ -255,6 +259,7 @@ export class SessionTemplateService {
                 name: true,
                 imageUrl: true,
                 bodyWeight: true,
+                type: true, // 🆕 Pour distinguer cardio
               },
             },
           },
@@ -289,6 +294,7 @@ export class SessionTemplateService {
                   name: true,
                   imageUrl: true,
                   bodyWeight: true,
+                  type: true, // 🆕 Pour distinguer cardio
                 },
               },
             },
@@ -316,13 +322,19 @@ export class SessionTemplateService {
 
         // Créer les ExerciceSessions depuis le template (toujours à jour)
         for (const exTemplate of template.exercises) {
+          // 🆕 Pour les exercices cardio : utiliser duration comme valeur de reps
+          const isCardio = exTemplate.exercise?.type === 'CARDIO';
+          const repsValue = isCardio
+            ? (exTemplate.duration || exTemplate.reps || 15)
+            : exTemplate.reps;
+
           await tx.exerciceSession.create({
             data: {
               sessionId: existingSession.id,
               exerciceId: exTemplate.exerciseId,
-              sets: exTemplate.sets,
-              reps: exTemplate.reps,
-              weight: exTemplate.weight || null,
+              sets: isCardio ? 1 : exTemplate.sets, // Cardio = 1 seule "série"
+              reps: repsValue,
+              weight: isCardio ? null : (exTemplate.weight || null),
             },
           });
         }
@@ -346,6 +358,7 @@ export class SessionTemplateService {
                   name: true,
                   imageUrl: true,
                   bodyWeight: true,
+                  type: true, // 🆕 Pour distinguer cardio
                 },
               },
             },

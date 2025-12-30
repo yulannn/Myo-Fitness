@@ -17,6 +17,7 @@ interface ExerciseRow {
     id?: number;
     exerciceId: number;
     exerciceName: string;
+    exerciceType?: string | null; // 🆕 Pour détecter les exercices cardio
     sets: number;
     reps: number;
     weight?: number;
@@ -58,6 +59,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                     id: ex.id,
                     exerciceId: exerciceId,
                     exerciceName: ex.exercice?.name || `Exercice #${exerciceId || 'unknown'}`,
+                    exerciceType: ex.exercice?.type || null, // 🆕 Capturer le type
                     sets: ex.sets || 0,
                     reps: ex.reps || 0,
                     weight: ex.weight || 0,
@@ -135,8 +137,9 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
         const newExercise: ExerciseRow = {
             exerciceId: exerciceIdNumber,
             exerciceName: exercise.name,
-            sets: 3,
-            reps: 10,
+            exerciceType: exercise.type || null, // 🆕 Capturer le type
+            sets: exercise.type === 'CARDIO' ? 1 : 3, // Cardio = 1 série
+            reps: exercise.type === 'CARDIO' ? 15 : 10, // Cardio = 15 min par défaut
             weight: 0,
             isNew: true,
             isModified: false,
@@ -311,6 +314,7 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                         {/* Exercises List */}
                         {visibleExercises.map((exercise) => {
                             const realIndex = exercises.indexOf(exercise);
+                            const isCardio = exercise.exerciceType === 'CARDIO';
 
                             return (
                                 <div
@@ -320,6 +324,11 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                     <div className="flex items-start justify-between gap-3">
                                         <h4 className="text-white font-semibold flex-1 break-words">
                                             {exercise.exerciceName}
+                                            {isCardio && (
+                                                <span className="ml-2 text-xs px-2 py-0.5 bg-red-500/20 text-red-400 rounded-lg">
+                                                    Cardio
+                                                </span>
+                                            )}
                                             {exercise.isNew && (
                                                 <span className="ml-2 text-xs px-2 py-0.5 bg-[#94fbdd]/20 text-[#94fbdd] rounded-lg">
                                                     Nouveau
@@ -340,23 +349,10 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-3">
+                                    {isCardio ? (
+                                        /* Affichage spécial pour cardio : uniquement la durée */
                                         <div className="space-y-1">
-                                            <label className="text-xs text-gray-400">Séries</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={exercise.sets === 0 ? '' : exercise.sets}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    handleUpdateExercise(realIndex, 'sets', value === '' ? 0 : Number(value));
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-gray-400">Reps</label>
+                                            <label className="text-xs text-gray-400">Durée (minutes)</label>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -366,24 +362,56 @@ export const EditSessionModal = ({ isOpen, onClose, session, availableExercises 
                                                     handleUpdateExercise(realIndex, 'reps', value === '' ? 0 : Number(value));
                                                 }}
                                                 className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                                placeholder="15"
                                             />
                                         </div>
+                                    ) : (
+                                        /* Affichage standard : sets, reps, poids */
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Séries</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={exercise.sets === 0 ? '' : exercise.sets}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        handleUpdateExercise(realIndex, 'sets', value === '' ? 0 : Number(value));
+                                                    }}
+                                                    className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                                />
+                                            </div>
 
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-gray-400">Poids (kg)</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.5"
-                                                value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    handleUpdateExercise(realIndex, 'weight', value === '' ? 0 : Number(value));
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
-                                            />
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Reps</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={exercise.reps === 0 ? '' : exercise.reps}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        handleUpdateExercise(realIndex, 'reps', value === '' ? 0 : Number(value));
+                                                    }}
+                                                    className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Poids (kg)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.5"
+                                                    value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        handleUpdateExercise(realIndex, 'weight', value === '' ? 0 : Number(value));
+                                                    }}
+                                                    className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             );
                         })}

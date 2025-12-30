@@ -29,6 +29,7 @@ export interface Exercice {
 export interface ExerciceMinimal {
     id: number;
     name: string;
+    type?: string | null; // 🆕 Pour détecter les exercices cardio
     groupes?: { isPrimary: boolean; groupe: MuscleGroup }[];
 }
 

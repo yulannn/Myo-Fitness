@@ -60,7 +60,7 @@ export class ExerciceService {
     return exercices;
   }
 
-  async findAllMinimal(userId: number): Promise<{ id: number; name: string; groupes: { isPrimary: boolean; groupe: { id: number; name: string } }[] }[]> {
+  async findAllMinimal(userId: number): Promise<{ id: number; name: string; type?: string | null; groupes: { isPrimary: boolean; groupe: { id: number; name: string } }[] }[]> {
     const exercices = await this.prisma.exercice.findMany({
       where: {
         OR: [
@@ -71,6 +71,7 @@ export class ExerciceService {
       select: {
         id: true,
         name: true,
+        type: true, // 🆕 Pour détecter les exercices cardio
         groupes: {
           select: {
             isPrimary: true,

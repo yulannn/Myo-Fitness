@@ -15,9 +15,11 @@ interface EditTemplateModalProps {
 interface ExerciseRow {
   exerciseId: number;
   exerciseName: string;
+  exerciseType?: string | null; // 🆕 Pour détecter les exercices cardio
   sets: number;
   reps: number;
   weight?: number;
+  duration?: number; // 🆕 Pour cardio
   orderInSession?: number;
 }
 
@@ -53,14 +55,19 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
     if (template?.exercises) {
       console.log('Premier exercice brut:', template.exercises[0]);
 
-      const mappedExercises: ExerciseRow[] = template.exercises.map((ex: any, index: number) => ({
-        exerciseId: ex.exercise?.id, // ✅ Corriger: utiliser ex.exercise.id
-        exerciseName: ex.exercise?.name || `Exercice #${ex.exercise?.id}`,
-        sets: Math.max(ex.sets || 3, 1), // Minimum 1
-        reps: Math.max(ex.reps || 10, 1), // Minimum 1
-        weight: ex.weight || 0,
-        orderInSession: index,
-      }));
+      const mappedExercises: ExerciseRow[] = template.exercises.map((ex: any, index: number) => {
+        const isCardio = ex.exercise?.type === 'CARDIO';
+        return {
+          exerciseId: ex.exercise?.id,
+          exerciseName: ex.exercise?.name || `Exercice #${ex.exercise?.id}`,
+          exerciseType: ex.exercise?.type || null,
+          sets: isCardio ? 1 : Math.max(ex.sets || 3, 1),
+          reps: isCardio ? (ex.duration || 15) : Math.max(ex.reps || 10, 1),
+          weight: ex.weight || 0,
+          duration: isCardio ? (ex.duration || 15) : undefined,
+          orderInSession: index,
+        };
+      });
 
       console.log('Exercices après mapping:', mappedExercises);
       setExercises(mappedExercises);
@@ -83,17 +90,20 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
         }
       }
 
-      // Préparer les données
       const payload = {
-        name: templateName.trim() || template.name, // Garder l'ancien nom si vide
+        name: templateName.trim() || template.name,
         description: templateDescription.trim(),
-        exercises: exercises.map((ex, index) => ({
-          exerciseId: Number(ex.exerciseId),
-          sets: Number(ex.sets),
-          reps: Number(ex.reps),
-          weight: ex.weight ? Number(ex.weight) : undefined,
-          orderInSession: index,
-        })),
+        exercises: exercises.map((ex, index) => {
+          const isCardio = ex.exerciseType === 'CARDIO';
+          return {
+            exerciseId: Number(ex.exerciseId),
+            sets: isCardio ? 1 : Number(ex.sets),
+            reps: isCardio ? Number(ex.duration || ex.reps) : Number(ex.reps), // Pour cardio: utiliser duration
+            weight: isCardio ? undefined : (ex.weight ? Number(ex.weight) : undefined),
+            duration: isCardio ? Number(ex.duration || ex.reps) : undefined,
+            orderInSession: index,
+          };
+        }),
       };
 
       console.log('Envoi au backend:', payload);
@@ -121,12 +131,16 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
       return;
     }
 
+    const isCardio = exercise.type === 'CARDIO';
+
     const newExercise: ExerciseRow = {
       exerciseId: exerciseIdNumber,
       exerciseName: exercise.name,
-      sets: 3,
-      reps: 10,
+      exerciseType: exercise.type || null, // 🆕 Capturer le type
+      sets: isCardio ? 1 : 3,
+      reps: isCardio ? 15 : 10, // Pour cardio: durée en minutes
       weight: 0,
+      duration: isCardio ? 15 : undefined,
       orderInSession: exercises.length,
     };
 
@@ -326,70 +340,106 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
 
                 {/* Exercises List */}
                 <div className="space-y-3">
-                  {exercises.map((exercise, index) => (
-                    <div
-                      key={`${exercise.exerciseId}-${index}`}
-                      className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <h4 className="text-white font-semibold flex-1 break-words">
-                          {exercise.exerciseName}
-                        </h4>
-                        <button
-                          onClick={() => handleRemoveExercise(index)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                          title="Supprimer l'exercice"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
+                  {exercises.map((exercise, index) => {
+                    const isCardio = exercise.exerciseType === 'CARDIO';
+
+                    return (
+                      <div
+                        key={`${exercise.exerciseId}-${index}`}
+                        className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <h4 className="text-white font-semibold flex-1 break-words">
+                            {exercise.exerciseName}
+                            {isCardio && (
+                              <span className="ml-2 text-xs px-2 py-0.5 bg-red-500/20 text-red-400 rounded-lg">
+                                Cardio
+                              </span>
+                            )}
+                          </h4>
+                          <button
+                            onClick={() => handleRemoveExercise(index)}
+                            className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                            title="Supprimer l'exercice"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {isCardio ? (
+                          /* Affichage cardio : uniquement durée */
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-400">Durée (minutes)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={(exercise.duration || exercise.reps) === 0 ? '' : (exercise.duration || exercise.reps)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const numValue = value === '' ? 1 : Number(value);
+                                // Mettre à jour duration ET reps en même temps
+                                const updatedExercises = [...exercises];
+                                updatedExercises[index] = {
+                                  ...updatedExercises[index],
+                                  duration: numValue,
+                                  reps: numValue,
+                                };
+                                setExercises(updatedExercises);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                              placeholder="15"
+                            />
+                          </div>
+                        ) : (
+                          /* Affichage standard : sets, reps, poids */
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-400">Séries</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={exercise.sets === 0 ? '' : exercise.sets}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleUpdateExercise(index, 'sets', value === '' ? 1 : Number(value));
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-400">Reps</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={exercise.reps === 0 ? '' : exercise.reps}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleUpdateExercise(index, 'reps', value === '' ? 1 : Number(value));
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-400">Poids (kg)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleUpdateExercise(index, 'weight', value === '' ? 0 : Number(value));
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs text-gray-400">Séries</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={exercise.sets === 0 ? '' : exercise.sets}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              handleUpdateExercise(index, 'sets', value === '' ? 1 : Number(value));
-                            }}
-                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs text-gray-400">Reps</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={exercise.reps === 0 ? '' : exercise.reps}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              handleUpdateExercise(index, 'reps', value === '' ? 1 : Number(value));
-                            }}
-                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs text-gray-400">Poids (kg)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            value={exercise.weight === 0 || exercise.weight === undefined ? '' : exercise.weight}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              handleUpdateExercise(index, 'weight', value === '' ? 0 : Number(value));
-                            }}
-                            className="w-full px-3 py-2 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 text-center"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {exercises.length === 0 && (

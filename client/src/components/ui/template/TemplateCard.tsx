@@ -292,22 +292,32 @@ export const TemplateCard = ({ template, programId, availableExercises = [] }: T
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
               Exercices
             </p>
-            {template.exercises.map((ex: any, idx: number) => (
-              <div
-                key={ex.id || idx}
-                className="flex items-center justify-between p-3 bg-[#121214] rounded-lg border border-white/5"
-              >
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">
-                    {ex.exercise?.name || 'Exercice'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {ex.sets} séries × {ex.reps} reps
-                    {ex.weight && ` @ ${ex.weight}kg`}
-                  </p>
+            {template.exercises.map((ex: any, idx: number) => {
+              const isCardio = ex.exercise?.type === 'CARDIO';
+
+              return (
+                <div
+                  key={ex.id || idx}
+                  className="flex items-center justify-between p-3 bg-[#121214] rounded-lg border border-white/5"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">
+                      {ex.exercise?.name || 'Exercice'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {isCardio ? (
+                        `${ex.duration || 15} minutes`
+                      ) : (
+                        <>
+                          {ex.sets} séries × {ex.reps} reps
+                          {ex.weight && ` @ ${ex.weight}kg`}
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
