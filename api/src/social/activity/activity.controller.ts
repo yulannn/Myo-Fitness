@@ -16,6 +16,18 @@ export class ActivityController {
         return this.activityService.getFeed(req.user.userId, Number(page), Number(limit));
     }
 
+    /**
+     * 🔒 Récupérer les détails d'une session d'ami
+     * Sécurisé : vérifie que l'utilisateur est ami avec le propriétaire
+     */
+    @Get('session/:sessionId/details')
+    getSessionDetails(
+        @Request() req,
+        @Param('sessionId', ParseIntPipe) sessionId: number,
+    ) {
+        return this.activityService.getSessionDetailsForFriend(req.user.userId, sessionId);
+    }
+
     @Post(':id/react')
     toggleReaction(
         @Request() req,

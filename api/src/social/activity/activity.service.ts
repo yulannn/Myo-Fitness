@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { ActivityType } from '@prisma/client';
 
@@ -100,6 +100,104 @@ export class ActivityService {
         };
     }
 
+    /**
+     * 🔒 Récupérer les détails d'une session d'un ami pour l'affichage dans le feed
+     * Sécurisé : vérifie que l'utilisateur est ami avec le propriétaire de la session
+     */
+    async getSessionDetailsForFriend(userId: number, sessionId: number) {
+        // 1. Récupérer la session avec son propriétaire
+        const session = await this.prisma.trainingSession.findUnique({
+            where: { id: sessionId },
+            include: {
+                trainingProgram: {
+                    include: {
+                        fitnessProfile: {
+                            select: { userId: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!session) {
+            throw new NotFoundException('Session introuvable');
+        }
+
+        const sessionOwnerId = session.trainingProgram.fitnessProfile.userId;
+
+        // 2. Vérifier que l'utilisateur est ami avec le propriétaire OU est le propriétaire
+        if (sessionOwnerId !== userId) {
+            const isFriend = await this.prisma.friend.findFirst({
+                where: {
+                    OR: [
+                        { userId: userId, friendId: sessionOwnerId, status: 'ACCEPTED' },
+                        { userId: sessionOwnerId, friendId: userId, status: 'ACCEPTED' },
+                    ],
+                },
+            });
+
+            if (!isFriend) {
+                throw new ForbiddenException('Vous n\'êtes pas autorisé à voir cette session');
+            }
+        }
+
+        // 3. Récupérer les détails de la session (exercices + performances)
+        const sessionDetails = await this.prisma.trainingSession.findUnique({
+            where: { id: sessionId },
+            select: {
+                id: true,
+                sessionName: true,
+                performedAt: true,
+                duration: true,
+                exercices: {
+                    select: {
+                        id: true,
+                        sets: true,
+                        reps: true,
+                        weight: true,
+                        exercice: {
+                            select: {
+                                name: true,
+                                groupes: {
+                                    where: { isPrimary: true },
+                                    select: {
+                                        groupe: {
+                                            select: { name: true }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        performances: {
+                            select: {
+                                set_index: true,
+                                reps_effectuees: true,
+                                weight: true,
+                                rpe: true,
+                                success: true,
+                            },
+                            orderBy: {
+                                set_index: 'asc'
+                            }
+                        }
+                    }
+                },
+                summary: {
+                    select: {
+                        totalSets: true,
+                        totalReps: true,
+                        totalVolume: true,
+                        avgRPE: true,
+                        caloriesBurned: true,
+                        muscleGroups: true,
+                    }
+                }
+            }
+        });
+
+        return sessionDetails;
+    }
+
     async toggleReaction(userId: number, activityId: number, emoji: string) {
         // Check if reaction exists
         const existing = await this.prisma.activityReaction.findUnique({
@@ -137,3 +235,4 @@ export class ActivityService {
         }
     }
 }
+
