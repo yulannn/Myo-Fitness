@@ -33,8 +33,10 @@ interface SessionExercise {
     sets: number;
     reps: number;
     weight: number | null;
+    duration?: number | null; // 🆕 Pour cardio
     exercice: {
         name: string;
+        type?: string | null; // 🆕 Pour détecter cardio
         groupes: { groupe: { name: string } }[];
     };
     performances: SessionPerformance[];
@@ -168,103 +170,126 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
 
                 {/* Exercises List */}
                 <div className="space-y-3">
-                    {sessionDetails.exercices.map((ex) => (
-                        <div key={ex.id} className="bg-white/[0.03] rounded-xl overflow-hidden">
-                            {/* Exercise Header */}
-                            <div className="flex items-center justify-between px-3 py-2.5 bg-white/5">
-                                <h4 className="font-semibold text-white text-sm">{ex.exercice.name}</h4>
-                                {ex.exercice.groupes[0] && (
-                                    <span className="text-[10px] text-[#94fbdd] bg-[#94fbdd]/10 px-2 py-0.5 rounded-full font-medium">
-                                        {ex.exercice.groupes[0].groupe.name}
-                                    </span>
+                    {sessionDetails.exercices.map((ex) => {
+                        const isCardio = ex.exercice.type === 'CARDIO';
+
+                        return (
+                            <div key={ex.id} className="bg-white/[0.03] rounded-xl overflow-hidden">
+                                {/* Exercise Header */}
+                                <div className="flex items-center justify-between px-3 py-2.5 bg-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold text-white text-sm">{ex.exercice.name}</h4>
+                                        {isCardio && (
+                                            <span className="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full font-medium">
+                                                Cardio
+                                            </span>
+                                        )}
+                                    </div>
+                                    {ex.exercice.groupes[0] && (
+                                        <span className="text-[10px] text-[#94fbdd] bg-[#94fbdd]/10 px-2 py-0.5 rounded-full font-medium">
+                                            {ex.exercice.groupes[0].groupe.name}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Cardio: Affichage spécial durée */}
+                                {isCardio ? (
+                                    <div className="px-3 py-3">
+                                        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-[#94fbdd]/10 rounded-lg">
+                                            <span className="text-lg font-bold text-[#94fbdd]">
+                                                {ex.duration || ex.reps || 15} minutes
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Standard: Affichage sets/reps/poids */
+                                    <>
+                                        {/* Performances Table */}
+                                        {ex.performances.length > 0 ? (
+                                            <div className="px-3 py-2">
+                                                {/* Table Header */}
+                                                <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
+                                                    <span>Série</span>
+                                                    <span className="text-center">Reps</span>
+                                                    <span className="text-center">Poids</span>
+                                                </div>
+
+                                                {/* Performance Rows */}
+                                                <div className="space-y-1.5">
+                                                    {ex.performances.map((perf, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg transition-colors ${perf.success === false
+                                                                ? 'bg-red-500/10'
+                                                                : 'hover:bg-white/5'
+                                                                }`}
+                                                        >
+                                                            {/* Set Number */}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${perf.success === false
+                                                                    ? 'bg-red-500/20 text-red-400'
+                                                                    : 'bg-white/10 text-gray-400'
+                                                                    }`}>
+                                                                    {perf.set_index}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Reps */}
+                                                            <span className={`text-center text-sm font-semibold ${perf.success === false ? 'text-red-400' : 'text-white'
+                                                                }`}>
+                                                                {perf.reps_effectuees ?? '-'}
+                                                            </span>
+
+                                                            {/* Weight */}
+                                                            <span className="text-center text-sm text-gray-300">
+                                                                {perf.weight ? `${perf.weight} kg` : '-'}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="px-3 py-2">
+                                                {/* Table Header */}
+                                                <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
+                                                    <span>Série</span>
+                                                    <span className="text-center">Reps</span>
+                                                    <span className="text-center">Poids</span>
+                                                </div>
+
+                                                {/* Planned Sets Rows */}
+                                                <div className="space-y-1.5">
+                                                    {Array.from({ length: ex.sets }, (_, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg hover:bg-white/5 transition-colors"
+                                                        >
+                                                            {/* Set Number */}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/10 text-gray-400">
+                                                                    {idx + 1}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Reps */}
+                                                            <span className="text-center text-sm font-semibold text-white">
+                                                                {ex.reps}
+                                                            </span>
+
+                                                            {/* Weight */}
+                                                            <span className="text-center text-sm text-gray-300">
+                                                                {ex.weight ? `${ex.weight} kg` : '-'}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
-
-                            {/* Performances Table */}
-                            {ex.performances.length > 0 ? (
-                                <div className="px-3 py-2">
-                                    {/* Table Header */}
-                                    <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
-                                        <span>Série</span>
-                                        <span className="text-center">Reps</span>
-                                        <span className="text-center">Poids</span>
-                                    </div>
-
-                                    {/* Performance Rows */}
-                                    <div className="space-y-1.5">
-                                        {ex.performances.map((perf, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg transition-colors ${perf.success === false
-                                                    ? 'bg-red-500/10'
-                                                    : 'hover:bg-white/5'
-                                                    }`}
-                                            >
-                                                {/* Set Number */}
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${perf.success === false
-                                                        ? 'bg-red-500/20 text-red-400'
-                                                        : 'bg-white/10 text-gray-400'
-                                                        }`}>
-                                                        {perf.set_index}
-                                                    </span>
-                                                </div>
-
-                                                {/* Reps */}
-                                                <span className={`text-center text-sm font-semibold ${perf.success === false ? 'text-red-400' : 'text-white'
-                                                    }`}>
-                                                    {perf.reps_effectuees ?? '-'}
-                                                </span>
-
-                                                {/* Weight */}
-                                                <span className="text-center text-sm text-gray-300">
-                                                    {perf.weight ? `${perf.weight} kg` : '-'}
-                                                </span>
-
-
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="px-3 py-2">
-                                    {/* Table Header */}
-                                    <div className="grid grid-cols-3 gap-4 text-[10px] text-gray-500 uppercase tracking-wider mb-2 px-1">
-                                        <span>Série</span>
-                                        <span className="text-center">Reps</span>
-                                        <span className="text-center">Poids</span>
-                                    </div>
-
-                                    {/* Planned Sets Rows */}
-                                    <div className="space-y-1.5">
-                                        {Array.from({ length: ex.sets }, (_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="grid grid-cols-3 gap-4 items-center py-1.5 px-1 rounded-lg hover:bg-white/5 transition-colors"
-                                            >
-                                                {/* Set Number */}
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/10 text-gray-400">
-                                                        {idx + 1}
-                                                    </span>
-                                                </div>
-
-                                                {/* Reps */}
-                                                <span className="text-center text-sm font-semibold text-white">
-                                                    {ex.reps}
-                                                </span>
-
-                                                {/* Weight */}
-                                                <span className="text-center text-sm text-gray-300">
-                                                    {ex.weight ? `${ex.weight} kg` : '-'}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Extra info */}

@@ -158,6 +158,7 @@ export class ActivityService {
                         exercice: {
                             select: {
                                 name: true,
+                                type: true, // 🆕 Pour détecter cardio
                                 groupes: {
                                     where: { isPrimary: true },
                                     select: {
