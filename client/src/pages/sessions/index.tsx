@@ -548,46 +548,39 @@ function SessionCard({ session }: { session: any }) {
                                         📊 Résumé de performance
                                     </h5>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {fullSession.summary.totalSets && (
+                                        {fullSession.summary.totalSets ? (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
                                                 <p className="text-xs text-gray-500">Séries totales</p>
                                                 <p className="text-lg font-bold text-[#94fbdd] mt-1">
                                                     {fullSession.summary.totalSets}
                                                 </p>
                                             </div>
-                                        )}
-                                        {fullSession.summary.totalReps && (
+                                        ) : null}
+                                        {fullSession.summary.totalReps ? (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
                                                 <p className="text-xs text-gray-500">Reps totales</p>
                                                 <p className="text-lg font-bold text-[#94fbdd] mt-1">
                                                     {fullSession.summary.totalReps}
                                                 </p>
                                             </div>
-                                        )}
-                                        {fullSession.summary.totalVolume && (
+                                        ) : null}
+                                        {fullSession.summary.totalVolume ? (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
                                                 <p className="text-xs text-gray-500">Volume total</p>
                                                 <p className="text-lg font-bold text-[#94fbdd] mt-1">
                                                     {Math.round(fullSession.summary.totalVolume)} kg
                                                 </p>
                                             </div>
-                                        )}
-                                        {fullSession.summary.caloriesBurned && (
+                                        ) : null}
+                                        {fullSession.summary.caloriesBurned ? (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
                                                 <p className="text-xs text-gray-500">Calories brûlées</p>
                                                 <p className="text-lg font-bold text-[#94fbdd] mt-1">
                                                     {Math.round(fullSession.summary.caloriesBurned)} kcal
                                                 </p>
                                             </div>
-                                        )}
-                                        {fullSession.summary.avgRPE && (
-                                            <div className="bg-[#18181b] rounded-md border border-white/5 p-3">
-                                                <p className="text-xs text-gray-500">RPE moyen</p>
-                                                <p className="text-lg font-bold text-[#94fbdd] mt-1">
-                                                    {fullSession.summary.avgRPE.toFixed(1)}
-                                                </p>
-                                            </div>
-                                        )}
+                                        ) : null}
+
                                         {fullSession.summary.muscleGroups && fullSession.summary.muscleGroups.length > 0 && (
                                             <div className="bg-[#18181b] rounded-md border border-white/5 p-3 col-span-2 sm:col-span-2">
                                                 <p className="text-xs text-gray-500 mb-2">Groupes musculaires</p>
