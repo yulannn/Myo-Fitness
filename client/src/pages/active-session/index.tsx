@@ -568,6 +568,7 @@ export default function ActiveSession() {
                                 caloriesBurned: activeSession?.summary?.caloriesBurned, // 🔥 Calories brûlées
                                 exercises: (activeSession?.exercices || []).map((ex: any) => ({
                                     name: ex.exercice?.name || 'Exercice',
+                                    type: ex.exercice?.type || null, // 🆕 Pour cardio
                                     sets: ex.sets,
                                     reps: ex.reps,
                                     weight: ex.weight

@@ -15,9 +15,11 @@ interface SessionSummaryCardProps {
         caloriesBurned?: number // 🔥 Calories brûlées
         exercises: Array<{
             name: string
+            type?: string | null // 🆕 Pour détecter cardio
             sets: number
             reps: number
             weight?: number
+            duration?: number // 🆕 Pour cardio
         }>
         date: Date
     }
@@ -164,17 +166,28 @@ export default function SessionSummaryCard({ sessionData, onShare, onDownload }:
                 <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     <h4 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 sm:mb-4">Aperçu de la séance</h4>
                     <div className="space-y-1.5 sm:space-y-2">
-                        {sessionData.exercises.slice(0, 5).map((exercise, index) => (
-                            <div key={index} className="flex items-baseline justify-between text-xs sm:text-sm group p-1.5 sm:p-2 rounded-lg hover:bg-[#252527] transition-colors">
-                                <div className="flex items-baseline gap-2 sm:gap-3 overflow-hidden">
-                                    <span className="text-[#94fbdd] font-mono text-[10px] sm:text-xs font-bold">{index + 1}</span>
-                                    <span className="text-gray-200 truncate font-semibold text-xs sm:text-sm">{exercise.name}</span>
+                        {sessionData.exercises.slice(0, 5).map((exercise, index) => {
+                            const isCardio = exercise.type === 'CARDIO';
+
+                            return (
+                                <div key={index} className="flex items-baseline justify-between text-xs sm:text-sm group p-1.5 sm:p-2 rounded-lg hover:bg-[#252527] transition-colors">
+                                    <div className="flex items-baseline gap-2 sm:gap-3 overflow-hidden">
+                                        <span className="text-[#94fbdd] font-mono text-[10px] sm:text-xs font-bold">{index + 1}</span>
+                                        <span className="text-gray-200 truncate font-semibold text-xs sm:text-sm">{exercise.name}</span>
+                                        {isCardio && (
+                                            <span className="text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded font-bold">Cardio</span>
+                                        )}
+                                    </div>
+                                    <span className="font-mono text-gray-500 text-[10px] sm:text-xs whitespace-nowrap pl-2 sm:pl-4 font-medium">
+                                        {isCardio ? (
+                                            `${exercise.duration || exercise.reps || 15} min`
+                                        ) : (
+                                            `${exercise.sets} × ${exercise.reps} ${exercise.weight ? `@ ${exercise.weight}kg` : ''}`
+                                        )}
+                                    </span>
                                 </div>
-                                <span className="font-mono text-gray-500 text-[10px] sm:text-xs whitespace-nowrap pl-2 sm:pl-4 font-medium">
-                                    {exercise.sets} × {exercise.reps} {exercise.weight ? `@ ${exercise.weight}kg` : ''}
-                                </span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     {sessionData.exercises.length > 5 && (
                         <p className="text-[10px] sm:text-xs text-gray-500 italic mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[#94fbdd]/10 text-center">

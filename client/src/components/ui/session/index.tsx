@@ -391,29 +391,39 @@ export const SessionCard = ({ session, availableExercises = [], programStatus }:
 
                         {/* Exercise List */}
                         <div className="space-y-1.5">
-                            {(session.exercices ?? []).map((ex: any, index: number) => (
-                                <div
-                                    key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}
-                                    className="flex items-center gap-2 p-2 rounded bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors"
-                                >
-                                    <div className="flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/5 text-gray-500 flex-shrink-0">
-                                        {index + 1}
-                                    </div>
+                            {(session.exercices ?? []).map((ex: any, index: number) => {
+                                const isCardio = ex.exercice?.type === 'CARDIO';
 
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-medium text-white truncate">
-                                            {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
+                                return (
+                                    <div
+                                        key={ex.id ?? `ex-${session.id}-${ex.exerciceId}`}
+                                        className="flex items-center gap-2 p-2 rounded bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/5 text-gray-500 flex-shrink-0">
+                                            {index + 1}
                                         </div>
-                                    </div>
 
-                                    {(ex.sets || ex.reps) && (
-                                        <div className="flex items-center gap-2 text-[11px] text-gray-500 flex-shrink-0">
-                                            {ex.sets && <span>{ex.sets}×</span>}
-                                            {ex.reps && <span>{ex.reps}</span>}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-medium text-white truncate">
+                                                {ex.exercice?.name ?? `Exercice #${ex.exerciceId}`}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+
+                                        {isCardio ? (
+                                            <div className="text-[11px] text-[#94fbdd] flex-shrink-0 font-medium">
+                                                {ex.duration || ex.reps || 15} min
+                                            </div>
+                                        ) : (
+                                            (ex.sets || ex.reps) && (
+                                                <div className="flex items-center gap-2 text-[11px] text-gray-500 flex-shrink-0">
+                                                    {ex.sets && <span>{ex.sets}×</span>}
+                                                    {ex.reps && <span>{ex.reps}</span>}
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
