@@ -6,6 +6,7 @@ export interface ExerciseTemplateDto {
   sets: number;
   reps: number;
   weight?: number;
+  duration?: number; // 🆕 Durée en minutes (pour cardio)
   notes?: string;
   orderInSession?: number;
   exercise?: {
@@ -13,6 +14,7 @@ export interface ExerciseTemplateDto {
     name: string;
     imageUrl?: string;
     bodyWeight: boolean;
+    type?: 'COMPOUND' | 'ISOLATION' | 'CARDIO' | 'MOBILITY' | 'STRETCH'; // 🆕
   };
 }
 

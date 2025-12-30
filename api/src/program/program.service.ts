@@ -41,6 +41,7 @@ export class ProgramService {
                                 sets: true,
                                 reps: true,
                                 weight: true,
+                                duration: true, // 🆕 Pour cardio
                                 orderInSession: true,
                                 exercise: {
                                     select: {
@@ -48,6 +49,7 @@ export class ProgramService {
                                         name: true,
                                         imageUrl: true,
                                         bodyWeight: true,
+                                        type: true, // 🆕 Pour identifier cardio
                                     }
                                 }
                             },
@@ -656,6 +658,150 @@ export class ProgramService {
             },
             include: { sessions: { include: { exercices: true } } },
         });
+    }
+
+    // 🆕 Ajouter un exercice cardio à tous les templates du programme
+    async addCardioToProgram(
+        programId: number,
+        exerciseId: number,
+        position: 'START' | 'END',
+        duration: number,
+        userId: number,
+    ) {
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: {
+                fitnessProfile: true,
+                sessionTemplates: {
+                    include: { exercises: true },
+                },
+            },
+        });
+
+        if (!program) {
+            throw new BadRequestException('Programme introuvable');
+        }
+
+        this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
+
+        // Vérifier que l'exercice existe et est de type CARDIO
+        const exercise = await this.prisma.exercice.findUnique({
+            where: { id: exerciseId },
+            select: { id: true, type: true },
+        });
+
+        if (!exercise) {
+            throw new BadRequestException('Exercice introuvable');
+        }
+
+        if (exercise.type !== 'CARDIO') {
+            throw new BadRequestException('L\'exercice sélectionné n\'est pas de type CARDIO');
+        }
+
+        return this.prisma.$transaction(async (prisma) => {
+            // D'abord, supprimer les exercices cardio existants de tous les templates
+            await this.removeCardioFromAllTemplates(prisma, program.sessionTemplates.map(t => t.id));
+
+            // Ajouter l'exercice cardio à chaque template
+            for (const template of program.sessionTemplates) {
+                const maxOrder = template.exercises.reduce(
+                    (max, ex) => Math.max(max, ex.orderInSession),
+                    -1
+                );
+
+                if (position === 'START') {
+                    // Décaler tous les exercices existants de +1
+                    await prisma.exerciseTemplate.updateMany({
+                        where: { sessionTemplateId: template.id },
+                        data: { orderInSession: { increment: 1 } },
+                    });
+
+                    // Ajouter le cardio en position 0
+                    await prisma.exerciseTemplate.create({
+                        data: {
+                            sessionTemplateId: template.id,
+                            exerciseId: exerciseId,
+                            sets: 1,
+                            reps: 1,
+                            duration: duration,
+                            orderInSession: 0,
+                        },
+                    });
+                } else {
+                    // Ajouter le cardio en dernière position
+                    await prisma.exerciseTemplate.create({
+                        data: {
+                            sessionTemplateId: template.id,
+                            exerciseId: exerciseId,
+                            sets: 1,
+                            reps: 1,
+                            duration: duration,
+                            orderInSession: maxOrder + 1,
+                        },
+                    });
+                }
+            }
+
+            return { success: true, message: 'Exercice cardio ajouté à tous les templates' };
+        });
+    }
+
+    // 🆕 Supprimer tous les exercices cardio d'un programme
+    async removeCardioFromProgram(programId: number, userId: number) {
+        const program = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: {
+                fitnessProfile: true,
+                sessionTemplates: true,
+            },
+        });
+
+        if (!program) {
+            throw new BadRequestException('Programme introuvable');
+        }
+
+        this.verifyPermissions(program.fitnessProfile.userId, userId, 'ce programme');
+
+        return this.prisma.$transaction(async (prisma) => {
+            await this.removeCardioFromAllTemplates(prisma, program.sessionTemplates.map(t => t.id));
+            return { success: true, message: 'Exercices cardio supprimés de tous les templates' };
+        });
+    }
+
+    // Helper privé pour supprimer les exercices cardio de multiples templates
+    private async removeCardioFromAllTemplates(prisma: any, templateIds: number[]) {
+        // Récupérer tous les IDs d'exercices de type CARDIO
+        const cardioExercises = await prisma.exercice.findMany({
+            where: { type: 'CARDIO' },
+            select: { id: true },
+        });
+
+        const cardioExerciseIds = cardioExercises.map((e: { id: number }) => e.id);
+
+        if (cardioExerciseIds.length === 0) return;
+
+        // Supprimer tous les ExerciseTemplates qui sont des exercices cardio
+        await prisma.exerciseTemplate.deleteMany({
+            where: {
+                sessionTemplateId: { in: templateIds },
+                exerciseId: { in: cardioExerciseIds },
+            },
+        });
+
+        // Réordonner les exercices restants pour chaque template
+        for (const templateId of templateIds) {
+            const remainingExercises = await prisma.exerciseTemplate.findMany({
+                where: { sessionTemplateId: templateId },
+                orderBy: { orderInSession: 'asc' },
+            });
+
+            for (let i = 0; i < remainingExercises.length; i++) {
+                await prisma.exerciseTemplate.update({
+                    where: { id: remainingExercises[i].id },
+                    data: { orderInSession: i },
+                });
+            }
+        }
     }
 
 }

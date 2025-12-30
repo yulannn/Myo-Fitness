@@ -136,7 +136,7 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
     };
 
     const renderSessionDetails = () => {
-        if (!sessionDetails) return null;
+        if (!sessionDetails) return <p>Aucune données disponible</p>;
 
         // Format volume: kg if < 1000, otherwise tonnes
         const formatVolume = (volume: number) => {

@@ -92,6 +92,29 @@ export class ExerciceService {
     return exercices;
   }
 
+  // 🆕 Récupère uniquement les exercices de type CARDIO
+  async findCardioExercises(userId: number): Promise<{ id: number; name: string; imageUrl: string | null }[]> {
+    const exercices = await this.prisma.exercice.findMany({
+      where: {
+        type: 'CARDIO',
+        OR: [
+          { isDefault: true },
+          { createdByUserId: userId },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return exercices;
+  }
+
   async findOne(id: number): Promise<ExerciceEntity> {
     const exercice = await this.prisma.exercice.findUnique({
       where: { id },

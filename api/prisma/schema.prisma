@@ -219,6 +219,7 @@ model ExerciseTemplate {
   sets              Int      @default(3)
   reps              Int      @default(8)
   weight            Float?
+  duration          Int?     // 🆕 Durée en minutes (pour exercices cardio)
   notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

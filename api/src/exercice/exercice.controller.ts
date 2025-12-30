@@ -97,6 +97,30 @@ export class ExerciceController {
     return this.exerciceService.findAllMinimal(userId);
   }
 
+  @Get('cardio')
+  @ApiOperation({ summary: 'Récupérer les exercices de type CARDIO' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des exercices cardio (id, name, imageUrl)',
+    schema: {
+      example: [
+        {
+          id: 10,
+          name: 'Course à pied',
+          imageUrl: null,
+        },
+        {
+          id: 11,
+          name: 'Vélo elliptique',
+          imageUrl: null,
+        },
+      ],
+    },
+  })
+  findCardioExercises(@Request() req) {
+    const userId = req.user.userId;
+    return this.exerciceService.findCardioExercises(userId);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un exercice par son ID' })

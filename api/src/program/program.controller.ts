@@ -28,6 +28,7 @@ import { CreateManualProgramDto } from './dto/create-manual-program.dto';
 import { AddSessionToProgramDto } from './dto/add-session-program.dto';
 import { UpdateProgramStatusDto } from './dto/update-program-status.dto';
 import { UpdateTrainingProgramDto } from './dto/update-program.dto';
+import { AddCardioToProgramDto } from './dto/cardio-program.dto';
 
 @ApiTags('program')
 @ApiBearerAuth()
@@ -201,5 +202,42 @@ export class ProgramController {
   remove(@Param('programId', ParseIntPipe) programId: number, @Request() req) {
     const userId = req.user.userId;
     return this.programService.deleteProgram(programId, userId);
+  }
+
+  // 🆕 Endpoints Cardio
+  @Post(':programId/cardio')
+  @ApiOperation({ summary: 'Ajouter un exercice cardio à tous les templates du programme' })
+  @ApiBody({ type: AddCardioToProgramDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Exercice cardio ajouté à tous les templates',
+  })
+  async addCardioToProgram(
+    @Param('programId', ParseIntPipe) programId: number,
+    @Body() dto: AddCardioToProgramDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.programService.addCardioToProgram(
+      programId,
+      dto.exerciseId,
+      dto.position,
+      dto.duration,
+      userId,
+    );
+  }
+
+  @Delete(':programId/cardio')
+  @ApiOperation({ summary: 'Supprimer tous les exercices cardio du programme' })
+  @ApiResponse({
+    status: 200,
+    description: 'Exercices cardio supprimés de tous les templates',
+  })
+  async removeCardioFromProgram(
+    @Param('programId', ParseIntPipe) programId: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.programService.removeCardioFromProgram(programId, userId);
   }
 }
