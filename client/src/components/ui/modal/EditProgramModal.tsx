@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon, PencilSquareIcon, HeartIcon, ChevronLeftIcon, ClockIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PencilSquareIcon, HeartIcon, ChevronLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import useCardioExercises, { type CardioExercise } from '../../../api/hooks/exercice/useCardioExercises';
 import useAddCardioToProgram from '../../../api/hooks/program/useAddCardioToProgram';
@@ -184,7 +184,7 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
                             {currentView === 'main' ? (
                                 <PencilSquareIcon className="h-5 w-5 text-[#94fbdd]" aria-hidden="true" />
                             ) : (
-                                <HeartIconSolid className="h-5 w-5 text-red-400" aria-hidden="true" />
+                                <HeartIconSolid className="h-5 w-5 text-[#94fbdd]" aria-hidden="true" />
                             )}
                         </div>
                         <h2 className="text-2xl font-bold text-white">
@@ -309,7 +309,7 @@ const MainView: React.FC<MainViewProps> = ({
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all"
+                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all font-medium"
                     placeholder="Nom du programme"
                     required
                     disabled={isPending}
@@ -325,7 +325,7 @@ const MainView: React.FC<MainViewProps> = ({
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all h-24 resize-none"
+                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all h-24 resize-none font-medium"
                     placeholder="Description du programme..."
                     disabled={isPending}
                 />
@@ -333,22 +333,22 @@ const MainView: React.FC<MainViewProps> = ({
 
             {/* Section: Modifier le programme */}
             <div className="pt-2">
-                <p className="text-sm font-medium text-gray-400 mb-3">Options du programme</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1">Extensions</p>
 
                 {/* Cardio Button */}
                 <button
                     type="button"
                     onClick={onOpenCardio}
-                    className="w-full flex items-center gap-4 p-4 bg-[#121214] rounded-xl border border-[#94fbdd]/10 hover:border-red-400/30 hover:bg-red-400/5 transition-all group"
+                    className="w-full flex items-center gap-4 p-4 bg-[#121214] rounded-xl border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#94fbdd]/5 transition-all group"
                 >
-                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-red-400/10 border border-red-400/20 group-hover:bg-red-400/20 transition-colors">
-                        <HeartIcon className="h-6 w-6 text-red-400" />
+                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[#94fbdd]/10 border border-[#94fbdd]/20 group-hover:bg-[#94fbdd]/20 transition-colors">
+                        <HeartIcon className="h-6 w-6 text-[#94fbdd]" />
                     </div>
                     <div className="flex-1 text-left">
-                        <p className="font-semibold text-white">Cardio</p>
-                        <p className="text-sm text-gray-400">Ajouter du cardio à vos séances</p>
+                        <p className="font-semibold text-white">Module Cardio</p>
+                        <p className="text-sm text-gray-400">Intégrer du cardio à vos séances</p>
                     </div>
-                    <ChevronLeftIcon className="h-5 w-5 text-gray-500 rotate-180" />
+                    <ChevronLeftIcon className="h-5 w-5 text-gray-500 rotate-180 group-hover:text-white transition-colors" />
                 </button>
             </div>
         </div>
@@ -382,129 +382,137 @@ const CardioView: React.FC<CardioViewProps> = ({
     setSelectedCardioExercise,
 }) => {
     return (
-        <div className="space-y-4">
-            {/* Toggle Include Cardio */}
-            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <HeartIconSolid className={`h-5 w-5 ${includeCardio ? 'text-red-400' : 'text-gray-500'}`} />
-                        <div>
-                            <p className="font-semibold text-white">Inclure le cardio</p>
-                            <p className="text-sm text-gray-400">Ajouter du cardio à chaque séance</p>
+        <div className="space-y-6">
+            {/* Toggle Include Cardio - Premium Design */}
+            <button
+                type="button"
+                onClick={() => setIncludeCardio(!includeCardio)}
+                className={`w-full relative group overflow-hidden rounded-2xl border transition-all duration-300 ${includeCardio
+                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] shadow-[0_0_20px_rgba(148,251,221,0.1)]'
+                    : 'bg-[#121214] border-white/10 hover:border-white/20'
+                    }`}
+            >
+                <div className="p-5 flex items-center gap-4 relative z-10">
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${includeCardio ? 'bg-[#94fbdd] text-[#121214]' : 'bg-white/5 text-gray-400'
+                        }`}>
+                        <HeartIconSolid className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 text-left">
+                        <h3 className={`font-bold text-lg ${includeCardio ? 'text-white' : 'text-gray-300'}`}>
+                            Activer le Cardio
+                        </h3>
+                        <p className="text-sm text-gray-400">Ajouter automatiquement une session cardio</p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${includeCardio
+                        ? 'border-[#94fbdd] bg-[#94fbdd]'
+                        : 'border-gray-500 group-hover:border-gray-400'
+                        }`}>
+                        {includeCardio && <CheckIcon className="w-4 h-4 text-[#121214] stroke-[3]" />}
+                    </div>
+                </div>
+            </button>
+
+            {/* Configuration Area */}
+            <div className={`space-y-6 transition-all duration-300 ${includeCardio ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-4 pointer-events-none grayscale'}`}>
+
+                {/* 1. Position Segmented Control - Simplified */}
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1">Placement</p>
+                    <div className="bg-[#121214] p-1 rounded-xl border border-white/5 flex gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setCardioPosition('START')}
+                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${cardioPosition === 'START'
+                                ? 'bg-[#252527] text-white shadow-lg border border-white/10'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                }`}
+                        >
+                            Début
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setCardioPosition('END')}
+                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${cardioPosition === 'END'
+                                ? 'bg-[#252527] text-white shadow-lg border border-white/10'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                }`}
+                        >
+                            Fin
+                        </button>
+                    </div>
+                </div>
+
+                {/* 2. Duration Slider */}
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center px-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Durée</p>
+                        <span className="text-[#94fbdd] font-mono font-bold">{cardioDuration} min</span>
+                    </div>
+                    <div className="bg-[#121214] rounded-xl p-5 border border-white/5">
+                        <input
+                            type="range"
+                            min="1"
+                            max="60"
+                            step="1"
+                            value={cardioDuration}
+                            onChange={(e) => setCardioDuration(Number(e.target.value))}
+                            className="w-full h-2 bg-[#252527] rounded-full appearance-none cursor-pointer accent-[#94fbdd]"
+                        />
+                        <div className="flex justify-between mt-2 text-[10px] text-gray-500 font-mono">
+                            <span>5m</span>
+                            <span>15m</span>
+                            <span>30m</span>
+                            <span>45m</span>
+                            <span>60m</span>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setIncludeCardio(!includeCardio)}
-                        className={`relative w-14 h-8 rounded-full transition-colors ${includeCardio ? 'bg-[#94fbdd]' : 'bg-gray-600'
-                            }`}
-                    >
-                        <div
-                            className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ${includeCardio ? 'left-7' : 'left-1'
-                                }`}
-                        />
-                    </button>
+                </div>
+
+                {/* 3. Exercise Selection List - Simple Column */}
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1">Exercice</p>
+
+                    {isLoadingCardio ? (
+                        <div className="flex items-center justify-center py-12 bg-[#121214] rounded-xl border border-white/5">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#94fbdd] border-t-transparent" />
+                        </div>
+                    ) : cardioExercises.length === 0 ? (
+                        <div className="text-center py-12 bg-[#121214] rounded-xl border border-white/5 text-gray-500 text-sm">
+                            Aucun exercice disponible
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                            {cardioExercises.map((exercise) => (
+                                <button
+                                    key={exercise.id}
+                                    type="button"
+                                    onClick={() => setSelectedCardioExercise(exercise)}
+                                    className={`relative flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${selectedCardioExercise?.id === exercise.id
+                                        ? 'bg-[#94fbdd]/10 border-[#94fbdd] shadow-[0_4px_12px_rgba(148,251,221,0.1)]'
+                                        : 'bg-[#121214] border-white/5 hover:border-white/10 hover:bg-[#252527]'
+                                        }`}
+                                >
+                                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${selectedCardioExercise?.id === exercise.id ? 'bg-[#94fbdd] text-[#121214]' : 'bg-white/5 text-gray-400'
+                                        }`}>
+                                        {selectedCardioExercise?.id === exercise.id ? <CheckIcon className="w-5 h-5 stroke-[2.5]" /> : <HeartIcon className="w-5 h-5" />}
+                                    </div>
+                                    <span className={`text-sm font-semibold flex-1 ${selectedCardioExercise?.id === exercise.id ? 'text-white' : 'text-gray-300'
+                                        }`}>
+                                        {exercise.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Position Selector */}
-            <div className={`bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3 transition-opacity ${!includeCardio ? 'opacity-50' : ''}`}>
-                <p className="text-sm font-medium text-gray-300">Position dans la séance</p>
-                <div className="flex gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setCardioPosition('START')}
-                        disabled={!includeCardio}
-                        className={`flex-1 py-3 rounded-lg font-medium transition-all ${cardioPosition === 'START'
-                            ? 'bg-[#94fbdd] text-[#121214]'
-                            : 'bg-[#252527] text-gray-400 hover:text-white'
-                            } disabled:cursor-not-allowed`}
-                    >
-                        Début
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setCardioPosition('END')}
-                        disabled={!includeCardio}
-                        className={`flex-1 py-3 rounded-lg font-medium transition-all ${cardioPosition === 'END'
-                            ? 'bg-[#94fbdd] text-[#121214]'
-                            : 'bg-[#252527] text-gray-400 hover:text-white'
-                            } disabled:cursor-not-allowed`}
-                    >
-                        Fin
-                    </button>
+            {/* Warning Message if cardio enabled but no exercise selected */}
+            {includeCardio && !selectedCardioExercise && !isLoadingCardio && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium">
+                    <span>⚠️ Veuillez sélectionner un exercice cardio pour valider.</span>
                 </div>
-            </div>
-
-            {/* Duration Selector */}
-            <div className={`bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3 transition-opacity ${!includeCardio ? 'opacity-50' : ''}`}>
-                <div className="flex items-center gap-2">
-                    <ClockIcon className="h-5 w-5 text-[#94fbdd]" />
-                    <p className="text-sm font-medium text-gray-300">Durée (minutes)</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <input
-                        type="range"
-                        min="5"
-                        max="60"
-                        step="5"
-                        value={cardioDuration}
-                        onChange={(e) => setCardioDuration(Number(e.target.value))}
-                        disabled={!includeCardio}
-                        className="flex-1 h-2 bg-[#252527] rounded-full appearance-none cursor-pointer accent-[#94fbdd] disabled:cursor-not-allowed"
-                    />
-                    <div className="w-16 text-center py-2 px-3 bg-[#252527] rounded-lg text-white font-semibold">
-                        {cardioDuration} min
-                    </div>
-                </div>
-            </div>
-
-            {/* Cardio Exercises List */}
-            <div className={`bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3 transition-opacity ${!includeCardio ? 'opacity-50' : ''}`}>
-                <p className="text-sm font-medium text-gray-300">Choisir un exercice</p>
-
-                {isLoadingCardio ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#94fbdd] border-t-transparent" />
-                    </div>
-                ) : cardioExercises.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                        Aucun exercice cardio disponible
-                    </div>
-                ) : (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {cardioExercises.map((exercise) => (
-                            <button
-                                key={exercise.id}
-                                type="button"
-                                onClick={() => setSelectedCardioExercise(exercise)}
-                                disabled={!includeCardio}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${selectedCardioExercise?.id === exercise.id
-                                    ? 'bg-[#94fbdd]/20 border border-[#94fbdd]/50'
-                                    : 'bg-[#252527] hover:bg-[#252527]/80 border border-transparent'
-                                    } disabled:cursor-not-allowed`}
-                            >
-                                <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${selectedCardioExercise?.id === exercise.id
-                                    ? 'bg-[#94fbdd]'
-                                    : 'bg-red-400/20'
-                                    }`}>
-                                    {selectedCardioExercise?.id === exercise.id ? (
-                                        <CheckIcon className="h-5 w-5 text-[#121214]" />
-                                    ) : (
-                                        <HeartIcon className="h-5 w-5 text-red-400" />
-                                    )}
-                                </div>
-                                <span className={`font-medium ${selectedCardioExercise?.id === exercise.id
-                                    ? 'text-[#94fbdd]'
-                                    : 'text-white'
-                                    }`}>
-                                    {exercise.name}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
+            )}
         </div>
     );
 };
