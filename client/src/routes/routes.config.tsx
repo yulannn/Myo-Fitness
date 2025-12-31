@@ -47,6 +47,7 @@ import {
     SOCIAL_CHATS,
     SOCIAL_FRIENDS,
     SOCIAL_NOTIFICATIONS,
+    MY_EXERCISES,
     SENTRY_TEST,
 } from "../utils/paths";
 
@@ -58,7 +59,20 @@ export interface AppRouteConfig {
     hideBottomNav?: boolean;
 }
 
+import { MyExercisesPage } from "../pages/my-exercises";
+import EditExercisePage from "../pages/my-exercises/EditExercisePage";
+
 export const routes: AppRouteConfig[] = [
+    {
+        path: MY_EXERCISES,
+        element: <MyExercisesPage />,
+        protected: true
+    },
+    {
+        path: `${MY_EXERCISES}/:id`,
+        element: <EditExercisePage />,
+        protected: true
+    },
     {
         path: HOME,
         element: <Home />,

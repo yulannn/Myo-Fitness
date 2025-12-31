@@ -30,6 +30,8 @@ export interface ExerciceMinimal {
     id: number;
     name: string;
     type?: string | null; // 🆕 Pour détecter les exercices cardio
+    isDefault?: boolean; // 🆕 Pour savoir si c'est un exercice système ou utilisateur
+    bodyWeight?: boolean;
     groupes?: { isPrimary: boolean; groupe: MuscleGroup }[];
 }
 

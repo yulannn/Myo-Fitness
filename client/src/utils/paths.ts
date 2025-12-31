@@ -22,4 +22,5 @@ export const RESET_PASSWORD = "/reset-password";
 export const VERIFY_EMAIL = "/verify-email";
 export const PRIVACY = "/privacy";
 export const BODY_ATLAS = "/body-atlas";
+export const MY_EXERCISES = "/my-exercises";
 export const SENTRY_TEST = "/sentry-test";

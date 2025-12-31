@@ -72,6 +72,7 @@ export class ExerciceService {
         id: true,
         name: true,
         type: true, // 🆕 Pour détecter les exercices cardio
+        isDefault: true, // 🆕 Pour savoir si c'est un exercice système ou utilisateur
         groupes: {
           select: {
             isPrimary: true,
@@ -182,6 +183,11 @@ export class ExerciceService {
     if (exercice.isDefault) {
       throw new Error('Cannot delete a default exercice');
     }
+
+    // Delete associated templates first due to Restrict constraint
+    await this.prisma.exerciseTemplate.deleteMany({
+      where: { exerciseId: id },
+    });
 
     return this.prisma.exercice.delete({
       where: { id },
