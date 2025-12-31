@@ -228,8 +228,8 @@ export class SessionTemplateService {
   async scheduleFromTemplate(templateId: number, dto: ScheduleSessionDto, userId: number) {
     const sessionDate = dto.date ? new Date(dto.date) : new Date();
 
-    // 1️⃣ Vérifier permissions
-    await this.getTemplateById(templateId, userId);
+    // 1️⃣ Vérifier permissions et récupérer le template
+    const template = await this.getTemplateById(templateId, userId);
 
     // 2️⃣ Chercher la TrainingSession existante non complétée
     const existingInstance = await this.prisma.trainingSession.findFirst({
@@ -239,14 +239,51 @@ export class SessionTemplateService {
       },
     });
 
-    // 3️⃣ Si aucune session trouvée, erreur de cohérence
+    // 3️⃣ Si aucune session trouvée, on en crée une nouvelle (Fix pour les templates ajoutés après coup)
     if (!existingInstance) {
-      throw new NotFoundException(
-        `No training session found for template #${templateId}. This should have been created during program generation.`
-      );
+      return this.prisma.trainingSession.create({
+        data: {
+          programId: template.programId,
+          sessionTemplateId: templateId,
+          sessionName: template.name,
+          date: sessionDate,
+          status: 'SCHEDULED',
+          exercices: {
+            create: template.exercises.map((ex) => {
+              const isCardio = ex.exercise?.type === 'CARDIO';
+              const repsValue = isCardio
+                ? (ex.duration || ex.reps || 15)
+                : ex.reps;
+
+              return {
+                exerciceId: ex.exerciseId,
+                sets: isCardio ? 1 : ex.sets,
+                reps: repsValue,
+                weight: isCardio ? null : (ex.weight || null),
+              };
+            }),
+          },
+        },
+        include: {
+          exercices: {
+            include: {
+              exercice: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                  bodyWeight: true,
+                  type: true,
+                },
+              },
+            },
+          },
+          sessionTemplate: true,
+        },
+      });
     }
 
-    // 4️⃣ Mettre à jour la date
+    // 4️⃣ Mettre à jour la date (comportement existant)
     return this.prisma.trainingSession.update({
       where: { id: existingInstance.id },
       data: { date: sessionDate },
