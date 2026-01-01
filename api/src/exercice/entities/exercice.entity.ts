@@ -20,6 +20,24 @@ export class ExerciceEntity implements Exercice {
   })
   difficulty: number;
 
+  @ApiProperty({
+    description: 'Popularité de l’exercice (0 à 100)',
+    example: 50,
+  })
+  popularity: number;
+
+  @ApiPropertyOptional({
+    description: 'Efficacité de l’exercice (1 à 5)',
+    example: 4,
+  })
+  effectiveness: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Niveau de fatigue de l’exercice (1 à 5)',
+    example: 3,
+  })
+  fatigueLevel: number | null;
+
   @ApiPropertyOptional({
     description: 'Description détaillée de l’exercice',
     example: 'Exercice classique pour le haut du corps',

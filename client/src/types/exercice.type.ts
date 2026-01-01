@@ -14,6 +14,9 @@ export interface Exercice {
     id: number;
     name: string;
     difficulty: number;
+    popularity: number;
+    effectiveness: number | null;
+    fatigueLevel: number | null;
     description?: string | null;
     type?: string | null;
     imageUrl?: string | null;
