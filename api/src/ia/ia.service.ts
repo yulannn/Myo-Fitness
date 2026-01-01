@@ -3,7 +3,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { GroqClient } from './groq/groq.client';
 import { PromptBuilder } from './groq/prompt.builder';
 import { LlmProgramSchema } from './schemas/llm-program.schema';
-import { FitnessProfile } from '@prisma/client';
+import { FitnessProfile, ProgramTemplate } from '@prisma/client';
 import { selectTemplateByFrequency, getTemplateSelectionLog } from './template-selector.helper';
 
 
@@ -15,12 +15,27 @@ export class IaService {
     private readonly promptBuilder: PromptBuilder,
   ) { }
 
-  async generateProgram(fitnessProfile: FitnessProfile) {
-    // 🎯 Sélection du template basée sur la fréquence d'entraînement (règles hard-codées)
+  async generateProgram(fitnessProfile: FitnessProfile, overrideTemplate?: ProgramTemplate) {
+    // 🎯 Sélection du template : utilise l'override si fourni, sinon calcule selon la fréquence
     const templateSelection = selectTemplateByFrequency(fitnessProfile.trainingFrequency);
 
+    // Si l'utilisateur a choisi un template différent, on l'utilise
+    const effectiveTemplate = overrideTemplate || templateSelection.template;
+    const effectiveSessionStructure = overrideTemplate
+      ? this.getSessionStructureForTemplate(overrideTemplate, fitnessProfile.trainingFrequency)
+      : templateSelection.sessionStructure;
+
     // 📊 Log pour debugging
-    console.log(getTemplateSelectionLog(fitnessProfile.trainingFrequency, templateSelection));
+    if (overrideTemplate) {
+      console.log(`🎯 ===== USER OVERRIDE TEMPLATE =====`);
+      console.log(`📅 Fréquence: ${fitnessProfile.trainingFrequency} jours/semaine`);
+      console.log(`🔄 Recommandé: ${templateSelection.template}`);
+      console.log(`✅ Choisi par l'utilisateur: ${effectiveTemplate}`);
+      console.log(`📋 Structure: ${effectiveSessionStructure.join(' → ')}`);
+      console.log(`🎯 ================================`);
+    } else {
+      console.log(getTemplateSelectionLog(fitnessProfile.trainingFrequency, templateSelection));
+    }
 
     // Charger les exercices selon le niveau et type d'entraînement
     const exercices = await this.prisma.exercice.findMany({
@@ -48,10 +63,10 @@ export class IaService {
 
     const prompt = this.promptBuilder.buildProgramPrompt(
       fitnessProfile,
-      templateSelection.template,
+      effectiveTemplate,
       exercices,
       priorityMuscles,
-      templateSelection.sessionStructure  // 🎯 Passe la structure exacte des sessions
+      effectiveSessionStructure  // 🎯 Passe la structure exacte des sessions
     );
 
 
@@ -59,7 +74,7 @@ export class IaService {
       const result = await this.groqClient.generateJsonResponse(
         prompt,
         LlmProgramSchema,
-        templateSelection.template,
+        effectiveTemplate,
       );
       return result;
     } catch (error) {
@@ -67,17 +82,48 @@ export class IaService {
         '⚠️ LLM failed after retries. Using backup generator. Last error:',
         error,
       );
-      return this.generateProgramBackup(fitnessProfile, templateSelection.template);
+      return this.generateProgramBackup(fitnessProfile, effectiveTemplate);
+    }
+  }
+
+  /**
+   * 🎯 Génère la structure des sessions pour un template donné
+   * Chaque template a maintenant sa propre structure explicite
+   */
+  private getSessionStructureForTemplate(template: ProgramTemplate, frequency: number): string[] {
+    switch (template) {
+      case 'FULL_BODY':
+        // Full Body répété selon la fréquence
+        return Array(frequency).fill('Full Body');
+
+      case 'UPPER_LOWER':
+        return ['Upper', 'Lower', 'Upper', 'Lower'];
+
+      case 'PUSH_PULL_LEGS':
+        return ['Push', 'Pull', 'Legs'];
+
+      case 'PPL_UPPER_LOWER':
+        return ['Push', 'Pull', 'Legs', 'Upper', 'Lower'];
+
+      case 'PPL_X2':
+        return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs'];
+
+      case 'PPL_X2_FULL_BODY':
+        return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs', 'Full Body'];
+
+      case 'CUSTOM':
+      default:
+        // Pour CUSTOM, on génère des Full Body par défaut
+        return Array(frequency).fill('Full Body');
     }
   }
 
 
 
-  private async generateProgramBackup(fitnessProfile: FitnessProfile, template: string) {
+  private async generateProgramBackup(fitnessProfile: FitnessProfile, template: ProgramTemplate) {
     type ExerciseEntry = { id: number; sets: number; reps: number };
     type SessionEntry = { name: string; exercises: ExerciseEntry[] };
 
-    // Template est maintenant passé en paramètre (choisi par le scoring)
     const allExercises = await this.prisma.exercice.findMany({
       where: {
         difficulty:
@@ -101,7 +147,7 @@ export class IaService {
     const upperGroups = ['chest', 'back', 'shoulders', 'biceps', 'triceps'];
     const lowerGroups = ['quads', 'hamstrings', 'glutes', 'calves'];
 
-    function pickExercises(groups: string[], count = 5): ExerciseEntry[] {
+    const pickExercises = (groups: string[], count = 5): ExerciseEntry[] => {
       const filtered = allExercises.filter(ex =>
         ex.groupes.some(g => groups.includes(g.groupe.name.toLowerCase())),
       );
@@ -113,63 +159,28 @@ export class IaService {
           sets,
           reps: groups.some(g => upperGroups.includes(g)) ? reps.upper : reps.lower,
         }));
-    }
+    };
 
-    const sessions: SessionEntry[] = [];
+    // 🎯 Utiliser la structure de sessions exacte selon le template et la fréquence
+    const sessionStructure = this.getSessionStructureForTemplate(template, fitnessProfile.trainingFrequency);
 
-    switch (template) {
-      case 'FULL_BODY':
-        sessions.push({
-          name: 'Full Body',
-          exercises: pickExercises([...upperGroups, ...lowerGroups], 6),
-        });
-        break;
-
-      case 'UPPER_LOWER_UPPER_LOWER':
-        sessions.push(
-          { name: 'Upper', exercises: pickExercises(upperGroups, 5) },
-          { name: 'Lower', exercises: pickExercises(lowerGroups, 5) },
-          { name: 'Upper', exercises: pickExercises(upperGroups, 5) },
-          { name: 'Lower', exercises: pickExercises(lowerGroups, 5) },
-        );
-        break;
-
-      case 'PUSH_PULL_LEGS':
-        sessions.push(
-          { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 5) },
-          { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 5) },
-          { name: 'Legs', exercises: pickExercises(lowerGroups, 5) },
-        );
-        break;
-
-      case 'PUSH_PULL_LEGS_UPPER_LOWER':
-        sessions.push(
-          { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 4) },
-          { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 4) },
-          { name: 'Legs', exercises: pickExercises(lowerGroups, 4) },
-          { name: 'Upper', exercises: pickExercises(upperGroups, 4) },
-          { name: 'Lower', exercises: pickExercises(lowerGroups, 4) },
-        );
-        break;
-
-      case 'PUSH_PULL_LEGS_PUSH_PULL_LEGS':
-        sessions.push(
-          { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 4) },
-          { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 4) },
-          { name: 'Legs', exercises: pickExercises(lowerGroups, 4) },
-          { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 4) },
-          { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 4) },
-          { name: 'Legs', exercises: pickExercises(lowerGroups, 4) },
-        );
-        break;
-
-      default:
-        sessions.push({
-          name: 'Full Body',
-          exercises: pickExercises([...upperGroups, ...lowerGroups], 6),
-        });
-        break;
-    }
+    const sessions: SessionEntry[] = sessionStructure.map(sessionName => {
+      switch (sessionName) {
+        case 'Push':
+          return { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 5) };
+        case 'Pull':
+          return { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 5) };
+        case 'Legs':
+          return { name: 'Legs', exercises: pickExercises(lowerGroups, 5) };
+        case 'Upper':
+          return { name: 'Upper', exercises: pickExercises(upperGroups, 5) };
+        case 'Lower':
+          return { name: 'Lower', exercises: pickExercises(lowerGroups, 5) };
+        case 'Full Body':
+        default:
+          return { name: 'Full Body', exercises: pickExercises([...upperGroups, ...lowerGroups], 6) };
+      }
+    });
 
     return { template, sessions };
   }

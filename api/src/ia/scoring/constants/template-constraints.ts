@@ -9,26 +9,43 @@ export const TEMPLATE_CONSTRAINTS: Record<ProgramTemplate, TemplateConstraints> 
     FULL_BODY: {
         minFrequency: 1,
         maxFrequency: 6,
-        optimalFrequency: [2, 3],
-        // Science: Full Body flexible 1-6j
-        // 1-3j : Optimal pour débutants/intermédiaires
-        // 4-6j : Haute fréquence pour avancés (volume modéré par séance)
+        optimalFrequency: [1, 2],
+        // Science: Full Body optimal pour 1-2j
     },
 
     UPPER_LOWER: {
-        minFrequency: 2,
-        maxFrequency: 6,
+        minFrequency: 4,
+        maxFrequency: 4,
         optimalFrequency: [4],
         // Science: Upper/Lower optimal à 4j (2x upper, 2x lower)
-        // Possible 2-6j avec adaptation volume
     },
 
     PUSH_PULL_LEGS: {
         minFrequency: 3,
+        maxFrequency: 3,
+        optimalFrequency: [3],
+        // Science: PPL classique à 3j
+    },
+
+    PPL_UPPER_LOWER: {
+        minFrequency: 5,
+        maxFrequency: 5,
+        optimalFrequency: [5],
+        // Science: PPL + Upper/Lower optimal à 5j
+    },
+
+    PPL_X2: {
+        minFrequency: 6,
         maxFrequency: 6,
-        optimalFrequency: [3, 6],
-        // Science: PPL classique à 3j OU PPLPPL à 6j
-        // 3j = 1x/semaine par muscle, 6j = 2x/semaine (optimal)
+        optimalFrequency: [6],
+        // Science: PPLPPL optimal à 6j (2x/semaine par muscle)
+    },
+
+    PPL_X2_FULL_BODY: {
+        minFrequency: 7,
+        maxFrequency: 7,
+        optimalFrequency: [7],
+        // Science: PPL x2 + Full Body = volume maximal à 7j
     },
 
     CUSTOM: {

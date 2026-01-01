@@ -57,21 +57,21 @@ export function selectTemplateByFrequency(trainingFrequency: number): TemplateSe
 
         case 5:
             return {
-                template: 'PUSH_PULL_LEGS',
+                template: 'PPL_UPPER_LOWER',
                 sessionStructure: ['Push', 'Pull', 'Legs', 'Upper', 'Lower'],
                 description: 'PPL + Upper/Lower - Volume optimal',
             };
 
         case 6:
             return {
-                template: 'PUSH_PULL_LEGS',
+                template: 'PPL_X2',
                 sessionStructure: ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs'],
                 description: 'PPL x2 - Chaque muscle 2x par semaine',
             };
 
         case 7:
             return {
-                template: 'PUSH_PULL_LEGS',
+                template: 'PPL_X2_FULL_BODY',
                 sessionStructure: ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs', 'Full Body'],
                 description: 'PPL x2 + Full Body - Volume maximal',
             };

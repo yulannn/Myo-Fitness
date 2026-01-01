@@ -656,9 +656,12 @@ enum ExerciceType {
 }
 
 enum ProgramTemplate {
-  FULL_BODY // 1-6j : Tout le corps (flexible, tous niveaux)
+  FULL_BODY // 1-2j : Tout le corps (flexible, tous niveaux)
   UPPER_LOWER // 4j : Haut/Bas alterné (intermédiaires)
-  PUSH_PULL_LEGS // 3j ou 6j : Push/Pull/Jambes (inter/avancés)
+  PUSH_PULL_LEGS // 3j : Push/Pull/Jambes classique
+  PPL_UPPER_LOWER // 5j : PPL + Upper/Lower (volume optimal)
+  PPL_X2 // 6j : PPL x2 (chaque muscle 2x/semaine)
+  PPL_X2_FULL_BODY // 7j : PPL x2 + Full Body (volume maximal)
   CUSTOM // Variable : Personnalisé
 }
 

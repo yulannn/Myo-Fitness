@@ -239,7 +239,9 @@ export class ProgramService {
     async create(createProgramDto: CreateTrainingProgramDto, userId: number) {
 
         const fitnessProfile = await this.validateFitnessProfile(createProgramDto.fitnessProfileId, userId);
-        const program = await this.iaService.generateProgram(fitnessProfile);
+
+        // 🎯 Passe le template optionnel choisi par l'utilisateur (sinon auto-calculé)
+        const program = await this.iaService.generateProgram(fitnessProfile, createProgramDto.template);
 
         if (!program) {
             throw new Error('Program generation failed');

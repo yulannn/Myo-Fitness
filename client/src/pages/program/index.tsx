@@ -3,7 +3,8 @@ import useArchivedPrograms from '../../api/hooks/program/useGetArchivedPrograms'
 import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
 import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal';
-import { useState, useMemo, useRef } from 'react';
+import useUpdateFitnessProfile from '../../api/hooks/fitness-profile/useUpdateFitnessProfile';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Modal,
   ModalContent,
@@ -12,7 +13,9 @@ import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useAuth } from '../../context/AuthContext';
 import { ProgramCard } from '../../components/ui/program';
-import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
+import { getAvailableTemplates, getRecommendedTemplate } from '../../utils/template-selector';
+import type { ProgramTemplate } from '../../types/program.type';
 
 const Program = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -35,8 +38,37 @@ const Program = () => {
   const { data: exercices = [] } = useExercicesMinimal();
   const { mutate, isPending } = useCreateProgram();
   const { mutate: mutateManual } = useCreateManualProgram();
+  const { mutate: updateProfile } = useUpdateFitnessProfile();
 
   const { user } = useAuth();
+
+  // 🎯 États pour le sélecteur de template
+  const [selectedFrequency, setSelectedFrequency] = useState<number>(fitnessProfile?.trainingFrequency || 3);
+  const [selectedTemplate, setSelectedTemplate] = useState<ProgramTemplate | null>(null);
+
+  // Synchroniser la fréquence avec le profil fitness
+  useEffect(() => {
+    if (fitnessProfile?.trainingFrequency) {
+      setSelectedFrequency(fitnessProfile.trainingFrequency);
+    }
+  }, [fitnessProfile?.trainingFrequency]);
+
+  // Réinitialiser le template sélectionné quand la fréquence change (pour garder le recommandé)
+  useEffect(() => {
+    setSelectedTemplate(null);
+  }, [selectedFrequency]);
+
+  // Calculer les templates disponibles
+  const availableTemplates = useMemo(
+    () => getAvailableTemplates(selectedFrequency),
+    [selectedFrequency]
+  );
+
+  // Template effectif (sélectionné ou recommandé par défaut)
+  const effectiveTemplate = useMemo(() => {
+    if (selectedTemplate) return selectedTemplate;
+    return getRecommendedTemplate(selectedFrequency).template;
+  }, [selectedTemplate, selectedFrequency]);
 
   // Construire les tableaux de programmes
   const activePrograms = useMemo(
@@ -83,25 +115,50 @@ const Program = () => {
       return;
     }
 
+    // 🎯 Créer le payload avec le template sélectionné
     const payload = {
       name: name || 'Programme généré',
       description: description || 'Programme généré automatiquement',
       fitnessProfileId: fitnessProfile.id,
       status: 'ACTIVE',
       startDate: startDate || new Date().toISOString(),
+      template: effectiveTemplate, // 🆕 Inclure le template choisi
     } as any;
 
     setIsGenerating(true);
 
-    mutate(payload, {
-      onSuccess: () => {
-        setIsGenerating(false);
-        setAutomaticOpen(false);
-      },
-      onError: () => {
-        setIsGenerating(false);
-      },
-    });
+    // 🆕 Si la fréquence a changé, mettre à jour le profil d'abord
+    const frequencyChanged = selectedFrequency !== fitnessProfile.trainingFrequency;
+
+    const createProgram = () => {
+      mutate(payload, {
+        onSuccess: () => {
+          setIsGenerating(false);
+          setAutomaticOpen(false);
+          // Reset pour la prochaine fois
+          setSelectedTemplate(null);
+        },
+        onError: () => {
+          setIsGenerating(false);
+        },
+      });
+    };
+
+    if (frequencyChanged) {
+      // Mettre à jour le profil puis créer le programme
+      updateProfile(
+        { id: fitnessProfile.id, trainingFrequency: selectedFrequency },
+        {
+          onSuccess: () => createProgram(),
+          onError: () => {
+            setIsGenerating(false);
+            console.error('Erreur lors de la mise à jour de la fréquence');
+          },
+        }
+      );
+    } else {
+      createProgram();
+    }
   };
 
   const handleCreateManual = () => {
@@ -321,7 +378,7 @@ const Program = () => {
         className="max-w-md bg-[#18181b] border border-white/10 rounded-2xl"
       >
         <ModalContent className="!p-0 overflow-visible">
-          <div className="p-5">
+          <div className="p-5 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-white text-center mb-6">
               Personnaliser le programme
             </h3>
@@ -349,7 +406,7 @@ const Program = () => {
                 </label>
                 <textarea
                   id="program-description"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[80px] resize-none"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[60px] resize-none"
                   placeholder="Objectifs, focus particulier..."
                   onChange={(e) =>
                     (automaticProgramDescriptionRef.current = e.target.value)
@@ -374,15 +431,83 @@ const Program = () => {
                 />
               </div>
 
-              {/* Profil automatiquement sélectionné */}
-              {fitnessProfile && (
-                <div className="p-3 bg-[#94fbdd]/5 rounded-lg border border-[#94fbdd]/10">
-                  <p className="text-xs text-[#94fbdd] mb-0.5 font-medium">Profil utilisé</p>
-                  <p className="text-xs text-gray-300">
-                    {user?.name} – {fitnessProfile.age} ans – {fitnessProfile.weight} kg – {fitnessProfile.trainingFrequency}j/semaine
-                  </p>
+              {/* 🎯 Sélecteur de fréquence */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Fréquence d'entraînement
+                </label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5, 6, 7].map((freq) => (
+                    <button
+                      key={freq}
+                      type="button"
+                      onClick={() => setSelectedFrequency(freq)}
+                      disabled={isGenerating}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${selectedFrequency === freq
+                          ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        } disabled:opacity-50`}
+                    >
+                      {freq}
+                    </button>
+                  ))}
                 </div>
-              )}
+                <p className="text-xs text-gray-500 text-center">
+                  {selectedFrequency} jour{selectedFrequency > 1 ? 's' : ''} par semaine
+                  {selectedFrequency !== fitnessProfile?.trainingFrequency && (
+                    <span className="text-[#94fbdd] ml-1">(modifié)</span>
+                  )}
+                </p>
+              </div>
+
+              {/* 🎯 Sélecteur de template */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Template d'entraînement
+                </label>
+                <div className="space-y-2">
+                  {availableTemplates.map((t) => (
+                    <button
+                      key={t.template}
+                      type="button"
+                      onClick={() => setSelectedTemplate(t.template)}
+                      disabled={isGenerating}
+                      className={`w-full p-3 rounded-xl border text-left transition-all ${effectiveTemplate === t.template
+                          ? 'bg-[#94fbdd]/10 border-[#94fbdd] shadow-lg shadow-[#94fbdd]/10'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        } disabled:opacity-50`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${effectiveTemplate === t.template
+                              ? 'border-[#94fbdd] bg-[#94fbdd]'
+                              : 'border-gray-500'
+                            }`}>
+                            {effectiveTemplate === t.template && (
+                              <CheckIcon className="w-3 h-3 text-[#121214] stroke-[3]" />
+                            )}
+                          </div>
+                          <div>
+                            <p className={`font-semibold text-sm ${effectiveTemplate === t.template ? 'text-white' : 'text-gray-300'}`}>
+                              {t.label}
+                            </p>
+                            <p className="text-xs text-gray-500">{t.description}</p>
+                          </div>
+                        </div>
+                        {t.isRecommended && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#94fbdd]/20 border border-[#94fbdd]/30">
+                            <StarIcon className="w-3 h-3 text-[#94fbdd]" />
+                            <span className="text-[10px] font-bold text-[#94fbdd] uppercase">Recommandé</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-2 font-mono">
+                        {t.sessionStructure.join(' → ')}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {isGenerating && (
                 <div className="p-3 bg-[#94fbdd]/10 rounded-lg flex items-center gap-3">

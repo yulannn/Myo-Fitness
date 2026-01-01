@@ -4,6 +4,14 @@ import { ProgramStatus, ProgramTemplate } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTrainingProgramDto {
+  @ApiPropertyOptional({
+    description: 'Template d\'entraînement choisi par l\'utilisateur (optionnel, sinon calculé automatiquement)',
+    enum: ProgramTemplate,
+    example: ProgramTemplate.PUSH_PULL_LEGS,
+  })
+  @IsEnum(ProgramTemplate)
+  @IsOptional()
+  template?: ProgramTemplate;
   @ApiProperty({
     description: 'ID du profil fitness associé',
     example: 1,
