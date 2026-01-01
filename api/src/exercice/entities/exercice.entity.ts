@@ -1,4 +1,4 @@
-import { Exercice, ExerciceType } from '@prisma/client';
+import { Exercice, ExerciceType, ExerciseTier } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ExerciceEntity implements Exercice {
@@ -37,6 +37,12 @@ export class ExerciceEntity implements Exercice {
     example: 3,
   })
   fatigueLevel: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Tier de l’exercice',
+    example: 'STANDARD',
+  })
+  tier: ExerciseTier;
 
   @ApiPropertyOptional({
     description: 'Description détaillée de l’exercice',

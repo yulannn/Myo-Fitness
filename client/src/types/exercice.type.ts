@@ -3,6 +3,12 @@ export interface MuscleGroup {
     name: string;
 }
 
+export enum ExerciseTier {
+    STAPLE,
+    STANDARD,
+    NICHE
+}
+
 export interface ExerciceMuscleGroup {
     exerciceId: number;
     groupeId: number;
@@ -22,6 +28,7 @@ export interface Exercice {
     imageUrl?: string | null;
     Materials: boolean;
     bodyWeight: boolean;
+    tier: ExerciseTier;
     isDefault: boolean;
     createdByUserId?: number | null;
     createdAt?: string;

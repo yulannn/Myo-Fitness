@@ -307,6 +307,7 @@ model Exercice {
   popularity      Int                   @default(0)
   effectiveness   Int?
   fatigueLevel    Int?
+  tier            ExerciseTier          @default(STANDARD)
   createdByUserId Int?
   isDefault       Boolean               @default(false)
   type            ExerciceType?
@@ -320,6 +321,12 @@ model Exercice {
 
   // 🆕 Relation vers les templates
   exerciseTemplates ExerciseTemplate[]
+}
+
+enum ExerciseTier {
+  STAPLE
+  STANDARD
+  NICHE
 }
 
 model ExerciceSession {
