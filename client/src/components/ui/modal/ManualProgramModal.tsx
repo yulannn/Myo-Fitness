@@ -24,7 +24,6 @@ interface ManualProgramModalProps {
     onConfirm: (data: {
         createProgramDto: {
             name: string;
-            description?: string;
             fitnessProfileId: number;
             startDate?: string;
         };
@@ -42,7 +41,6 @@ export const ManualProgramModal = ({
     isPending = false,
 }: ManualProgramModalProps) => {
     const [programName, setProgramName] = useState('');
-    const [programDescription, setProgramDescription] = useState('');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [numberOfSessions, setNumberOfSessions] = useState(1);
     const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -155,7 +153,6 @@ export const ManualProgramModal = ({
         onConfirm({
             createProgramDto: {
                 name: programName,
-                description: programDescription || undefined,
                 fitnessProfileId,
                 startDate: startDate || new Date().toISOString(),
             },
@@ -165,7 +162,6 @@ export const ManualProgramModal = ({
 
     const handleClose = () => {
         setProgramName('');
-        setProgramDescription('');
         setStartDate(new Date().toISOString().split('T')[0]);
         setNumberOfSessions(1);
         setSessions([]);
@@ -212,20 +208,7 @@ export const ManualProgramModal = ({
                                     />
                                 </div>
 
-                                {/* Description */}
-                                <div className="space-y-2">
-                                    <label htmlFor="program-description" className="text-sm font-medium text-gray-300">
-                                        Description (optionnel)
-                                    </label>
-                                    <textarea
-                                        id="program-description"
-                                        className="w-full rounded-xl bg-[#121214] border border-[#94fbdd]/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[100px] resize-none"
-                                        placeholder="Décrivez les objectifs de votre programme..."
-                                        value={programDescription}
-                                        onChange={(e) => setProgramDescription(e.target.value)}
-                                        disabled={isPending}
-                                    />
-                                </div>
+
                             </div>
                         )}
 

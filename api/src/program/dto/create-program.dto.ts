@@ -28,13 +28,7 @@ export class CreateTrainingProgramDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({
-    description: 'Description du programme',
-    example: 'Programme de 12 semaines pour développer force et endurance',
-  })
-  @IsString()
-  @IsOptional()
-  description?: string;
+
 
   @ApiPropertyOptional({
     description: 'Statut du programme',

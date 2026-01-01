@@ -62,13 +62,7 @@ export class CreateProgramDataDto {
     @IsString()
     name: string;
 
-    @ApiProperty({
-        example: 'Programme complet pour débutants, 3 jours/semaine',
-        required: false,
-    })
-    @IsOptional()
-    @IsString()
-    description?: string;
+
 
     @ApiProperty({ example: 1, description: 'ID du profil fitness associé' })
     @IsNumber()

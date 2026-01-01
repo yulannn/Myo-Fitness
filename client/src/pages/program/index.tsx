@@ -81,7 +81,7 @@ const Program = () => {
 
 
   const automaticProgramNameRef = useRef<string>('');
-  const automaticProgramDescriptionRef = useRef<string>('');
+
   const automaticProgramStartDateRef = useRef<string>(new Date().toISOString().split('T')[0]);
 
   const toggleProgramExpansion = (programId: number) => {
@@ -110,7 +110,7 @@ const Program = () => {
     setChoiceOpen(true);
   };
 
-  const handleConfirmAutomatic = (name?: string, description?: string, startDate?: string) => {
+  const handleConfirmAutomatic = (name?: string, startDate?: string) => {
     if (!fitnessProfile?.id) {
       console.error('Aucun profil fitness trouvé');
       return;
@@ -119,7 +119,6 @@ const Program = () => {
     // 🎯 Créer le payload avec le template sélectionné
     const payload = {
       name: name || 'Programme généré',
-      description: description || 'Programme généré automatiquement',
       fitnessProfileId: fitnessProfile.id,
       status: 'ACTIVE',
       startDate: startDate || new Date().toISOString(),
@@ -394,20 +393,7 @@ const Program = () => {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="program-description" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Description
-            </label>
-            <textarea
-              id="program-description"
-              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[60px] resize-none"
-              placeholder="Objectifs, focus particulier..."
-              onChange={(e) =>
-                (automaticProgramDescriptionRef.current = e.target.value)
-              }
-              disabled={isGenerating}
-            />
-          </div>
+
 
           <div className="space-y-1.5">
             <label htmlFor="program-start-date" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -523,7 +509,6 @@ const Program = () => {
               onClick={() =>
                 handleConfirmAutomatic(
                   automaticProgramNameRef.current,
-                  automaticProgramDescriptionRef.current,
                   automaticProgramStartDateRef.current
                 )
               }

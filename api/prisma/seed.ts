@@ -1082,7 +1082,6 @@ async function main() {
     data: {
       fitnessProfileId: fitnessProfile1.id,
       name: 'Programme Push/Pull/Legs',
-      description: 'Programme intermédiaire avec templates réutilisables',
       template: 'PUSH_PULL_LEGS',
       status: 'ACTIVE',
     },
@@ -1092,7 +1091,6 @@ async function main() {
     data: {
       fitnessProfileId: fitnessProfile2.id,
       name: 'Programme Full Body',
-      description: 'Programme débutant poids du corps',
       template: 'FULL_BODY',
       status: 'ACTIVE',
     },

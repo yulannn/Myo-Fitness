@@ -21,7 +21,6 @@ export interface Session {
 export interface Program {
     id: number;
     name: string;
-    description?: string | null;
     status?: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' | 'DRAFT';
     createdAt?: string;
     updatedAt?: string;
@@ -42,7 +41,6 @@ export type ProgramTemplate =
 
 export interface CreateProgramPayload {
     name: string;
-    description?: string | null;
     fitnessProfileId: number;
     startDate?: string;
     template?: ProgramTemplate; // 🆕 Template optionnel choisi par l'utilisateur

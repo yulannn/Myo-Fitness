@@ -56,7 +56,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
     setIsEditModalOpen(true);
   };
 
-  const handleConfirmEdit = (data: { name: string; description: string }) => {
+  const handleConfirmEdit = (data: { name: string }) => {
     updateProgram({ programId: program.id, payload: data }, {
       onSuccess: () => setIsEditModalOpen(false)
     });
@@ -88,12 +88,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
                 {program.name}
               </h2>
 
-              {/* Description */}
-              {program.description && (
-                <p className="text-sm text-gray-500 line-clamp-1">
-                  {program.description}
-                </p>
-              )}
+
 
               {/* Metadata */}
               <div className="flex items-center gap-3 text-xs text-gray-600">

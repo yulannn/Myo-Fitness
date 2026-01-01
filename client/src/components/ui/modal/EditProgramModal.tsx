@@ -24,14 +24,13 @@ interface SessionTemplateWithExercises {
 interface ProgramWithTemplates {
     id: number;
     name: string;
-    description?: string;
     sessionTemplates?: SessionTemplateWithExercises[];
 }
 
 interface EditProgramModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { name: string; description: string }) => void;
+    onConfirm: (data: { name: string }) => void;
     program: ProgramWithTemplates;
     isPending: boolean;
 }
@@ -47,7 +46,6 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
     isPending
 }) => {
     const [name, setName] = useState(program.name);
-    const [description, setDescription] = useState(program.description || '');
     const [isClosing, setIsClosing] = useState(false);
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +75,6 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
     useEffect(() => {
         if (isOpen) {
             setName(program.name);
-            setDescription(program.description || '');
             setCurrentView('main');
 
             // Initialize cardio state from program data
@@ -207,8 +204,6 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
                         <MainView
                             name={name}
                             setName={setName}
-                            description={description}
-                            setDescription={setDescription}
                             isPending={isPending}
                             onOpenCardio={() => setCurrentView('cardio')}
                         />
@@ -242,7 +237,7 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onConfirm({ name, description })}
+                                onClick={() => onConfirm({ name })}
                                 disabled={isPending || !name.trim()}
                                 className="w-full px-4 py-3 rounded-xl bg-[#94fbdd] text-[#121214] font-bold shadow-lg shadow-[#94fbdd]/20 hover:bg-[#94fbdd]/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -283,8 +278,6 @@ export const EditProgramModal: React.FC<EditProgramModalProps> = ({
 interface MainViewProps {
     name: string;
     setName: (name: string) => void;
-    description: string;
-    setDescription: (description: string) => void;
     isPending: boolean;
     onOpenCardio: () => void;
 }
@@ -292,8 +285,6 @@ interface MainViewProps {
 const MainView: React.FC<MainViewProps> = ({
     name,
     setName,
-    description,
-    setDescription,
     isPending,
     onOpenCardio,
 }) => {
@@ -316,20 +307,7 @@ const MainView: React.FC<MainViewProps> = ({
                 />
             </div>
 
-            {/* Description */}
-            <div className="bg-[#121214] rounded-xl p-4 border border-[#94fbdd]/10 space-y-3">
-                <label htmlFor="description" className="text-sm font-medium text-gray-300">
-                    Description
-                </label>
-                <textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-[#252527] border border-[#94fbdd]/20 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 transition-all h-24 resize-none font-medium"
-                    placeholder="Description du programme..."
-                    disabled={isPending}
-                />
-            </div>
+
 
             {/* Section: Modifier le programme */}
             <div className="pt-2">

@@ -22,7 +22,7 @@ export class ProgramService {
             select: {
                 id: true,
                 name: true,
-                description: true,
+
                 status: true,
                 createdAt: true,
                 template: true,
@@ -120,7 +120,7 @@ export class ProgramService {
             select: {
                 id: true,
                 name: true,
-                description: true,
+
                 status: true,
                 createdAt: true,
                 template: true,
@@ -171,7 +171,7 @@ export class ProgramService {
             select: {
                 id: true,
                 name: true,
-                description: true,
+
                 status: true,
                 createdAt: true,
                 template: true,
@@ -312,7 +312,7 @@ export class ProgramService {
             const createdProgram = await prisma.trainingProgram.create({
                 data: {
                     name: dto.name,
-                    description: dto.description ?? '',
+
                     fitnessProfileId: dto.fitnessProfileId,
                     template: program.template as ProgramTemplate,
                     status: 'ACTIVE',
@@ -417,7 +417,7 @@ export class ProgramService {
             const createdProgram = await prisma.trainingProgram.create({
                 data: {
                     name: createProgramDto.name,
-                    description: createProgramDto.description ?? '',
+
                     fitnessProfileId: createProgramDto.fitnessProfileId,
                     template: 'CUSTOM' as ProgramTemplate,
                     status: 'ACTIVE',
@@ -656,7 +656,7 @@ export class ProgramService {
             where: { id: programId },
             data: {
                 name: dto.name,
-                description: dto.description,
+
             },
             include: { sessions: { include: { exercices: true } } },
         });
