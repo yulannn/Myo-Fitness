@@ -10,6 +10,7 @@ import {
   ModalContent,
 } from '../../components/ui/modal';
 import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal';
+import { BottomSheet } from '../../components/ui/BottomSheet';
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
 import { useAuth } from '../../context/AuthContext';
 import { ProgramCard } from '../../components/ui/program';
@@ -371,186 +372,177 @@ const Program = () => {
         </ModalContent>
       </Modal>
 
-      <Modal
+      <BottomSheet
         isOpen={automaticOpen}
-        showClose={false}
         onClose={() => setAutomaticOpen(false)}
-        className="max-w-md bg-[#18181b] border border-white/10 rounded-2xl"
+        title="Personnaliser le programme"
       >
-        <ModalContent className="!p-0 overflow-visible">
-          <div className="p-5 max-h-[85vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-white text-center mb-6">
-              Personnaliser le programme
-            </h3>
+        <div className="p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="program-name" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Nom du programme
+            </label>
+            <input
+              id="program-name"
+              type="text"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
+              placeholder="Ex: Prise de masse estivale"
+              onChange={(e) =>
+                (automaticProgramNameRef.current = e.target.value)
+              }
+              disabled={isGenerating}
+            />
+          </div>
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="program-name" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Nom du programme
-                </label>
-                <input
-                  id="program-name"
-                  type="text"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all"
-                  placeholder="Ex: Prise de masse estivale"
-                  onChange={(e) =>
-                    (automaticProgramNameRef.current = e.target.value)
-                  }
+          <div className="space-y-1.5">
+            <label htmlFor="program-description" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Description
+            </label>
+            <textarea
+              id="program-description"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[60px] resize-none"
+              placeholder="Objectifs, focus particulier..."
+              onChange={(e) =>
+                (automaticProgramDescriptionRef.current = e.target.value)
+              }
+              disabled={isGenerating}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="program-start-date" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Date de début
+            </label>
+            <input
+              id="program-start-date"
+              type="date"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
+              defaultValue={new Date().toISOString().split('T')[0]}
+              onChange={(e) =>
+                (automaticProgramStartDateRef.current = e.target.value)
+              }
+              disabled={isGenerating}
+            />
+          </div>
+
+          {/* 🎯 Sélecteur de fréquence */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Fréquence d'entraînement
+            </label>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4, 5, 6, 7].map((freq) => (
+                <button
+                  key={freq}
+                  type="button"
+                  onClick={() => setSelectedFrequency(freq)}
                   disabled={isGenerating}
-                />
-              </div>
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${selectedFrequency === freq
+                    ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    } disabled:opacity-50`}
+                >
+                  {freq}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              {selectedFrequency} jour{selectedFrequency > 1 ? 's' : ''} par semaine
+              {selectedFrequency !== fitnessProfile?.trainingFrequency && (
+                <span className="text-[#94fbdd] ml-1">(modifié)</span>
+              )}
+            </p>
+          </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="program-description" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Description
-                </label>
-                <textarea
-                  id="program-description"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all min-h-[60px] resize-none"
-                  placeholder="Objectifs, focus particulier..."
-                  onChange={(e) =>
-                    (automaticProgramDescriptionRef.current = e.target.value)
-                  }
+          {/* 🎯 Sélecteur de template */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Template d'entraînement
+            </label>
+            <div className="space-y-2">
+              {availableTemplates.map((t) => (
+                <button
+                  key={t.template}
+                  type="button"
+                  onClick={() => setSelectedTemplate(t.template)}
                   disabled={isGenerating}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="program-start-date" className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Date de début
-                </label>
-                <input
-                  id="program-start-date"
-                  type="date"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#94fbdd]/50 focus:border-[#94fbdd] transition-all [color-scheme:dark]"
-                  defaultValue={new Date().toISOString().split('T')[0]}
-                  onChange={(e) =>
-                    (automaticProgramStartDateRef.current = e.target.value)
-                  }
-                  disabled={isGenerating}
-                />
-              </div>
-
-              {/* 🎯 Sélecteur de fréquence */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Fréquence d'entraînement
-                </label>
-                <div className="flex gap-1.5">
-                  {[1, 2, 3, 4, 5, 6, 7].map((freq) => (
-                    <button
-                      key={freq}
-                      type="button"
-                      onClick={() => setSelectedFrequency(freq)}
-                      disabled={isGenerating}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${selectedFrequency === freq
-                          ? 'bg-[#94fbdd] text-[#121214] shadow-lg shadow-[#94fbdd]/20'
-                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                        } disabled:opacity-50`}
-                    >
-                      {freq}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 text-center">
-                  {selectedFrequency} jour{selectedFrequency > 1 ? 's' : ''} par semaine
-                  {selectedFrequency !== fitnessProfile?.trainingFrequency && (
-                    <span className="text-[#94fbdd] ml-1">(modifié)</span>
-                  )}
-                </p>
-              </div>
-
-              {/* 🎯 Sélecteur de template */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Template d'entraînement
-                </label>
-                <div className="space-y-2">
-                  {availableTemplates.map((t) => (
-                    <button
-                      key={t.template}
-                      type="button"
-                      onClick={() => setSelectedTemplate(t.template)}
-                      disabled={isGenerating}
-                      className={`w-full p-3 rounded-xl border text-left transition-all ${effectiveTemplate === t.template
-                          ? 'bg-[#94fbdd]/10 border-[#94fbdd] shadow-lg shadow-[#94fbdd]/10'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                        } disabled:opacity-50`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${effectiveTemplate === t.template
-                              ? 'border-[#94fbdd] bg-[#94fbdd]'
-                              : 'border-gray-500'
-                            }`}>
-                            {effectiveTemplate === t.template && (
-                              <CheckIcon className="w-3 h-3 text-[#121214] stroke-[3]" />
-                            )}
-                          </div>
-                          <div>
-                            <p className={`font-semibold text-sm ${effectiveTemplate === t.template ? 'text-white' : 'text-gray-300'}`}>
-                              {t.label}
-                            </p>
-                            <p className="text-xs text-gray-500">{t.description}</p>
-                          </div>
-                        </div>
-                        {t.isRecommended && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#94fbdd]/20 border border-[#94fbdd]/30">
-                            <StarIcon className="w-3 h-3 text-[#94fbdd]" />
-                            <span className="text-[10px] font-bold text-[#94fbdd] uppercase">Recommandé</span>
-                          </div>
+                  className={`w-full p-3 rounded-xl border text-left transition-all ${effectiveTemplate === t.template
+                    ? 'bg-[#94fbdd]/10 border-[#94fbdd] shadow-lg shadow-[#94fbdd]/10'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                    } disabled:opacity-50`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${effectiveTemplate === t.template
+                        ? 'border-[#94fbdd] bg-[#94fbdd]'
+                        : 'border-gray-500'
+                        }`}>
+                        {effectiveTemplate === t.template && (
+                          <CheckIcon className="w-3 h-3 text-[#121214] stroke-[3]" />
                         )}
                       </div>
-                      <p className="text-[10px] text-gray-500 mt-2 font-mono">
-                        {t.sessionStructure.join(' → ')}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {isGenerating && (
-                <div className="p-3 bg-[#94fbdd]/10 rounded-lg flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                  <p className="text-xs text-[#94fbdd] font-medium">L'IA génère votre programme...</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3 mt-6 pt-2">
-                <button
-                  onClick={() => setAutomaticOpen(false)}
-                  disabled={isGenerating}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors disabled:opacity-50"
-                  type="button"
-                >
-                  Annuler
+                      <div>
+                        <p className={`font-semibold text-sm ${effectiveTemplate === t.template ? 'text-white' : 'text-gray-300'}`}>
+                          {t.label}
+                        </p>
+                        <p className="text-xs text-gray-500">{t.description}</p>
+                      </div>
+                    </div>
+                    {t.isRecommended && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#94fbdd]/20 border border-[#94fbdd]/30">
+                        <StarIcon className="w-3 h-3 text-[#94fbdd]" />
+                        <span className="text-[10px] font-bold text-[#94fbdd] uppercase">Recommandé</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-2 font-mono">
+                    {t.sessionStructure.join(' → ')}
+                  </p>
                 </button>
-                <button
-                  onClick={() =>
-                    handleConfirmAutomatic(
-                      automaticProgramNameRef.current,
-                      automaticProgramDescriptionRef.current,
-                      automaticProgramStartDateRef.current
-                    )
-                  }
-                  disabled={isGenerating || !fitnessProfile}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] shadow-lg shadow-[#94fbdd]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  type="button"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      <span>Génération...</span>
-                    </>
-                  ) : (
-                    'Générer'
-                  )}
-                </button>
-              </div>
+              ))}
             </div>
           </div>
-        </ModalContent>
-      </Modal>
+
+          {isGenerating && (
+            <div className="p-3 bg-[#94fbdd]/10 rounded-lg flex items-center gap-3">
+              <div className="w-4 h-4 border-2 border-[#94fbdd] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <p className="text-xs text-[#94fbdd] font-medium">L'IA génère votre programme...</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 mt-6 pt-2 mb-6">
+            <button
+              onClick={() => setAutomaticOpen(false)}
+              disabled={isGenerating}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+              type="button"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={() =>
+                handleConfirmAutomatic(
+                  automaticProgramNameRef.current,
+                  automaticProgramDescriptionRef.current,
+                  automaticProgramStartDateRef.current
+                )
+              }
+              disabled={isGenerating || !fitnessProfile}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] shadow-lg shadow-[#94fbdd]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              type="button"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span>Génération...</span>
+                </>
+              ) : (
+                'Générer'
+              )}
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
 
       {fitnessProfile && (
         <ManualProgramModal
@@ -561,7 +553,7 @@ const Program = () => {
           availableExercises={exercices}
         />
       )}
-    </div>
+    </div >
   );
 };
 
