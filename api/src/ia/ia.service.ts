@@ -4,8 +4,7 @@ import { GroqClient } from './groq/groq.client';
 import { PromptBuilder } from './groq/prompt.builder';
 import { LlmProgramSchema } from './schemas/llm-program.schema';
 import { FitnessProfile } from '@prisma/client';
-import { TemplateScorerService } from './scoring/template-scorer.service';
-import { ScoringProfile } from './scoring/types/scoring.types';
+import { selectTemplateByFrequency, getTemplateSelectionLog } from './template-selector.helper';
 
 
 @Injectable()
@@ -14,54 +13,14 @@ export class IaService {
     private readonly prisma: PrismaService,
     private readonly groqClient: GroqClient,
     private readonly promptBuilder: PromptBuilder,
-    private readonly templateScorer: TemplateScorerService,
   ) { }
 
   async generateProgram(fitnessProfile: FitnessProfile) {
-    // 🎯 NOUVEAU : Utiliser le scoring intelligent pour choisir le template
-    const scoringProfile: ScoringProfile = {
-      trainingFrequency: fitnessProfile.trainingFrequency,
-      experienceLevel: fitnessProfile.experienceLevel,
-      goals: fitnessProfile.goals,
-      musclePriorities: fitnessProfile.musclePriorities,
-      age: fitnessProfile.age,
-      weight: fitnessProfile.weight,
-      targetWeight: fitnessProfile.targetWeight,
-    };
+    // 🎯 Sélection du template basée sur la fréquence d'entraînement (règles hard-codées)
+    const templateSelection = selectTemplateByFrequency(fitnessProfile.trainingFrequency);
 
-    const templateScores = this.templateScorer.scoreTemplates(scoringProfile);
-    const bestTemplate = templateScores[0];
-
-    // 📊 Logs détaillés pour debugging et transparence
-    console.log('\n🎯 ===== TEMPLATE SCORING RESULTS =====');
-    console.log(`✅ Selected: ${bestTemplate.template} (Score: ${bestTemplate.score}/100)`);
-    console.log(`📋 Reasons:`);
-    bestTemplate.reasons.forEach((reason, i) => {
-      console.log(`   ${i + 1}. ${reason}`);
-    });
-
-    // Séparer les templates compatibles (score > 0) des incompatibles (score = 0)
-    const compatibleTemplates = templateScores.filter(t => t.score > 0).slice(1);
-    const incompatibleTemplates = templateScores.filter(t => t.score === 0);
-
-    if (compatibleTemplates.length > 0) {
-      console.log(`\n📊 Templates compatibles avec ${scoringProfile.trainingFrequency}j/semaine:`);
-      compatibleTemplates.forEach((alt, i) => {
-        console.log(`   ${i + 2}. ${alt.template}: ${alt.score}/100`);
-      });
-    }
-
-    if (incompatibleTemplates.length > 0) {
-      console.log(`\n❌ Templates incompatibles avec ${scoringProfile.trainingFrequency}j/semaine:`);
-      incompatibleTemplates.forEach((template) => {
-        console.log(`   • ${template.template}:`);
-        template.reasons.forEach((reason) => {
-          console.log(`     ${reason}`);
-        });
-      });
-    }
-
-    console.log('🎯 =====================================\n');
+    // 📊 Log pour debugging
+    console.log(getTemplateSelectionLog(fitnessProfile.trainingFrequency, templateSelection));
 
     // Charger les exercices selon le niveau et type d'entraînement
     const exercices = await this.prisma.exercice.findMany({
@@ -89,16 +48,18 @@ export class IaService {
 
     const prompt = this.promptBuilder.buildProgramPrompt(
       fitnessProfile,
-      bestTemplate.template,
+      templateSelection.template,
       exercices,
-      priorityMuscles
+      priorityMuscles,
+      templateSelection.sessionStructure  // 🎯 Passe la structure exacte des sessions
     );
+
 
     try {
       const result = await this.groqClient.generateJsonResponse(
         prompt,
         LlmProgramSchema,
-        bestTemplate.template,
+        templateSelection.template,
       );
       return result;
     } catch (error) {
@@ -106,7 +67,7 @@ export class IaService {
         '⚠️ LLM failed after retries. Using backup generator. Last error:',
         error,
       );
-      return this.generateProgramBackup(fitnessProfile, bestTemplate.template);
+      return this.generateProgramBackup(fitnessProfile, templateSelection.template);
     }
   }
 
