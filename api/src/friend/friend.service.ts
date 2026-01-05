@@ -18,7 +18,7 @@ export class FriendService {
   async searchUsers(query: string, currentUserId: number) {
     if (!query || query.length < 2) return [];
 
-    // 1️⃣ Rechercher les utilisateurs par code ami uniquement
+    // 1 Rechercher les utilisateurs par code ami uniquement
     const users = await this.prisma.user.findMany({
       where: {
         friendCode: { equals: query, mode: 'insensitive' }, // Recherche exacte (mais insensible à la casse au cas où)
@@ -39,7 +39,7 @@ export class FriendService {
     // Extraire les IDs pour les requêtes bulk
     const userIds = users.map(u => u.id);
 
-    // 2️⃣ ✅ OPTIMISATION : Récupérer TOUS les friends et requests en 2 requêtes
+    // Récupérer TOUS les friends et requests en 2 requêtes
     const [friends, requests] = await Promise.all([
       // Récupérer toutes les relations d'amitié en une seule requête
       this.prisma.friend.findMany({
@@ -70,7 +70,6 @@ export class FriendService {
       })
     ]);
 
-    // 3️⃣ ✅ Créer des Maps pour lookup O(1) au lieu de O(N)
     const friendMap = new Map<number, boolean>();
     const requestMap = new Map<number, { sent: boolean }>();
 
@@ -88,7 +87,7 @@ export class FriendService {
       });
     });
 
-    // 4️⃣ ✅ Mapper les résultats en mémoire (très rapide)
+    //  Mapper les résultats en mémoire (très rapide)
     const results = users.map(user => {
       let status = 'NONE';
 
@@ -180,7 +179,7 @@ export class FriendService {
       throw new Error('Friend request not found');
     }
 
-    // ✅ SÉCURITÉ : Vérifier que c'est bien le destinataire qui accepte
+    //  Vérifier que c'est bien le destinataire qui accepte
     if (request.receiverId !== userId) {
       throw new ForbiddenException(
         'Vous ne pouvez accepter que les demandes qui vous sont adressées'
@@ -258,7 +257,7 @@ export class FriendService {
       throw new Error('Friend request not found');
     }
 
-    // ✅ SÉCURITÉ : Vérifier que c'est bien le destinataire qui refuse
+    //  Vérifier que c'est bien le destinataire qui refuse
     if (request.receiverId !== userId) {
       throw new ForbiddenException(
         'Vous ne pouvez refuser que les demandes qui vous sont adressées'

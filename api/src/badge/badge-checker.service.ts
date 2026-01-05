@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { BadgeService, BadgeRequirement } from './badge.service';
 
-/**
- * Service responsable de la vérification et du déclenchement des badges
- * Utilise un système de cache pour éviter les requêtes répétées
- */
+
 @Injectable()
 export class BadgeCheckerService {
   private readonly logger = new Logger(BadgeCheckerService.name);
@@ -17,7 +14,6 @@ export class BadgeCheckerService {
 
   /**
    * Vérifie et débloque les badges liés aux sessions après une session complétée
-   * ✅ OPTIMISÉ: Batch des requêtes pour éviter N+1
    */
   async checkSessionBadges(userId: number, sessionId: number) {
     const unlockedBadges: any[] = [];
@@ -37,7 +33,7 @@ export class BadgeCheckerService {
         'NIGHT_OWL',
       ];
 
-      // ✅ OPTIMISÉ: Récupérer tous les badges ET tous les badges déjà débloqués en parallèle
+
       const [badges, existingUserBadges] = await Promise.all([
         this.prisma.badge.findMany({
           where: {
@@ -55,14 +51,13 @@ export class BadgeCheckerService {
         }),
       ]);
 
-      // Créer un Set des codes de badges déjà débloqués pour O(1) lookup
       const unlockedBadgeCodes = new Set(
         existingUserBadges.map((ub) => ub.badge.code),
       );
 
-      // Vérifier chaque badge
+
       for (const badge of badges) {
-        // ✅ Vérifier si déjà débloqué sans requête
+        //  Vérifier si déjà débloqué sans requête
         if (unlockedBadgeCodes.has(badge.code)) {
           continue; // Déjà débloqué, passer au suivant
         }
@@ -183,7 +178,6 @@ export class BadgeCheckerService {
 
   /**
    * Vérifie si un badge doit être débloqué selon son requirement
-   * ⚠️ DEPRECATED: Utilisez checkBadgeRequirementWithoutDBCheck quand les badges débloqués sont déjà récupérés
    */
   private async checkBadgeRequirement(
     userId: number,
@@ -211,7 +205,6 @@ export class BadgeCheckerService {
 
   /**
    * Vérifie si un badge doit être débloqué (sans vérification DB)
-   * ✅ OPTIMISÉ: Utiliser quand les badges débloqués sont déjà vérifiés avant
    */
   private async checkBadgeRequirementWithoutDBCheck(
     userId: number,
@@ -307,7 +300,6 @@ export class BadgeCheckerService {
 
   /**
    * Récupère les statistiques de sessions pour un utilisateur
-   * ✅ OPTIMISÉ: Utilise des agrégations SQL au lieu de charger en mémoire
    */
   private async getSessionStats(userId: number) {
     // Compter toutes les sessions complétées
@@ -320,7 +312,6 @@ export class BadgeCheckerService {
       },
     });
 
-    // ✅ OPTIMISÉ: Utiliser Prisma raw query pour compter efficacement
     // Compter les sessions tôt le matin (avant 8h) avec agrégation SQL
     const earlyBirdResult = await this.prisma.$queryRaw<
       Array<{ count: bigint }>
@@ -358,10 +349,8 @@ export class BadgeCheckerService {
 
   /**
    * Récupère les statistiques de volume pour un utilisateur
-   * ✅ OPTIMISÉ: Utilise SUM() SQL au lieu de reduce() JavaScript
    */
   private async getVolumeStats(userId: number) {
-    // ✅ Utiliser aggregate pour calculer la somme côté base de données
     const result = await this.prisma.sessionSummary.aggregate({
       where: {
         session: {

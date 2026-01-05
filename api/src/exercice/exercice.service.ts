@@ -71,8 +71,8 @@ export class ExerciceService {
       select: {
         id: true,
         name: true,
-        type: true, // 🆕 Pour détecter les exercices cardio
-        isDefault: true, // 🆕 Pour savoir si c'est un exercice système ou utilisateur
+        type: true,
+        isDefault: true,
         groupes: {
           select: {
             isPrimary: true,
@@ -94,7 +94,6 @@ export class ExerciceService {
     return exercices;
   }
 
-  // 🆕 Récupère uniquement les exercices de type CARDIO
   async findCardioExercises(userId: number): Promise<{ id: number; name: string; imageUrl: string | null }[]> {
     const exercices = await this.prisma.exercice.findMany({
       where: {
@@ -184,7 +183,6 @@ export class ExerciceService {
       throw new Error('Cannot delete a default exercice');
     }
 
-    // Delete associated templates first due to Restrict constraint
     await this.prisma.exerciseTemplate.deleteMany({
       where: { exerciseId: id },
     });

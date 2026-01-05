@@ -47,26 +47,20 @@ export class AuthService {
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const code = this.generateFriendCode();
 
-      // ✅ Vérifier si le code existe déjà
       const existing = await this.usersService.findByFriendCode(code);
 
       if (!existing) {
-        // Code unique trouvé !
         return code;
       }
-
-      // Log pour debugging (rare)
       console.warn(`FriendCode collision detected: ${code}, retry ${attempt + 1}/${MAX_ATTEMPTS}`);
     }
 
-    // Si on arrive ici, on a eu 10 collisions d'affilée (quasi impossible)
     throw new BadRequestException(
       'Impossible de générer un code ami unique. Veuillez réessayer dans quelques instants.'
     );
   }
 
 
-  /** Valide l'utilisateur pour le LocalStrategy */
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
     const user = await this.usersService.findUserByEmail(email);
     if (!user) return null;
@@ -135,7 +129,6 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
 
-    // ✅ Générer un friendCode unique garanti sans collision
     const friendCode = await this.generateUniqueFriendCode();
 
     const newUser = await this.usersService.createUser({
@@ -170,7 +163,7 @@ export class AuthService {
     const user = await this.usersService.findUserById(userId);
     await this.usersService.updateUser(userId, {
       refreshToken: null,
-      tokenVersion: user.tokenVersion + 1, // ✅ Révocation de tous les tokens existants
+      tokenVersion: user.tokenVersion + 1,
     });
   }
 
@@ -182,7 +175,6 @@ export class AuthService {
 
       if (!user || !user.refreshToken) throw new UnauthorizedException('Invalid token');
 
-      // ✅ VÉRIFIER LA VERSION DU TOKEN (révocation)
       if (payload.tokenVersion !== user.tokenVersion) {
         throw new UnauthorizedException('Token révoqué - reconnectez-vous');
       }
@@ -200,7 +192,7 @@ export class AuthService {
         updatedAt: user.updatedAt,
         level: user.level,
         xp: user.xp,
-        tokenVersion: user.tokenVersion, // ✅ Inclure tokenVersion
+        tokenVersion: user.tokenVersion,
       };
 
       const newPayload = this.buildJwtPayload(safeUser);
@@ -308,7 +300,7 @@ export class AuthService {
       password: hashedPassword,
       resetPasswordCode: null,
       resetPasswordExpires: null,
-      tokenVersion: user.tokenVersion + 1, // ✅ Sécurité : déconnecter tous les appareils
+      tokenVersion: user.tokenVersion + 1,
     });
 
     // Envoyer un email de confirmation
@@ -349,7 +341,7 @@ export class AuthService {
     // Mettre à jour le mot de passe ET incrémenter tokenVersion pour déconnecter tous les appareils
     await this.usersService.updateUser(user.id, {
       password: hashedPassword,
-      tokenVersion: user.tokenVersion + 1, // ✅ Sécurité : déconnecter tous les appareils
+      tokenVersion: user.tokenVersion + 1,
     });
 
     // Envoyer un email de confirmation

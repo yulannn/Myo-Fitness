@@ -35,12 +35,11 @@ export class FitnessProfileService {
         }
     }
 
-    // Retourne null si aucun profil — le controller / front gèrera l'absence
     async findByUser(userId: number): Promise<FitnessProfileEntity | null> {
         const profile = await this.prisma.fitnessProfile.findUnique({
             where: { userId },
         });
-        return profile; // peut être null
+        return profile;
     }
 
     async findOne(id: number, userId: number): Promise<FitnessProfileEntity> {

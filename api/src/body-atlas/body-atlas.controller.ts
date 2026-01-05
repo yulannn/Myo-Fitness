@@ -12,7 +12,7 @@ export class BodyAtlasController {
     ) { }
 
     /**
-     * 🎯 GET /body-atlas
+     *  GET /body-atlas
      * Récupère le Body Atlas complet de l'utilisateur connecté
      */
     @Get()
@@ -23,7 +23,7 @@ export class BodyAtlasController {
     }
 
     /**
-     * 🎯 GET /body-atlas/:userId
+     *  GET /body-atlas/:userId
      * Récupère le Body Atlas d'un autre utilisateur (pour comparaison)
      */
     @Get(':userId')
@@ -33,7 +33,7 @@ export class BodyAtlasController {
     }
 
     /**
-     * 🤝 GET /body-atlas/compare/:userId
+     *  GET /body-atlas/compare/:userId
      * Compare ton Body Atlas avec un autre utilisateur
      */
     @Get('compare/:userId')

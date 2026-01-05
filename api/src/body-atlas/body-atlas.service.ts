@@ -57,19 +57,19 @@ export class BodyAtlasService {
     constructor(private prisma: PrismaService) { }
 
     /**
-     * 🎯 Récupère les données complètes du Body Atlas d'un utilisateur
+     * Récupère les données complètes du Body Atlas d'un utilisateur
      */
     async getBodyAtlasData(userId: number) {
         this.logger.log(`Fetching Body Atlas data for user ${userId}`);
 
-        // 1️⃣ Récupérer TOUS les groupes musculaires de la DB
+        // Récupérer TOUS les groupes musculaires de la DB
         const allMuscleGroups = await this.prisma.muscleGroup.findMany({
             orderBy: {
                 category: 'asc',
             },
         });
 
-        // 2️⃣ Récupérer les stats existantes de l'utilisateur
+        // 2 Récupérer les stats existantes de l'utilisateur
         const userStats = await this.prisma.userMuscleStats.findMany({
             where: { userId },
             include: {
@@ -77,10 +77,10 @@ export class BodyAtlasService {
             },
         });
 
-        // 3️⃣ Créer une map des stats existantes pour lookup rapide O(1)
+        // 3 Créer une map des stats existantes pour lookup rapide O(1)
         const statsMap = new Map(userStats.map(stat => [stat.muscleGroupId, stat]));
 
-        // 4️⃣ Construire la liste complète : merger tous les muscles avec les stats utilisateur
+        // 4 Construire la liste complète : merger tous les muscles avec les stats utilisateur
         const allMuscleStats = allMuscleGroups.map(muscle => {
             const existingStat = statsMap.get(muscle.id);
 
@@ -102,12 +102,12 @@ export class BodyAtlasService {
                     lastTrainedAt: null,
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                    heat: null, // Pas de chaleur pour les muscles jamais travaillés
+                    heat: null,
                 };
             }
         });
 
-        // 5️⃣ Trier intelligemment : muscles travaillés d'abord, puis par niveau, puis par catégorie
+        // 5️ Trier intelligemment : muscles travaillés d'abord, puis par niveau, puis par catégorie
         const sortedStats = allMuscleStats.sort((a, b) => {
             // Priorité 1 : Muscles travaillés en premier
             if (a.totalVolume > 0 && b.totalVolume === 0) return -1;
@@ -122,7 +122,7 @@ export class BodyAtlasService {
             return a.muscleGroup.category.localeCompare(b.muscleGroup.category);
         });
 
-        // 6️⃣ Calculer les scores uniquement avec les muscles travaillés
+        // 6 Calculer les scores uniquement avec les muscles travaillés
         const workedMuscles = allMuscleStats.filter(s => s.totalVolume > 0);
         const scores = this.calculateScores(workedMuscles);
 
@@ -136,7 +136,7 @@ export class BodyAtlasService {
     }
 
     /**
-     * 📊 Calcule les scores et identifie les muscles dominants/faibles
+     *  Calcule les scores et identifie les muscles dominants/faibles
      */
     private calculateScores(muscleStats: any[]) {
         if (muscleStats.length === 0) {
@@ -181,13 +181,12 @@ export class BodyAtlasService {
     }
 
     /**
-     * 🔄 Met à jour les stats musculaires après une session
-     * ✅ Optimisé : Utilise une transaction batch pour éviter N+1 queries
+     *  Met à jour les stats musculaires après une session
      */
     async updateMuscleStats(userId: number, sessionId: number) {
         this.logger.log(`Updating muscle stats for user ${userId} from session ${sessionId}`);
 
-        // 🏋️ Récupérer le poids du corps de l'utilisateur depuis FitnessProfile
+        //  Récupérer le poids du corps de l'utilisateur depuis FitnessProfile
         const fitnessProfile = await this.prisma.fitnessProfile.findUnique({
             where: { userId },
             select: { weight: true },
@@ -199,7 +198,7 @@ export class BodyAtlasService {
             this.logger.warn(`User ${userId} has no bodyWeight set in FitnessProfile. Bodyweight exercises will have reduced volume.`);
         }
 
-        // 1️⃣ Récupérer la session avec les exercices et performances
+        // 1️ Récupérer la session avec les exercices et performances
         const session = await this.prisma.trainingSession.findUnique({
             where: { id: sessionId },
             include: {
@@ -224,7 +223,7 @@ export class BodyAtlasService {
             throw new Error('Session not found');
         }
 
-        // 2️⃣ Grouper les performances par muscle avec calcul adaptatif du volume
+        // 2 Grouper les performances par muscle avec calcul adaptatif du volume
         const muscleVolumes = new Map<number, { volume: number; sets: number; category: MuscleCategory }>();
 
         for (const exerciceSession of session.exercices) {
@@ -232,7 +231,7 @@ export class BodyAtlasService {
             const muscleGroups = exercice.groupes;
 
             for (const performance of exerciceSession.performances) {
-                // 💪 Calcul adaptatif du volume (gère poids du corps + lestage)
+                //  Calcul adaptatif du volume (gère poids du corps + lestage)
                 const volume = this.calculateVolumeForAtlas(
                     performance.weight || 0,
                     performance.reps_effectuees || 0,
@@ -255,7 +254,7 @@ export class BodyAtlasService {
             }
         }
 
-        // 3️⃣ Récupérer TOUTES les stats existantes de l'utilisateur en UNE SEULE query
+        // 3 Récupérer TOUTES les stats existantes de l'utilisateur en UNE SEULE query
         const existingStats = await this.prisma.userMuscleStats.findMany({
             where: { userId },
             select: {
@@ -270,7 +269,7 @@ export class BodyAtlasService {
             existingStats.map(stat => [stat.muscleGroupId, stat])
         );
 
-        // 4️⃣ Préparer tous les upserts
+        // 4 Préparer tous les upserts
         const upsertOperations = Array.from(muscleVolumes.entries()).map(([muscleId, data]) => {
             const existingStat = statsMap.get(muscleId);
             const newVolume = (existingStat?.totalVolume || 0) + data.volume;
@@ -298,19 +297,14 @@ export class BodyAtlasService {
             });
         });
 
-        // 5️⃣ Exécuter TOUS les upserts dans UNE SEULE transaction
+        // 5 Exécuter TOUS les upserts dans UNE SEULE transaction
         await this.prisma.$transaction(upsertOperations);
 
         this.logger.log(`✅ Muscle stats updated successfully (${upsertOperations.length} muscles)`);
     }
 
     /**
-     * 📈 Calcule le niveau d'un muscle de manière scalable et infinie
-     * 
-     * Utilise une progression logarithmique (comme Strava, Duolingo, etc.)
-     * - Pas de plafond de niveau
-     * - Adapté par catégorie de muscle (jambes vs bras)
-     * - Progression naturelle : de plus en plus difficile
+     *  Calcule le niveau d'un muscle de manière scalable et infinie
      * 
      * @param totalVolume Volume total cumulé pour ce muscle (kg)
      * @param muscleCategory Catégorie du muscle (LEGS, ARMS, etc.)
@@ -319,8 +313,7 @@ export class BodyAtlasService {
     private calculateLevel(totalVolume: number, muscleCategory: MuscleCategory): number {
         if (totalVolume === 0) return 0;
 
-        // 🎯 Volume de base par catégorie pour atteindre niveau 1
-        // Calibré selon la charge typique des exercices
+
         const BASE_VOLUMES: Record<MuscleCategory, number> = {
             LEGS: 8000,       // Squats, leg press → charges lourdes
             BACK: 6000,       // Deadlift, rows → charges moyennes-lourdes
@@ -331,21 +324,11 @@ export class BodyAtlasService {
             OTHER: 5000,      // Fallback conservateur
         };
 
-        // 🔥 Facteur de progression entre niveaux
-        // 1.5 = chaque niveau nécessite +50% de volume en plus
-        // Plus le facteur est élevé, plus la progression est difficile
+
         const PROGRESSION_FACTOR = 1.55;
 
         const baseVolume = BASE_VOLUMES[muscleCategory] || BASE_VOLUMES.OTHER;
 
-        // 📐 Formule logarithmique : niveau = floor(log_base(volume / baseVolume))
-        // Exemple avec LEGS (base=8000, factor=1.55) :
-        //   8k kg   → niveau 1
-        //   12.4k   → niveau 2  (+55%)
-        //   19.2k   → niveau 3  (+55%)
-        //   29.8k   → niveau 4  (+55%)
-        //   46.2k   → niveau 5  (+55%)
-        //   ... ∞
         const level = Math.floor(
             Math.log(totalVolume / baseVolume) / Math.log(PROGRESSION_FACTOR)
         );
@@ -354,10 +337,7 @@ export class BodyAtlasService {
         return Math.max(0, level);
     }
 
-    /**
-     * 🏷️ Retourne le label textuel d'un niveau
-     * Labels inspirés des RPG et apps fitness (Duolingo, Strava)
-     */
+
     getLevelLabel(level: number): string {
         if (level === 0) return 'Novice';
         if (level === 1) return 'Débutant';
@@ -375,21 +355,7 @@ export class BodyAtlasService {
         return 'Inconnu';
     }
 
-    /**
-     * 💪 Calcule le volume adaptatif pour le Body Atlas
-     * 
-     * Gère 3 cas :
-     * 1. Exercice avec charges (bench, squat barre, etc.) → weight × reps
-     * 2. Exercice poids du corps (pompes, tractions) → bodyWeight × coefficient × reps  
-     * 3. Exercice poids du corps LESTÉ (tractions +10kg) → (bodyWeight + lest) × coefficient × reps
-     * 
-     * @param weight Charge utilisée (0 si poids du corps pur, >0 si lesté)
-     * @param reps Répétitions effectuées
-     * @param isBodyWeight Flag indiquant si c'est un exercice poids du corps
-     * @param exerciseName Nom de l'exercice (pour le coefficient)
-     * @param userBodyWeight Poids du corps de l'utilisateur (kg)
-     * @returns Volume calculé en kg
-     */
+
     private calculateVolumeForAtlas(
         weight: number,
         reps: number,
@@ -402,7 +368,6 @@ export class BodyAtlasService {
             return weight * reps;
         }
 
-        // Cas 2 & 3: Exercice poids du corps (avec ou sans lest)
         if (!userBodyWeight || userBodyWeight <= 0) {
             // Si pas de poids du corps renseigné, fallback sur le weight uniquement
             this.logger.warn(`User bodyWeight not set, using weight only for ${exerciseName}`);
@@ -418,13 +383,7 @@ export class BodyAtlasService {
         return totalWeight * coefficient * reps;
     }
 
-    /**
-
-     * 🌡️ Calcule la "chaleur" d'un muscle (HOT, WARM, COLD, FROZEN)
-     * ✅ Retourne null si le muscle n'a jamais été travaillé (totalVolume = 0)
-     */
     private calculateHeat(lastTrainedAt: Date | null, totalVolume: number): MuscleHeat | null {
-        // Pas de chaleur pour les muscles jamais travaillés
         if (totalVolume === 0 || !lastTrainedAt) return null;
 
         const now = new Date();
@@ -437,7 +396,7 @@ export class BodyAtlasService {
     }
 
     /**
-     * 🤝 Compare deux Body Atlas
+     *  Compare deux Body Atlas
      */
     async compareAtlas(userId1: number, userId2: number) {
         const [atlas1, atlas2] = await Promise.all([
