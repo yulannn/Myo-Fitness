@@ -6,7 +6,7 @@ import 'react-day-picker/dist/style.css'
 import useGetSessionsForCalendar from '../../api/hooks/session/useGetSessionsForCalendar'
 import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
-import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import { getImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
@@ -399,6 +399,12 @@ function SessionCard({ session }: { session: any }) {
     const templateExerciseCount = session.sessionTemplate?._count?.exercises || 0
     const canExpand = exerciseCount > 0 || templateExerciseCount > 0
 
+    // 🔍 Déterminer si la séance est dans le passé et non validée
+    const sessionDate = session.performedAt ? new Date(session.performedAt) : session.date ? new Date(session.date) : null
+    const isPastSession = sessionDate ? sessionDate < new Date() && !isSameDay(sessionDate, new Date()) : false
+    const isNotCompleted = !session.completed
+    const showMissedIndicator = isPastSession && isNotCompleted
+
     return (
         <div className="bg-[#18181b] rounded-lg border border-white/5 overflow-hidden transition-all hover:border-white/10 group">
             {/* Header */}
@@ -414,6 +420,9 @@ function SessionCard({ session }: { session: any }) {
                             </h3>
                             {session.completed && (
                                 <CheckCircleIcon className="h-4 w-4 text-[#94fbdd]" />
+                            )}
+                            {showMissedIndicator && (
+                                <QuestionMarkCircleIcon className="h-4 w-4 text-orange-400" />
                             )}
                         </div>
 
@@ -431,6 +440,15 @@ function SessionCard({ session }: { session: any }) {
 
                         {session.sessionName && (
                             <p className="text-xs text-gray-600 line-clamp-1 mt-1">{session.sessionName}</p>
+                        )}
+
+                        {/* Message pour séance non validée dans le passé */}
+                        {showMissedIndicator && (
+                            <div className="mt-2 p-2 bg-orange-400/10 border border-orange-400/20 rounded-md">
+                                <p className="text-xs text-orange-400 font-medium">
+                                    ⚠️ Non effectuée
+                                </p>
+                            </div>
                         )}
                     </div>
 

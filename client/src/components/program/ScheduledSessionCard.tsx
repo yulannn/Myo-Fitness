@@ -1,4 +1,4 @@
-import { PlayIcon, CalendarIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, CalendarIcon, TrashIcon, QuestionMarkCircleIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceStore } from '../../store/usePerformanceStore';
@@ -68,6 +68,12 @@ export default function ScheduledSessionCard({
   const minDate = new Date().toISOString().split('T')[0];
   const isToday = session.date && new Date(session.date).toDateString() === new Date().toDateString();
 
+  // 🔍 Déterminer si la séance est dans le passé et non validée
+  const sessionDate = session.date ? new Date(session.date) : null;
+  const isPastSession = sessionDate ? sessionDate < new Date() && !isToday : false;
+  const isCompleted = session.completed || false;
+  const showMissedIndicator = isPastSession && !isCompleted;
+
   return (
     <>
       <div className={`bg-[#252527] rounded-2xl border p-5 hover:border-[#94fbdd]/30 transition-all ${isToday ? 'border-[#94fbdd]/50' : 'border-[#94fbdd]/10'
@@ -86,6 +92,12 @@ export default function ScheduledSessionCard({
                   Aujourd'hui
                 </span>
               )}
+              {isCompleted && (
+                <CheckCircleIcon className="h-4 w-4 text-[#94fbdd]" />
+              )}
+              {showMissedIndicator && (
+                <QuestionMarkCircleIcon className="h-4 w-4 text-orange-400" />
+              )}
             </div>
             <h3 className="text-lg font-bold text-white mb-1">
               {session.sessionName || 'Séance'}
@@ -94,6 +106,15 @@ export default function ScheduledSessionCard({
               <p className="text-xs text-gray-500">
                 Basé sur : <span className="text-[#94fbdd]">{templateName}</span>
               </p>
+            )}
+
+            {/* Message pour séance non validée dans le passé */}
+            {showMissedIndicator && (
+              <div className="mt-2 p-2 bg-orange-400/10 border border-orange-400/20 rounded-md">
+                <p className="text-xs text-orange-400 font-medium">
+                  ⚠️ Non effectuée
+                </p>
+              </div>
             )}
           </div>
         </div>
