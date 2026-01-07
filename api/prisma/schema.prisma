@@ -136,6 +136,7 @@ enum ActivityType {
   PROGRAM_COMPLETED
   STREAK_REACHED
   SESSION_SHARED
+  BADGE_UNLOCKED
 }
 
 model FitnessProfile {

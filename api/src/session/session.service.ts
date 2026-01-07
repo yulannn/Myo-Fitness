@@ -419,6 +419,24 @@ export class SessionService {
     let unlockedBadges: any[] = [];
     try {
       unlockedBadges = await this.checkBadgesAfterSession(userId, id);
+
+      // 🆕 Créer une activité pour chaque badge débloqué
+      for (const unlocked of unlockedBadges) {
+        // unlocked est un UserBadge qui inclut le Badge
+        // Si structure différente (ex: mock ou changement), on fallback safe
+        const badgeData = unlocked.badge || unlocked;
+
+        await this.activityService.createActivity(
+          userId,
+          ActivityType.BADGE_UNLOCKED,
+          {
+            badgeId: badgeData.id,
+            badgeName: badgeData.name,
+            badgeIcon: badgeData.iconUrl,
+            badgeCode: badgeData.code,
+          }
+        );
+      }
     } catch (error) {
       console.error('Erreur lors de la vérification des badges:', error);
       // On ne fait pas échouer la requête si les badges échouent
@@ -430,6 +448,13 @@ export class SessionService {
     } catch (error) {
       console.error('Erreur lors de la mise à jour des stats musculaires:', error);
       // On ne fait pas échouer la requête si la mise à jour échoue
+    }
+
+    // 🆕 Vérifier les records personnels (PR)
+    try {
+      await this.checkPersonalRecords(sessionWithSummary, userId);
+    } catch (error) {
+      console.error('Erreur lors de la vérification des PRs:', error);
     }
 
     return {
@@ -466,6 +491,66 @@ export class SessionService {
     }
 
     return allUnlockedBadges;
+  }
+
+  /**
+   * Vérifie et crée des activités pour les records personnels
+   */
+  private async checkPersonalRecords(session: any, userId: number) {
+    if (!session.exercices) return;
+
+    for (const exercise of session.exercices) {
+      // Ignorer si pas de performances ou exercice cardio (pour l'instant basé sur poids)
+      if (!exercise.performances || exercise.performances.length === 0) continue;
+      if (exercise.exercice.type === 'CARDIO') continue;
+
+      // Calculer le max poids validé dans cette session
+      const maxWeightSession = Math.max(
+        ...exercise.performances
+          .filter((p: any) => p.success)
+          .map((p: any) => p.weight || 0)
+      );
+
+      if (maxWeightSession <= 0) continue;
+
+      // Chercher le record précédent
+      // On cherche la meilleure performance passée pour cet exercice
+      // ⚠️ Optimisation: Idéalement il faudrait une table de stats aggregated
+      const previousBest = await this.prisma.setPerformance.findFirst({
+        where: {
+          exerciceSession: {
+            exerciceId: exercise.exerciceId,
+            trainingSession: {
+              trainingProgram: { fitnessProfile: { userId } },
+              completed: true,
+              id: { not: session.id }, // Exclure la session actuelle
+            },
+          },
+          success: true,
+        },
+        orderBy: { weight: 'desc' },
+        select: { weight: true },
+      });
+
+      const previousMax = previousBest?.weight || 0;
+
+      // Si on a battu le record (et qu'il y avait un record ou au moins que c'est significatif)
+      // On considère un PR si on bat l'ancien. Si c'est la toute première fois, c'est aussi un PR techniquement.
+      // Dison qu'on notifie toujours si > previousMax.
+      if (maxWeightSession > previousMax) {
+        await this.activityService.createActivity(
+          userId,
+          ActivityType.PERSONAL_RECORD,
+          {
+            exerciseName: exercise.exercice.name,
+            value: `${maxWeightSession}kg`,
+            previousValue: previousMax > 0 ? `${previousMax}kg` : null,
+            sessionId: session.id,
+            exerciseId: exercise.exerciceId,
+          }
+        );
+      }
+    }
   }
 
   /**

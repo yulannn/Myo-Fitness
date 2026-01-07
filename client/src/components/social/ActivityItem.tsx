@@ -6,7 +6,8 @@ import {
     CheckCircleIcon,
     CalendarIcon,
     ChevronDownIcon,
-    ChevronUpIcon
+    ChevronUpIcon,
+    StarIcon
 } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -103,6 +104,7 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
             case 'PERSONAL_RECORD': return <TrophyIcon className="h-6 w-6 text-yellow-500" />;
             case 'PROGRAM_COMPLETED': return <CalendarIcon className="h-6 w-6 text-purple-500" />;
             case 'STREAK_REACHED': return <FireIcon className="h-6 w-6 text-orange-500" />;
+            case 'BADGE_UNLOCKED': return <StarIcon className="h-6 w-6 text-indigo-400" />;
             default: return <CheckCircleIcon className="h-6 w-6 text-gray-500" />;
         }
     };
@@ -126,6 +128,23 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
                             <span className="font-bold text-white">{activity.user.name}</span> a battu son record !
                         </p>
                         <p className="text-sm font-semibold text-yellow-400 mt-1">{data.exerciseName}: {data.value}</p>
+                    </div>
+                );
+            case 'BADGE_UNLOCKED':
+                return (
+                    <div>
+                        <p className="text-sm text-gray-300">
+                            <span className="font-bold text-white">{activity.user.name}</span> a débloqué le badge <span className="text-indigo-400 font-bold">{data.badgeName || 'Inconnu'}</span> !
+                        </p>
+                        {data.badgeIcon && (
+                            <div className="mt-2 bg-white/5 p-2 rounded-lg inline-flex items-center gap-3 border border-white/10">
+                                <img src={data.badgeIcon} alt={data.badgeName} className="w-10 h-10 object-contain drop-shadow-lg" />
+                                <div>
+                                    <p className="text-xs text-indigo-300 font-semibold uppercase tracking-wider">Badge débloqué</p>
+                                    <p className="font-bold text-white">{data.badgeName}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             default:
