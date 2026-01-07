@@ -8,9 +8,10 @@ import { UsersModule } from 'src/users/users.module';
 import { ActivityModule } from '../social/activity/activity.module';
 import { BadgeModule } from '../badge/badge.module';
 import { BodyAtlasModule } from '../body-atlas/body-atlas.module';
+import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 
 @Module({
-  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule, BodyAtlasModule],
+  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule, BodyAtlasModule, LeaderboardModule],
   controllers: [SessionController],
   providers: [SessionService, SessionCleanupService],
   exports: [SessionService],

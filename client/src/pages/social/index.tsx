@@ -2,13 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import {
     ChatBubbleLeftRightIcon,
     UsersIcon,
-    BellIcon
+    BellIcon,
+    TrophyIcon
 } from '@heroicons/react/24/outline';
 import SharedSessionsList from '../../components/social/SharedSessionsList';
 import { useSessionNotifications } from '../../api/hooks/shared-session/useSessionNotifications';
 import { useFriendNotifications } from '../../api/hooks/friend/useFriendNotifications';
 import { useGlobalMessageListener } from '../../api/hooks/chat/useGlobalMessageListener';
-import { SOCIAL_CHATS, SOCIAL_FRIENDS, SOCIAL_NOTIFICATIONS } from '../../utils/paths';
+import { SOCIAL_CHATS, SOCIAL_FRIENDS, SOCIAL_NOTIFICATIONS, LEADERBOARD } from '../../utils/paths';
 import useGetPendingFriendRequests from '../../api/hooks/friend/useGetPendingFriendRequests';
 import usePendingGroupRequests from '../../api/hooks/group/useGetPendingGroupRequests';
 import { useConversations } from '../../api/hooks/chat/useConversations';
@@ -45,7 +46,17 @@ export default function SocialFeed() {
                         <h1 className="text-3xl font-extrabold text-white tracking-tight">Social</h1>
                     </div>
 
+
                     <div className="flex gap-3">
+                        {/* Leaderboard Button */}
+                        <button
+                            onClick={() => navigate(LEADERBOARD)}
+                            className="p-2.5 rounded-full bg-gradient-to-r from-[#94fbdd]/20 to-[#7de3c7]/20 border border-[#94fbdd]/30 text-[#94fbdd] hover:from-[#94fbdd]/30 hover:to-[#7de3c7]/30 transition-all"
+                            title="Classement"
+                        >
+                            <TrophyIcon className="h-6 w-6" />
+                        </button>
+
                         {/* Notifications Button */}
                         <button
                             onClick={() => navigate(SOCIAL_NOTIFICATIONS)}

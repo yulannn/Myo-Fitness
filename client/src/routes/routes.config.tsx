@@ -18,6 +18,7 @@ import VerifyEmail from "../pages/verify-email";
 import Privacy from "../pages/privacy";
 import Onboarding from "../pages/onboarding";
 import BodyAtlasPage from "../pages/body-atlas";
+import LeaderboardPage from "../pages/leaderboard";
 import ChatsPage from "../pages/social/ChatsPage";
 import FriendsPage from "../pages/social/FriendsPage";
 import NotificationsPage from "../pages/social/NotificationsPage";
@@ -43,6 +44,7 @@ import {
     VERIFY_EMAIL,
     PRIVACY,
     BODY_ATLAS,
+    LEADERBOARD,
     ONBOARDING,
     SOCIAL_CHATS,
     SOCIAL_FRIENDS,
@@ -165,6 +167,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: BODY_ATLAS,
         element: <BodyAtlasPage />,
+        protected: true
+    },
+    {
+        path: LEADERBOARD,
+        element: <LeaderboardPage />,
         protected: true
     },
     {

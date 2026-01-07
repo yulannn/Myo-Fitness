@@ -10,6 +10,7 @@ import { ActivityService } from '../social/activity/activity.service';
 import { ActivityType } from '@prisma/client';
 import { BadgeCheckerService } from '../badge/badge-checker.service';
 import { BodyAtlasService } from '../body-atlas/body-atlas.service';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 
 @Injectable()
 export class SessionService {
@@ -20,6 +21,7 @@ export class SessionService {
     private readonly activityService: ActivityService,
     private readonly badgeCheckerService: BadgeCheckerService,
     private readonly bodyAtlasService: BodyAtlasService,
+    private readonly leaderboardService: LeaderboardService,
   ) { }
 
   /**
@@ -457,6 +459,14 @@ export class SessionService {
       await this.checkPersonalRecords(sessionWithSummary, userId);
     } catch (error) {
       console.error('Erreur lors de la vérification des PRs:', error);
+    }
+
+    // 🏆 Mettre à jour les statistiques du leaderboard
+    try {
+      await this.leaderboardService.updateUserStats(userId);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des stats du leaderboard:', error);
+      // On ne fait pas échouer la requête si la mise à jour échoue
     }
 
     return {
