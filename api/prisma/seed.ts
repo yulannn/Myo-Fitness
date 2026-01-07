@@ -136,10 +136,15 @@ async function main() {
   ];
 
   for (const badge of trainingBadges) {
+    const badgeWithIcon = {
+      ...badge,
+      iconUrl: 'badge_placeholder.png',
+    };
+
     await prisma.badge.upsert({
       where: { code: badge.code },
-      create: badge,
-      update: badge,
+      create: badgeWithIcon,
+      update: badgeWithIcon,
     });
   }
 
@@ -1004,6 +1009,7 @@ async function main() {
     const createdExercice = await prisma.exercice.create({
       data: {
         name: exercice.name,
+        imageUrl: 'exercise_placeholder.png',
         difficulty: exercice.difficulty,
         description: exercice.description,
         type: exercice.type as any,

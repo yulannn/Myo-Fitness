@@ -14,7 +14,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Badges')
 @ApiBearerAuth()
-@Controller('badges')
+@Controller('api/v1/badges')
 @UseGuards(AuthGuard('jwt'))
 export class BadgeController {
   constructor(private readonly badgeService: BadgeService) { }

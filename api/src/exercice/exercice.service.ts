@@ -73,6 +73,8 @@ export class ExerciceService {
         name: true,
         type: true,
         isDefault: true,
+        imageUrl: true,
+        bodyWeight: true,
         groupes: {
           select: {
             isPrimary: true,

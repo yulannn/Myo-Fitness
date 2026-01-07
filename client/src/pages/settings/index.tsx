@@ -13,6 +13,7 @@ import {
     SparklesIcon,
     ShieldCheckIcon,
     ChevronRightIcon,
+    BookOpenIcon,
 
 } from '@heroicons/react/24/outline';
 import api from '../../api/apiClient';
@@ -45,6 +46,7 @@ export default function Settings() {
     // Navigation Handlers
     const handleMyProfile = () => navigate('/my-profile');
     const handleMyExercises = () => navigate('/my-exercises');
+    const handleExercises = () => navigate('/exercises');
     const handleChangePassword = () => navigate('/change-password');
     const handlePremium = () => navigate('/premium');
     const handlePrivacy = () => navigate('/privacy');
@@ -141,7 +143,6 @@ export default function Settings() {
                 {/* Settings Groups */}
                 <SettingsSection title="Compte">
                     <SettingsItem icon={UserCircleIcon} label="Informations personnelles" onClick={handleMyProfile} />
-                    <SettingsItem icon={QueueListIcon} label="Mes exercices" onClick={handleMyExercises} />
                     <SettingsItem icon={KeyIcon} label="Sécurité & Mot de passe" onClick={handleChangePassword} />
                     <SettingsItem
                         icon={SparklesIcon}
@@ -149,6 +150,11 @@ export default function Settings() {
                         value={isPremium ? "Premium" : "Gratuit"}
                         onClick={handlePremium}
                     />
+                </SettingsSection>
+
+                <SettingsSection title="Entraînement">
+                    <SettingsItem icon={QueueListIcon} label="Mes exercices" onClick={handleMyExercises} />
+                    <SettingsItem icon={BookOpenIcon} label="Bibliothèque d'exercices" onClick={handleExercises} />
                 </SettingsSection>
 
                 <SettingsSection title="Application">

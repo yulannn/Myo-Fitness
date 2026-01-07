@@ -114,6 +114,7 @@ export class UsersController {
     xp: number;
     friendCode: string | null;
     createdAt: Date;
+    userBadges: any[];
   }> {
 
     const userId = Number(id);

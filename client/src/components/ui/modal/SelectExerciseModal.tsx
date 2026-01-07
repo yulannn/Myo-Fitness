@@ -313,36 +313,79 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   );
 };
 
-// Sub-component for individual exercise items
 const ExerciseItem = ({
   exercise,
   onSelect
 }: {
   exercise: ExerciceMinimal;
   onSelect: (id: number) => void;
-}) => (
-  <button
-    onClick={() => onSelect(exercise.id)}
-    className="w-full p-4 rounded-xl bg-[#121214] border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#1a1a1c] transition-all text-left group"
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex flex-col">
-        <span className="text-white font-medium group-hover:text-[#94fbdd] transition-colors">
-          {exercise.name}
-        </span>
-        {exercise.isDefault === false && (
-          <span className="text-xs text-[#94fbdd] flex items-center gap-1 mt-0.5">
-            <UserIcon className="w-3 h-3" />
-            Créé par vous
-          </span>
-        )}
+}) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const imageUrl = exercise.imageUrl
+    ? (exercise.imageUrl.startsWith('http') ? exercise.imageUrl : `${API_URL}/assets/exercises_illustration/${exercise.imageUrl}`)
+    : null;
+
+  return (
+    <button
+      onClick={() => onSelect(exercise.id)}
+      className="w-full p-3 rounded-xl bg-[#121214] border border-[#94fbdd]/10 hover:border-[#94fbdd]/30 hover:bg-[#1a1a1c] transition-all text-left group"
+    >
+      <div className="flex items-center gap-4">
+        {/* Image / Icon */}
+        <div className="w-12 h-12 rounded-lg bg-[#252527] border border-white/5 overflow-hidden flex-shrink-0 flex items-center justify-center">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={exercise.name}
+              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+              onError={(e) => {
+                // Fallback si l'image ne charge pas
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.classList.add('fallback-icon');
+              }}
+            />
+          ) : (
+            <div className="text-gray-600">
+              {/* Fallback visual based on type ? simple generic for now */}
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+          )}
+
+          {/* Fallback Icon visible when img hidden */}
+          <div className="hidden fallback-icon:block text-gray-600">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <span className="text-white font-medium truncate pr-2 group-hover:text-[#94fbdd] transition-colors">
+              {exercise.name}
+            </span>
+            <div className="p-1 rounded-full bg-[#94fbdd]/10 group-hover:bg-[#94fbdd]/20 transition-all flex-shrink-0">
+              <PlusIcon className="h-5 w-5 text-[#94fbdd] group-hover:scale-110 transition-transform" />
+            </div>
+          </div>
+
+          {exercise.getBodyWeight && (
+            <span className="text-xs text-gray-500 block mt-0.5">Poids du corps</span>
+          )}
+
+          {exercise.isDefault === false && (
+            <span className="text-xs text-[#94fbdd] flex items-center gap-1 mt-0.5">
+              <UserIcon className="w-3 h-3" />
+              Créé par vous
+            </span>
+          )}
+        </div>
       </div>
-      <div className="p-1 rounded-full bg-[#94fbdd]/10 group-hover:bg-[#94fbdd]/20 transition-all">
-        <PlusIcon className="h-5 w-5 text-[#94fbdd] group-hover:scale-110 transition-transform" />
-      </div>
-    </div>
-  </button>
-);
+    </button>
+  );
+};
 
 // Sub-component for muscle group items
 const MuscleGroupItem = ({

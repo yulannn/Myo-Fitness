@@ -60,6 +60,7 @@ export class UsersService {
     xp: number;
     friendCode: string | null;
     createdAt: Date;
+    userBadges: any[];
   }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -71,6 +72,11 @@ export class UsersService {
         xp: true,
         friendCode: true,
         createdAt: true,
+        userBadges: {
+          include: {
+            badge: true,
+          },
+        },
       },
     });
 

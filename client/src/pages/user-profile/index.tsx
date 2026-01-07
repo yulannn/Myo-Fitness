@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, UsersIcon, UserCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { usePublicProfile } from '../../api/hooks/user/usePublicProfile';
 import { getImageUrl } from '../../utils/imageUtils';
+import BadgeList from '../../components/profile/BadgeList';
 
 
 /**
@@ -148,6 +149,17 @@ export default function UserProfilePage() {
                         </div>
                     </div>
                 )}
+
+                {/* Badges Section */}
+                <div className="bg-[#18181b] rounded-xl border border-white/5 p-6">
+                    <h3 className="text-sm font-medium text-gray-400 mb-6 uppercase tracking-wider flex items-center justify-between">
+                        Badges
+                        <span className="text-xs bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">
+                            {user.userBadges?.length || 0}
+                        </span>
+                    </h3>
+                    <BadgeList userBadges={user.userBadges || []} />
+                </div>
 
                 {/* Info Card */}
                 <div className="bg-[#18181b] rounded-xl border border-white/5 p-6">

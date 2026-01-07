@@ -14,6 +14,7 @@ export interface PublicProfile {
     xp: number;
     friendCode: string | null;
     createdAt: string;
+    userBadges: any[];
 }
 
 export function usePublicProfile(userId: number | undefined) {

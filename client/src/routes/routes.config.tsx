@@ -48,6 +48,7 @@ import {
     SOCIAL_FRIENDS,
     SOCIAL_NOTIFICATIONS,
     MY_EXERCISES,
+    EXERCISES,
     SENTRY_TEST,
 } from "../utils/paths";
 
@@ -61,11 +62,17 @@ export interface AppRouteConfig {
 
 import { MyExercisesPage } from "../pages/my-exercises";
 import EditExercisePage from "../pages/my-exercises/EditExercisePage";
+import ExercisesPage from "../pages/exercises";
 
 export const routes: AppRouteConfig[] = [
     {
         path: MY_EXERCISES,
         element: <MyExercisesPage />,
+        protected: true
+    },
+    {
+        path: EXERCISES,
+        element: <ExercisesPage />,
         protected: true
     },
     {

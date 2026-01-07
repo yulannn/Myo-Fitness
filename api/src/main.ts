@@ -1,5 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as bcrypt from 'bcrypt';
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
@@ -26,6 +29,12 @@ async function bootstrap() {
 
   // Utiliser Pino comme logger global
   app.useLogger(app.get(Logger));
+
+  // Serve static assets
+  const expressApp = app as unknown as NestExpressApplication;
+  expressApp.useStaticAssets(join(__dirname, '..', '..', 'assets'), {
+    prefix: '/assets/',
+  });
 
 
   // Middleware pour préserver le raw body pour Stripe webhook

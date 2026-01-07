@@ -11,11 +11,14 @@ import XpBar from '../../components/common/XpBar';
 import type { FitnessProfile } from '../../types/fitness-profile.type';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useMyBadges } from '../../api/hooks/badge/useMyBadges';
+import BadgeList from '../../components/profile/BadgeList';
 
 export default function FitnessProfiles() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: profiles, isLoading } = useFitnessProfilesByUser();
+  const { data: myBadges, isLoading: isBadgesLoading } = useMyBadges();
 
   const createMutation = useCreateFitnessProfile();
   const updateMutation = useUpdateFitnessProfile();
@@ -76,6 +79,13 @@ export default function FitnessProfiles() {
           <section>
             <h3 className="text-sm font-medium text-gray-400 mb-2 px-1">Niveau & Progression</h3>
             <XpBar variant="compact" showLevel={true} />
+          </section>
+
+          <section>
+            <h3 className="text-sm font-medium text-gray-400 mb-2 px-1">Badges</h3>
+            <div className="bg-[#18181b] rounded-xl border border-white/5 p-4">
+              <BadgeList userBadges={myBadges || []} isLoading={isBadgesLoading} />
+            </div>
           </section>
         </div>
 
