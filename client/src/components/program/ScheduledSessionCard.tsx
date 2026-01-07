@@ -14,7 +14,6 @@ interface ScheduledSessionCardProps {
 
 export default function ScheduledSessionCard({
   session,
-  programName,
   templateName
 }: ScheduledSessionCardProps) {
   const navigate = useNavigate();
