@@ -196,7 +196,7 @@ export class LeaderboardService {
         // 1. Nombre total de sessions complétées
         const totalSessionsCompleted = await this.prisma.trainingSession.count({
             where: {
-                trainingProgram: { fitnessProfileId: userId },
+                trainingProgram: { fitnessProfile: { userId } },
                 completed: true,
             },
         });
@@ -209,7 +209,7 @@ export class LeaderboardService {
             where: {
                 exerciceSession: {
                     trainingSession: {
-                        trainingProgram: { fitnessProfileId: userId },
+                        trainingProgram: { fitnessProfile: { userId } },
                         completed: true,
                     },
                 },
@@ -226,7 +226,7 @@ export class LeaderboardService {
             where: {
                 exerciceSession: {
                     trainingSession: {
-                        trainingProgram: { fitnessProfileId: userId },
+                        trainingProgram: { fitnessProfile: { userId } },
                         completed: true,
                     },
                 },
@@ -246,7 +246,7 @@ export class LeaderboardService {
         // 4. Durée moyenne des sessions
         const sessionsWithDuration = await this.prisma.trainingSession.findMany({
             where: {
-                trainingProgram: { fitnessProfileId: userId },
+                trainingProgram: { fitnessProfile: { userId } },
                 completed: true,
                 duration: { not: null },
             },
@@ -272,7 +272,7 @@ export class LeaderboardService {
         // 6. Date de la dernière session
         const lastSession = await this.prisma.trainingSession.findFirst({
             where: {
-                trainingProgram: { fitnessProfileId: userId },
+                trainingProgram: { fitnessProfile: { userId } },
                 completed: true,
             },
             orderBy: {
@@ -304,7 +304,7 @@ export class LeaderboardService {
     }> {
         const sessions = await this.prisma.trainingSession.findMany({
             where: {
-                trainingProgram: { fitnessProfileId: userId },
+                trainingProgram: { fitnessProfile: { userId } },
                 completed: true,
                 performedAt: { not: null },
             },

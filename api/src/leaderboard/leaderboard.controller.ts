@@ -29,6 +29,8 @@ export class LeaderboardController {
         @Query('type') type: LeaderboardType,
     ): Promise<LeaderboardResponseDto> {
         const userId = req.user.userId;
+        // 🔄 Force update stats to ensure data correctness
+        await this.leaderboardService.updateUserStats(userId);
         return this.leaderboardService.getFriendsLeaderboard(userId, type);
     }
 
