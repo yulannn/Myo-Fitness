@@ -7,7 +7,7 @@ import useGetSessionsForCalendar from '../../api/hooks/session/useGetSessionsFor
 import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
 import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
-import { getImageUrl } from '../../utils/imageUtils'
+import { getImageUrl, getExerciseImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
     // 📅 État pour le mois affiché dans le calendrier (par défaut : mois actuel)
@@ -483,7 +483,8 @@ function SessionCard({ session }: { session: any }) {
                                         ? fullSession.sessionTemplate.exercises.map((exTemplate: any) => ({
                                             exercice: {
                                                 name: exTemplate.exercise?.name,
-                                                type: exTemplate.exercise?.type
+                                                type: exTemplate.exercise?.type,
+                                                imageUrl: exTemplate.exercise?.imageUrl
                                             },
                                             sets: exTemplate.sets,
                                             reps: exTemplate.reps,
@@ -508,26 +509,50 @@ function SessionCard({ session }: { session: any }) {
                                                 key={index}
                                                 className="bg-[#18181b] rounded-md border border-white/5 p-3"
                                             >
-                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-white">
-                                                            {ex.exercice?.name || `Exercice ${index + 1}`}
-                                                        </p>
+                                                <div className="flex items-center gap-3">
+                                                    {/* Image */}
+                                                    <div className="relative w-12 h-12 rounded-lg bg-[#252527] overflow-hidden flex-shrink-0 border border-white/5">
+                                                        {getExerciseImageUrl(ex.exercice?.imageUrl) ? (
+                                                            <img
+                                                                src={getExerciseImageUrl(ex.exercice?.imageUrl)!}
+                                                                alt={ex.exercice?.name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                    (e.target as HTMLImageElement).parentElement!.innerText = '🏋️‍♂️';
+                                                                    (e.target as HTMLImageElement).parentElement!.className += ' flex items-center justify-center text-lg';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-lg">
+                                                                🏋️‍♂️
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    {!hasPerformances && (
-                                                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                            {isCardio ? (
-                                                                <span>{ex.duration || 15} min</span>
-                                                            ) : (
-                                                                <>
-                                                                    {ex.sets && <span>{ex.sets} séries</span>}
-                                                                    {ex.reps && <span>{ex.reps} reps</span>}
-                                                                    {ex.weight && <span>{ex.weight} kg</span>}
-                                                                </>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-white truncate">
+                                                                    {ex.exercice?.name || `Exercice ${index + 1}`}
+                                                                </p>
+                                                            </div>
+
+                                                            {!hasPerformances && (
+                                                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                                    {isCardio ? (
+                                                                        <span>{ex.duration || 15} min</span>
+                                                                    ) : (
+                                                                        <>
+                                                                            {ex.sets && <span>{ex.sets} séries</span>}
+                                                                            {ex.reps && <span>{ex.reps} reps</span>}
+                                                                            {ex.weight && <span>{ex.weight} kg</span>}
+                                                                        </>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
 
                                                 {hasPerformances && (

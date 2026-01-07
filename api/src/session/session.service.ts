@@ -73,6 +73,7 @@ export class SessionService {
               select: {
                 name: true,
                 type: true, // 🆕 Pour distinguer cardio
+                imageUrl: true, // ✅ Ajouté pour le frontend
               },
             },
             performances: {
@@ -103,6 +104,7 @@ export class SessionService {
                     id: true,
                     name: true,
                     type: true, // 🆕 Pour distinguer cardio
+                    imageUrl: true, // ✅ Ajouté pour le frontend
                   },
                 },
               },

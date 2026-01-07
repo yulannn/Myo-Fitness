@@ -124,3 +124,21 @@ export function validateImageFile(file: File): {
 
     return { isValid: true };
 }
+
+/**
+ * Obtient l'URL complète pour une image d'exercice
+ * 
+ * @param imageUrl - URL ou chemin de l'image
+ * @returns URL complète ou null
+ */
+export function getExerciseImageUrl(imageUrl: string | null | undefined): string | null {
+    if (!imageUrl) return null;
+
+    // Si c'est déjà une URL complète
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+
+    // Sinon construire l'URL vers l'API
+    return `${API_BASE_URL}/assets/exercises_illustration/${imageUrl}`;
+}

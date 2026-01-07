@@ -11,6 +11,7 @@ import { EditTemplateModal } from '../modal/EditTemplateModal';
 import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } from '../modal/BottomSheet';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../modal';
 import { formatDateToISO } from '../../../utils/dateUtils';
+import { getExerciseImageUrl } from '../../../utils/imageUtils';
 
 interface TemplateCardProps {
   template: any;
@@ -298,10 +299,30 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
               return (
                 <div
                   key={ex.id || idx}
-                  className="flex items-center justify-between p-3 bg-[#121214] rounded-lg border border-white/5"
+                  className="flex items-center gap-3 p-3 bg-[#121214] rounded-lg border border-white/5"
                 >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">
+                  {/* Image */}
+                  <div className="relative w-12 h-12 rounded-lg bg-[#252527] overflow-hidden flex-shrink-0 border border-white/5">
+                    {getExerciseImageUrl(ex.exercise?.imageUrl) ? (
+                      <img
+                        src={getExerciseImageUrl(ex.exercise?.imageUrl)!}
+                        alt={ex.exercise?.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).parentElement!.innerText = '🏋️‍♂️';
+                          (e.target as HTMLImageElement).parentElement!.className += ' flex items-center justify-center text-lg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-lg">
+                        🏋️‍♂️
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
                       {ex.exercise?.name || 'Exercice'}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">

@@ -11,6 +11,7 @@ import useUpdateExerciceSets from '../../api/hooks/session/useUpdateExerciceSets
 import { Modal } from '../../components/ui/modal'
 import { usePerformanceStore } from '../../store/usePerformanceStore'
 import SessionSummaryCard from '../../components/session/SessionSummaryCard'
+import { getExerciseImageUrl } from '../../utils/imageUtils'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
@@ -362,9 +363,30 @@ export default function ActiveSession() {
                         return (
                             <div key={exerciceSession.id || index} className="space-y-4">
                                 <div className="flex items-center justify-between border-b border-[#94fbdd]/10 pb-3 gap-4">
-                                    <h3 className="text-lg font-bold text-white flex-1 min-w-0 truncate">
-                                        {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
-                                    </h3>
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        {/* Image */}
+                                        <div className="relative w-12 h-12 rounded-lg bg-[#252527] overflow-hidden flex-shrink-0 border border-white/5">
+                                            {getExerciseImageUrl(exerciceSession.exercice?.imageUrl) ? (
+                                                <img
+                                                    src={getExerciseImageUrl(exerciceSession.exercice?.imageUrl)!}
+                                                    alt={exerciceSession.exercice?.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                        (e.target as HTMLImageElement).parentElement!.innerText = '🏋️‍♂️';
+                                                        (e.target as HTMLImageElement).parentElement!.className += ' flex items-center justify-center text-lg';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-lg">
+                                                    🏋️‍♂️
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white truncate">
+                                            {exerciceSession.exercice?.name || `Exercice ${index + 1}`}
+                                        </h3>
+                                    </div>
 
                                     {/* Pour cardio : afficher durée, sinon sets × reps */}
                                     {isCardio ? (
