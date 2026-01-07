@@ -12,7 +12,7 @@ import {
 import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal';
 import { BottomSheet } from '../../components/ui/BottomSheet';
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
-import { useAuth } from '../../context/AuthContext';
+
 import { ProgramCard } from '../../components/ui/program';
 import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
 import { getAvailableTemplates, getRecommendedTemplate } from '../../utils/template-selector';
@@ -41,7 +41,7 @@ const Program = () => {
   const { mutate: mutateManual } = useCreateManualProgram();
   const { mutate: updateProfile } = useUpdateFitnessProfile();
 
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   // 🎯 États pour le sélecteur de template
   const [selectedFrequency, setSelectedFrequency] = useState<number>(fitnessProfile?.trainingFrequency || 3);

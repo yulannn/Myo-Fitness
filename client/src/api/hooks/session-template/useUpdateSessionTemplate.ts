@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import sessionTemplateService, { UpdateSessionTemplateDto } from '../../services/sessionTemplateService';
+import sessionTemplateService, { type UpdateSessionTemplateDto } from '../../services/sessionTemplateService';
 
 export default function useUpdateSessionTemplate() {
   const queryClient = useQueryClient();

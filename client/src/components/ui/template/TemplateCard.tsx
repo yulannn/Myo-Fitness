@@ -18,7 +18,7 @@ interface TemplateCardProps {
   availableExercises?: ExerciceMinimal[];
 }
 
-export const TemplateCard = ({ template, programId, availableExercises = [] }: TemplateCardProps) => {
+export const TemplateCard = ({ template, availableExercises = [] }: TemplateCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
