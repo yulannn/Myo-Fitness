@@ -1,18 +1,47 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DayPicker } from 'react-day-picker'
-import { format, isSameDay, startOfMonth, endOfMonth } from 'date-fns'
+import { format, isSameDay, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
 import useGetSessionsForCalendar from '../../api/hooks/session/useGetSessionsForCalendar'
 import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
-import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { usePremium } from '../../contexts/PremiumContext'
+import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon, LockClosedIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { getImageUrl, getExerciseImageUrl } from '../../utils/imageUtils'
 
 export default function Sessions() {
+    const navigate = useNavigate()
+    const { isPremium } = usePremium()
+
     // 📅 État pour le mois affiché dans le calendrier (par défaut : mois actuel)
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+    const [showPremiumModal, setShowPremiumModal] = useState(false)
+
+    // Vérifier si aller en arrière serait bloqué (au-delà du mois précédent)
+    const isBackRestricted = useMemo(() => {
+        if (isPremium) return false
+        const today = new Date()
+        const prevMonth = subMonths(today, 1)
+        // Bloqué si on est déjà sur le mois précédent (ne peut pas aller plus loin en arrière)
+        return isSameMonth(currentMonth, prevMonth)
+    }, [currentMonth, isPremium])
+
+    // Handler pour naviguer vers le mois précédent
+    const handlePrevMonth = () => {
+        if (isBackRestricted) {
+            setShowPremiumModal(true)
+        } else {
+            setCurrentMonth(subMonths(currentMonth, 1))
+        }
+    }
+
+    // Handler pour naviguer vers le mois suivant (toujours autorisé)
+    const handleNextMonth = () => {
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+    }
 
     // 🎯 OPTIMISATION : Calculer les dates du mois affiché
     const monthStart = useMemo(() =>
@@ -267,6 +296,19 @@ export default function Sessions() {
       color: inherit;
     }
 
+    /* PREMIUM RESTRICTION STYLES */
+    .restricted-calendar .rdp-table {
+        filter: blur(6px);
+        opacity: 0.15;
+        pointer-events: none;
+        user-select: none;
+        transition: all 0.3s ease;
+    }
+
+    .restricted-calendar .rdp-caption {
+        position: relative;
+        z-index: 30;
+    }
   `
 
     // Detect days that have BOTH types of sessions
@@ -326,19 +368,93 @@ export default function Sessions() {
                 </div>
 
                 {/* Calendrier */}
-                <div className="bg-[#18181b] rounded-xl shadow-lg p-4 sm:p-6 border border-white/5">
+                <div className="bg-[#18181b] rounded-xl shadow-lg p-4 sm:p-6 border border-white/5 relative overflow-hidden transition-all duration-300">
+                    {/* Custom navigation header */}
+                    <div className="flex items-center justify-between mb-4">
+                        <button
+                            onClick={handlePrevMonth}
+                            className={`p-2 rounded-lg transition-colors flex items-center gap-1 ${isBackRestricted ? 'text-[#94fbdd] hover:bg-[#94fbdd]/10' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                        >
+                            {isBackRestricted && <LockClosedIcon className="w-3.5 h-3.5" />}
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <span className="text-lg font-semibold text-white capitalize">
+                            {format(currentMonth, 'MMMM yyyy', { locale: fr })}
+                        </span>
+                        <button
+                            onClick={handleNextMonth}
+                            className="p-2 rounded-lg hover:bg-white/5 transition-colors text-gray-400 hover:text-white"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Calendar - always visible */}
                     <DayPicker
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
                         month={currentMonth}
-                        onMonthChange={setCurrentMonth}
+                        onMonthChange={(month) => {
+                            // Check if going backwards to a restricted month
+                            if (!isPremium && month < currentMonth) {
+                                const prevMonth = subMonths(new Date(), 1)
+                                if (month < startOfMonth(prevMonth)) {
+                                    setShowPremiumModal(true)
+                                    return
+                                }
+                            }
+                            setCurrentMonth(month)
+                        }}
                         locale={fr}
                         modifiers={modifiers}
                         modifiersClassNames={modifiersClassNames}
                         showOutsideDays={false}
+                        hideNavigation
                     />
                 </div>
+
+                {/* Premium Modal */}
+                {showPremiumModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-[#18181b] rounded-2xl p-6 max-w-sm w-full border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-[#94fbdd]/20 to-[#94fbdd]/5 border border-[#94fbdd]/20 mb-4">
+                                    <LockClosedIcon className="h-7 w-7 text-[#94fbdd]" />
+                                </div>
+
+                                <h3 className="text-lg font-bold text-white mb-2">Contenu Premium</h3>
+                                <p className="text-gray-400 text-sm mb-6">
+                                    L'historique au-delà du mois précédent est réservé aux membres Premium.
+                                </p>
+
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setShowPremiumModal(false)
+                                            navigate('/premium')
+                                        }}
+                                        className="w-full px-5 py-3 bg-[#94fbdd] text-[#121214] font-bold rounded-xl text-sm transition-all hover:bg-[#7fffd4] flex items-center justify-center gap-2"
+                                    >
+                                        <SparklesIcon className="h-4 w-4" />
+                                        Passer Premium
+                                    </button>
+
+                                    <button
+                                        onClick={() => setShowPremiumModal(false)}
+                                        className="w-full px-5 py-2.5 text-gray-400 font-medium text-sm transition-all hover:text-white"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Détails des sessions */}
                 {selectedDate ? (
