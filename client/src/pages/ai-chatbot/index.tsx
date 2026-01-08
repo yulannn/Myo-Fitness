@@ -239,7 +239,7 @@ const WelcomeScreen = ({
         </div>
 
         <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Salut champion ! 💪</h2>
+            <h2 className="text-2xl font-bold text-white">Salut champion ! </h2>
             <p className="text-gray-400 max-w-md">
                 Je suis ton coach IA personnel. Pose-moi n'importe quelle question sur l'entraînement, la nutrition ou la récupération !
             </p>
