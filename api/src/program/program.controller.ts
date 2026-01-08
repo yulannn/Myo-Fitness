@@ -29,6 +29,7 @@ import { AddSessionToProgramDto } from './dto/add-session-program.dto';
 import { UpdateProgramStatusDto } from './dto/update-program-status.dto';
 import { UpdateTrainingProgramDto } from './dto/update-program.dto';
 import { AddCardioToProgramDto } from './dto/cardio-program.dto';
+import { PremiumGuard } from '../subscription/guards/premium.guard';
 
 @ApiTags('program')
 @ApiBearerAuth()
@@ -87,12 +88,17 @@ export class ProgramController {
 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post()
-  @ApiOperation({ summary: 'Créer un nouveau programme d’entraînement' })
+  @UseGuards(PremiumGuard) // 🔒 Premium uniquement pour la génération IA
+  @ApiOperation({ summary: 'Créer un nouveau programme d\'entraînement (IA - Premium uniquement)' })
   @ApiBody({ type: CreateTrainingProgramDto })
   @ApiResponse({
     status: 201,
     description: 'Programme créé avec succès',
     type: TrainingProgramEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Cette fonctionnalité nécessite un abonnement premium',
   })
   create(@Body() createProgramDto: CreateTrainingProgramDto, @Request() req) {
     const userId = req.user.userId;

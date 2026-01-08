@@ -5,7 +5,9 @@ import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgr
 import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal';
 import useUpdateFitnessProfile from '../../api/hooks/fitness-profile/useUpdateFitnessProfile';
 import useGetInProgressSession from '../../api/hooks/session/useGetInProgressSession';
+import { useIsPremium } from '../../api/hooks/useSubscription';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Modal,
   ModalContent,
@@ -21,6 +23,7 @@ import { getAvailableTemplates, getRecommendedTemplate } from '../../utils/templ
 import type { ProgramTemplate } from '../../types/program.type';
 
 const Program = () => {
+  const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [automaticOpen, setAutomaticOpen] = useState(false);
@@ -60,6 +63,10 @@ const Program = () => {
   const { mutate, isPending } = useCreateProgram();
   const { mutate: mutateManual } = useCreateManualProgram();
   const { mutate: updateProfile } = useUpdateFitnessProfile();
+
+  // 🔒 Vérifier si l'utilisateur est premium
+  const { data: premiumStatus } = useIsPremium();
+  const isPremium = premiumStatus?.isPremium || false;
 
   // const { user } = useAuth();
 
@@ -359,21 +366,53 @@ const Program = () => {
             <div className="space-y-3">
               <button
                 onClick={() => {
+                  if (!isPremium) {
+                    navigate('/premium');
+                    return;
+                  }
                   setAutomaticOpen(true);
                   setChoiceOpen(false);
                 }}
                 disabled={isPending}
-                className="w-full p-4 rounded-xl bg-[#94fbdd]/10 hover:bg-[#94fbdd]/20 border border-[#94fbdd]/20 flex items-center gap-4 transition-all group"
+                className={`w-full p-4 rounded-xl border flex items-center gap-4 transition-all group relative ${!isPremium
+                  ? 'bg-[#94fbdd]/5 border-[#94fbdd]/20 cursor-pointer hover:bg-[#94fbdd]/10'
+                  : 'bg-[#94fbdd]/10 hover:bg-[#94fbdd]/20 border-[#94fbdd]/20'
+                  }`}
               >
-                <div className="p-2 bg-[#94fbdd]/20 rounded-lg group-hover:scale-110 transition-transform">
-                  <SparklesIcon className="h-5 w-5 text-[#94fbdd]" />
+                {!isPremium && (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 bg-gradient-to-r from-[#94fbdd] to-[#7de0c4] text-[#121214] text-[10px] font-black rounded-full shadow-lg shadow-[#94fbdd]/30 flex items-center gap-1">
+                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    PREMIUM
+                  </div>
+                )}
+                <div className={`p-2 rounded-lg transition-all ${!isPremium
+                  ? 'bg-[#94fbdd]/10'
+                  : 'bg-[#94fbdd]/20 group-hover:scale-110'
+                  }`}>
+                  <SparklesIcon className={`h-5 w-5 ${!isPremium ? 'text-[#94fbdd]/60' : 'text-[#94fbdd]'}`} />
                 </div>
-                <div className="text-left">
-                  <h4 className="font-semibold text-white text-sm">Automatique (IA)</h4>
-                  <p className="text-xs text-gray-400">Généré selon votre profil</p>
+                <div className="text-left flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className={`font-semibold text-sm ${!isPremium ? 'text-gray-400' : 'text-white'}`}>
+                      Automatique (IA)
+                    </h4>
+                  </div>
+                  <p className={`text-xs ${!isPremium ? 'text-gray-600' : 'text-gray-400'}`}>
+                    {!isPremium ? 'Nécessite Premium' : 'Généré selon votre profil'}
+                  </p>
                 </div>
+                {!isPremium && (
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                )}
               </button>
 
+              {/* Bouton Manuel - Toujours accessible */}
               <button
                 onClick={handleCreateManual}
                 className="w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-4 transition-all group"
