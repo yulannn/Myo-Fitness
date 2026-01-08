@@ -8,7 +8,7 @@ export function useAcceptFriendRequest() {
         mutationFn: (requestId: number) => FriendService.acceptFriendRequest(requestId),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['friends'] });
-            qc.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
+            qc.invalidateQueries({ queryKey: ['friendRequests'] });
             qc.invalidateQueries({ queryKey: ['conversations'] });
         }
     });

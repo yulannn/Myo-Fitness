@@ -4,7 +4,7 @@ import type { Friend } from '../../../types/friend.type';
 
 export function usePendingFriendRequests() {
     return useQuery<Friend[], unknown>({
-        queryKey: ['pendingFriendRequests'],
+        queryKey: ['friendRequests'],
         queryFn: () => FriendFetchDataService.getPendingFriendRequests(),
     });
 }

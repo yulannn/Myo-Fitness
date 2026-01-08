@@ -8,7 +8,7 @@ export function useDeclineFriendRequest() {
         mutationFn: (requestId: number) => FriendService.declineFriendRequest(requestId),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['friends'] });
-            qc.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
+            qc.invalidateQueries({ queryKey: ['friendRequests'] });
         }
     });
 }

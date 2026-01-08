@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     MagnifyingGlassIcon,
     UsersIcon,
@@ -27,7 +28,7 @@ export default function FriendsPage() {
     const navigate = useNavigate();
     // const queryClient = useQueryClient();
     // const [showSearchModal, setShowSearchModal] = useState(false); // Removed modal state
-    // const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
     // const [showSearchModal, setShowSearchModal] = useState(false); // Removed modal state
     const [searchQuery, setSearchQuery] = useState('');
     const [lastSearchedQuery, setLastSearchedQuery] = useState('');
@@ -76,6 +77,9 @@ export default function FriendsPage() {
                 type: 'PRIVATE',
                 participantIds: [friendId]
             });
+            // Invalider les conversations pour forcer le rechargement de la liste avec la nouvelle conversation
+            await queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
             navigate(SOCIAL_CHATS, { state: { conversationId: res.data.id } });
         } catch (e) {
             console.error("Erreur création chat", e);
