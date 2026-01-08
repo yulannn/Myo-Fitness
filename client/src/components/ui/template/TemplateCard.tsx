@@ -3,6 +3,7 @@ import { PlayIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon, CalendarIco
 import { DayPicker } from 'react-day-picker';
 import { fr } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useStartFromTemplate from '../../../api/hooks/session-template/useStartFromTemplate';
 import useScheduleFromTemplate from '../../../api/hooks/session-template/useScheduleFromTemplate';
@@ -12,6 +13,8 @@ import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } f
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../modal';
 import { formatDateToISO } from '../../../utils/dateUtils';
 import { getExerciseImageUrl } from '../../../utils/imageUtils';
+import { ExerciseDetailModal } from '../../exercises';
+import type { Exercice } from '../../../types/exercice.type';
 
 interface TemplateCardProps {
   template: any;
@@ -25,6 +28,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isConfirmStartModalOpen, setIsConfirmStartModalOpen] = useState(false);
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<Exercice | null>(null);
 
   const { mutate: startTemplate, isPending: isStarting } = useStartFromTemplate();
   const { mutate: scheduleTemplate, isPending: isScheduling } = useScheduleFromTemplate();
@@ -299,7 +303,8 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
               return (
                 <div
                   key={ex.id || idx}
-                  className="flex items-center gap-3 p-3 bg-[#121214] rounded-lg border border-white/5"
+                  onClick={() => setSelectedExercise(ex.exercise)}
+                  className="flex items-center gap-3 p-3 bg-[#121214] rounded-lg border border-white/5 cursor-pointer hover:bg-[#1a1a1c] transition-colors"
                 >
                   {/* Image */}
                   <div className="relative w-12 h-12 rounded-lg bg-[#252527] overflow-hidden flex-shrink-0 border border-white/5">
@@ -310,13 +315,23 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
-                          (e.target as HTMLImageElement).parentElement!.innerText = '🏋️‍♂️';
-                          (e.target as HTMLImageElement).parentElement!.className += ' flex items-center justify-center text-lg';
+                          const parent = (e.target as HTMLImageElement).parentElement!;
+                          parent.className += ' flex items-center justify-center text-lg';
+
+                          if (ex.exercise?.isDefault === false) {
+                            parent.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>`;
+                          } else {
+                            parent.innerText = '🏋️‍♂️';
+                          }
                         }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-lg">
-                        🏋️‍♂️
+                        {ex.exercise?.isDefault === false ? (
+                          <DocumentTextIcon className="w-6 h-6 text-gray-500" />
+                        ) : (
+                          "🏋️‍♂️"
+                        )}
                       </div>
                     )}
                   </div>
@@ -432,7 +447,6 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
         </ModalFooter>
       </Modal>
 
-      {/* Modal de confirmation pour supprimer */}
       <Modal isOpen={isConfirmDeleteModalOpen} onClose={() => setIsConfirmDeleteModalOpen(false)}>
         <ModalHeader>
           <ModalTitle className="text-lg">Supprimer la séance ?</ModalTitle>
@@ -465,6 +479,12 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
           </div>
         </ModalFooter>
       </Modal>
+
+      <ExerciseDetailModal
+        isOpen={!!selectedExercise}
+        onClose={() => setSelectedExercise(null)}
+        exercise={selectedExercise}
+      />
     </>
   );
 };

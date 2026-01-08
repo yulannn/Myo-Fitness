@@ -50,6 +50,20 @@ export class ProgramService {
                                         imageUrl: true,
                                         bodyWeight: true,
                                         type: true, // 🆕 Pour identifier cardio
+                                        difficulty: true,
+                                        description: true,
+                                        isDefault: true,
+                                        groupes: {
+                                            select: {
+                                                isPrimary: true,
+                                                groupe: {
+                                                    select: {
+                                                        id: true,
+                                                        name: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -143,6 +157,22 @@ export class ProgramService {
                                     select: {
                                         id: true,
                                         name: true,
+                                        difficulty: true,
+                                        description: true,
+                                        isDefault: true,
+                                        imageUrl: true,
+                                        bodyWeight: true,
+                                        groupes: {
+                                            select: {
+                                                isPrimary: true,
+                                                groupe: {
+                                                    select: {
+                                                        id: true,
+                                                        name: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             },

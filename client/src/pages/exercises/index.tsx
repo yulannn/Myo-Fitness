@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExercicesByUser } from '../../api/hooks/exercice/useGetExercicesByUser';
-import { MagnifyingGlassIcon, ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Modal } from '../../components/ui/modal';
+import { MagnifyingGlassIcon, ArrowLeftIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { ExerciseDetailModal } from '../../components/exercises';
 import type { Exercice } from '../../types/exercice.type';
 
 export default function ExercisesPage() {
@@ -91,8 +91,8 @@ export default function ExercisesPage() {
                         <button
                             onClick={() => setFilterBodyWeight(null)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterBodyWeight === null
-                                    ? 'bg-white text-black'
-                                    : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
+                                ? 'bg-white text-black'
+                                : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
                                 }`}
                         >
                             Tout
@@ -100,8 +100,8 @@ export default function ExercisesPage() {
                         <button
                             onClick={() => setFilterBodyWeight(true)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterBodyWeight === true
-                                    ? 'bg-[#94fbdd] text-black'
-                                    : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
+                                ? 'bg-[#94fbdd] text-black'
+                                : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
                                 }`}
                         >
                             Poids du corps
@@ -109,8 +109,8 @@ export default function ExercisesPage() {
                         <button
                             onClick={() => setFilterBodyWeight(false)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterBodyWeight === false
-                                    ? 'bg-blue-400 text-black'
-                                    : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
+                                ? 'bg-blue-400 text-black'
+                                : 'bg-[#18181b] text-gray-400 hover:text-white border border-white/5'
                                 }`}
                         >
                             Musculation
@@ -122,8 +122,8 @@ export default function ExercisesPage() {
                         <button
                             onClick={() => setSelectedMuscleGroup(null)}
                             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap border ${selectedMuscleGroup === null
-                                    ? 'bg-white border-white text-black'
-                                    : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
+                                ? 'bg-white border-white text-black'
+                                : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
                                 }`}
                         >
                             Tout
@@ -133,8 +133,8 @@ export default function ExercisesPage() {
                                 key={group}
                                 onClick={() => setSelectedMuscleGroup(group === selectedMuscleGroup ? null : group)}
                                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap border ${selectedMuscleGroup === group
-                                        ? 'bg-[#94fbdd] border-[#94fbdd] text-black'
-                                        : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
+                                    ? 'bg-[#94fbdd] border-[#94fbdd] text-black'
+                                    : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
                                     }`}
                             >
                                 {group}
@@ -170,13 +170,23 @@ export default function ExercisesPage() {
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).style.display = 'none';
-                                                (e.target as HTMLImageElement).parentElement!.innerText = '🏋️‍♂️';
-                                                (e.target as HTMLImageElement).parentElement!.className += ' flex items-center justify-center text-2xl';
+                                                const parent = (e.target as HTMLImageElement).parentElement!;
+                                                parent.className += ' flex items-center justify-center text-2xl';
+
+                                                if (exercise.isDefault === false) {
+                                                    parent.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>`;
+                                                } else {
+                                                    parent.innerText = '🏋️‍♂️';
+                                                }
                                             }}
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-2xl">
-                                            🏋️‍♂️
+                                            {exercise.isDefault === false ? (
+                                                <DocumentTextIcon className="w-8 h-8 text-gray-500" />
+                                            ) : (
+                                                "🏋️‍♂️"
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -209,103 +219,11 @@ export default function ExercisesPage() {
             </div>
 
             {/* Detail Modal */}
-            <Modal
+            <ExerciseDetailModal
                 isOpen={!!selectedExercise}
                 onClose={() => setSelectedExercise(null)}
-                showClose={false}
-                className="!p-0 !bg-transparent !border-none !shadow-none !max-w-none flex items-center justify-center pointer-events-none"
-            >
-                <div className="bg-[#18181b] w-full max-w-sm mx-auto rounded-3xl overflow-hidden shadow-2xl border border-white/10 pointer-events-auto max-h-[85vh] flex flex-col">
-                    {selectedExercise && (
-                        <>
-                            {/* Header Image */}
-                            <div className="relative h-48 w-full bg-[#252527] flex-shrink-0">
-                                <button
-                                    onClick={() => setSelectedExercise(null)}
-                                    className="absolute top-4 right-4 z-10 p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors"
-                                >
-                                    <XMarkIcon className="w-5 h-5" />
-                                </button>
-
-                                {getExerciseImageUrl(selectedExercise.imageUrl) ? (
-                                    <img
-                                        src={getExerciseImageUrl(selectedExercise.imageUrl)!}
-                                        alt={selectedExercise.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                            (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
-                                            (e.target as HTMLImageElement).parentElement!.innerHTML += '<span class="text-4xl">🏋️‍♂️</span>';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-4xl text-gray-600">
-                                        🏋️‍♂️
-                                    </div>
-                                )}
-
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#18181b] to-transparent opacity-80" />
-
-                                <div className="absolute bottom-0 left-0 p-6 w-full">
-                                    <h2 className="text-2xl font-bold text-white drop-shadow-md leading-tight">
-                                        {selectedExercise.name}
-                                    </h2>
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-6 space-y-6 overflow-y-auto">
-                                {/* Tags */}
-                                <div className="flex flex-wrap gap-2">
-                                    {selectedExercise.groupes?.map((g, i) => (
-                                        <span key={i} className={`px-3 py-1 rounded-full text-xs font-semibold ${g.isPrimary ? 'bg-[#94fbdd] text-[#121214]' : 'bg-white/5 text-gray-300'}`}>
-                                            {g.groupe.name}
-                                        </span>
-                                    ))}
-                                    {selectedExercise.bodyWeight && (
-                                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300">
-                                            Poids du corps
-                                        </span>
-                                    )}
-                                    {selectedExercise.isDefault && (
-                                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300">
-                                            Officiel
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Description */}
-                                {selectedExercise.description && (
-                                    <div className="space-y-2">
-                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Description</h3>
-                                        <p className="text-gray-300 text-sm leading-relaxed">
-                                            {selectedExercise.description}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Additional Info */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-[#252527] p-3 rounded-xl border border-white/5">
-                                        <div className="text-xs text-gray-500 mb-1">Difficulté</div>
-                                        <div className="flex gap-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <div key={i} className={`h-1.5 w-full rounded-full ${i < selectedExercise.difficulty ? 'bg-[#94fbdd]' : 'bg-white/10'}`} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="bg-[#252527] p-3 rounded-xl border border-white/5">
-                                        <div className="text-xs text-gray-500 mb-1">Type</div>
-                                        <div className="text-sm font-medium text-white">
-                                            {selectedExercise.bodyWeight ? 'Calisthénie' : 'Musculation'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </Modal>
+                exercise={selectedExercise}
+            />
         </div>
     );
 }
