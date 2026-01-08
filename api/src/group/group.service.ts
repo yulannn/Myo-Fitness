@@ -55,14 +55,23 @@ export class GroupService {
             throw new ConflictException('Group request already sent');
         }
 
-        return this.prisma.friendGroupRequest.create({
+        const request = await this.prisma.friendGroupRequest.create({
             data: {
                 senderId,
                 receiverId,
                 groupId,
                 status: 'PENDING',
             },
+            include: { // Include sender/group data for the notification payload
+                group: { select: { name: true } },
+                sender: { select: { name: true } }
+            }
         });
+
+        // Notify via WebSocket
+        this.chatGateway.notifyGroupRequestReceived(receiverId, request);
+
+        return request;
     }
 
     async acceptGroupRequest(requestId: string) {

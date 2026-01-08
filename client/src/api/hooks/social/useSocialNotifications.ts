@@ -1,21 +1,46 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import FriendService from '../../services/friendService';
 import GroupService from '../../services/groupService';
 import { useConversations } from '../chat/useConversations';
+import { useChatSocket } from '../../../context/ChatSocketContext';
 
 export function useSocialNotifications() {
+    const queryClient = useQueryClient();
+    const { socket } = useChatSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleFriendRequest = () => {
+            queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
+        };
+
+        const handleGroupRequest = () => {
+            queryClient.invalidateQueries({ queryKey: ['groupRequests'] });
+        };
+
+        socket.on('friend:request-received', handleFriendRequest);
+        socket.on('group:request-received', handleGroupRequest);
+
+        return () => {
+            socket.off('friend:request-received', handleFriendRequest);
+            socket.off('group:request-received', handleGroupRequest);
+        };
+    }, [socket, queryClient]);
+
     const { data: friendRequests = [] } = useQuery({
         queryKey: ['friendRequests'],
         queryFn: () => FriendService.getPendingFriendRequests(),
-        staleTime: 2 * 60 * 1000,
-        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
+        refetchOnWindowFocus: true,
     });
 
     const { data: groupRequests = [] } = useQuery({
         queryKey: ['groupRequests'],
         queryFn: () => GroupService.getPendingGroupRequests(),
-        staleTime: 2 * 60 * 1000,
-        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
+        refetchOnWindowFocus: true,
     });
 
     const { data: conversations = [] } = useConversations();

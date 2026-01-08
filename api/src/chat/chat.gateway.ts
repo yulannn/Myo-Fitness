@@ -359,4 +359,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             });
         }
     }
+    /**
+     * Notifier quand une demande de groupe est reçue
+     */
+    notifyGroupRequestReceived(receiverId: number, request: any) {
+        const socketIds = userSockets.get(receiverId);
+        if (socketIds) {
+            socketIds.forEach((socketId) => {
+                this.server.to(socketId).emit('group:request-received', request);
+            });
+        }
+    }
 }
