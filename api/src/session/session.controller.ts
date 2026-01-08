@@ -91,6 +91,46 @@ export class SessionController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('user/in-progress')
+  @ApiOperation({
+    summary: '🔄 Récupérer la session en cours (IN_PROGRESS)',
+    description: 'Retourne la session actuellement en cours d\'exécution, permettant à l\'utilisateur de la reprendre'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session en cours récupérée (ou null si aucune)',
+  })
+  getInProgressSession(@Request() req) {
+    const userId = req.user.userId;
+    return this.sessionService.getInProgressSession(userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('user/in-progress/:id')
+  @ApiOperation({
+    summary: '🚫 Annuler une session en cours',
+    description: 'Annule la session IN_PROGRESS et la remet en SCHEDULED. Les performances sont supprimées.'
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la session à annuler',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session annulée avec succès',
+  })
+  @ApiResponse({ status: 400, description: 'Session pas en cours' })
+  @ApiResponse({ status: 404, description: 'Session non trouvée' })
+  cancelInProgressSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.sessionService.cancelInProgressSession(id, userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('user/records')
   @ApiOperation({
     summary: '🏆 Récupérer les records personnels (top 3)',

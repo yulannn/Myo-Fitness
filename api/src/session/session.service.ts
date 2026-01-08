@@ -25,6 +25,128 @@ export class SessionService {
   ) { }
 
   /**
+   * 🔄 Récupère la session IN_PROGRESS de l'utilisateur (s'il y en a une)
+   * Utilisé pour permettre la reprise d'une session abandonnée
+   */
+  async getInProgressSession(userId: number) {
+    return this.prisma.trainingSession.findFirst({
+      where: {
+        trainingProgram: {
+          fitnessProfile: { userId },
+          status: 'ACTIVE',
+        },
+        status: 'IN_PROGRESS',
+      },
+      select: {
+        id: true,
+        sessionName: true,
+        date: true,
+        createdAt: true,
+        updatedAt: true,
+        trainingProgram: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        exercices: {
+          select: {
+            id: true,
+            exerciceId: true,
+            sets: true,
+            reps: true,
+            weight: true,
+            exercice: {
+              select: {
+                name: true,
+                imageUrl: true,
+                type: true,
+              },
+            },
+            performances: {
+              select: {
+                set_index: true,
+                reps_effectuees: true,
+                weight: true,
+                rpe: true,
+                success: true,
+              },
+            },
+          },
+        },
+        sessionTemplate: {
+          select: {
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            exercices: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * 🚫 Annule une session IN_PROGRESS et la remet en SCHEDULED
+   * Conserve le template mais supprime les performances et exercices de session
+   */
+  async cancelInProgressSession(sessionId: number, userId: number) {
+    const session = await this.prisma.trainingSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        trainingProgram: {
+          include: { fitnessProfile: true },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session introuvable');
+    }
+
+    this.programService.verifyPermissions(
+      session.trainingProgram.fitnessProfile.userId,
+      userId,
+      'cette session'
+    );
+
+    if (session.status !== 'IN_PROGRESS') {
+      throw new BadRequestException('Cette session n\'est pas en cours');
+    }
+
+    return this.prisma.$transaction(async (prisma) => {
+      // Supprimer les performances
+      await prisma.setPerformance.deleteMany({
+        where: {
+          exerciceSession: {
+            sessionId,
+          },
+        },
+      });
+
+      // Supprimer les exercices de la session
+      await prisma.exerciceSession.deleteMany({
+        where: { sessionId },
+      });
+
+      // Remettre la session en SCHEDULED (pas CANCELLED, pour pouvoir la relancer)
+      await prisma.trainingSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'SCHEDULED',
+          completed: false,
+          performedAt: null,
+          duration: null,
+        },
+      });
+
+      return { message: 'Session annulée avec succès. Elle a été remise en attente.' };
+    });
+  }
+
+  /**
    * 🎯 OPTIMISÉ: Récupère une session par ID avec seulement les données nécessaires
    */
   async getSessionById(id: number, userId: number) {

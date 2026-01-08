@@ -9,7 +9,11 @@ export function useDeleteSession() {
       await SessionService.deleteSession(sessionId);
     },
     onSuccess: () => {
+      // 🔄 Immédiatement mettre le cache in-progress à null pour éviter la modal
+      queryClient.setQueryData(['session', 'in-progress'], null);
+
       queryClient.invalidateQueries({ queryKey: ['program'] });
+      queryClient.invalidateQueries({ queryKey: ['session'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
 
       // 🚀 NOUVEAUX: Invalider les stats après suppression
@@ -21,3 +25,4 @@ export function useDeleteSession() {
 }
 
 export default useDeleteSession;
+

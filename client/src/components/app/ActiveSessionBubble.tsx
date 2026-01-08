@@ -38,7 +38,7 @@ export default function ActiveSessionBubble() {
     // - Pas de session active
     // - Utilisateur d\u00e9connect\u00e9 \u2705 NOUVELLE CONDITION
     // - D\u00e9j\u00e0 sur la page active-session
-    if (!activeSession || !startTime || !isAuthenticated || location.pathname === '/active-session') {
+    if (!activeSession || !startTime || !isAuthenticated || location.pathname === '/active-session' || location.pathname === '/programs') {
         return null;
     }
 

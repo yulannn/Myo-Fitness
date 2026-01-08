@@ -8,10 +8,14 @@ interface ModalProps {
     children: React.ReactNode;
     showClose?: boolean;
     className?: string;
+    preventClose?: boolean; // Empêche la fermeture via backdrop ou bouton X
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClose = true, className }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClose = true, className, preventClose = false }) => {
     if (!isOpen) return null;
+
+    const handleBackdropClick = preventClose ? undefined : onClose;
+    const shouldShowClose = showClose && !preventClose;
 
     return (
         <div
@@ -21,7 +25,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClo
         >
             <div
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                onClick={onClose}
+                onClick={handleBackdropClick}
             />
 
             <div
@@ -38,7 +42,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showClo
                 )}
             >
                 {/* Close Button */}
-                {showClose && (
+                {shouldShowClose && (
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-[#121214] rounded-xl transition-colors z-10"

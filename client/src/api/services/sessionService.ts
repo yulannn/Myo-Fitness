@@ -110,6 +110,22 @@ export const SessionFetchDataService = {
         const res = await api.patch(`/session/exercice-session/${exerciceSessionId}/sets`, { sets });
         return res.data;
     },
+
+    /**
+     * 🔄 Récupère la session en cours (IN_PROGRESS) s'il y en a une
+     */
+    async getInProgressSession(): Promise<any | null> {
+        const res = await api.get('/session/user/in-progress');
+        return res.data;
+    },
+
+    /**
+     * 🚫 Annule une session en cours et la remet en SCHEDULED
+     */
+    async cancelInProgressSession(sessionId: number): Promise<{ message: string }> {
+        const res = await api.delete<{ message: string }>(`/session/user/in-progress/${sessionId}`);
+        return res.data;
+    },
 };
 
 export default SessionFetchDataService;

@@ -4,6 +4,7 @@ import useCreateProgram from '../../api/hooks/program/useCreateProgram';
 import useCreateManualProgram from '../../api/hooks/program/useCreateManualProgram';
 import useExercicesMinimal from '../../api/hooks/exercice/useGetExercicesMinimal';
 import useUpdateFitnessProfile from '../../api/hooks/fitness-profile/useUpdateFitnessProfile';
+import useGetInProgressSession from '../../api/hooks/session/useGetInProgressSession';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Modal,
@@ -12,6 +13,7 @@ import {
 import { ManualProgramModal } from '../../components/ui/modal/ManualProgramModal';
 import { BottomSheet } from '../../components/ui/BottomSheet';
 import useFitnessProfilesByUser from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser';
+import { InProgressSessionModal } from '../../components/program/InProgressSessionModal';
 
 import { ProgramCard } from '../../components/ui/program';
 import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
@@ -23,6 +25,7 @@ const Program = () => {
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [automaticOpen, setAutomaticOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [inProgressModalOpen, setInProgressModalOpen] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -35,6 +38,23 @@ const Program = () => {
 
   // Récupère les programmes archivés (toujours chargés pour le compteur)
   const { data: archivedPrograms = [] } = useArchivedPrograms(true);
+
+  // 🔄 Détecter une session IN_PROGRESS
+  const { data: inProgressSession, isFetching: isFetchingInProgress } = useGetInProgressSession();
+
+  // Tracker si on vient de fermer la modal (pour éviter qu'elle se rouvre immédiatement)
+  const [modalDismissed, setModalDismissed] = useState(false);
+
+  // Ouvrir automatiquement la modal si une session IN_PROGRESS est détectée
+  useEffect(() => {
+    if (inProgressSession && !modalDismissed && !isFetchingInProgress) {
+      setInProgressModalOpen(true);
+    }
+    // Reset le dismiss quand il n'y a plus de session en cours
+    if (!inProgressSession) {
+      setModalDismissed(false);
+    }
+  }, [inProgressSession, modalDismissed, isFetchingInProgress]);
 
   const { data: exercices = [] } = useExercicesMinimal();
   const { mutate, isPending } = useCreateProgram();
@@ -538,6 +558,16 @@ const Program = () => {
           availableExercises={exercices}
         />
       )}
+
+      {/* Modal de reprise de session IN_PROGRESS */}
+      <InProgressSessionModal
+        isOpen={inProgressModalOpen}
+        onClose={() => {
+          setInProgressModalOpen(false);
+          setModalDismissed(true);
+        }}
+        session={inProgressSession}
+      />
     </div >
   );
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PlayIcon, StopIcon, CheckCircleIcon, XMarkIcon, SparklesIcon, ArrowPathIcon, MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/solid'
 import useCreatePerformance from '../../api/hooks/performance/useCreatePerformance'
 import useDeletePerformance from '../../api/hooks/performance/useDeletePerformance'
@@ -8,6 +8,7 @@ import useDeleteSession from '../../api/hooks/session/useDeleteSession'
 import useCreateAdaptedSession from '../../api/hooks/session-adaptation/useCreateAdaptedSession'
 import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCreateNewSimilarSession'
 import useUpdateExerciceSets from '../../api/hooks/session/useUpdateExerciceSets'
+import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { Modal } from '../../components/ui/modal'
 import { usePerformanceStore } from '../../store/usePerformanceStore'
 import SessionSummaryCard from '../../components/session/SessionSummaryCard'
@@ -15,6 +16,9 @@ import { getExerciseImageUrl } from '../../utils/imageUtils'
 
 export default function ActiveSession() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const sessionIdFromUrl = searchParams.get('sessionId')
+
     const [elapsedTime, setElapsedTime] = useState(0)
     const [finalDuration, setFinalDuration] = useState(0)
     const [showGenerationModal, setShowGenerationModal] = useState(false)
@@ -22,6 +26,7 @@ export default function ActiveSession() {
     const [showCancelModal, setShowCancelModal] = useState(false)
     const [showCompletionModal, setShowCompletionModal] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
+    const [isRestoringSession, setIsRestoringSession] = useState(false)
 
     // Zustand store unifié - Plus de localStorage manuel !
     const {
@@ -33,7 +38,54 @@ export default function ActiveSession() {
         markAsSaved,
         clearSession,
         getAllPerformances,
+        setActiveSession,
+        setSessionId,
+        setStartTime,
     } = usePerformanceStore()
+
+    // Si on a un sessionId dans l'URL mais pas de session active, on charge depuis l'API
+    // ⚠️ IMPORTANT : On ne recharge PAS si on est en train d'annuler (pour éviter de réhydrater le store juste avant de quitter)
+    const shouldLoadFromApi = sessionIdFromUrl && !activeSession && !isCancelling
+
+    const { data: sessionFromApi, isLoading: isLoadingSession } = useGetSessionById(
+        shouldLoadFromApi ? parseInt(sessionIdFromUrl) : 0
+    )
+
+    // Restaurer la session depuis l'API si nécessaire
+    useEffect(() => {
+        if (sessionFromApi && shouldLoadFromApi && !isRestoringSession) {
+            setIsRestoringSession(true)
+
+            // Restaurer les données de la session
+            setSessionId(sessionFromApi.id)
+            setActiveSession(sessionFromApi)
+            setStartTime(Date.now()) // Nouveau timer
+
+            // Restaurer les performances déjà validées depuis la BDD
+            if (sessionFromApi.exercices) {
+                sessionFromApi.exercices.forEach((exercice: any) => {
+                    if (exercice.performances) {
+                        exercice.performances.forEach((perf: any) => {
+                            // Recréer la performance dans le store
+                            updatePerformance(exercice.id, perf.set_index, {
+                                reps_effectuees: perf.reps_effectuees,
+                                weight: perf.weight,
+                                rpe: perf.rpe,
+                                success: perf.success,
+                                savedPerformanceId: perf.id_set || perf.id,
+                            })
+                            // Marquer comme validé si success
+                            if (perf.success && !performances[`${exercice.id}-${perf.set_index}`]?.success) {
+                                // Already handled in updatePerformance above
+                            }
+                        })
+                    }
+                })
+            }
+
+            setIsRestoringSession(false)
+        }
+    }, [sessionFromApi, shouldLoadFromApi, isRestoringSession])
 
 
     const { mutate: createPerformance } = useCreatePerformance()
@@ -291,6 +343,25 @@ export default function ActiveSession() {
                 toggleSuccess(exerciceSessionId, setIndex)
             }
         })
+    }
+
+    // Afficher un loader si on charge la session depuis l'API
+    if (isLoadingSession || isRestoringSession) {
+        return (
+            <div className="min-h-screen bg-[#121214] flex items-center justify-center p-6 text-white font-[Montserrat]">
+                <div className="max-w-md w-full text-center space-y-6">
+                    <div className="w-16 h-16 mx-auto bg-[#252527] rounded-full flex items-center justify-center border border-[#94fbdd]/20">
+                        <div className="w-8 h-8 border-3 border-[#94fbdd] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold text-white mb-2">Chargement de la séance...</h1>
+                        <p className="text-gray-400">
+                            Récupération de vos performances en cours.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     if (!activeSession) {
