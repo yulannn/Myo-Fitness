@@ -371,7 +371,7 @@ const ExerciseItem = ({
             </div>
           </div>
 
-          {exercise.getBodyWeight && (
+          {exercise.bodyWeight && (
             <span className="text-xs text-gray-500 block mt-0.5">Poids du corps</span>
           )}
 
