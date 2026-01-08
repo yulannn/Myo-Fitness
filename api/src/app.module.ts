@@ -37,6 +37,7 @@ import { BodyAtlasModule } from './body-atlas/body-atlas.module';
 import { MuscleGroupModule } from './muscle-group/muscle-group.module';
 import { SessionTemplateModule } from './session-template/session-template.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { AiChatbotModule } from './ai-chatbot/ai-chatbot.module';
 
 
 
@@ -86,6 +87,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
     MuscleGroupModule,
     SessionTemplateModule,
     LeaderboardModule,
+    AiChatbotModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [

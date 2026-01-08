@@ -57,6 +57,7 @@ model User {
   mirrorMatchesAs1 MirrorMatch[]     @relation("MirrorMatchUser1")
   mirrorMatchesAs2 MirrorMatch[]     @relation("MirrorMatchUser2")
   LeaderboardStats LeaderboardStats?
+  AIChatMessage    AIChatMessage[]
 }
 
 model Activity {
@@ -778,4 +779,23 @@ enum MatchStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+}
+
+// 🤖 AI CHATBOT: Historique des conversations avec l'IA
+model AIChatMessage {
+  id        String   @id @default(uuid())
+  userId    Int
+  role      AIRole // USER ou ASSISTANT
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+enum AIRole {
+  USER
+  ASSISTANT
 }

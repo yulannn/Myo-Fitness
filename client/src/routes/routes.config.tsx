@@ -52,6 +52,7 @@ import {
     MY_EXERCISES,
     EXERCISES,
     SENTRY_TEST,
+    AI_CHATBOT,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -65,6 +66,7 @@ export interface AppRouteConfig {
 import { MyExercisesPage } from "../pages/my-exercises";
 import EditExercisePage from "../pages/my-exercises/EditExercisePage";
 import ExercisesPage from "../pages/exercises";
+import AIChatbot from "../pages/ai-chatbot";
 
 export const routes: AppRouteConfig[] = [
     {
@@ -172,6 +174,11 @@ export const routes: AppRouteConfig[] = [
     {
         path: LEADERBOARD,
         element: <LeaderboardPage />,
+        protected: true
+    },
+    {
+        path: AI_CHATBOT,
+        element: <AIChatbot />,
         protected: true
     },
     {

@@ -33,6 +33,11 @@ export default function BottomNav() {
   const location = useLocation()
   const { totalNotifications } = useSocialNotifications()
 
+  // Hide bottom nav on chatbot page for fullscreen experience
+  if (location.pathname === '/ai-chatbot') {
+    return null
+  }
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#252527]/95 backdrop-blur-xl shadow-2xl border-t border-[#94fbdd]/10 rounded-t-3xl">
       <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">

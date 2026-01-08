@@ -6,6 +6,8 @@ import useWeightHistory from '../../api/hooks/fitness-profile/useWeightHistory'
 import { useFitnessProfilesByUser } from '../../api/hooks/fitness-profile/useGetFitnessProfilesByUser'
 import {
   ArrowRightIcon,
+  SparklesIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
@@ -104,6 +106,28 @@ export default function Home() {
             </div>
           </Link>
         </div>
+
+        {/* Myo - Assistant IA */}
+        <Link
+          to="/ai-chatbot"
+          className="group block bg-[#18181b] border border-white/5 rounded-2xl p-4 hover:border-[#94fbdd]/40 transition-all active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#94fbdd] to-[#7de0c4] flex items-center justify-center flex-shrink-0">
+              <SparklesIcon className="w-5 h-5 text-[#121214]" />
+            </div>
+
+            {/* Text */}
+            <div className="flex-1">
+              <h3 className="text-white font-semibold text-sm">Myo - Assistant IA</h3>
+              <p className="text-gray-500 text-xs">Pose tes questions sur le fitness</p>
+            </div>
+
+            {/* Arrow */}
+            <ChevronRightIcon className="w-5 h-5 text-gray-600 group-hover:text-[#94fbdd] group-hover:translate-x-1 transition-all flex-shrink-0" />
+          </div>
+        </Link>
 
         {/* Progress Dashboard Section */}
         <div className="space-y-6">

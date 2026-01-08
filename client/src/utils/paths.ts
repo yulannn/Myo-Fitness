@@ -26,3 +26,4 @@ export const LEADERBOARD = "/leaderboard";
 export const MY_EXERCISES = "/my-exercises";
 export const EXERCISES = "/exercises";
 export const SENTRY_TEST = "/sentry-test";
+export const AI_CHATBOT = "/ai-chatbot";
