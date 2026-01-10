@@ -358,11 +358,12 @@ export default function Sessions() {
         <section className="min-h-screen bg-[#121214] pb-24">
             <style>{customStyles}</style>
 
-            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Mes Séances</h1>
-                    <p className="text-sm text-gray-400">
+            <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+                {/* Header avec design amélioré */}
+                <div className="space-y-2">
+                    <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Mes Séances</h1>
+                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                        <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
                         {sessions?.length || 0} séance{(sessions?.length || 0) > 1 ? 's' : ''} au total
                     </p>
                 </div>
