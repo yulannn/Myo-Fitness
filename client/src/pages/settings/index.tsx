@@ -97,9 +97,11 @@ export default function Settings() {
 
     return (
         <div className="min-h-screen bg-[#121214] pb-24">
-            <div className="max-w-xl mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
                 {/* Header Title */}
-                <h1 className="text-2xl font-bold text-white mb-6">Paramètres</h1>
+                <div className="space-y-2">
+                    <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Paramètres</h1>
+                </div>
 
                 {/* Compact Profile Card */}
                 <div className="bg-gradient-to-r from-[#252527] to-[#1e1e20] p-4 rounded-2xl border border-purple-500/10 mb-8 flex items-center gap-4 relative overflow-hidden group hover:border-purple-500/30 transition-all cursor-pointer" onClick={handleMyProfile}>

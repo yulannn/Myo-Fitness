@@ -16,17 +16,24 @@ export default function HomeHeader() {
                 <div className="flex items-start justify-between gap-4">
                     {/* Left: Welcome Message */}
                     <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                                {user?.name?.split(' ')[0] || 'Champion'}
-                            </h1>
-                            <div className="px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
-                                <span className="text-xs font-medium text-gray-400">Niveau {xpData?.level || 1}</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                    {user?.name?.split(' ')[0] || 'Champion'}
+                                </h1>
+                                {/* Niveau badge aligné avec le nom */}
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-gray-600" />
+                                    <div className="px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
+                                        <span className="text-xs font-medium text-gray-400">Niveau {xpData?.level || 1}</span>
+                                    </div>
+                                </div>
                             </div>
+                            <p className="text-sm text-gray-400 flex items-center gap-2">
+                                <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
+                                Prêt pour ta séance du jour ?
+                            </p>
                         </div>
-                        <p className="text-gray-400 mt-1">
-                            Prêt pour ta séance du jour ?
-                        </p>
                     </div>
 
                     {/* Right: Body Atlas Icon */}

@@ -37,13 +37,13 @@ export default function SocialFeed() {
     const notificationsCount = friendRequests.length + (groupRequests?.length || 0);
 
     return (
-        <div className="min-h-screen bg-[#121214] pb-20">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="min-h-screen bg-[#121214] pb-24">
+            <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
                 {/* Header Actions */}
-                <div className="flex items-center justify-between mb-6 sticky top-0 bg-[#121214]/95 backdrop-blur-xl z-20 py-4 -mx-4 px-4 border-b border-white/5 shadow-sm">
-                    <div>
-                        <h1 className="text-3xl font-extrabold text-white tracking-tight">Social</h1>
+                <div className="flex items-center justify-between mb-6 sticky top-0 bg-[#121214]/95 backdrop-blur-xl z-20 py-2 -mx-4 px-4 border-b border-white/5 shadow-sm">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Social</h1>
                     </div>
 
 
