@@ -55,6 +55,7 @@ export default function BottomNav() {
               key={to}
               to={to}
               end={end}
+              aria-label={label}
               className="relative flex flex-col items-center gap-1 px-3 py-2 min-w-[64px] group"
             >
               {/* Icon Container */}

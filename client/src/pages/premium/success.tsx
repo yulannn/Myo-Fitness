@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usePremium } from '../../contexts/PremiumContext';
+import { usePremium } from '../../context/PremiumContext';
 import { stripeService } from '../../api/services/stripeService';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { SparklesIcon, ClockIcon } from '@heroicons/react/24/outline';

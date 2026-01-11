@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePremium } from '../../contexts/PremiumContext';
+import { usePremium } from '../../context/PremiumContext';
 import { useNavigate } from 'react-router-dom';
 import { useCreateCheckoutSession, useCancelSubscription } from '../../api/hooks/useStripe';
 import ConfirmModal from '../../components/ui/modal/ConfirmModal';

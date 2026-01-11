@@ -1,7 +1,7 @@
 import { PlayIcon, CalendarIcon, TrashIcon, QuestionMarkCircleIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePerformanceStore } from '../../store/usePerformanceStore';
+import { usePerformanceStore } from '../../stores/usePerformanceStore';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../ui/modal';
 import useUpdateSessionDate from '../../api/hooks/session/useUpdateSessionDate';
 import useDeleteSessionFromProgram from '../../api/hooks/program/useDeleteSessionFromProgram';

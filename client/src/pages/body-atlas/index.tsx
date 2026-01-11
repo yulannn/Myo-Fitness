@@ -1,5 +1,5 @@
 import { useBodyAtlas } from '../../api/hooks/body-atlas/useBodyAtlas';
-import { useBodyAtlasStore } from '../../store/useBodyAtlasStore';
+import { useBodyAtlasStore } from '../../stores/useBodyAtlasStore';
 import { MuscleHeat, MuscleCategory } from '../../types/body-atlas.type';
 import { Flame, Snowflake, Zap, TrendingUp, Trophy, Target, Activity, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

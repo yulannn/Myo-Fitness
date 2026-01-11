@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { usePremium } from '../../contexts/PremiumContext';
+import { usePremium } from '../../context/PremiumContext';
 
 interface PremiumGuardProps {
     children: React.ReactNode;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePremium } from '../../contexts/PremiumContext';
+import { usePremium } from '../../context/PremiumContext';
 import './PremiumBadge.css';
 
 interface PremiumBadgeProps {

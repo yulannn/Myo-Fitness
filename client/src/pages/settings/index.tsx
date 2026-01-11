@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { usePremium } from '../../contexts/PremiumContext'; // Ensure this path is correct based on your project structure
+import { usePremium } from '../../context/PremiumContext';
 import { getImageUrl } from '../../utils/imageUtils'; // Ensure utils are imported
 import {
     UserCircleIcon,

@@ -10,7 +10,7 @@ import { StartSessionModal } from "../modal/StartSessionModal"
 import { DayPicker } from 'react-day-picker'
 import { fr } from 'date-fns/locale'
 import 'react-day-picker/dist/style.css'
-import { usePerformanceStore } from "../../../store/usePerformanceStore"
+import { usePerformanceStore } from "../../../stores/usePerformanceStore"
 
 interface SessionProps {
     session: SessionType

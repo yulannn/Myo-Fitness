@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import BodyAtlasService from '../../services/bodyAtlasService';
-import { useBodyAtlasStore } from '../../../store/useBodyAtlasStore';
+import { useBodyAtlasStore } from '../../../stores/useBodyAtlasStore';
 
 /**
  * 🎯 Hook pour récupérer le Body Atlas de l'utilisateur

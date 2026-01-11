@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import SessionService from '../../services/sessionService';
-import { usePerformanceStore } from '../../../store/usePerformanceStore';
+import { usePerformanceStore } from '../../../stores/usePerformanceStore';
 
 export function useUpdateExerciceSets() {
     const queryClient = useQueryClient();

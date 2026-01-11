@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ExclamationTriangleIcon, PlayIcon, XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Modal, ModalContent } from '../ui/modal';
 import useDeleteSession from '../../api/hooks/session/useDeleteSession';
-import { usePerformanceStore } from '../../store/usePerformanceStore';
+import { usePerformanceStore } from '../../stores/usePerformanceStore';
 
 interface InProgressSessionModalProps {
     isOpen: boolean;

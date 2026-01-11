@@ -5,7 +5,7 @@ import { AuthFetchDataService } from '../api/services/authService';
 import { tokenService } from '../api/services/tokenService';
 import { logAnalyticsEvent, AnalyticsEvents, setAnalyticsUserId } from '../utils/analytics';
 import { setLoggingOut } from '../api/apiClient';
-import { usePerformanceStore } from '../store/usePerformanceStore';
+import { usePerformanceStore } from '../stores/usePerformanceStore';
 
 interface MeResponse {
     user: AuthUser;

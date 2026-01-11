@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import SessionService from "../../services/sessionService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBadgeToastStore } from "../../../stores/useBadgeToastStore";
-import { usePerformanceStore } from "../../../store/usePerformanceStore";
+import { usePerformanceStore } from "../../../stores/usePerformanceStore";
 
 
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
-import { usePerformanceStore } from '../../store/usePerformanceStore';
+import { usePerformanceStore } from '../../stores/usePerformanceStore';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ActiveSessionBubble() {

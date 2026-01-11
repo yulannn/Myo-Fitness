@@ -7,7 +7,7 @@ import 'react-day-picker/dist/style.css'
 import useGetSessionsForCalendar from '../../api/hooks/session/useGetSessionsForCalendar'
 import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions'
-import { usePremium } from '../../contexts/PremiumContext'
+import { usePremium } from '../../context/PremiumContext'
 import { CalendarDaysIcon, CheckCircleIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon, LockClosedIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { getImageUrl, getExerciseImageUrl } from '../../utils/imageUtils'
 

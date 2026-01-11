@@ -6,7 +6,7 @@ import App from './App.tsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext.tsx'
 import { ChatSocketProvider } from './context/ChatSocketContext.tsx'
-import { PremiumProvider } from './contexts/PremiumContext.tsx'
+import { PremiumProvider } from './context/PremiumContext.tsx'
 import './utils/forceLogout'
 import './config/firebase' // Initialize Firebase Analytics
 import { initializeSentry } from './config/sentry.config'

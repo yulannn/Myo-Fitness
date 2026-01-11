@@ -21,6 +21,7 @@ import { ProgramCard } from '../../components/ui/program';
 import { PlusIcon, SparklesIcon, ClipboardDocumentListIcon, ExclamationTriangleIcon, ArchiveBoxIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
 import { getAvailableTemplates, getRecommendedTemplate } from '../../utils/template-selector';
 import type { ProgramTemplate } from '../../types/program.type';
+import ProgramCardSkeleton from '../../components/ui/skeleton/ProgramCardSkeleton';
 
 const Program = () => {
   const navigate = useNavigate();
@@ -210,11 +211,15 @@ const Program = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#121214]">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#94fbdd]/20 border-t-[#94fbdd]"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-8 w-8 rounded-full bg-[#94fbdd]/20 animate-pulse"></div>
+      <div className="min-h-screen bg-[#121214] pb-24">
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+          <div className="space-y-2">
+            <div className="h-10 bg-white/10 rounded-lg w-64 animate-pulse" />
+            <div className="h-4 bg-white/5 rounded w-48 animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <ProgramCardSkeleton />
+            <ProgramCardSkeleton />
           </div>
         </div>
       </div>
@@ -236,6 +241,7 @@ const Program = () => {
           {(activePrograms.length > 0 || archivedPrograms.length > 0) && (
             <button
               onClick={openAddFlow}
+              aria-label="Créer un nouveau programme"
               className="group flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#94fbdd] to-[#7de0c4] text-[#121214] font-bold rounded-2xl shadow-xl shadow-[#94fbdd]/30 hover:shadow-2xl hover:shadow-[#94fbdd]/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
             >
               <PlusIcon className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />

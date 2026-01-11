@@ -10,7 +10,7 @@ import useCreateNewSimilarSession from '../../api/hooks/session-adaptation/useCr
 import useUpdateExerciceSets from '../../api/hooks/session/useUpdateExerciceSets'
 import useGetSessionById from '../../api/hooks/session/useGetSessionById'
 import { Modal } from '../../components/ui/modal'
-import { usePerformanceStore } from '../../store/usePerformanceStore'
+import { usePerformanceStore } from '../../stores/usePerformanceStore'
 import SessionSummaryCard from '../../components/session/SessionSummaryCard'
 import { getExerciseImageUrl } from '../../utils/imageUtils'
 

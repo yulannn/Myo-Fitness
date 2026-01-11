@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import SessionTemplateService from '../../services/sessionTemplateService';
-import { usePerformanceStore } from '../../../store/usePerformanceStore';
+import { usePerformanceStore } from '../../../stores/usePerformanceStore';
 import SessionLoadingOverlay from '../../../components/ui/SessionLoadingOverlay';
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';

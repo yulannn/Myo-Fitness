@@ -119,6 +119,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
               <button
                 onClick={handleEditClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
+                aria-label={`Modifier le programme ${program.name}`}
                 className="p-2.5 rounded-full text-gray-500 hover:text-white hover:bg-white/10 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
                 title="Modifier"
               >
@@ -128,6 +129,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
               <button
                 onClick={handleStatusClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
+                aria-label={isActive ? `Archiver le programme ${program.name}` : `Désarchiver le programme ${program.name}`}
                 className="p-2.5 rounded-full text-gray-500 hover:text-white hover:bg-white/10 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
                 title={isActive ? "Archiver" : "Désarchiver"}
               >
@@ -143,6 +145,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
               <button
                 onClick={handleDeleteClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
+                aria-label={`Supprimer le programme ${program.name}`}
                 className="p-2.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-500/20 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
                 title="Supprimer"
               >
