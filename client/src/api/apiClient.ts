@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
-import { tokenService } from "./services/tokenService";
+import { secureTokenService } from "./services/secureTokenService";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -26,20 +26,18 @@ const refreshToken = async (): Promise<string> => {
 
         refreshPromise = api
             .post("/auth/refresh")
-            .then((res) => {
+            .then(async (res) => {
                 const newToken = res.data.accessToken;
-                tokenService.setAccessToken(newToken);
+                await secureTokenService.setAccessToken(newToken);
                 return newToken;
             })
-            .catch((error: AxiosError) => {
+            .catch(async (error: AxiosError) => {
                 console.error('❌ Échec du refresh token:', error.response?.status, error.response?.data);
 
                 // Nettoyer complètement la session
-                tokenService.clear();
+                await secureTokenService.clear();
 
                 if (typeof window !== 'undefined') {
-                    window.localStorage.removeItem('myo.auth.accessToken');
-
                     // Ne rediriger que si on n'est pas déjà sur une page d'authentification
                     // Pour éviter les boucles de redirection infinies
                     const isOnAuthPage = window.location.pathname.startsWith('/auth');
@@ -77,8 +75,8 @@ const processQueue = (error: any, token: string | null) => {
 };
 
 // Interceptor → Ajoute automatiquement le token
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    const token = tokenService.getAccessToken();
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+    const token = await secureTokenService.getAccessToken();
     if (token && token.trim()) {
         config.headers = config.headers || {};
         (config.headers as any).Authorization = `Bearer ${token}`;

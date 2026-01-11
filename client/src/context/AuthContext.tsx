@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthSuccessResponse, AuthUser } from '../types/auth.type';
 import { AuthFetchDataService } from '../api/services/authService';
-import { tokenService } from '../api/services/tokenService';
+import { secureTokenService } from '../api/services/secureTokenService';
 import { logAnalyticsEvent, AnalyticsEvents, setAnalyticsUserId } from '../utils/analytics';
 import { setLoggingOut } from '../api/apiClient';
 import { usePerformanceStore } from '../stores/usePerformanceStore';
@@ -21,7 +21,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const ACCESS_TOKEN_KEY = 'myo.auth.accessToken';
+
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -30,17 +30,26 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const queryClient = useQueryClient();
     const [user, setUser] = useState<AuthUser | null>(null);
-    const [accessToken, setAccessToken] = useState<string | null>(() =>
-        typeof window === 'undefined' ? null : window.localStorage.getItem(ACCESS_TOKEN_KEY)
-    );
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [initialised, setInitialised] = useState(false);
 
-    const clearSession = useCallback(() => {
+    // Charger le token au démarrage de manière asynchrone
+    useEffect(() => {
+        const loadToken = async () => {
+            const token = await secureTokenService.getAccessToken();
+            if (token) {
+                setAccessToken(token);
+            } else {
+                setInitialised(true);
+            }
+        };
+        loadToken();
+    }, []);
+
+    const clearSession = useCallback(async () => {
         setUser(null);
         setAccessToken(null);
-        if (typeof window !== 'undefined') {
-            window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-        }
+        await secureTokenService.clear();
         queryClient.removeQueries({ queryKey: ['auth'] });
     }, [queryClient]);
 
@@ -81,12 +90,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, [accessToken]);
 
     const applyAuthResult = useCallback(
-        (payload: AuthSuccessResponse) => {
+        async (payload: AuthSuccessResponse) => {
             setUser(payload.user);
             setAccessToken(payload.accessToken);
-            if (typeof window !== 'undefined') {
-                window.localStorage.setItem(ACCESS_TOKEN_KEY, payload.accessToken);
-            }
+            await secureTokenService.setAccessToken(payload.accessToken);
             queryClient.setQueryData(['auth', 'me'], { user: payload.user });
 
             // Track login event in Analytics
@@ -116,8 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const currentToken = accessToken;
 
         // Nettoyer immédiatement la session locale pour éviter que des requêtes ne se déclenchent
-        clearSession();
-        tokenService.clear();
+        await clearSession();
 
         // 🧹 Nettoyer le store de performance (sessions actives, performances, etc.)
         usePerformanceStore.getState().clearSession();
