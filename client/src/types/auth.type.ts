@@ -9,7 +9,7 @@ export interface AuthUser {
 
 export interface AuthSuccessResponse {
     accessToken: string;
-    refreshToken?: string;
+    refreshToken: string; // ✅ Obligatoire en client-side
     user: AuthUser;
 }
 

@@ -29,15 +29,14 @@ export class AuthController {
     @ApiOperation({ summary: 'Se connecter avec e-mail et mot de passe' })
     @ApiBody({ type: SignInDto, description: 'Informations de connexion' })
     @ApiResponse({ status: 200, description: 'Connexion réussie', type: AuthResultDto })
-    async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async login(@Request() req) {
         const result = await this.authService.signIn(req.user);
-        res.cookie('refreshToken', result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-        });
-        return { accessToken: result.accessToken, user: result.user };
+        // ✅ Client-side: Retourne refreshToken dans response body
+        return {
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            user: result.user
+        };
     }
 
     @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -66,9 +65,9 @@ export class AuthController {
     @ApiOperation({ summary: 'Se déconnecter et supprimer le refresh token' })
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Déconnexion réussie', schema: { example: { message: 'Logged out successfully' } } })
-    async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async logout(@Request() req) {
         await this.authService.logout(req.user.userId);
-        res.clearCookie('refreshToken');
+        // ✅ Client-side: Pas de cookie à nettoyer
         return { message: 'Logged out successfully' };
     }
 
@@ -80,12 +79,14 @@ export class AuthController {
         status: 200,
         description: 'Nouveau token généré',
         schema: {
-            example: { accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+            example: {
+                accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+            },
         },
     })
-    async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
-        const refreshToken = req.cookies['refreshToken'];
-
+    async refresh(@Body('refreshToken') refreshToken: string) {
+        // ✅ Client-side: Reçoit refreshToken dans request body
         if (!refreshToken) {
             throw new UnauthorizedException('No refresh token provided');
         }
@@ -93,14 +94,11 @@ export class AuthController {
         const { accessToken, refreshToken: newRefreshToken } =
             await this.authService.refreshToken(refreshToken);
 
-        res.cookie('refreshToken', newRefreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-
-        return { accessToken };
+        // ✅ Client-side: Retourne les deux tokens
+        return {
+            accessToken,
+            refreshToken: newRefreshToken
+        };
     }
 
     @Throttle({ default: { limit: 3, ttl: 60000 } })

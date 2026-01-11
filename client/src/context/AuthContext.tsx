@@ -93,7 +93,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         async (payload: AuthSuccessResponse) => {
             setUser(payload.user);
             setAccessToken(payload.accessToken);
+            // ✅ Sauvegarder les DEUX tokens
             await secureTokenService.setAccessToken(payload.accessToken);
+            await secureTokenService.setRefreshToken(payload.refreshToken);
             queryClient.setQueryData(['auth', 'me'], { user: payload.user });
 
             // Track login event in Analytics

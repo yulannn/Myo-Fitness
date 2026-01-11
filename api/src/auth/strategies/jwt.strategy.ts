@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtPayload } from '../types/jwt-paylod';
+import { UsersService } from 'src/users/users.service';
+
+interface JwtPayloadWithVersion {
+  sub: number;
+  email: string;
+  name: string;
+  profilePictureUrl: string | null;
+  tokenVersion: number;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private readonly usersService: UsersService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -13,7 +21,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: JwtPayloadWithVersion) {
+    // Vérifier que le tokenVersion correspond à celui en BDD
+    const user = await this.usersService.findUserById(payload.sub);
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
+
+    // Si le tokenVersion a changé, le token a été révoqué
+    if (payload.tokenVersion !== user.tokenVersion) {
+      throw new UnauthorizedException('Session révoquée - veuillez vous reconnecter');
+    }
+
     return {
       userId: payload.sub,
       email: payload.email,

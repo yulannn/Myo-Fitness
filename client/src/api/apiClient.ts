@@ -24,39 +24,53 @@ const refreshToken = async (): Promise<string> => {
     if (!refreshPromise) {
         isRefreshing = true;
 
-        refreshPromise = api
-            .post("/auth/refresh")
-            .then(async (res) => {
-                const newToken = res.data.accessToken;
-                await secureTokenService.setAccessToken(newToken);
-                return newToken;
-            })
-            .catch(async (error: AxiosError) => {
-                console.error('❌ Échec du refresh token:', error.response?.status, error.response?.data);
+        refreshPromise = (async () => {
+            // ✅ Récupérer le refresh token stocké
+            const storedRefreshToken = await secureTokenService.getRefreshToken();
 
-                // Nettoyer complètement la session
-                await secureTokenService.clear();
+            if (!storedRefreshToken) {
+                throw new Error('No refresh token available');
+            }
 
-                if (typeof window !== 'undefined') {
-                    // Ne rediriger que si on n'est pas déjà sur une page d'authentification
-                    // Pour éviter les boucles de redirection infinies
-                    const isOnAuthPage = window.location.pathname.startsWith('/auth');
+            return api
+                .post("/auth/refresh", { refreshToken: storedRefreshToken }) // ✅ Envoi dans body
+                .then(async (res) => {
+                    const newAccessToken = res.data.accessToken;
+                    const newRefreshToken = res.data.refreshToken;
 
-                    if (!isOnAuthPage) {
-                        setTimeout(() => {
-                            if (typeof window !== 'undefined') {
-                                window.location.href = '/auth/login';
-                            }
-                        }, 500);
+                    // ✅ Sauvegarder les DEUX nouveaux tokens
+                    await secureTokenService.setAccessToken(newAccessToken);
+                    await secureTokenService.setRefreshToken(newRefreshToken);
+
+                    return newAccessToken;
+                })
+                .catch(async (error: AxiosError) => {
+                    console.error('❌ Échec du refresh token:', error.response?.status, error.response?.data);
+
+                    // Nettoyer complètement la session
+                    await secureTokenService.clear();
+
+                    if (typeof window !== 'undefined') {
+                        // Ne rediriger que si on n'est pas déjà sur une page d'authentification
+                        // Pour éviter les boucles de redirection infinies
+                        const isOnAuthPage = window.location.pathname.startsWith('/auth');
+
+                        if (!isOnAuthPage) {
+                            setTimeout(() => {
+                                if (typeof window !== 'undefined') {
+                                    window.location.href = '/auth/login';
+                                }
+                            }, 500);
+                        }
                     }
-                }
 
-                throw error;
-            })
-            .finally(() => {
-                isRefreshing = false;
-                refreshPromise = null;
-            });
+                    throw error;
+                })
+                .finally(() => {
+                    isRefreshing = false;
+                    refreshPromise = null;
+                });
+        })();
     }
 
     return refreshPromise;

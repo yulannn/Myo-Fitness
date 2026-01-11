@@ -2,6 +2,7 @@ import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 
 const ACCESS_TOKEN_KEY = 'myo.auth.accessToken';
+const REFRESH_TOKEN_KEY = 'myo.auth.refreshToken'; // ✅ Nouveau
 
 // Détection de la plateforme pour utiliser le bon storage
 const isNative = Capacitor.isNativePlatform();
@@ -44,29 +45,42 @@ export const secureTokenService = {
     },
 
     /**
-     * Supprime l'access token
+     * Récupère le refresh token de manière sécurisée
      */
-    async clear(): Promise<void> {
+    async getRefreshToken(): Promise<string | null> {
         if (isNative) {
-            // Mobile: Suppression sécurisée
-            await Preferences.remove({ key: ACCESS_TOKEN_KEY });
+            const { value } = await Preferences.get({ key: REFRESH_TOKEN_KEY });
+            return value;
         } else {
-            // Web: Suppression localStorage
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            return localStorage.getItem(REFRESH_TOKEN_KEY);
         }
     },
 
     /**
-     * Migre les tokens de localStorage vers Preferences (à exécuter une fois)
+     * Sauvegarde le refresh token de manière sécurisée
      */
-    async migrateFromLocalStorage(): Promise<void> {
+    async setRefreshToken(token: string): Promise<void> {
         if (isNative) {
-            const oldToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-            if (oldToken) {
-                await this.setAccessToken(oldToken);
-                localStorage.removeItem(ACCESS_TOKEN_KEY);
-                console.log('✅ Token migré vers stockage sécurisé');
-            }
+            await Preferences.set({
+                key: REFRESH_TOKEN_KEY,
+                value: token,
+            });
+        } else {
+            localStorage.setItem(REFRESH_TOKEN_KEY, token);
+        }
+    },
+
+    /**
+     * Supprime tous les tokens (access + refresh)
+     */
+    async clear(): Promise<void> {
+        // Nettoyer les deux tokens
+        if (isNative) {
+            await Preferences.remove({ key: ACCESS_TOKEN_KEY });
+            await Preferences.remove({ key: REFRESH_TOKEN_KEY });
+        } else {
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_KEY);
         }
     },
 };
