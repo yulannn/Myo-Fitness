@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTrainingProgramDto } from './dto/create-program.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { IaService } from 'src/ia/ia.service';
@@ -834,6 +834,82 @@ export class ProgramService {
                 });
             }
         }
+    }
+
+
+    async cloneProgram(programId: number, targetUserId: number) {
+        const sourceProgram = await this.prisma.trainingProgram.findUnique({
+            where: { id: programId },
+            include: {
+                sessionTemplates: {
+                    include: {
+                        exercises: true
+                    }
+                }
+            }
+        });
+
+        if (!sourceProgram) {
+            throw new NotFoundException('Program not found');
+        }
+
+        const targetProfile = await this.prisma.fitnessProfile.findUnique({
+            where: { userId: targetUserId }
+        });
+
+        if (!targetProfile) {
+            throw new BadRequestException('Target user has no fitness profile');
+        }
+
+        return this.prisma.$transaction(async (prisma) => {
+            const newProgram = await prisma.trainingProgram.create({
+                data: {
+                    name: sourceProgram.name + ' (Imported)',
+                    fitnessProfileId: targetProfile.id,
+                    status: 'ARCHIVED',
+                    template: sourceProgram.template,
+                    startDate: new Date(),
+                }
+            });
+
+            for (const template of sourceProgram.sessionTemplates) {
+                const newTemplate = await prisma.sessionTemplate.create({
+                    data: {
+                        programId: newProgram.id,
+                        name: template.name,
+                        description: template.description,
+                        orderInProgram: template.orderInProgram,
+                    }
+                });
+
+                for (const ex of template.exercises) {
+                    await prisma.exerciseTemplate.create({
+                        data: {
+                            sessionTemplateId: newTemplate.id,
+                            exerciseId: ex.exerciseId,
+                            sets: ex.sets,
+                            reps: ex.reps,
+                            weight: ex.weight,
+                            duration: ex.duration,
+                            notes: ex.notes,
+                            orderInSession: ex.orderInSession
+                        }
+                    });
+                }
+
+                await prisma.trainingSession.create({
+                    data: {
+                        programId: newProgram.id,
+                        sessionTemplateId: newTemplate.id,
+                        sessionName: template.name,
+                        status: 'SCHEDULED',
+                        date: null
+                    }
+                });
+            }
+
+            return newProgram;
+        });
     }
 
 }

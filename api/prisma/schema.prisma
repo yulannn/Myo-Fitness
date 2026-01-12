@@ -702,6 +702,7 @@ enum MessageType {
   FILE
   SYSTEM
   INVITATION
+  PROGRAM_SHARE
 }
 
 enum PremiumStatus {

@@ -199,6 +199,18 @@ export class ProgramController {
     return this.programService.updateProgram(programId, updateProgramDto, userId);
   }
 
+  @Post(':programId/clone')
+  @ApiOperation({ summary: 'Cloner un programme d’entraînement (Importation)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Programme cloné avec succès',
+    type: TrainingProgramEntity,
+  })
+  clone(@Param('programId', ParseIntPipe) programId: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.programService.cloneProgram(programId, userId);
+  }
+
   @Delete(':programId')
   @ApiOperation({ summary: 'Supprimer un programme d’entraînement' })
   @ApiResponse({

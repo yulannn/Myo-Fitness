@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, ArchiveBoxIcon, ArrowUturnLeftIcon, CalendarDaysIcon, PencilSquareIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { TemplateCard } from '../template';
 import { ProgramStatusModal } from '../modal/ProgramStatusModal';
 import { DeleteProgramModal } from '../modal/DeleteProgramModal';
 import { EditProgramModal } from '../modal/EditProgramModal';
+import { ShareProgramModal } from '../modal/ShareProgramModal';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
 import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
@@ -25,6 +26,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const isActive = program.status === 'ACTIVE';
 
@@ -116,6 +118,14 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
 
             {/* Actions avec boutons modernes */}
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsShareModalOpen(true); }}
+                className="p-2.5 rounded-full text-gray-500 hover:text-[#94fbdd] hover:bg-[#94fbdd]/10 hover:scale-110 transition-all backdrop-blur-sm"
+                title="Partager"
+              >
+                <ShareIcon className="h-4.5 w-4.5" />
+              </button>
+
               <button
                 onClick={handleEditClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
@@ -256,6 +266,13 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
         program={program}
         isPending={isUpdating}
       />
+
+      <ShareProgramModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        program={program}
+      />
     </>
+
   );
 };

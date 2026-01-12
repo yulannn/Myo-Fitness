@@ -10,7 +10,7 @@ export interface CreateConversationDto {
 export interface SendMessageDto {
     conversationId: string;
     content: string;
-    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE';
+    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'PROGRAM_SHARE';
     mediaUrl?: string;
 }
 

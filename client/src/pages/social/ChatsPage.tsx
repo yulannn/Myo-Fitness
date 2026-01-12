@@ -8,7 +8,10 @@ import {
     InformationCircleIcon,
     TrashIcon,
     PlusIcon,
-    CheckIcon
+    CheckIcon,
+    ShareIcon,
+    CalendarDaysIcon,
+    ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import useUpdateGroup from '../../api/hooks/group/useUpdateGroup';
 import useRemoveMember from '../../api/hooks/group/useRemoveMember';
@@ -29,6 +32,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getImageUrl } from '../../utils/imageUtils';
 import useJoinSession from '../../api/hooks/shared-session/useJoinSession';
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions';
+import useCloneProgram from '../../api/hooks/program/useCloneProgram';
 
 export default function ChatsPage() {
     const navigate = useNavigate();
@@ -65,6 +69,7 @@ export default function ChatsPage() {
     const sendGroupRequestMutation = useSendGroupRequest();
     const joinSession = useJoinSession();
     const { data: sharedSessions } = useSharedSessions();
+    const cloneProgramMutation = useCloneProgram();
 
     const createGroupMutation = useCreateGroup({
         onSuccess: (newGroup) => {
@@ -262,7 +267,9 @@ export default function ChatsPage() {
                                                         {conv.lastMessage?.sender?.id === user?.id && 'Vous: '}
                                                         {conv.lastMessage?.type === 'INVITATION'
                                                             ? '📅 Invitation à une séance'
-                                                            : (conv.lastMessage?.content || 'Nouvelle conversation')
+                                                            : conv.lastMessage?.type === 'PROGRAM_SHARE'
+                                                                ? '📥 Programme partagé'
+                                                                : (conv.lastMessage?.content || 'Nouvelle conversation')
                                                         }
                                                     </p>
                                                     {conv.unreadCount > 0 && (
@@ -329,6 +336,68 @@ export default function ChatsPage() {
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg: any) => {
+                                    // Handle PROGRAM_SHARE Messages
+                                    if (msg.type === 'PROGRAM_SHARE') {
+                                        try {
+                                            const programData = JSON.parse(msg.content);
+                                            const isMe = msg.sender?.id === user?.id;
+
+                                            return (
+                                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} my-2`}>
+                                                    <div className={`
+                                                        w-full max-w-xs rounded-2xl p-4 border transition-all
+                                                        ${isMe
+                                                            ? 'bg-[#18181b] border-[#94fbdd]/30'
+                                                            : 'bg-[#18181b] border-white/10'
+                                                        }
+                                                    `}>
+                                                        {/* Header */}
+                                                        <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/5">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isMe ? 'bg-[#94fbdd]/10 text-[#94fbdd]' : 'bg-white/10 text-gray-300'}`}>
+                                                                <ShareIcon className="h-4 w-4" />
+                                                            </div>
+                                                            <div>
+                                                                <p className={`text-xs font-bold uppercase tracking-wider ${isMe ? 'text-[#94fbdd]' : 'text-gray-300'}`}>Programme Partagé</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Body */}
+                                                        <div className="mb-4">
+                                                            <h3 className="text-white font-bold text-base mb-1">{programData.programName}</h3>
+                                                            <p className="text-gray-400 text-xs flex items-center gap-1">
+                                                                <CalendarDaysIcon className="h-3 w-3" /> {programData.sessionCount} séances
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Action */}
+                                                        {!isMe && (
+                                                            <button
+                                                                onClick={() => cloneProgramMutation.mutate(programData.programId)}
+                                                                disabled={cloneProgramMutation.isPending}
+                                                                className="w-full bg-[#27272a] hover:bg-[#323236] text-white text-xs font-bold py-2 px-3 rounded-lg border border-white/10 transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                {cloneProgramMutation.isPending ? 'Importation...' : (
+                                                                    <>
+                                                                        <ArrowDownTrayIcon className="h-4 w-4" />
+                                                                        Importer le programme
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                        {isMe && (
+                                                            <div className="text-right">
+                                                                <span className="text-gray-600 text-[10px] italic">Partagé par vous</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        } catch (e) {
+                                            console.error("Failed to parse program share", e);
+                                            return null;
+                                        }
+                                    }
+
                                     // Handle INVITATION Messages
                                     if (msg.type === 'INVITATION') {
                                         try {
