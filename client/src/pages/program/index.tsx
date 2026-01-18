@@ -232,7 +232,7 @@ const Program = () => {
         {/* Header avec design amélioré */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Mes Programmes</h1>
+            <h1 className="text-2xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Mes Programmes</h1>
             <p className="text-gray-400 text-sm flex items-center gap-2">
               <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
               Gérez et suivez votre évolution

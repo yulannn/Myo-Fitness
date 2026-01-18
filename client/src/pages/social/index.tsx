@@ -43,7 +43,7 @@ export default function SocialFeed() {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between mb-6 sticky top-0 bg-[#121214]/95 backdrop-blur-xl z-20 py-2 -mx-4 px-4 border-b border-white/5 shadow-sm">
                     <div className="space-y-2">
-                        <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Social</h1>
+                        <h1 className="text-2xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Social</h1>
                     </div>
 
 

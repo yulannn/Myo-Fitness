@@ -18,7 +18,7 @@ export default function HomeHeader() {
                     <div className="flex-1">
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                                <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                <h1 className="text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                                     {user?.name?.split(' ')[0] || 'Champion'}
                                 </h1>
                                 {/* Niveau badge aligné avec le nom */}

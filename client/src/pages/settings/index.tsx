@@ -100,7 +100,7 @@ export default function Settings() {
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
                 {/* Header Title */}
                 <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Paramètres</h1>
+                    <h1 className="text-2xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Paramètres</h1>
                 </div>
 
                 {/* Compact Profile Card */}
