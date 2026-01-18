@@ -5,6 +5,7 @@ import { ProgramStatusModal } from '../modal/ProgramStatusModal';
 import { DeleteProgramModal } from '../modal/DeleteProgramModal';
 import { EditProgramModal } from '../modal/EditProgramModal';
 import { ShareProgramModal } from '../modal/ShareProgramModal';
+import { EditTemplateModal } from '../modal/EditTemplateModal';
 import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useUpdateProgramStatus from '../../../api/hooks/program/useUpdateProgramStatus';
 import useDeleteProgram from '../../../api/hooks/program/useDeleteProgram';
@@ -27,6 +28,7 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCreateTemplateModalOpen, setIsCreateTemplateModalOpen] = useState(false);
 
   const isActive = program.status === 'ACTIVE';
 
@@ -68,87 +70,70 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
 
   return (
     <>
-      <div
-        className={`
-          group relative overflow-hidden rounded-3xl
-          bg-gradient-to-br from-[#18181b] to-[#121214]
-          border transition-all duration-500
-          ${isActive
-            ? 'border-[#94fbdd]/20 shadow-2xl shadow-[#94fbdd]/10'
-            : 'border-white/5'
-          }
-        `}
-      >
-        {/* Glow effect pour programmes actifs */}
-        {isActive && (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#94fbdd]/5 via-transparent to-transparent opacity-50 pointer-events-none" />
-        )}
-
+      <div className="border-b border-white/5 pb-8 mb-8">
         {/* Header */}
         <div
           onClick={isActive ? undefined : onToggleExpand}
-          className={`relative p-6 ${!isActive ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
+          className={`${!isActive ? 'cursor-pointer' : ''}`}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0 space-y-3">
-              {/* Title avec badge actif */}
-              <div className="flex items-center gap-3">
-                <h2 className={`text-lg font-bold truncate transition-colors ${isActive ? 'text-white' : 'text-gray-400'}`}>
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1 min-w-0">
+              {/* Title with status */}
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className={`text-xl font-bold ${isActive ? 'text-white' : 'text-gray-400'}`}>
                   {program.name}
                 </h2>
                 {isActive && (
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#94fbdd]/20 text-[#94fbdd] border border-[#94fbdd]/30 animate-pulse">
+                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#94fbdd]">
                     Actif
                   </span>
                 )}
               </div>
 
-              {/* Metadata avec meilleur espacement */}
-              <div className="flex items-center gap-4 text-xs text-gray-500">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5">
-                  <CalendarDaysIcon className="h-4 w-4" />
-                  <span className="font-medium">{program.sessionTemplates?.length || 0} séance{(program.sessionTemplates?.length || 0) > 1 ? 's' : ''}</span>
+              {/* Metadata */}
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5">
+                  <CalendarDaysIcon className="h-3.5 w-3.5" />
+                  <span>{program.sessionTemplates?.length || 0} séance{(program.sessionTemplates?.length || 0) > 1 ? 's' : ''}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-gray-600" />
-                  <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
-                </div>
+                <span>•</span>
+                <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
 
-            {/* Actions avec boutons modernes */}
-            <div className="flex items-center gap-1.5">
+            {/* Actions */}
+            <div className="flex items-center gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); setIsShareModalOpen(true); }}
-                className="p-2.5 rounded-full text-gray-500 hover:text-[#94fbdd] hover:bg-[#94fbdd]/10 hover:scale-110 transition-all backdrop-blur-sm"
+                className="p-2 text-gray-500 hover:text-[#94fbdd] transition-colors"
                 title="Partager"
               >
-                <ShareIcon className="h-4.5 w-4.5" />
+                <ShareIcon className="h-4 w-4" />
               </button>
 
               <button
                 onClick={handleEditClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
                 aria-label={`Modifier le programme ${program.name}`}
-                className="p-2.5 rounded-full text-gray-500 hover:text-white hover:bg-white/10 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
+                className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50"
                 title="Modifier"
               >
-                <PencilSquareIcon className="h-4.5 w-4.5" />
+                <PencilSquareIcon className="h-4 w-4" />
               </button>
 
               <button
                 onClick={handleStatusClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
                 aria-label={isActive ? `Archiver le programme ${program.name}` : `Désarchiver le programme ${program.name}`}
-                className="p-2.5 rounded-full text-gray-500 hover:text-white hover:bg-white/10 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
+                className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50"
                 title={isActive ? "Archiver" : "Désarchiver"}
               >
                 {isUpdatingStatus ? (
-                  <div className="h-4.5 w-4.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : isActive ? (
-                  <ArchiveBoxIcon className="h-4.5 w-4.5" />
+                  <ArchiveBoxIcon className="h-4 w-4" />
                 ) : (
-                  <ArrowUturnLeftIcon className="h-4.5 w-4.5" />
+                  <ArrowUturnLeftIcon className="h-4 w-4" />
                 )}
               </button>
 
@@ -156,26 +141,26 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
                 onClick={handleDeleteClick}
                 disabled={isUpdatingStatus || isDeleting || isUpdating}
                 aria-label={`Supprimer le programme ${program.name}`}
-                className="p-2.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-500/20 hover:scale-110 transition-all disabled:opacity-50 backdrop-blur-sm"
+                className="p-2 text-gray-500 hover:text-red-400 transition-colors disabled:opacity-50"
                 title="Supprimer"
               >
                 {isDeleting ? (
-                  <div className="h-4.5 w-4.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <TrashIcon className="h-4.5 w-4.5" />
+                  <TrashIcon className="h-4 w-4" />
                 )}
               </button>
 
               {((program.sessionTemplates && program.sessionTemplates.length > 0) || (program.sessions && program.sessions.length > 0)) && !isActive && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-                  className="p-2.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 hover:scale-110 transition-all backdrop-blur-sm"
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
                   title={isExpanded ? 'Masquer les séances' : 'Voir les séances'}
                 >
                   {isExpanded ? (
-                    <ChevronUpIcon className="h-4.5 w-4.5 transition-transform" />
+                    <ChevronUpIcon className="h-4 w-4" />
                   ) : (
-                    <ChevronDownIcon className="h-4.5 w-4.5 transition-transform" />
+                    <ChevronDownIcon className="h-4 w-4" />
                   )}
                 </button>
               )}
@@ -185,11 +170,25 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
 
         {/* Session Templates - Programmes actifs: toujours visible */}
         {program.sessionTemplates && program.sessionTemplates.length > 0 && isActive && (
-          <div className="border-t border-white/5 p-6 space-y-3 bg-black/30 backdrop-blur-sm">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
-              Séances
-            </p>
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Séances
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCreateTemplateModalOpen(true); // Changed to open CreateTemplateModal
+                }}
+                className="text-xs text-[#94fbdd] hover:text-[#7de0c4] font-semibold flex items-center gap-1 transition-colors"
+                title="Ajouter une séance"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter
+              </button>
+            </div>
             {program.sessionTemplates.map((template: any) => {
               const scheduledInstance = program.sessions?.find(
                 (session: any) => session.sessionTemplateId === template.id && !session.completed
@@ -212,19 +211,17 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
 
         {/* Session Templates - Programmes archivés: visible si expanded, read-only */}
         {program.sessionTemplates && program.sessionTemplates.length > 0 && !isActive && isExpanded && (
-          <div className="border-t border-white/5 p-6 space-y-3 bg-black/30 backdrop-blur-sm animate-in slide-in-from-top-2 duration-300">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <div className="w-1 h-4 bg-gray-600 rounded-full" />
+          <div className="mt-6 space-y-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
               Séances
             </p>
             {program.sessionTemplates.map((template: any) => (
               <div
                 key={template.id}
-                className="p-4 bg-[#121214]/80 backdrop-blur-sm rounded-2xl border border-white/5 hover:border-white/10 transition-all"
+                className="py-2 border-b border-white/5"
               >
-                <p className="text-sm font-semibold text-gray-300">{template.name}</p>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
-                  <div className="w-1 h-1 rounded-full bg-gray-600" />
+                <p className="text-sm font-medium text-gray-300">{template.name}</p>
+                <p className="text-xs text-gray-500 mt-1">
                   {template.exercises?.length || 0} exercice{(template.exercises?.length || 0) > 1 ? 's' : ''}
                 </p>
               </div>
@@ -233,11 +230,21 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
         )}
 
         {(!program.sessionTemplates || program.sessionTemplates.length === 0) && isActive && (
-          <div className="border-t border-white/5 p-8 text-center bg-black/30 backdrop-blur-sm">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3">
-              <CalendarDaysIcon className="h-5 w-5 text-gray-600" />
-            </div>
-            <p className="text-sm text-gray-500 font-medium">Aucune séance</p>
+          <div className="mt-6 py-8 text-center border-t border-white/5">
+            <CalendarDaysIcon className="h-8 w-8 text-gray-600 mx-auto mb-3" />
+            <p className="text-sm text-gray-500 mb-4">Aucune séance</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCreateTemplateModalOpen(true);
+              }}
+              className="text-sm text-[#94fbdd] hover:text-[#7de0c4] font-semibold inline-flex items-center gap-1.5 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ajouter une séance
+            </button>
           </div>
         )}
       </div>
@@ -272,6 +279,21 @@ export const ProgramCard = ({ program, isExpanded, onToggleExpand, exercices, ac
         onClose={() => setIsShareModalOpen(false)}
         program={program}
       />
+
+      {/* Modal pour créer une nouvelle séance */}
+      {isCreateTemplateModalOpen && (
+        <EditTemplateModal
+          isOpen={isCreateTemplateModalOpen}
+          onClose={() => setIsCreateTemplateModalOpen(false)}
+          template={{
+            programId: program.id,
+            name: '',
+            description: '',
+            exercises: []
+          }}
+          availableExercises={exercices}
+        />
+      )}
     </>
 
   );

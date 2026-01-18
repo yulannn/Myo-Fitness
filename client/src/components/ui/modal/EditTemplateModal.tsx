@@ -76,6 +76,9 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
     setTemplateDescription(template?.description || '');
   }, [template, isOpen]);
 
+  // Detect if we're creating or updating
+  const isCreating = !template?.id;
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       // Log des exercices pour debug
@@ -91,7 +94,7 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
       }
 
       const payload = {
-        name: templateName.trim() || template.name,
+        name: templateName.trim() || template.name || 'Nouvelle séance',
         description: templateDescription.trim(),
         exercises: exercises.map((ex, index) => {
           const isCardio = ex.exerciseType === 'CARDIO';
@@ -108,7 +111,18 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
 
       console.log('Envoi au backend:', payload);
 
-      await sessionTemplateService.updateTemplate(template.id, payload);
+      // Create or update based on whether we have an ID
+      if (isCreating) {
+        // Create new template with programId in payload
+        const createPayload = {
+          ...payload,
+          programId: template.programId,
+        };
+        await sessionTemplateService.createTemplate(createPayload);
+      } else {
+        // Update existing template
+        await sessionTemplateService.updateTemplate(template.id, payload);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['program'] });
@@ -248,7 +262,7 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
 
           {/* Title */}
           <h2 className="text-2xl font-bold text-white text-center">
-            Modifier le template
+            {isCreating ? 'Créer une séance' : 'Modifier la séance'}
           </h2>
 
           {/* Close Button */}
@@ -487,7 +501,7 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
                   <span>Enregistrement...</span>
                 </div>
               ) : (
-                'Enregistrer les modifications'
+                isCreating ? 'Créer la séance' : 'Enregistrer les modifications'
               )}
             </button>
           </div>

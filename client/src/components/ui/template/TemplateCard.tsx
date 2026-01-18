@@ -188,13 +188,13 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
   return (
     <>
       <style>{calendarStyles}</style>
-      <div className="relative rounded-lg overflow-hidden bg-[#1a1a1c] border border-white/5 hover:border-white/10 transition-all">
+      <div className="bg-[#1a1a1c] border border-white/5 rounded-lg p-4">
         {/* Content */}
-        <div className="p-3">
+        <div>
           {/* Header : Titre + Expand button */}
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-white truncate">
+              <h3 className="text-base font-semibold text-white">
                 {template.name}
               </h3>
 
@@ -205,7 +205,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
               )}
 
               {/* Métadonnées : Date planifiée + Nombre d'exercices */}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1.5">
                 {/* Date planifiée */}
                 {scheduledInstance?.date && (
                   <div className="flex items-center gap-1">
@@ -227,7 +227,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
             {template.exercises && template.exercises.length > 0 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1.5 rounded text-gray-500 hover:text-white transition-colors flex-shrink-0"
+                className="p-1.5 text-gray-500 hover:text-white transition-colors flex-shrink-0"
                 title={isExpanded ? 'Masquer' : 'Voir les exercices'}
               >
                 {isExpanded ? (
@@ -240,11 +240,11 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
           </div>
 
           {/* Actions : 3 boutons alignés horizontalement */}
-          <div className="flex items-center gap-1.5 mt-2">
+          <div className="flex items-center gap-1.5">
             {/* Modifier */}
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-gray-300 rounded transition-colors"
+              className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
               title="Modifier"
             >
               <PencilSquareIcon className="w-4 h-4" />
@@ -253,7 +253,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
             {/* Planifier/Modifier date */}
             <button
               onClick={() => setIsScheduleModalOpen(true)}
-              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-gray-300 rounded transition-colors"
+              className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
               title={scheduledInstance ? "Modifier la date" : "Planifier"}
             >
               <CalendarIcon className="w-4 h-4" />
@@ -263,7 +263,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
             <button
               onClick={() => setIsConfirmDeleteModalOpen(true)}
               disabled={isDeleting}
-              className="p-1.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded transition-colors disabled:opacity-50"
+              className="p-1.5 text-gray-500 hover:text-red-400 transition-colors disabled:opacity-50"
               title="Supprimer la séance"
             >
               {isDeleting ? (
@@ -279,7 +279,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
             <button
               onClick={handleStartClick}
               disabled={isStarting}
-              className="p-1.5 bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] rounded transition-colors disabled:opacity-50"
+              className="p-1.5 bg-[#94fbdd] hover:bg-[#7de0c4] text-[#121214] transition-colors disabled:opacity-50"
               title="Démarrer la séance"
             >
               {isStarting ? (
@@ -293,8 +293,8 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
 
         {/* Liste d'exercices (expandable) */}
         {isExpanded && template.exercises && template.exercises.length > 0 && (
-          <div className="border-t border-white/5 bg-black/20 p-4 space-y-2">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+          <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
               Exercices
             </p>
             {template.exercises.map((ex: any, idx: number) => {
@@ -304,10 +304,10 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
                 <div
                   key={ex.id || idx}
                   onClick={() => setSelectedExercise(ex.exercise)}
-                  className="flex items-center gap-3 p-3 bg-[#121214] rounded-lg border border-white/5 cursor-pointer hover:bg-[#1a1a1c] transition-colors"
+                  className="flex items-center gap-3 p-2 bg-[#121214] rounded cursor-pointer hover:bg-[#252527] transition-colors"
                 >
                   {/* Image */}
-                  <div className="relative w-12 h-12 rounded-lg bg-[#252527] overflow-hidden flex-shrink-0 border border-white/5">
+                  <div className="relative w-10 h-10 bg-[#252527] flex-shrink-0 border border-white/5">
                     {getExerciseImageUrl(ex.exercise?.imageUrl) ? (
                       <img
                         src={getExerciseImageUrl(ex.exercise?.imageUrl)!}
