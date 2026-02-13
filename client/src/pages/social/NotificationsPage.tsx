@@ -8,7 +8,9 @@ import usePendingGroupRequests from '../../api/hooks/group/useGetPendingGroupReq
 // Assuming useAccept/DeclineGroupRequest exist based on file listing earlier
 import useAcceptGroupRequest from '../../api/hooks/group/useAcceptGroupRequest';
 import useDeclineGroupRequest from '../../api/hooks/group/useDeclineGroupRequest';
+import { useCoachingRequests } from '../../api/hooks/coaching/useCoachingRequests';
 import { getImageUrl } from '../../utils/imageUtils';
+import { AcademicCapIcon } from '@heroicons/react/24/outline';
 
 export default function NotificationsPage() {
     const navigate = useNavigate();
@@ -24,8 +26,11 @@ export default function NotificationsPage() {
     const acceptGroup = useAcceptGroupRequest();
     const declineGroup = useDeclineGroupRequest();
 
-    const isLoading = loadingFriends || loadingGroups;
-    const hasNotifications = friendRequests.length > 0 || groupRequests.length > 0;
+    // Coaching Requests
+    const { requests: coachingRequests = [], loading: loadingCoaching, respond: respondCoaching } = useCoachingRequests();
+
+    const isLoading = loadingFriends || loadingGroups || loadingCoaching;
+    const hasNotifications = friendRequests.length > 0 || groupRequests.length > 0 || coachingRequests.length > 0;
 
     return (
         <div className="min-h-screen bg-[#121214] pb-20">
@@ -131,6 +136,49 @@ export default function NotificationsPage() {
                                                     onClick={() => declineGroup.mutate(req.id)}
                                                     className="p-2 bg-[#27272a] text-gray-400 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                                     disabled={declineGroup.isPending}
+                                                >
+                                                    <XMarkIcon className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Coaching Requests */}
+                        {coachingRequests.length > 0 && (
+                            <section className="space-y-4">
+                                <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                    <AcademicCapIcon className="h-4 w-4" />
+                                    Demandes de Coaching ({coachingRequests.length})
+                                </h2>
+                                <div className="space-y-3">
+                                    {coachingRequests.map((req) => (
+                                        <div key={req.id} className="bg-[#18181b] p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 bg-[#27272a] rounded-full overflow-hidden border border-[#94fbdd]/20">
+                                                    {req.coach?.profilePictureUrl ? (
+                                                        <img src={getImageUrl(req.coach.profilePictureUrl)} alt={req.coach.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <AcademicCapIcon className="w-6 h-6 m-3 text-gray-500" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-white">{req.coach?.name || 'Coach'}</p>
+                                                    <p className="text-xs text-gray-500 font-medium">Souhaite vous coacher</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => respondCoaching(req.id, 'ACCEPTED')}
+                                                    className="p-2 bg-[#94fbdd] text-[#121214] rounded-lg hover:bg-[#94fbdd]/90 transition-colors"
+                                                >
+                                                    <CheckIcon className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => respondCoaching(req.id, 'REJECTED')}
+                                                    className="p-2 bg-[#27272a] text-gray-400 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                                 >
                                                     <XMarkIcon className="h-5 w-5" />
                                                 </button>

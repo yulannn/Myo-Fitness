@@ -15,9 +15,12 @@ import usePendingGroupRequests from '../../api/hooks/group/useGetPendingGroupReq
 import { useConversations } from '../../api/hooks/chat/useConversations';
 import { useState } from 'react';
 import ActivityFeed from '../../components/social/ActivityFeed';
+import CoachingSection from '../../components/social/CoachingSection';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SocialFeed() {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     // Activer les notifications de séances
     useSessionNotifications();
@@ -120,6 +123,9 @@ export default function SocialFeed() {
                         </button>
                     </div>
                 </div>
+
+                {/* Coaching: Only for coaches */}
+                {user?.role === 'COACH' && <CoachingSection />}
 
                 {/* Content */}
                 {viewMode === 'sessions' ? (

@@ -38,6 +38,7 @@ import { MuscleGroupModule } from './muscle-group/muscle-group.module';
 import { SessionTemplateModule } from './session-template/session-template.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AiChatbotModule } from './ai-chatbot/ai-chatbot.module';
+import { CoachingModule } from './coaching/coaching.module';
 
 
 
@@ -88,6 +89,7 @@ import { AiChatbotModule } from './ai-chatbot/ai-chatbot.module';
     SessionTemplateModule,
     LeaderboardModule,
     AiChatbotModule,
+    CoachingModule,
   ],
   controllers: [AppController, SentryTestController],
   providers: [

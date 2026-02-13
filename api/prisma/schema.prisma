@@ -59,6 +59,10 @@ model User {
   mirrorMatchesAs2 MirrorMatch[]     @relation("MirrorMatchUser2")
   LeaderboardStats LeaderboardStats?
   AIChatMessage    AIChatMessage[]
+
+  // 🏋️ COACHING Relations
+  coachRelationships CoachingRelationship[] @relation("CoachToClient")
+  clientRelationships CoachingRelationship[] @relation("ClientToCoach")
 }
 
 model Activity {
@@ -805,4 +809,28 @@ enum AIRole {
 enum UserRole {
   USER
   COACH
+}
+
+// 🏋️ COACHING Models
+model CoachingRelationship {
+  id        Int            @id @default(autoincrement())
+  coachId   Int
+  clientId  Int
+  status    CoachingStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  coach  User @relation("CoachToClient", fields: [coachId], references: [id], onDelete: Cascade)
+  client User @relation("ClientToCoach", fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([coachId, clientId])
+  @@index([coachId])
+  @@index([clientId])
+  @@index([status])
+}
+
+enum CoachingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
