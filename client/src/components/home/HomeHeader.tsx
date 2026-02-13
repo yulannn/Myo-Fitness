@@ -38,13 +38,13 @@ export default function HomeHeader() {
                                     )}
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-400 flex items-center gap-2">
+                            <div className="text-sm text-gray-400 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
                                 {isCoach
                                     ? 'Tes athlètes comptent sur toi 💪'
                                     : 'Prêt pour ta séance du jour ?'
                                 }
-                            </p>
+                            </div>
                         </div>
                     </div>
 

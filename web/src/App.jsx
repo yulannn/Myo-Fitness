@@ -13,6 +13,7 @@ import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import UserDashboard from './pages/dashboard/UserDashboard.jsx';
 import CoachDashboard from './pages/dashboard/CoachDashboard.jsx';
+import ClientDetailPage from './pages/dashboard/ClientDetailPage.jsx';
 
 // ── Smart dashboard redirect based on role ───────────────────
 function DashboardRedirect() {
@@ -63,6 +64,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="COACH">
                 <CoachDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/coach/client/:clientId"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientDetailPage />
               </ProtectedRoute>
             }
           />

@@ -1,30 +1,27 @@
 // ─────────────────────────────────────────────────────────────
-// Dashboard – Coach (COACH role)
+// Dashboard – Coach (COACH role) ✦ Premium SaaS Design
 // ─────────────────────────────────────────────────────────────
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import DashboardLayout from './DashboardLayout.jsx';
 import coachingApi from '../../api/coachingApi.js';
+import StatsGrid, { StatsGridSkeleton } from '../../components/coach/StatsGrid.jsx';
+import ClientsTable, { ClientsTableSkeleton } from '../../components/coach/ClientsTable.jsx';
 import {
   UserGroupIcon,
   ClipboardDocumentListIcon,
   AcademicCapIcon,
   ChartBarSquareIcon,
-  TrashIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
-
-const stats = [
-  { label: 'Pratiquants', value: '—', icon: UserGroupIcon, color: 'from-primary/20 to-primary/5' },
-  { label: 'Programmes actifs', value: '—', icon: ClipboardDocumentListIcon, color: 'from-violet-500/20 to-violet-500/5' },
-  { label: 'Séances planifiées', value: '—', icon: AcademicCapIcon, color: 'from-blue-500/20 to-blue-500/5' },
-  { label: 'Taux de complétion', value: '—', icon: ChartBarSquareIcon, color: 'from-emerald-500/20 to-emerald-500/5' },
-];
+import AddClientModal from '../../components/coach/AddClientModal.jsx';
 
 export default function CoachDashboard() {
   const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchClients() {
@@ -41,57 +38,93 @@ export default function CoachDashboard() {
   }, []);
 
   const handleTerminate = async (relationshipId) => {
-    if (!window.confirm("Voulez-vous vraiment arrêter le suivi de ce client ?")) return;
-
+    if (!window.confirm('Voulez-vous vraiment arrêter le suivi de ce client ?')) return;
     try {
       await coachingApi.terminateRelationship(relationshipId);
-      setClients(prev => prev.filter(c => c.relationshipId !== relationshipId));
+      setClients((prev) => prev.filter((c) => c.relationshipId !== relationshipId));
     } catch (err) {
       console.error('Failed to terminate coaching:', err);
-      alert("Erreur lors de la suppression de la relation.");
+      alert('Erreur lors de la suppression de la relation.');
     }
   };
 
-  // Update dynamic stats
-  const dynamicStats = [
-    { label: 'Pratiquants', value: clients.length || '—', icon: UserGroupIcon, color: 'from-primary/20 to-primary/5' },
-    { label: 'Programmes actifs', value: '—', icon: ClipboardDocumentListIcon, color: 'from-violet-500/20 to-violet-500/5' },
-    { label: 'Séances planifiées', value: '—', icon: AcademicCapIcon, color: 'from-blue-500/20 to-blue-500/5' },
-    { label: 'Taux de complétion', value: '—', icon: ChartBarSquareIcon, color: 'from-emerald-500/20 to-emerald-500/5' },
-  ];
+  // ── Computed stats ─────────────────────────────────────────
+  const stats = useMemo(() => {
+    const activePrograms = clients.filter((c) => c.activeProgram).length;
+    const totalSessions30d = clients.reduce((sum, c) => sum + (c.sessionsLast30Days || 0), 0);
+    const ratesWithData = clients.filter((c) => c.completionRate !== null);
+    const avgCompletion =
+      ratesWithData.length > 0
+        ? Math.round(ratesWithData.reduce((sum, c) => sum + c.completionRate, 0) / ratesWithData.length)
+        : null;
+
+    return [
+      {
+        label: 'Pratiquants',
+        value: clients.length || '—',
+        subtitle: `${clients.filter((c) => c.daysSinceLastSession !== null && c.daysSinceLastSession <= 7).length} actifs cette semaine`,
+        icon: UserGroupIcon,
+        color: 'from-primary/20 to-primary/5',
+      },
+      {
+        label: 'Programmes actifs',
+        value: activePrograms || '—',
+        icon: ClipboardDocumentListIcon,
+        color: 'from-violet-500/20 to-violet-500/5',
+      },
+      {
+        label: 'Séances (30j)',
+        value: totalSessions30d || '—',
+        subtitle: `${(totalSessions30d / Math.max(clients.length, 1)).toFixed(1)} / client`,
+        icon: AcademicCapIcon,
+        color: 'from-blue-500/20 to-blue-500/5',
+      },
+      {
+        label: 'Taux complétion',
+        value: avgCompletion !== null ? `${avgCompletion}%` : '—',
+        icon: ChartBarSquareIcon,
+        color: 'from-emerald-500/20 to-emerald-500/5',
+      },
+    ];
+  }, [clients]);
 
   return (
     <DashboardLayout>
       {/* ── Welcome ──────────────────────────────────────────── */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="px-2.5 py-1 bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider rounded-lg border border-primary/20">
-            Coach
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold text-white">
-          Bienvenue, <span className="text-primary">{user?.name}</span> 🏋️
-        </h1>
-        <p className="text-text-secondary mt-2 text-sm">
-          Gérez vos pratiquants et suivez leur progression depuis votre espace coach.
-        </p>
-      </div>
-
-      {/* ── Stats grid ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {dynamicStats.map((s) => (
-          <div
-            key={s.label}
-            className={`relative overflow-hidden rounded-xl border border-border-subtle p-5 bg-gradient-to-br ${s.color} backdrop-blur-lg group hover:border-primary/20 transition-all duration-300`}
-          >
-            <s.icon className="w-8 h-8 text-white/20 absolute top-4 right-4 group-hover:text-white/30 transition-colors" />
-            <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-white">{s.value}</p>
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="px-2.5 py-1 bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider rounded-lg border border-primary/20">
+              Coach Pro
+            </span>
           </div>
-        ))}
+          <h1 className="text-3xl font-bold text-white">
+            Bienvenue, <span className="text-primary tracking-tight">{user?.name}</span> 🏋️
+          </h1>
+          <p className="text-text-secondary mt-2 text-sm max-w-lg leading-relaxed">
+            Optimisez le suivi de vos athlètes, analysez leurs performances et gérez vos programmes depuis votre terminal coach.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsInviteModalOpen(true)}
+          className="bg-primary text-background font-black px-6 py-4 rounded-2xl flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/10 whitespace-nowrap"
+        >
+          <PlusIcon className="w-5 h-5" />
+          Nouveau Client
+        </button>
       </div>
 
-      {/* ── Mes Clients ───────────────────────────────────────── */}
+      {/* ── Invite Modal ─────────────────────────────────────── */}
+      <AddClientModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+      />
+
+      {/* ── Stats ─────────────────────────────────────────────── */}
+      {loading ? <StatsGridSkeleton /> : <StatsGrid stats={stats} />}
+
+      {/* ── Clients section ───────────────────────────────────── */}
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <UserGroupIcon className="w-6 h-6 text-primary" />
@@ -103,95 +136,9 @@ export default function CoachDashboard() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 rounded-2xl bg-surface border border-border-subtle animate-pulse" />
-          ))}
-        </div>
-      ) : clients.length === 0 ? (
-        <div className="rounded-2xl border border-border-subtle bg-surface/50 p-12 text-center backdrop-blur-sm">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-primary/5 flex items-center justify-center border border-primary/10">
-            <UserGroupIcon className="w-10 h-10 text-primary/40" />
-          </div>
-          <h3 className="text-lg font-bold text-white mb-2">Aucun client pour le moment</h3>
-          <p className="text-text-secondary text-sm max-w-sm mx-auto leading-relaxed">
-            Utilisez votre application mobile pour ajouter des pratiquants via leur code unique.
-            Ils apparaîtront ici une fois qu'ils auront accepté votre demande.
-          </p>
-        </div>
+        <ClientsTableSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clients.map((client) => (
-            <div
-              key={client.id}
-              className="bg-surface border border-border-subtle rounded-2xl p-6 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 group"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  {client.profilePictureUrl ? (
-                    <img
-                      src={client.profilePictureUrl}
-                      alt={client.name}
-                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/20"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                      <span className="text-primary font-bold text-lg">
-                        {client.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-white group-hover:text-primary transition-colors">{client.name}</h3>
-                    <p className="text-xs text-text-secondary">{client.email}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleTerminate(client.relationshipId)}
-                  className="p-2 text-text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                  title="Arrêter le suivi"
-                >
-                  <TrashIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {/* Goals */}
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold mb-2">Objectifs</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {client.goals.length > 0 ? client.goals.map((g, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-primary/5 text-primary text-[10px] rounded-md border border-primary/10">
-                        {g}
-                      </span>
-                    )) : (
-                      <span className="text-[10px] text-text-secondary/50">Aucun objectif défini</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Last Session */}
-                <div className="pt-4 border-t border-border-subtle/50">
-                  <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold mb-1">Dernière séance</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-white font-medium">
-                      {client.lastSessionName || 'Aucune séance'}
-                    </p>
-                    {client.lastSessionDate && (
-                      <p className="text-[10px] text-text-secondary">
-                        {new Date(client.lastSessionDate).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <button className="w-full mt-2 py-2.5 bg-background border border-border-subtle hover:border-primary/50 text-white text-xs font-bold rounded-xl transition-all">
-                  Visualiser le profil
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ClientsTable clients={clients} onTerminate={handleTerminate} />
       )}
     </DashboardLayout>
   );
