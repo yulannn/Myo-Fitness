@@ -37,8 +37,8 @@ export default function DashboardLayout({ children }) {
   }
 
   const menuItems = [
-    { name: 'Dashboard', path: isCoach ? '/dashboard/coach' : '/dashboard/user', icon: HomeIcon },
-    { name: 'Clients', path: '/dashboard/coach', icon: UsersIcon, hide: !isCoach },
+    { name: 'Mes Clients', path: '/dashboard/coach', icon: UsersIcon, hide: !isCoach },
+    { name: 'Dashboard', path: '/dashboard/user', icon: HomeIcon, hide: isCoach },
     { name: 'Bibliothèque', path: '#', icon: BookOpenIcon, disabled: true },
     { name: 'Calendrier', path: '#', icon: CalendarIcon, disabled: true },
   ].filter(i => !i.hide);
@@ -90,8 +90,8 @@ export default function DashboardLayout({ children }) {
               key={item.name}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${location.pathname === item.path
-                  ? 'bg-primary/10 text-primary shadow-sm'
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-primary/10 text-primary shadow-sm'
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
                 } ${item.disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
             >
               <item.icon className={`w-5 h-5 shrink-0 ${location.pathname === item.path ? 'text-primary' : 'group-hover:scale-110 transition-transform'}`} />
@@ -177,8 +177,8 @@ export default function DashboardLayout({ children }) {
                 to={item.path}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${location.pathname === item.path
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-text-secondary hover:text-white hover:bg-white/5'
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'text-text-secondary hover:text-white hover:bg-white/5'
                   } ${item.disabled ? 'opacity-50 grayscale pointer-events-none' : ''}`}
               >
                 <item.icon className="w-6 h-6" />

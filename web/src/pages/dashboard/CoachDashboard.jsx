@@ -1,19 +1,12 @@
-// ─────────────────────────────────────────────────────────────
-// Dashboard – Coach (COACH role) ✦ Premium SaaS Design
-// ─────────────────────────────────────────────────────────────
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import DashboardLayout from './DashboardLayout.jsx';
 import coachingApi from '../../api/coachingApi.js';
-import StatsGrid, { StatsGridSkeleton } from '../../components/coach/StatsGrid.jsx';
 import ClientsTable, { ClientsTableSkeleton } from '../../components/coach/ClientsTable.jsx';
 import {
   UserGroupIcon,
-  ClipboardDocumentListIcon,
-  AcademicCapIcon,
-  ChartBarSquareIcon,
   PlusIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import AddClientModal from '../../components/coach/AddClientModal.jsx';
 
@@ -22,6 +15,7 @@ export default function CoachDashboard() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function fetchClients() {
@@ -48,70 +42,49 @@ export default function CoachDashboard() {
     }
   };
 
-  // ── Computed stats ─────────────────────────────────────────
-  const stats = useMemo(() => {
-    const activePrograms = clients.filter((c) => c.activeProgram).length;
-    const totalSessions30d = clients.reduce((sum, c) => sum + (c.sessionsLast30Days || 0), 0);
-    const ratesWithData = clients.filter((c) => c.completionRate !== null);
-    const avgCompletion =
-      ratesWithData.length > 0
-        ? Math.round(ratesWithData.reduce((sum, c) => sum + c.completionRate, 0) / ratesWithData.length)
-        : null;
-
-    return [
-      {
-        label: 'Pratiquants',
-        value: clients.length || '—',
-        subtitle: `${clients.filter((c) => c.daysSinceLastSession !== null && c.daysSinceLastSession <= 7).length} actifs cette semaine`,
-        icon: UserGroupIcon,
-        color: 'from-primary/20 to-primary/5',
-      },
-      {
-        label: 'Programmes actifs',
-        value: activePrograms || '—',
-        icon: ClipboardDocumentListIcon,
-        color: 'from-violet-500/20 to-violet-500/5',
-      },
-      {
-        label: 'Séances (30j)',
-        value: totalSessions30d || '—',
-        subtitle: `${(totalSessions30d / Math.max(clients.length, 1)).toFixed(1)} / client`,
-        icon: AcademicCapIcon,
-        color: 'from-blue-500/20 to-blue-500/5',
-      },
-      {
-        label: 'Taux complétion',
-        value: avgCompletion !== null ? `${avgCompletion}%` : '—',
-        icon: ChartBarSquareIcon,
-        color: 'from-emerald-500/20 to-emerald-500/5',
-      },
-    ];
-  }, [clients]);
+  // ── Search & Filter ────────────────────────────────────────
+  const filteredClients = useMemo(() => {
+    if (!searchQuery.trim()) return clients;
+    const query = searchQuery.toLowerCase().trim();
+    return clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.email.toLowerCase().includes(query) ||
+        (c.activeProgram?.name?.toLowerCase().includes(query))
+    );
+  }, [clients, searchQuery]);
 
   return (
     <DashboardLayout>
-      {/* ── Welcome ──────────────────────────────────────────── */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      {/* ── Welcome Area ──────────────────────────────────────── */}
+      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="px-2.5 py-1 bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider rounded-lg border border-primary/20">
-              Coach Pro
-            </span>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-1 w-8 bg-primary rounded-full" />
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Dashboard Pro</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">
-            Bienvenue, <span className="text-primary tracking-tight">{user?.name}</span> 🏋️
+          <h1 className="text-4xl font-black text-white leading-none">
+            Salut, <span className="text-primary">{user?.name}</span>
           </h1>
-          <p className="text-text-secondary mt-2 text-sm max-w-lg leading-relaxed">
-            Optimisez le suivi de vos athlètes, analysez leurs performances et gérez vos programmes depuis votre terminal coach.
-          </p>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-full">
+              <UserGroupIcon className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-white">
+                {clients.length} <span className="text-text-secondary font-medium">élève{clients.length > 1 ? 's' : ''}</span>
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary font-medium italic">
+              {clients.filter(c => c.daysSinceLastSession !== null && c.daysSinceLastSession <= 7).length} actifs cette semaine
+            </p>
+          </div>
         </div>
 
         <button
           onClick={() => setIsInviteModalOpen(true)}
-          className="bg-primary text-background font-black px-6 py-4 rounded-2xl flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/10 whitespace-nowrap"
+          className="bg-primary text-background font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/10 whitespace-nowrap group"
         >
-          <PlusIcon className="w-5 h-5" />
-          Nouveau Client
+          <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+          Ajouter un client
         </button>
       </div>
 
@@ -119,27 +92,60 @@ export default function CoachDashboard() {
       <AddClientModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
+        onSuccess={() => {
+          // Re-fetch or manually add if desired, but service usually keeps it PENDING
+        }}
       />
 
-      {/* ── Stats ─────────────────────────────────────────────── */}
-      {loading ? <StatsGridSkeleton /> : <StatsGrid stats={stats} />}
+      {/* ── Client List Area ───────────────────────────────────── */}
+      <div className="mt-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 pb-6 border-b border-white/5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
+              <UserGroupIcon className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white tracking-tight">Liste des clients</h2>
+              <p className="text-[11px] text-text-secondary uppercase tracking-[0.2em] font-bold mt-1">Gestion des athlètes</p>
+            </div>
+          </div>
 
-      {/* ── Clients section ───────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <UserGroupIcon className="w-6 h-6 text-primary" />
-          Mes Clients
-        </h2>
-        <span className="text-xs text-text-secondary bg-surface border border-border-subtle px-3 py-1 rounded-full">
-          {clients.length} actif{clients.length > 1 ? 's' : ''}
-        </span>
+          <div className="relative group min-w-[320px]">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-primary transition-colors" />
+            <input
+              type="text"
+              placeholder="Rechercher un athlète..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-surface-card/40 border border-white/5 focus:border-primary/50 text-white rounded-2xl pl-11 pr-4 py-4 text-sm transition-all outline-none placeholder:text-text-secondary/30 font-semibold"
+            />
+          </div>
+        </div>
+
+        <div>
+          {loading ? (
+            <ClientsTableSkeleton />
+          ) : (
+            <ClientsTable
+              clients={filteredClients}
+              onTerminate={handleTerminate}
+            />
+          )}
+
+          {!loading && filteredClients.length === 0 && searchQuery && (
+            <div className="py-24 flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <MagnifyingGlassIcon className="w-10 h-10 text-white/10" />
+              </div>
+              <h3 className="text-white font-black text-xl">Aucun résultat</h3>
+              <p className="text-text-secondary text-sm mt-2 max-w-sm font-medium">
+                Nous n'avons trouvé aucun client correspondant à votre recherche.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-
-      {loading ? (
-        <ClientsTableSkeleton />
-      ) : (
-        <ClientsTable clients={clients} onTerminate={handleTerminate} />
-      )}
     </DashboardLayout>
   );
 }
+
