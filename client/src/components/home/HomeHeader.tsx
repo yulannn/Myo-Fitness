@@ -3,10 +3,13 @@ import XpBar from '../common/XpBar';
 import { useUserXp } from '../../api/hooks/user/useUserXp';
 import { Link } from 'react-router-dom';
 import { Activity } from 'lucide-react';
+import { AcademicCapIcon } from '@heroicons/react/24/outline';
 
 export default function HomeHeader() {
     const { user } = useAuth();
     const { data: xpData } = useUserXp();
+
+    const isCoach = user?.role === 'COACH';
 
     return (
 
@@ -19,7 +22,7 @@ export default function HomeHeader() {
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <h1 className="text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                                    {user?.name?.split(' ')[0] || 'Champion'}
+                                    {isCoach ? 'Coach ' : ''}{user?.name?.split(' ')[0] || 'Champion'}
                                 </h1>
                                 {/* Niveau badge aligné avec le nom */}
                                 <div className="flex items-center gap-2">
@@ -27,11 +30,20 @@ export default function HomeHeader() {
                                     <div className="px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
                                         <span className="text-xs font-medium text-gray-400">Niveau {xpData?.level || 1}</span>
                                     </div>
+                                    {isCoach && (
+                                        <div className="px-2.5 py-1 bg-[#94fbdd]/10 rounded-full border border-[#94fbdd]/20 flex items-center gap-1">
+                                            <AcademicCapIcon className="h-3.5 w-3.5 text-[#94fbdd]" />
+                                            <span className="text-xs font-semibold text-[#94fbdd]">Coach</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <p className="text-sm text-gray-400 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-[#94fbdd] rounded-full" />
-                                Prêt pour ta séance du jour ?
+                                {isCoach
+                                    ? 'Tes athlètes comptent sur toi 💪'
+                                    : 'Prêt pour ta séance du jour ?'
+                                }
                             </p>
                         </div>
                     </div>

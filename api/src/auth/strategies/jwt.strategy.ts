@@ -9,6 +9,7 @@ interface JwtPayloadWithVersion {
   name: string;
   profilePictureUrl: string | null;
   tokenVersion: number;
+  role: 'USER' | 'COACH';
 }
 
 @Injectable()
@@ -39,6 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       name: payload.name,
       profilePictureUrl: payload.profilePictureUrl,
+      role: payload.role || 'USER',
     };
   }
 }

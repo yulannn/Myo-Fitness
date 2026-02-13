@@ -9,6 +9,7 @@ export interface RegisterFormValues {
     lastName: string;
     email: string;
     password: string;
+    role: 'USER' | 'COACH';
 }
 
 const emailPattern =
@@ -26,6 +27,7 @@ function toPayload(values: RegisterFormValues): RegisterPayload {
         email,
         name: name || email.split('@')[0],
         password: values.password,
+        role: values.role,
     };
 }
 

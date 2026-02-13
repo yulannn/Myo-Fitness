@@ -9,13 +9,14 @@ import { EmailService } from 'src/email/email.service';
 
 type SafeUser = Omit<UserEntity, 'password' | 'refreshToken'>;
 
-// Type pour le payload JWT avec tokenVersion
+// Type pour le payload JWT avec tokenVersion et rôle
 interface JwtPayloadWithVersion {
   sub: number;
   email: string;
   name: string;
   profilePictureUrl: string | null;
   tokenVersion: number;
+  role: 'USER' | 'COACH';
 }
 
 @Injectable()
@@ -85,6 +86,7 @@ export class AuthService {
       name: user.name,
       profilePictureUrl: user.profilePictureUrl || null,
       tokenVersion: user.tokenVersion,
+      role: user.role || 'USER',
     };
   }
 
@@ -135,6 +137,7 @@ export class AuthService {
       ...signUpDto,
       password: hashedPassword,
       friendCode,
+      role: signUpDto.role || 'USER',
     });
 
     // Générer un code de vérification à 6 chiffres
@@ -193,6 +196,7 @@ export class AuthService {
         level: user.level,
         xp: user.xp,
         tokenVersion: user.tokenVersion,
+        role: user.role || 'USER',
       };
 
       const newPayload = this.buildJwtPayload(safeUser);

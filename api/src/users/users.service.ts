@@ -28,6 +28,7 @@ export class UsersService {
     password: string;
     name: string;
     friendCode?: string;
+    role?: 'USER' | 'COACH';
   }): Promise<UserEntity> {
     const newUser = await this.prisma.user.create({
       data,

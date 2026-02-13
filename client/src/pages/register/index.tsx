@@ -5,13 +5,14 @@ import type { FieldErrors } from '../../types/auth.type';
 import { ApiError } from '../../types/auth.type';
 import { useRegister, type RegisterFormValues } from '../../api/hooks/auth/useRegister';
 import { ValidationError } from '../../api/hooks/errors';
-import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon, AcademicCapIcon } from '@heroicons/react/24/outline'
 
 const initialFormValues: RegisterFormValues = {
   firstName: '',
   lastName: '',
   email: '',
   password: '',
+  role: 'USER',
 }
 
 export default function Register() {
@@ -80,6 +81,43 @@ export default function Register() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            {/* Role Selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Je suis
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormValues(prev => ({ ...prev, role: 'USER' }))}
+                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-semibold transition-all ${formValues.role === 'USER'
+                      ? 'border-[#94fbdd] bg-[#94fbdd]/10 text-[#94fbdd]'
+                      : 'border-white/10 bg-[#121214] text-gray-400 hover:border-white/20'
+                    }`}
+                >
+                  <UserIcon className="h-5 w-5" />
+                  Sportif
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormValues(prev => ({ ...prev, role: 'COACH' }))}
+                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-semibold transition-all ${formValues.role === 'COACH'
+                      ? 'border-[#94fbdd] bg-[#94fbdd]/10 text-[#94fbdd]'
+                      : 'border-white/10 bg-[#121214] text-gray-400 hover:border-white/20'
+                    }`}
+                >
+                  <AcademicCapIcon className="h-5 w-5" />
+                  Coach
+                </button>
+              </div>
+              {formValues.role === 'COACH' && (
+                <p className="mt-2 text-xs text-[#94fbdd]/70 flex items-center gap-1">
+                  <AcademicCapIcon className="h-3.5 w-3.5" />
+                  Tu pourras gérer tes clients et créer des programmes personnalisés
+                </p>
+              )}
+            </div>
+
             {/* Name Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* First Name */}

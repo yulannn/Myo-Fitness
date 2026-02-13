@@ -25,6 +25,7 @@ model User {
   xp                       Int                        @default(0)
   lastXpGainDate           DateTime?
   tokenVersion             Int                        @default(0)
+  role                     UserRole                   @default(USER)
   conversationParticipants ConversationParticipant[]
   exercicesCreated         Exercice[]                 @relation("ExerciceCreatedBy")
   fitnessProfiles          FitnessProfile?
@@ -799,4 +800,9 @@ model AIChatMessage {
 enum AIRole {
   USER
   ASSISTANT
+}
+
+enum UserRole {
+  USER
+  COACH
 }

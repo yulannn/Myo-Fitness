@@ -5,6 +5,7 @@ export interface AuthUser {
     profilePictureUrl?: string | null;
     friendCode?: string | null;
     shareActivities?: boolean;
+    role?: 'USER' | 'COACH';
 }
 
 export interface AuthSuccessResponse {
@@ -26,6 +27,7 @@ export interface RegisterPayload {
     email: string;
     name: string;
     password: string;
+    role?: 'USER' | 'COACH';
 }
 
 export type FieldErrors = Record<string, string>;

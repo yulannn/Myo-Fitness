@@ -56,6 +56,13 @@ export class UserEntity {
   })
   tokenVersion: number;
 
+  @ApiProperty({
+    description: 'Rôle de l\'utilisateur',
+    example: 'USER',
+    enum: ['USER', 'COACH'],
+  })
+  role: 'USER' | 'COACH';
+
   @ApiPropertyOptional({
     description: 'Refresh token de l\'utilisateur',
     example: null,
