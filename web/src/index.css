@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  html,
+  body {
+    @apply bg-background text-text-primary scroll-smooth;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-70;
+  }
+
+  .glass-card {
+    @apply bg-surface-card backdrop-blur-md border border-border-subtle hover:border-border-accent transition-all duration-300;
+  }
+
+  .glow-shadow {
+    @apply shadow-[0_0_20px_rgba(148, 251, 221, 0.15)];
+  }
+}
