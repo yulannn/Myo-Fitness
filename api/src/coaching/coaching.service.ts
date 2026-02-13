@@ -179,4 +179,54 @@ export class CoachingService {
       },
     });
   }
+
+  /**
+   * Le client récupère son coach actuel
+   */
+  async getMyCoach(clientId: number) {
+    const relationship = await this.prisma.coachingRelationship.findFirst({
+      where: {
+        clientId,
+        status: 'ACCEPTED',
+      },
+      include: {
+        coach: {
+          select: {
+            id: true,
+            name: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!relationship) return null;
+
+    return {
+      relationshipId: relationship.id,
+      ...relationship.coach,
+    };
+  }
+
+  /**
+   * Rompre une relation de coaching (Coach ou Client)
+   */
+  async terminateRelationship(userId: number, relationshipId: number) {
+    const relationship = await this.prisma.coachingRelationship.findUnique({
+      where: { id: relationshipId },
+    });
+
+    if (!relationship) {
+      throw new NotFoundException('Relation de coaching introuvable.');
+    }
+
+    // Sécurité : Seuls le coach ou le client concernés peuvent supprimer
+    if (relationship.coachId !== userId && relationship.clientId !== userId) {
+      throw new ForbiddenException('Vous n\'êtes pas autorisé à rompre cette relation.');
+    }
+
+    return this.prisma.coachingRelationship.delete({
+      where: { id: relationshipId },
+    });
+  }
 }

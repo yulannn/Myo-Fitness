@@ -6,6 +6,12 @@ export const coachingApi = {
    * @returns {Promise<Array>}
    */
   getClients: () => apiRequest('/coaching/clients'),
+
+  /**
+   * Rompre une relation de coaching
+   * @param {number} relationshipId 
+   */
+  terminateRelationship: (relationshipId) => apiRequest(`/coaching/relationship/${relationshipId}`, 'DELETE'),
 };
 
 export default coachingApi;

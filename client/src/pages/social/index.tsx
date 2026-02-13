@@ -16,6 +16,7 @@ import { useConversations } from '../../api/hooks/chat/useConversations';
 import { useState } from 'react';
 import ActivityFeed from '../../components/social/ActivityFeed';
 import CoachingSection from '../../components/social/CoachingSection';
+import MyCoachCard from '../../components/social/MyCoachCard';
 import { useAuth } from '../../context/AuthContext';
 
 export default function SocialFeed() {
@@ -126,6 +127,9 @@ export default function SocialFeed() {
 
                 {/* Coaching: Only for coaches */}
                 {user?.role === 'COACH' && <CoachingSection />}
+
+                {/* Coaching: Only for clients (to see their coach) */}
+                {user?.role === 'USER' && <MyCoachCard />}
 
                 {/* Content */}
                 {viewMode === 'sessions' ? (

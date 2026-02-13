@@ -4,6 +4,8 @@ import {
   Patch,
   Get,
   Body,
+  Delete,
+  Param,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -41,10 +43,24 @@ export class CoachingController {
     return this.coachingService.getCoachClients(req.user.userId);
   }
 
+  @Get('my-coach')
+  @ApiOperation({ summary: 'Récupérer son coach actuel (Client uniquement)' })
+  @ApiResponse({ status: 200, description: 'Infos du coach' })
+  async getMyCoach(@Request() req) {
+    return this.coachingService.getMyCoach(req.user.userId);
+  }
+
   @Get('pending')
   @ApiOperation({ summary: 'Récupérer les demandes de coaching en attente (Client uniquement)' })
   @ApiResponse({ status: 200, description: 'Liste des demandes en attente' })
   async getPendingRequests(@Request() req) {
     return this.coachingService.getPendingRequests(req.user.userId);
+  }
+
+  @Delete('relationship/:id')
+  @ApiOperation({ summary: 'Rompre une relation de coaching (Coach ou Client)' })
+  @ApiResponse({ status: 200, description: 'Relation rompue' })
+  async deleteRelationship(@Request() req, @Param('id') id: string) {
+    return this.coachingService.terminateRelationship(req.user.userId, parseInt(id));
   }
 }

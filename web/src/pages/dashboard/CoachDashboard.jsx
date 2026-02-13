@@ -11,6 +11,7 @@ import {
   ClipboardDocumentListIcon,
   AcademicCapIcon,
   ChartBarSquareIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 const stats = [
@@ -38,6 +39,18 @@ export default function CoachDashboard() {
     }
     fetchClients();
   }, []);
+
+  const handleTerminate = async (relationshipId) => {
+    if (!window.confirm("Voulez-vous vraiment arrêter le suivi de ce client ?")) return;
+
+    try {
+      await coachingApi.terminateRelationship(relationshipId);
+      setClients(prev => prev.filter(c => c.relationshipId !== relationshipId));
+    } catch (err) {
+      console.error('Failed to terminate coaching:', err);
+      alert("Erreur lors de la suppression de la relation.");
+    }
+  };
 
   // Update dynamic stats
   const dynamicStats = [
@@ -133,6 +146,13 @@ export default function CoachDashboard() {
                     <p className="text-xs text-text-secondary">{client.email}</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleTerminate(client.relationshipId)}
+                  className="p-2 text-text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                  title="Arrêter le suivi"
+                >
+                  <TrashIcon className="w-5 h-5" />
+                </button>
               </div>
 
               <div className="space-y-4">

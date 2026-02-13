@@ -48,6 +48,21 @@ export const coachingService = {
   },
 
   /**
+   * Rompre la relation de coaching (bilatéral)
+   */
+  async terminateRelationship(relationshipId: number) {
+    return api.delete(`/coaching/relationship/${relationshipId}`);
+  },
+
+  /**
+   * Récupérer son coach actuel
+   */
+  async getMyCoach(): Promise<any> {
+    const res = await api.get('/coaching/my-coach');
+    return res.data;
+  },
+
+  /**
    * Récupérer les demandes en attente pour un client
    */
   async getPendingRequests(): Promise<CoachingRequest[]> {
