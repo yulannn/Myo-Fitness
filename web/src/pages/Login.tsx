@@ -1,11 +1,6 @@
-// ─────────────────────────────────────────────────────────────
-// Myo Fitness – Login Page (Web)
-// Premium dark-theme login with animations & full error handling
-// ─────────────────────────────────────────────────────────────
-
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   BoltIcon,
   EnvelopeIcon,
@@ -19,7 +14,6 @@ import {
 export default function Login() {
   const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Redirect if already authed
   useEffect(() => {
@@ -35,8 +29,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const emailRef = useRef(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     emailRef.current?.focus();
@@ -44,7 +38,7 @@ export default function Login() {
 
   // ── Client-side validation ─────────────────────────────────
   function validate() {
-    const errs = {};
+    const errs: Record<string, string> = {};
     if (!email.trim()) errs.email = 'L\'adresse e-mail est requise';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       errs.email = 'Format d\'e-mail invalide';
@@ -54,7 +48,7 @@ export default function Login() {
   }
 
   // ── Submit ─────────────────────────────────────────────────
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setFieldErrors({});
@@ -68,10 +62,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(email.trim().toLowerCase(), password);
-
-      // Navigate to intended page or role-based dashboard
-      // The useEffect above will handle the redirect after user state updates
-    } catch (err) {
+    } catch (err: any) {
       if (err.status === 401) {
         setError('Identifiants incorrects. Vérifiez votre e-mail et mot de passe.');
       } else if (err.status === 429) {
@@ -146,8 +137,8 @@ export default function Login() {
                   }}
                   placeholder="coach@myo-fitness.app"
                   className={`w-full pl-11 pr-4 py-3.5 bg-background border rounded-xl text-white placeholder:text-text-secondary/40 focus:outline-none focus:ring-2 transition-all duration-200 text-sm ${fieldErrors.email
-                      ? 'border-red-500/50 focus:ring-red-500/30'
-                      : 'border-border-subtle focus:ring-primary/30 focus:border-primary/40'
+                    ? 'border-red-500/50 focus:ring-red-500/30'
+                    : 'border-border-subtle focus:ring-primary/30 focus:border-primary/40'
                     }`}
                 />
               </div>
@@ -175,8 +166,8 @@ export default function Login() {
                   }}
                   placeholder="••••••••"
                   className={`w-full pl-11 pr-12 py-3.5 bg-background border rounded-xl text-white placeholder:text-text-secondary/40 focus:outline-none focus:ring-2 transition-all duration-200 text-sm ${fieldErrors.password
-                      ? 'border-red-500/50 focus:ring-red-500/30'
-                      : 'border-border-subtle focus:ring-primary/30 focus:border-primary/40'
+                    ? 'border-red-500/50 focus:ring-red-500/30'
+                    : 'border-border-subtle focus:ring-primary/30 focus:border-primary/40'
                     }`}
                 />
                 <button

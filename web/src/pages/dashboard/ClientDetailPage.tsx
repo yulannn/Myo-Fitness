@@ -1,14 +1,10 @@
-// ─────────────────────────────────────────────────────────────
-// ClientDetailPage – Full client view for coaches
-// ─────────────────────────────────────────────────────────────
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import DashboardLayout from './DashboardLayout.jsx';
-import coachingApi from '../../api/coachingApi.js';
-import VolumeChart from '../../components/coach/VolumeChart.jsx';
-import SessionHistory from '../../components/coach/SessionHistory.jsx';
-import SessionDetailModal from '../../components/coach/SessionDetailModal.jsx';
+import DashboardLayout from './DashboardLayout';
+import { useClientDetail } from '../../api/hooks/useCoaching';
+import VolumeChart from '../../components/coach/VolumeChart';
+import SessionHistory from '../../components/coach/SessionHistory';
+import SessionDetailModal from '../../components/coach/SessionDetailModal';
 import {
   ArrowLeftIcon,
   AcademicCapIcon,
@@ -20,35 +16,26 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function ClientDetailPage() {
-  const { clientId } = useParams();
+  const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const [client, setClient] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedSession, setSelectedSession] = useState<number | null>(null);
+
+  const { data: client, isLoading: loading, isError } = useClientDetail(clientId ? parseInt(clientId) : null);
 
   useEffect(() => {
-    if (!clientId) return;
-    setLoading(true);
-    coachingApi
-      .getClientDetail(parseInt(clientId))
-      .then(setClient)
-      .catch((err) => {
-        console.error('Failed to load client:', err);
-        navigate('/dashboard/coach', { replace: true });
-      })
-      .finally(() => setLoading(false));
-  }, [clientId, navigate]);
+    if (isError) {
+      navigate('/dashboard/coach', { replace: true });
+    }
+  }, [isError, navigate]);
 
-  // Sessions are now pre-flattened and limited to 50 by the API
   const allSessions = useMemo(() => {
     return client?.sessions || [];
   }, [client]);
 
   const profile = client?.fitnessProfiles;
-  const activeProgram = profile?.trainingPrograms?.find((p) => p.status === 'ACTIVE');
+  const activeProgram = profile?.trainingPrograms?.find((p: any) => p.status === 'ACTIVE');
 
-  // ── Experience label ──────────────────────────────────────
-  const expLabels = {
+  const expLabels: Record<string, string> = {
     BEGINNER: 'Débutant',
     INTERMEDIATE: 'Intermédiaire',
     ADVANCED: 'Avancé',
@@ -95,7 +82,7 @@ export default function ClientDetailPage() {
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
               <span className="text-primary font-bold text-xl">
-                {client.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
+                {client.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
               </span>
             </div>
           )}
@@ -113,7 +100,7 @@ export default function ClientDetailPage() {
             { icon: UserIcon, label: 'Âge', value: profile.age ? `${profile.age} ans` : '—' },
             { icon: ArrowsUpDownIcon, label: 'Taille', value: profile.height ? `${profile.height} cm` : '—' },
             { icon: ScaleIcon, label: 'Poids', value: profile.weight ? `${profile.weight} kg` : '—' },
-            { icon: AcademicCapIcon, label: 'Niveau', value: expLabels[profile.experienceLevel] || '—' },
+            { icon: AcademicCapIcon, label: 'Niveau', value: profile.experienceLevel ? expLabels[profile.experienceLevel] || '—' : '—' },
             { icon: CalendarDaysIcon, label: 'Fréquence', value: profile.trainingFrequency ? `${profile.trainingFrequency}×/sem` : '—' },
             { icon: FireIcon, label: 'Objectifs', value: profile.goals?.length || 0 },
           ].map((stat) => (
@@ -133,7 +120,7 @@ export default function ClientDetailPage() {
         <div className="mb-8">
           <h3 className="text-xs text-text-secondary uppercase tracking-wider font-bold mb-3">Objectifs</h3>
           <div className="flex flex-wrap gap-2">
-            {profile.goals.map((g, i) => (
+            {profile.goals.map((g: string, i: number) => (
               <span key={i} className="px-3 py-1.5 bg-primary/5 text-primary text-xs font-bold rounded-lg border border-primary/10">
                 {g}
               </span>
@@ -171,12 +158,12 @@ export default function ClientDetailPage() {
       <div className="mb-8">
         <SessionHistory
           sessions={allSessions}
-          onSessionClick={(sessionId) => setSelectedSession(sessionId)}
+          onSessionClick={(sessionId: number) => setSelectedSession(sessionId)}
         />
       </div>
 
       {/* ── Session Detail Modal ──────────────────────────────── */}
-      {selectedSession && (
+      {selectedSession && clientId && (
         <SessionDetailModal
           clientId={parseInt(clientId)}
           sessionId={selectedSession}

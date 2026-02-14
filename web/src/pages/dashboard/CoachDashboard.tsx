@@ -1,41 +1,27 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../context/AuthContext.jsx';
-import DashboardLayout from './DashboardLayout.jsx';
-import coachingApi from '../../api/coachingApi.js';
-import ClientsTable, { ClientsTableSkeleton } from '../../components/coach/ClientsTable.jsx';
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import DashboardLayout from './DashboardLayout';
+import { useClients, useTerminateRelationship } from '../../api/hooks/useCoaching';
+import ClientsTable, { ClientsTableSkeleton } from '../../components/coach/ClientsTable';
 import {
   UserGroupIcon,
   PlusIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import AddClientModal from '../../components/coach/AddClientModal.jsx';
+import AddClientModal from '../../components/coach/AddClientModal';
+import { Client } from '../../types';
 
 export default function CoachDashboard() {
   const { user } = useAuth();
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: clients = [], isLoading: loading } = useClients();
+  const terminateMutation = useTerminateRelationship();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    async function fetchClients() {
-      try {
-        const data = await coachingApi.getClients();
-        setClients(data);
-      } catch (err) {
-        console.error('Failed to fetch clients:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchClients();
-  }, []);
-
-  const handleTerminate = async (relationshipId) => {
+  const handleTerminate = async (relationshipId: number) => {
     if (!window.confirm('Voulez-vous vraiment arrêter le suivi de ce client ?')) return;
     try {
-      await coachingApi.terminateRelationship(relationshipId);
-      setClients((prev) => prev.filter((c) => c.relationshipId !== relationshipId));
+      await terminateMutation.mutateAsync(relationshipId);
     } catch (err) {
       console.error('Failed to terminate coaching:', err);
       alert('Erreur lors de la suppression de la relation.');
@@ -47,7 +33,7 @@ export default function CoachDashboard() {
     if (!searchQuery.trim()) return clients;
     const query = searchQuery.toLowerCase().trim();
     return clients.filter(
-      (c) =>
+      (c: Client) =>
         c.name.toLowerCase().includes(query) ||
         c.email.toLowerCase().includes(query) ||
         (c.activeProgram?.name?.toLowerCase().includes(query))
@@ -74,7 +60,7 @@ export default function CoachDashboard() {
               </span>
             </div>
             <p className="text-xs text-text-secondary font-medium italic">
-              {clients.filter(c => c.daysSinceLastSession !== null && c.daysSinceLastSession <= 7).length} actifs cette semaine
+              {clients.filter((c: Client) => c.daysSinceLastSession !== null && c.daysSinceLastSession! <= 7).length} actifs cette semaine
             </p>
           </div>
         </div>
@@ -148,4 +134,3 @@ export default function CoachDashboard() {
     </DashboardLayout>
   );
 }
-

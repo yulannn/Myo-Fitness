@@ -1,31 +1,23 @@
-// ─────────────────────────────────────────────────────────────
-// SessionDetailModal – Exercise-level session breakdown
-// ─────────────────────────────────────────────────────────────
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   XMarkIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
-import coachingApi from '../../api/coachingApi.js';
+import { useClientSessionDetail } from '../../api/hooks/useCoaching';
 
-export default function SessionDetailModal({ clientId, sessionId, onClose }) {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface SessionDetailModalProps {
+  clientId: number;
+  sessionId: number;
+  onClose: () => void;
+}
 
-  useEffect(() => {
-    if (!sessionId || !clientId) return;
-    setLoading(true);
-    setError(null);
-
-    coachingApi
-      .getClientSessionDetail(clientId, sessionId)
-      .then((data) => setSession(data))
-      .catch((err) => setError(err.message || 'Erreur de chargement'))
-      .finally(() => setLoading(false));
-  }, [clientId, sessionId]);
+export default function SessionDetailModal({ clientId, sessionId, onClose }: SessionDetailModalProps) {
+  const {
+    data: session,
+    isLoading: loading,
+    error,
+  } = useClientSessionDetail(clientId, sessionId);
 
   if (!sessionId) return null;
 
@@ -77,9 +69,9 @@ export default function SessionDetailModal({ clientId, sessionId, onClose }) {
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <p className="text-red-400 text-sm">{error}</p>
+              <p className="text-red-400 text-sm">{(error as any).message || 'Une erreur est survenue'}</p>
             </div>
-          ) : (
+          ) : session ? (
             <>
               {/* Summary bar */}
               {session.summary && (
@@ -100,8 +92,8 @@ export default function SessionDetailModal({ clientId, sessionId, onClose }) {
 
               {/* Exercises */}
               <div className="space-y-4">
-                {session.exercices?.map((ex) => {
-                  const primaryMuscle = ex.exercice.groupes?.find((g) => g.isPrimary)?.groupe?.name;
+                {session.exercices?.map((ex: any) => {
+                  const primaryMuscle = ex.exercice.groupes?.find((g: any) => g.isPrimary)?.groupe?.name;
 
                   return (
                     <div key={ex.id} className="bg-background rounded-xl border border-border-subtle overflow-hidden">
@@ -137,7 +129,7 @@ export default function SessionDetailModal({ clientId, sessionId, onClose }) {
                             <span>RPE</span>
                             <span className="text-right">Statut</span>
                           </div>
-                          {ex.performances.map((perf) => (
+                          {ex.performances.map((perf: any) => (
                             <div
                               key={perf.set_index}
                               className="grid grid-cols-5 gap-2 py-2 border-t border-border-subtle/30 text-xs"
@@ -167,7 +159,7 @@ export default function SessionDetailModal({ clientId, sessionId, onClose }) {
                 })}
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

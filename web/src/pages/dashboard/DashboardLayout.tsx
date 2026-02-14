@@ -1,15 +1,9 @@
-// ─────────────────────────────────────────────────────────────
-// DashboardLayout – Shared shell for all authenticated pages
-// Contains the top nav bar with user info & logout
-// ─────────────────────────────────────────────────────────────
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext';
 import {
   BoltIcon,
-  ArrowRightOnRectangleIcon,
-  UserCircleIcon,
+  ArrowRightOnRectangleIcon as LogoutIcon,
   Bars3Icon,
   XMarkIcon,
   HomeIcon,
@@ -20,7 +14,11 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 
-export default function DashboardLayout({ children }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,7 +136,7 @@ export default function DashboardLayout({ children }) {
               disabled={loggingOut}
               className="w-full mt-4 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-red-400 hover:bg-red-500/10 transition-all text-xs font-semibold border border-transparent hover:border-red-500/20"
             >
-              <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              <LogoutIcon className="w-4 h-4" />
               {loggingOut ? 'Sortie...' : 'Déconnexion'}
             </button>
           )}
@@ -203,7 +201,7 @@ export default function DashboardLayout({ children }) {
               onClick={handleLogout}
               className="w-full py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl flex items-center justify-center gap-3 font-black text-sm transition-all active:scale-95 shadow-lg shadow-red-500/5 mb-2"
             >
-              <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              <LogoutIcon className="w-5 h-5" />
               Déconnexion
             </button>
           </div>
@@ -240,4 +238,3 @@ export default function DashboardLayout({ children }) {
     </div>
   );
 }
-

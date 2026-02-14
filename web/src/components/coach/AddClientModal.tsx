@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import { XMarkIcon, UserPlusIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import coachingApi from '../../api/coachingApi';
+import { useCreateCoachingRequest } from '../../api/hooks/useCoaching';
 
-export default function AddClientModal({ isOpen, onClose, onSuccess }) {
+interface AddClientModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+export default function AddClientModal({ isOpen, onClose, onSuccess }: AddClientModalProps) {
   const [code, setCode] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const createRequestMutation = useCreateCoachingRequest();
   const [success, setSuccess] = useState(false);
 
   if (!isOpen) return null;
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!code.trim()) return;
 
-    setLoading(true);
-    setError(null);
-
     try {
-      await coachingApi.createRequest(code.trim().toUpperCase());
+      await createRequestMutation.mutateAsync(code.trim().toUpperCase());
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -28,11 +30,11 @@ export default function AddClientModal({ isOpen, onClose, onSuccess }) {
       }, 2000);
     } catch (err) {
       console.error('Failed to create coaching request:', err);
-      setError(err.message || 'Une erreur est survenue.');
-    } finally {
-      setLoading(false);
     }
   }
+
+  const loading = createRequestMutation.isPending;
+  const error = (createRequestMutation.error as any)?.message;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

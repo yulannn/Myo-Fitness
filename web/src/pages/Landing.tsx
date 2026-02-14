@@ -3,13 +3,13 @@
 // ─────────────────────────────────────────────────────────────
 
 import React from 'react';
-import Navbar from '../components/Navbar.jsx';
-import Hero from '../components/Hero.jsx';
-import Stats from '../components/Stats.jsx';
-import Features from '../components/Features.jsx';
-import Footer from '../components/Footer.jsx';
-import LegalModal from '../components/LegalModal.jsx';
-import ComingSoonModal from '../components/ComingSoonModal.jsx';
+import Navbar from '../components/Navbar';
+import Hero from '../components/Hero';
+import Stats from '../components/Stats';
+import Features from '../components/Features';
+import Footer from '../components/Footer';
+import LegalModal from '../components/LegalModal';
+import ComingSoonModal from '../components/ComingSoonModal';
 
 export default function Landing() {
   const [legalType, setLegalType] = React.useState(null);

@@ -1,10 +1,6 @@
-// ─────────────────────────────────────────────────────────────
-// Dashboard – Pratiquant (USER role)
-// ─────────────────────────────────────────────────────────────
-
 import React from 'react';
-import { useAuth } from '../../context/AuthContext.jsx';
-import DashboardLayout from './DashboardLayout.jsx';
+import { useAuth } from '../../context/AuthContext';
+import DashboardLayout from './DashboardLayout';
 import {
   ChartBarIcon,
   FireIcon,
