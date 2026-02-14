@@ -555,4 +555,113 @@ export class CoachingService {
       return session;
     });
   }
+
+  /**
+   * Créer une séance "maître" pour le coach (réutilisable)
+   */
+  async createCoachSession(coachId: number, sessionData: any) {
+    await this.assertIsCoach(coachId);
+
+    // 1. Trouver ou créer le programme "Bibliothèque Coach" pour ce coach
+    let coachProgram = await this.prisma.trainingProgram.findFirst({
+      where: {
+        fitnessProfile: { userId: coachId },
+        name: 'Ma Bibliothèque de Séances',
+      },
+      select: { id: true },
+    });
+
+    if (!coachProgram) {
+      // S'assurer qu'il a un profil fitness
+      let fitnessProfile = await this.prisma.fitnessProfile.findUnique({
+        where: { userId: coachId },
+      });
+
+      if (!fitnessProfile) {
+        fitnessProfile = await this.prisma.fitnessProfile.create({
+          data: {
+            userId: coachId,
+            age: 30, // Valeurs par défaut
+            height: 175,
+            weight: 70,
+            trainingFrequency: 3,
+            experienceLevel: 'INTERMEDIATE',
+            gender: 'OTHER',
+          },
+        });
+      }
+
+      coachProgram = await this.prisma.trainingProgram.create({
+        data: {
+          name: 'Ma Bibliothèque de Séances',
+          fitnessProfileId: fitnessProfile.id,
+          status: 'DRAFT',
+        },
+      });
+    }
+
+    // 2. Créer le template de séance
+    return this.prisma.$transaction(async (tx) => {
+      const template = await tx.sessionTemplate.create({
+        data: {
+          programId: coachProgram!.id,
+          name: sessionData.name || 'Séance sans nom',
+          description: sessionData.description || '',
+          orderInProgram: 0,
+        },
+      });
+
+      if (sessionData.exercises && sessionData.exercises.length > 0) {
+        for (let i = 0; i < sessionData.exercises.length; i++) {
+          const ex = sessionData.exercises[i];
+          await tx.exerciseTemplate.create({
+            data: {
+              sessionTemplateId: template.id,
+              exerciseId: ex.id,
+              sets: ex.sets || 3,
+              reps: ex.reps || 10,
+              weight: ex.weight || 0,
+              orderInSession: i,
+            },
+          });
+        }
+      }
+
+      return tx.sessionTemplate.findUnique({
+        where: { id: template.id },
+        include: {
+          exercises: {
+            include: { exercise: true },
+          },
+        },
+      });
+    });
+  }
+
+  /**
+   * Récupérer la bibliothèque de séances du coach
+   */
+  async getCoachLibrary(coachId: number) {
+    await this.assertIsCoach(coachId);
+
+    const coachProgram = await this.prisma.trainingProgram.findFirst({
+      where: {
+        fitnessProfile: { userId: coachId },
+        name: 'Ma Bibliothèque de Séances',
+      },
+      include: {
+        sessionTemplates: {
+          include: {
+            exercises: {
+              include: { exercise: true },
+              orderBy: { orderInSession: 'asc' },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    return coachProgram?.sessionTemplates || [];
+  }
 }

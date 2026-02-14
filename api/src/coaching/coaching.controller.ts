@@ -92,4 +92,16 @@ export class CoachingController {
   ) {
     return this.coachingService.assignSessionToClient(req.user.userId, clientId, sessionData);
   }
+
+  @Post('sessions')
+  @ApiOperation({ summary: 'Créer une séance maître dans la bibliothèque du coach' })
+  async createCoachSession(@Request() req, @Body() sessionData: any) {
+    return this.coachingService.createCoachSession(req.user.userId, sessionData);
+  }
+
+  @Get('sessions')
+  @ApiOperation({ summary: 'Récupérer la bibliothèque de séances du coach' })
+  async getCoachLibrary(@Request() req) {
+    return this.coachingService.getCoachLibrary(req.user.userId);
+  }
 }

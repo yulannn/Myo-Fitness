@@ -101,5 +101,21 @@ export const coachingService = {
   async assignSession(clientId: number, sessionData: any): Promise<any> {
     const res = await api.post(`/coaching/clients/${clientId}/sessions`, sessionData);
     return res.data;
+  },
+
+  /**
+   * Créer une séance maître (Template) dans la bibliothèque du coach
+   */
+  async saveCoachSession(sessionData: any): Promise<any> {
+    const res = await api.post('/coaching/sessions', sessionData);
+    return res.data;
+  },
+
+  /**
+   * Récupérer la bibliothèque de séances du coach
+   */
+  async getCoachSessions(): Promise<any[]> {
+    const res = await api.get('/coaching/sessions');
+    return res.data;
   }
 };
