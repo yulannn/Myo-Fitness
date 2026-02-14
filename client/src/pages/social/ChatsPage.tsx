@@ -33,6 +33,9 @@ import { getImageUrl } from '../../utils/imageUtils';
 import useJoinSession from '../../api/hooks/shared-session/useJoinSession';
 import { useSharedSessions } from '../../api/hooks/shared-session/useSharedSessions';
 import useCloneProgram from '../../api/hooks/program/useCloneProgram';
+import { useCoachClients } from '../../api/hooks/coaching/useCoachClients';
+import { useCreateConversation } from '../../api/hooks/chat/useCreateConversation';
+import { useMemo } from 'react';
 
 export default function ChatsPage() {
     const navigate = useNavigate();
@@ -58,12 +61,57 @@ export default function ChatsPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<number | null>(null);
 
+    // Virtual conversation state for new chats
+    const [pendingTargetUserId, setPendingTargetUserId] = useState<number | null>(null);
+
     // Queries
     const { data: conversations = [], isLoading: loadingConvs } = useConversations();
-    const { data: messages = [] } = useMessages(selectedConversation);
+    const { data: messages = [] } = useMessages(selectedConversation?.startsWith('virtual-') ? null : selectedConversation);
     const { mutate: sendMessage } = useSendMessage();
     const { mutate: markAsRead } = useMarkAsRead();
     const { data: friendsList = [] } = useFriendsList();
+    const { data: coachClients = [] } = useCoachClients();
+    const { mutateAsync: createConversation } = useCreateConversation();
+
+    // Filtered conversations logic: Merge real ones with coach clients
+    const filteredConversations = useMemo(() => {
+        // 1. Get existing private conversations with friends/clients
+        const existingPrivateConvs = conversations.filter((c: any) => c.type === 'PRIVATE');
+
+        // 2. Identify clients who don't have a conversation yet
+        const clientsWithConvs = new Set();
+        existingPrivateConvs.forEach((c: any) => {
+            const other = c.participants?.find((p: any) => p.user?.id !== user?.id);
+            if (other) clientsWithConvs.add(other.user.id);
+        });
+
+        // 3. Create virtual conversations for missing clients
+        const virtualConvs = coachClients
+            .filter(client => !clientsWithConvs.has(client.id))
+            .map(client => ({
+                id: `virtual-${client.id}`,
+                isVirtual: true,
+                participants: [{ user: client }, { user }],
+                unreadCount: 0,
+                lastMessage: null,
+                name: client.name,
+                type: 'PRIVATE'
+            }));
+
+        // 4. Merge all
+        const all = [...conversations, ...virtualConvs];
+
+        // 5. Filter by search term
+        return all.filter((c: any) => {
+            const clientPart = c.participants?.find((p: any) => p.user?.id !== user?.id)?.user;
+            const name = c.name || clientPart?.name || '';
+            return name.toLowerCase().includes(searchTerm.toLowerCase());
+        }).sort((a: any, b: any) => {
+            const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+            const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+            return dateB - dateA;
+        });
+    }, [conversations, coachClients, searchTerm, user?.id]);
 
     // Mutations
     const sendGroupRequestMutation = useSendGroupRequest();
@@ -94,18 +142,33 @@ export default function ChatsPage() {
     const deleteGroupMutation = useDeleteGroup();
     const leaveGroupMutation = useLeaveGroup();
 
-    const selectedConv = conversations.find((c: any) => c.id === selectedConversation);
+    const selectedConv = filteredConversations.find((c: any) => c.id === selectedConversation);
     const isGroupChat = selectedConv?.type === 'GROUP' || !!selectedConv?.groupId;
     const { data: groupMembersData } = useGroupMembers(isGroupChat ? selectedConv?.groupId : undefined);
     const groupMembers = groupMembersData?.members || [];
     const isAdmin = groupMembersData?.adminId === user?.id;
 
-    // Check location state for pre-selected conversation
+    // Check location state for pre-selected conversation or user
     useEffect(() => {
         if (location.state?.conversationId) {
             setSelectedConversation(location.state.conversationId);
+            setPendingTargetUserId(null);
+        } else if (location.state?.targetUserId) {
+            const targetId = location.state.targetUserId;
+            // Check if a real conversation already exists
+            const existing = conversations.find((c: any) =>
+                c.type === 'PRIVATE' && c.participants?.some((p: any) => p.user?.id === targetId)
+            );
+
+            if (existing) {
+                setSelectedConversation(existing.id);
+                setPendingTargetUserId(null);
+            } else {
+                setSelectedConversation(`virtual-${targetId}`);
+                setPendingTargetUserId(targetId);
+            }
         }
-    }, [location.state]);
+    }, [location.state, conversations]);
 
 
     // Websocket hooks
@@ -125,7 +188,7 @@ export default function ChatsPage() {
         markAsRead(convId);
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!selectedConversation || !messageInput.trim()) return;
 
         stopTyping();
@@ -134,7 +197,25 @@ export default function ChatsPage() {
             typingTimeoutRef.current = null;
         }
 
-        sendMessage({ conversationId: selectedConversation, content: messageInput.trim() }, {
+        let convId = selectedConversation;
+
+        // If it's a virtual conversation, we must create it first
+        if (selectedConversation.startsWith('virtual-') && pendingTargetUserId) {
+            try {
+                const newConv = await createConversation({
+                    type: 'PRIVATE',
+                    participantIds: [pendingTargetUserId]
+                });
+                convId = newConv.id;
+                setSelectedConversation(convId);
+                setPendingTargetUserId(null);
+            } catch (err) {
+                console.error("Failed to create conversation:", err);
+                return;
+            }
+        }
+
+        sendMessage({ conversationId: convId, content: messageInput.trim() }, {
             onSuccess: () => setMessageInput(''),
         });
     };
@@ -159,11 +240,7 @@ export default function ChatsPage() {
         }
     };
 
-    // Filtered conversations
-    const filteredConversations = conversations.filter((c: any) => {
-        const name = c.name || c.participants?.filter((p: any) => p.user?.id !== user?.id).map((p: any) => p.user?.name).join(', ') || '';
-        return name.toLowerCase().includes(searchTerm.toLowerCase());
-    });
+
 
 
     // --- RENDER ---

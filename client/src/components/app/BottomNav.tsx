@@ -12,16 +12,33 @@ import {
   Cog6ToothIcon as Cog6ToothIconSolid,
   ClipboardDocumentCheckIcon as ClipboardDocumentCheckIconSolid,
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
+  UsersIcon as UsersIconSolid,
+  PlusCircleIcon as PlusCircleIconSolid,
 } from '@heroicons/react/24/solid'
+import {
+  UsersIcon,
+  PlusCircleIcon,
+} from '@heroicons/react/24/outline'
 import { useSocialNotifications } from '../../api/hooks/social/useSocialNotifications'
+import { useAuth } from '../../context/AuthContext'
+import {
+  COACH_CLIENTS,
+  COACH_SESSION_NEW,
+  HOME,
+  PROGRAMS,
+  SESSIONS,
+  SOCIAL,
+  COACH_SOCIAL,
+  SETTINGS
+} from '../../utils/paths'
 
-const items = [
-  { to: '/programs', icon: ClipboardDocumentCheckIcon, iconSolid: ClipboardDocumentCheckIconSolid, label: 'Programme' },
-  { to: '/sessions', icon: CalendarDaysIcon, iconSolid: CalendarDaysIconSolid, label: 'Séances' },
-  { to: '/', icon: HomeIcon, iconSolid: HomeIconSolid, end: true, label: 'Accueil' },
-  { to: '/social', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid, label: 'Social' },
+const userItems = [
+  { to: PROGRAMS, icon: ClipboardDocumentCheckIcon, iconSolid: ClipboardDocumentCheckIconSolid, label: 'Programme' },
+  { to: SESSIONS, icon: CalendarDaysIcon, iconSolid: CalendarDaysIconSolid, label: 'Séances' },
+  { to: HOME, icon: HomeIcon, iconSolid: HomeIconSolid, end: true, label: 'Accueil' },
+  { to: SOCIAL, icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid, label: 'Social' },
   {
-    to: '/settings',
+    to: SETTINGS,
     icon: Cog6ToothIcon,
     iconSolid: Cog6ToothIconSolid,
     label: 'Paramètres',
@@ -29,9 +46,27 @@ const items = [
   },
 ]
 
+const coachItems = [
+  { to: COACH_CLIENTS, icon: UsersIcon, iconSolid: UsersIconSolid, label: 'Clients', end: true },
+  { to: COACH_SESSION_NEW, icon: PlusCircleIcon, iconSolid: PlusCircleIconSolid, label: 'Créer', end: false },
+  { to: COACH_SOCIAL, icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid, label: 'Messages', end: false },
+  {
+    to: SETTINGS,
+    icon: Cog6ToothIcon,
+    iconSolid: Cog6ToothIconSolid,
+    label: 'Paramètres',
+    end: false,
+    matches: ['/settings', '/my-profile', '/change-password', '/privacy', '/profile']
+  },
+]
+
 export default function BottomNav() {
   const location = useLocation()
+  const { user } = useAuth()
   const { totalNotifications } = useSocialNotifications()
+
+  const isCoach = user?.role === 'COACH'
+  const items = isCoach ? coachItems : userItems
 
   // Hide bottom nav on chatbot page for fullscreen experience
   if (location.pathname === '/ai-chatbot') {
@@ -78,7 +113,7 @@ export default function BottomNav() {
                   />
 
                   {/* Badge de notification pour l'onglet Social */}
-                  {to === '/social' && totalNotifications > 0 && (
+                  {(to === SOCIAL || to === COACH_SOCIAL) && totalNotifications > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-[#252527] shadow-lg animate-pulse">
                       {totalNotifications > 99 ? '99+' : totalNotifications}
                     </span>

@@ -499,4 +499,60 @@ export class CoachingService {
 
     return session;
   }
+
+  /**
+   * Assigner une nouvelle séance à un client (l'ajoute à son programme actif)
+   */
+  async assignSessionToClient(
+    coachId: number,
+    clientId: number,
+    sessionData: any, // On utilisera le même DTO que ProgramService
+  ) {
+    await this.assertIsCoach(coachId);
+    await this.assertCoachClientRelationship(coachId, clientId);
+
+    // 1. Trouver le programme actif du client
+    const activeProgram = await this.prisma.trainingProgram.findFirst({
+      where: {
+        fitnessProfile: { userId: clientId },
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+
+    if (!activeProgram) {
+      throw new BadRequestException(
+        "Le client n'a pas de programme actif. Impossible d'assigner une séance.",
+      );
+    }
+
+    // 2. Créer la séance via Prisma (logique similaire à ProgramService.addSessionToProgram)
+    return this.prisma.$transaction(async (tx) => {
+      const session = await tx.trainingSession.create({
+        data: {
+          programId: activeProgram.id,
+          sessionName: sessionData.name || 'Séance Coach',
+          completed: false,
+          status: 'SCHEDULED',
+          date: new Date(), // Par défaut aujourd'hui ou date prévue si fournie
+        },
+      });
+
+      if (sessionData.exercises && sessionData.exercises.length > 0) {
+        for (const ex of sessionData.exercises) {
+          await tx.exerciceSession.create({
+            data: {
+              sessionId: session.id,
+              exerciceId: ex.id,
+              sets: ex.sets || 3,
+              reps: ex.reps || 10,
+              weight: ex.weight || 0,
+            },
+          });
+        }
+      }
+
+      return session;
+    });
+  }
 }

@@ -68,5 +68,38 @@ export const coachingService = {
   async getPendingRequests(): Promise<CoachingRequest[]> {
     const res = await api.get('/coaching/pending');
     return res.data;
+  },
+
+  /**
+   * Récupérer les détails d'un client spécifique (pour le coach)
+   */
+  async getClientDetail(clientId: number): Promise<any> {
+    const res = await api.get(`/coaching/clients/${clientId}`);
+    return res.data;
+  },
+
+  /**
+   * Récupérer l'historique des séances d'un client
+   * Note: getClientDetail renvoie déjà les 50 dernières séances.
+   */
+  async getClientSessions(clientId: number): Promise<any[]> {
+    const res = await api.get(`/coaching/clients/${clientId}`);
+    return res.data.sessions || [];
+  },
+
+  /**
+   * Récupérer le détail d'une séance spécifique d'un client
+   */
+  async getClientSessionDetail(clientId: number, sessionId: number): Promise<any> {
+    const res = await api.get(`/coaching/clients/${clientId}/sessions/${sessionId}`);
+    return res.data;
+  },
+
+  /**
+   * Assigner une séance à un client
+   */
+  async assignSession(clientId: number, sessionData: any): Promise<any> {
+    const res = await api.post(`/coaching/clients/${clientId}/sessions`, sessionData);
+    return res.data;
   }
 };

@@ -53,6 +53,10 @@ import {
     EXERCISES,
     SENTRY_TEST,
     AI_CHATBOT,
+    COACH_CLIENTS,
+    COACH_CLIENT_DETAIL,
+    COACH_SESSION_NEW,
+    COACH_SOCIAL,
 } from "../utils/paths";
 
 export interface AppRouteConfig {
@@ -67,6 +71,10 @@ import { MyExercisesPage } from "../pages/my-exercises";
 import EditExercisePage from "../pages/my-exercises/EditExercisePage";
 import ExercisesPage from "../pages/exercises";
 import AIChatbot from "../pages/ai-chatbot";
+import CoachClients from "../pages/coach/CoachClients";
+import CoachClientDetail from "../pages/coach/CoachClientDetail";
+import CoachSessionCreator from "../pages/coach/CoachSessionCreator";
+import CoachSocial from "../pages/coach/CoachSocial";
 
 export const routes: AppRouteConfig[] = [
     {
@@ -179,6 +187,27 @@ export const routes: AppRouteConfig[] = [
     {
         path: AI_CHATBOT,
         element: <AIChatbot />,
+        protected: true
+    },
+    // Coach Routes
+    {
+        path: COACH_CLIENTS,
+        element: <CoachClients />,
+        protected: true
+    },
+    {
+        path: COACH_CLIENT_DETAIL,
+        element: <CoachClientDetail />,
+        protected: true
+    },
+    {
+        path: COACH_SESSION_NEW,
+        element: <CoachSessionCreator />,
+        protected: true
+    },
+    {
+        path: COACH_SOCIAL,
+        element: <CoachSocial />,
         protected: true
     },
     {

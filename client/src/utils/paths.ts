@@ -27,3 +27,9 @@ export const MY_EXERCISES = "/my-exercises";
 export const EXERCISES = "/exercises";
 export const SENTRY_TEST = "/sentry-test";
 export const AI_CHATBOT = "/ai-chatbot";
+
+// Coach Paths
+export const COACH_CLIENTS = "/coach/clients";
+export const COACH_CLIENT_DETAIL = "/coach/client/:id";
+export const COACH_SESSION_NEW = "/coach/sessions/new";
+export const COACH_SOCIAL = "/coach/social";

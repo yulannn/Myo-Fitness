@@ -82,4 +82,14 @@ export class CoachingController {
   ) {
     return this.coachingService.getClientSessionDetail(req.user.userId, clientId, sessionId);
   }
+
+  @Post('clients/:clientId/sessions')
+  @ApiOperation({ summary: 'Assigner une nouvelle séance à un client (Coach — sécurisé)' })
+  async assignSession(
+    @Request() req,
+    @Param('clientId', ParseIntPipe) clientId: number,
+    @Body() sessionData: any, // On accepte le format { name, exercises: [...] }
+  ) {
+    return this.coachingService.assignSessionToClient(req.user.userId, clientId, sessionData);
+  }
 }
