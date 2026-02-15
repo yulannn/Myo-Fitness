@@ -1,10 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { FitnessProfileService } from './fitness-profile.service';
 import { CreateFitnessProfileDto } from './dto/create-fitness-profile.dto';
 import { UpdateFitnessProfileDto } from './dto/update-fitness-profile.dto';
 import { FitnessProfileEntity } from './entities/fitness-profile.entity';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('fitness-profile')
@@ -12,8 +29,7 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/fitness-profile')
 export class FitnessProfileController {
-  constructor(private readonly fitnessProfileService: FitnessProfileService) { }
-
+  constructor(private readonly fitnessProfileService: FitnessProfileService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
@@ -40,14 +56,18 @@ export class FitnessProfileController {
       },
     },
   })
-  create(@Body() createFitnessProfileDto: CreateFitnessProfileDto, @Request() req) {
+  create(
+    @Body() createFitnessProfileDto: CreateFitnessProfileDto,
+    @Request() req,
+  ) {
     const userId = req.user.userId;
     return this.fitnessProfileService.create(createFitnessProfileDto, userId);
   }
 
-
   @Get()
-  @ApiOperation({ summary: 'Récupérer tous les profils fitness de l’utilisateur' })
+  @ApiOperation({
+    summary: 'Récupérer tous les profils fitness de l’utilisateur',
+  })
   @ApiResponse({
     status: 200,
     description: 'Liste des profils fitness',
@@ -60,7 +80,12 @@ export class FitnessProfileController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un profil fitness par ID' })
-  @ApiParam({ name: 'id', description: 'ID du profil fitness', type: Number, example: 1 })
+  @ApiParam({
+    name: 'id',
+    description: 'ID du profil fitness',
+    type: Number,
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Profil fitness trouvé',
@@ -74,20 +99,33 @@ export class FitnessProfileController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un profil fitness' })
-  @ApiParam({ name: 'id', description: 'ID du profil à modifier', type: Number, example: 1 })
+  @ApiParam({
+    name: 'id',
+    description: 'ID du profil à modifier',
+    type: Number,
+    example: 1,
+  })
   @ApiBody({ type: UpdateFitnessProfileDto })
   @ApiResponse({
     status: 200,
     description: 'Profil fitness mis à jour',
     type: FitnessProfileEntity,
   })
-  update(@Param('id') id: string, @Body() updateFitnessProfileDto: UpdateFitnessProfileDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateFitnessProfileDto: UpdateFitnessProfileDto,
+    @Request() req,
+  ) {
     const userId = req.user.userId;
-    return this.fitnessProfileService.update(+id, updateFitnessProfileDto, userId);
+    return this.fitnessProfileService.update(
+      +id,
+      updateFitnessProfileDto,
+      userId,
+    );
   }
 
   @Get('weight-history/me')
-  @ApiOperation({ summary: 'Récupérer l\'historique du poids de l\'utilisateur' })
+  @ApiOperation({ summary: "Récupérer l'historique du poids de l'utilisateur" })
   @ApiResponse({
     status: 200,
     description: 'Historique du poids récupéré avec succès',
@@ -116,7 +154,12 @@ export class FitnessProfileController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un profil fitness' })
-  @ApiParam({ name: 'id', description: 'ID du profil à supprimer', type: Number, example: 1 })
+  @ApiParam({
+    name: 'id',
+    description: 'ID du profil à supprimer',
+    type: Number,
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Profil fitness supprimé avec succès',

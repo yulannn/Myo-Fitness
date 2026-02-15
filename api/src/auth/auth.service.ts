@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -25,7 +29,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private emailService: EmailService,
-  ) { }
+  ) {}
 
   /** Génère un code ami de 8 caractères alphanumériques (privé) */
   private generateFriendCode(): string {
@@ -37,7 +41,7 @@ export class AuthService {
     return code;
   }
 
-  /** 
+  /**
    * Génère un code ami UNIQUE avec retry en cas de collision
    * @returns Un friendCode garanti unique
    * @throws BadRequestException si impossible d'en générer un après 10 tentatives
@@ -53,16 +57,20 @@ export class AuthService {
       if (!existing) {
         return code;
       }
-      console.warn(`FriendCode collision detected: ${code}, retry ${attempt + 1}/${MAX_ATTEMPTS}`);
+      console.warn(
+        `FriendCode collision detected: ${code}, retry ${attempt + 1}/${MAX_ATTEMPTS}`,
+      );
     }
 
     throw new BadRequestException(
-      'Impossible de générer un code ami unique. Veuillez réessayer dans quelques instants.'
+      'Impossible de générer un code ami unique. Veuillez réessayer dans quelques instants.',
     );
   }
 
-
-  async validateUser(email: string, password: string): Promise<SafeUser | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<SafeUser | null> {
     const user = await this.usersService.findUserByEmail(email);
     if (!user) return null;
 
@@ -71,7 +79,9 @@ export class AuthService {
 
     // Vérifier si l'email est vérifié
     if (!user.emailVerified) {
-      throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte de réception.');
+      throw new UnauthorizedException(
+        'Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte de réception.',
+      );
     }
 
     const { password: _, refreshToken, ...safeUser } = user;
@@ -114,20 +124,32 @@ export class AuthService {
   async signIn(user: SafeUser): Promise<AuthResultDto> {
     const payload = this.buildJwtPayload(user);
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    await this.usersService.updateUser(user.id, { refreshToken: hashedRefreshToken });
+    await this.usersService.updateUser(user.id, {
+      refreshToken: hashedRefreshToken,
+    });
 
     return { accessToken, refreshToken, user };
   }
 
-
   /** Inscription */
-  async register(signUpDto: SignUpDto): Promise<{ message: string; email: string }> {
-    const existingUser = await this.usersService.findUserByEmail(signUpDto.email);
-    if (existingUser) throw new BadRequestException('Cet email est déjà utilisé. Si c\'est votre compte, veuillez vous connecter.');
+  async register(
+    signUpDto: SignUpDto,
+  ): Promise<{ message: string; email: string }> {
+    const existingUser = await this.usersService.findUserByEmail(
+      signUpDto.email,
+    );
+    if (existingUser)
+      throw new BadRequestException(
+        "Cet email est déjà utilisé. Si c'est votre compte, veuillez vous connecter.",
+      );
 
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
 
@@ -153,10 +175,15 @@ export class AuthService {
     });
 
     // Envoyer l'email de vérification
-    await this.emailService.sendEmailVerification(newUser.email, code, newUser.name);
+    await this.emailService.sendEmailVerification(
+      newUser.email,
+      code,
+      newUser.name,
+    );
 
     return {
-      message: 'Compte créé avec succès. Consultez votre email pour le code de vérification.',
+      message:
+        'Compte créé avec succès. Consultez votre email pour le code de vérification.',
       email: newUser.email,
     };
   }
@@ -171,12 +198,16 @@ export class AuthService {
   }
 
   /** Rafraîchir le token avec vérification de la version */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayloadWithVersion>(refreshToken);
+      const payload =
+        await this.jwtService.verifyAsync<JwtPayloadWithVersion>(refreshToken);
       const user = await this.usersService.findUserById(payload.sub);
 
-      if (!user || !user.refreshToken) throw new UnauthorizedException('Invalid token');
+      if (!user || !user.refreshToken)
+        throw new UnauthorizedException('Invalid token');
 
       if (payload.tokenVersion !== user.tokenVersion) {
         throw new UnauthorizedException('Token révoqué - reconnectez-vous');
@@ -201,11 +232,17 @@ export class AuthService {
 
       const newPayload = this.buildJwtPayload(safeUser);
 
-      const newAccessToken = await this.jwtService.signAsync(newPayload, { expiresIn: '15m' });
-      const newRefreshToken = await this.jwtService.signAsync(newPayload, { expiresIn: '7d' });
+      const newAccessToken = await this.jwtService.signAsync(newPayload, {
+        expiresIn: '15m',
+      });
+      const newRefreshToken = await this.jwtService.signAsync(newPayload, {
+        expiresIn: '7d',
+      });
 
       const hashedNewRefresh = await bcrypt.hash(newRefreshToken, 10);
-      await this.usersService.updateUser(user.id, { refreshToken: hashedNewRefresh });
+      await this.usersService.updateUser(user.id, {
+        refreshToken: hashedNewRefresh,
+      });
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     } catch (err) {
@@ -222,7 +259,10 @@ export class AuthService {
 
     // Ne pas révéler si l'email existe ou non (sécurité)
     if (!user) {
-      return { message: 'Si cet email existe, un code de réinitialisation a été envoyé.' };
+      return {
+        message:
+          'Si cet email existe, un code de réinitialisation a été envoyé.',
+      };
     }
 
     // Générer un code à 6 chiffres
@@ -240,13 +280,18 @@ export class AuthService {
     // Envoyer l'email
     await this.emailService.sendPasswordResetEmail(user.email, code, user.name);
 
-    return { message: 'Si cet email existe, un code de réinitialisation a été envoyé.' };
+    return {
+      message: 'Si cet email existe, un code de réinitialisation a été envoyé.',
+    };
   }
 
   /**
    * Vérifie uniquement si le code est valide (sans changer le mot de passe)
    */
-  async verifyResetCode(email: string, code: string): Promise<{ valid: boolean }> {
+  async verifyResetCode(
+    email: string,
+    code: string,
+  ): Promise<{ valid: boolean }> {
     const user = await this.usersService.findUserByEmail(email);
 
     if (!user) {
@@ -274,7 +319,11 @@ export class AuthService {
   /**
    * Vérifie le code et réinitialise le mot de passe
    */
-  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
     const user = await this.usersService.findUserByEmail(email);
 
     if (!user) {
@@ -310,7 +359,10 @@ export class AuthService {
     // Envoyer un email de confirmation
     await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
-    return { message: 'Votre mot de passe a été réinitialisé avec succès. Vous devrez vous reconnecter.' };
+    return {
+      message:
+        'Votre mot de passe a été réinitialisé avec succès. Vous devrez vous reconnecter.',
+    };
   }
 
   /**
@@ -328,7 +380,10 @@ export class AuthService {
     }
 
     // Vérifier que le mot de passe actuel est correct
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Le mot de passe actuel est incorrect');
     }
@@ -336,7 +391,9 @@ export class AuthService {
     // Vérifier que le nouveau mot de passe est différent de l'ancien
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
-      throw new BadRequestException('Le nouveau mot de passe doit être différent de l\'ancien');
+      throw new BadRequestException(
+        "Le nouveau mot de passe doit être différent de l'ancien",
+      );
     }
 
     // Hasher le nouveau mot de passe
@@ -351,7 +408,10 @@ export class AuthService {
     // Envoyer un email de confirmation
     await this.emailService.sendPasswordChangedEmail(user.email, user.name);
 
-    return { message: 'Votre mot de passe a été modifié avec succès. Vous devrez vous reconnecter sur tous vos appareils.' };
+    return {
+      message:
+        'Votre mot de passe a été modifié avec succès. Vous devrez vous reconnecter sur tous vos appareils.',
+    };
   }
 
   /**
@@ -365,7 +425,9 @@ export class AuthService {
     }
 
     if (user.emailVerified) {
-      return { message: 'Votre email est déjà vérifié. Vous pouvez vous connecter.' };
+      return {
+        message: 'Votre email est déjà vérifié. Vous pouvez vous connecter.',
+      };
     }
 
     if (!user.emailVerificationCode || !user.emailVerificationExpires) {
@@ -374,7 +436,9 @@ export class AuthService {
 
     // Vérifier si le code a expiré
     if (new Date() > user.emailVerificationExpires) {
-      throw new BadRequestException('Le code de vérification a expiré. Demandez un nouveau code.');
+      throw new BadRequestException(
+        'Le code de vérification a expiré. Demandez un nouveau code.',
+      );
     }
 
     // Vérifier que le code correspond
@@ -389,7 +453,10 @@ export class AuthService {
       emailVerificationExpires: null,
     });
 
-    return { message: 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.' };
+    return {
+      message:
+        'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.',
+    };
   }
 
   /**
@@ -400,7 +467,10 @@ export class AuthService {
 
     if (!user) {
       // Ne pas révéler si l'email existe ou non
-      return { message: 'Si cet email existe et n\'est pas vérifié, un nouveau code a été envoyé.' };
+      return {
+        message:
+          "Si cet email existe et n'est pas vérifié, un nouveau code a été envoyé.",
+      };
     }
 
     if (user.emailVerified) {
@@ -420,6 +490,8 @@ export class AuthService {
     // Envoyer l'email
     await this.emailService.sendEmailVerification(user.email, code, user.name);
 
-    return { message: 'Un nouveau code de vérification a été envoyé à votre email.' };
+    return {
+      message: 'Un nouveau code de vérification a été envoyé à votre email.',
+    };
   }
 }

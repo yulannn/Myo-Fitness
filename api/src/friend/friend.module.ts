@@ -9,4 +9,4 @@ import { R2Module } from '../r2/r2.module';
   controllers: [FriendController],
   providers: [FriendService],
 })
-export class FriendModule { }
+export class FriendModule {}

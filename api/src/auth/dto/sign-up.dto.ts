@@ -1,4 +1,10 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsIn } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SignUpDto {
@@ -25,7 +31,7 @@ export class SignUpDto {
   password: string;
 
   @ApiPropertyOptional({
-    description: 'Rôle de l\'utilisateur (USER ou COACH)',
+    description: "Rôle de l'utilisateur (USER ou COACH)",
     example: 'USER',
     enum: ['USER', 'COACH'],
   })

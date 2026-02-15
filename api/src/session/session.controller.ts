@@ -1,4 +1,17 @@
-import { Controller, Patch, Param, Body, UseGuards, ParseIntPipe, Post, Request, Delete, Put, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  ParseIntPipe,
+  Post,
+  Request,
+  Delete,
+  Put,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { SessionService } from './session.service';
 import { UpdateSessionDateDto } from './dto/update-session.dto';
 import {
@@ -14,7 +27,7 @@ import { ExerciseDataDto } from 'src/program/dto/session-data.dto';
 @ApiTags('session')
 @Controller('api/v1/session')
 export class SessionController {
-  constructor(private readonly sessionService: SessionService) { }
+  constructor(private readonly sessionService: SessionService) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
@@ -29,10 +42,7 @@ export class SessionController {
     description: 'Session récupérée avec succès',
   })
   @ApiResponse({ status: 404, description: 'Session non trouvée' })
-  getSessionById(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req,
-  ) {
+  getSessionById(@Param('id', ParseIntPipe) id: number, @Request() req) {
     const userId = req.user.userId;
     return this.sessionService.getSessionById(id, userId);
   }
@@ -41,7 +51,8 @@ export class SessionController {
   @Get('user/calendar')
   @ApiOperation({
     summary: '🚀 Récupérer les sessions optimisées pour le calendrier',
-    description: 'Endpoint ultra-optimisé qui retourne uniquement les données minimales pour l\'affichage calendrier'
+    description:
+      "Endpoint ultra-optimisé qui retourne uniquement les données minimales pour l'affichage calendrier",
   })
   @ApiResponse({
     status: 200,
@@ -53,14 +64,19 @@ export class SessionController {
     @Query('endDate') endDate?: string,
   ) {
     const userId = req.user.userId;
-    return this.sessionService.getSessionsForCalendar(userId, startDate, endDate);
+    return this.sessionService.getSessionsForCalendar(
+      userId,
+      startDate,
+      endDate,
+    );
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('user/all')
   @ApiOperation({
-    summary: 'Récupérer toutes les sessions d\'un utilisateur',
-    description: 'Supporte le filtrage par plage de dates via query params (startDate, endDate) pour optimiser le chargement du calendrier'
+    summary: "Récupérer toutes les sessions d'un utilisateur",
+    description:
+      'Supporte le filtrage par plage de dates via query params (startDate, endDate) pour optimiser le chargement du calendrier',
   })
   @ApiResponse({
     status: 200,
@@ -79,7 +95,8 @@ export class SessionController {
   @Get('user/stats')
   @ApiOperation({
     summary: '📊 Récupérer les statistiques utilisateur optimisées',
-    description: 'Calcul optimisé côté DB des statistiques de sessions (total, complétées, à venir)',
+    description:
+      'Calcul optimisé côté DB des statistiques de sessions (total, complétées, à venir)',
   })
   @ApiResponse({
     status: 200,
@@ -94,7 +111,8 @@ export class SessionController {
   @Get('user/in-progress')
   @ApiOperation({
     summary: '🔄 Récupérer la session en cours (IN_PROGRESS)',
-    description: 'Retourne la session actuellement en cours d\'exécution, permettant à l\'utilisateur de la reprendre'
+    description:
+      "Retourne la session actuellement en cours d'exécution, permettant à l'utilisateur de la reprendre",
   })
   @ApiResponse({
     status: 200,
@@ -109,7 +127,8 @@ export class SessionController {
   @Delete('user/in-progress/:id')
   @ApiOperation({
     summary: '🚫 Annuler une session en cours',
-    description: 'Annule la session IN_PROGRESS et la remet en SCHEDULED. Les performances sont supprimées.'
+    description:
+      'Annule la session IN_PROGRESS et la remet en SCHEDULED. Les performances sont supprimées.',
   })
   @ApiParam({
     name: 'id',
@@ -134,16 +153,14 @@ export class SessionController {
   @Get('user/records')
   @ApiOperation({
     summary: '🏆 Récupérer les records personnels (top 3)',
-    description: 'Calcul optimisé côté DB des 3 meilleurs records (poids × reps) par exercice',
+    description:
+      'Calcul optimisé côté DB des 3 meilleurs records (poids × reps) par exercice',
   })
   @ApiResponse({
     status: 200,
     description: 'Records personnels récupérés avec succès',
   })
-  getPersonalRecords(
-    @Request() req,
-    @Query('limit') limit?: string,
-  ) {
+  getPersonalRecords(@Request() req, @Query('limit') limit?: string) {
     const userId = req.user.userId;
     const limitNum = limit ? parseInt(limit, 10) : 3;
     return this.sessionService.getPersonalRecords(userId, limitNum);
@@ -153,7 +170,8 @@ export class SessionController {
   @Get('user/streak')
   @ApiOperation({
     summary: '🔥 Récupérer les données de streak',
-    description: 'Calcul optimisé côté DB de la série de jours consécutifs d\'entraînement',
+    description:
+      "Calcul optimisé côté DB de la série de jours consécutifs d'entraînement",
   })
   @ApiResponse({
     status: 200,
@@ -163,7 +181,6 @@ export class SessionController {
     const userId = req.user.userId;
     return this.sessionService.getUserStreak(userId);
   }
-
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/completed')
@@ -210,7 +227,7 @@ export class SessionController {
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/sessionName')
-  @ApiOperation({ summary: 'Mettre à jour le nom d\'une session' })
+  @ApiOperation({ summary: "Mettre à jour le nom d'une session" })
   @ApiParam({
     name: 'id',
     description: 'ID de la session à mettre à jour',
@@ -221,9 +238,9 @@ export class SessionController {
     schema: {
       type: 'object',
       properties: {
-        sessionName: { type: 'string' }
-      }
-    }
+        sessionName: { type: 'string' },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -238,7 +255,6 @@ export class SessionController {
     const userId = req.user.userId;
     return this.sessionService.updateSessionName(id, sessionName, userId);
   }
-
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('delete-exercise/:sessionId/:exerciceId')
@@ -337,10 +353,7 @@ export class SessionController {
     description: 'Session supprimée avec succès',
   })
   @ApiResponse({ status: 404, description: 'Session non trouvée' })
-  async deleteSession(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req,
-  ) {
+  async deleteSession(@Param('id', ParseIntPipe) id: number, @Request() req) {
     const userId = req.user.userId;
     return this.sessionService.deleteSession(id, userId);
   }
@@ -348,12 +361,13 @@ export class SessionController {
   @UseGuards(AuthGuard('jwt'))
   @Patch('exercice-session/:id/sets')
   @ApiOperation({
-    summary: '🔧 Modifier le nombre de séries d\'un exercice pendant la session',
-    description: 'Permet d\'ajouter ou enlever des séries à un exercice en cours de session'
+    summary: "🔧 Modifier le nombre de séries d'un exercice pendant la session",
+    description:
+      "Permet d'ajouter ou enlever des séries à un exercice en cours de session",
   })
   @ApiParam({
     name: 'id',
-    description: 'ID de l\'ExerciceSession',
+    description: "ID de l'ExerciceSession",
     type: Number,
   })
   @ApiBody({
@@ -364,16 +378,19 @@ export class SessionController {
           type: 'number',
           description: 'Nouveau nombre de séries (1-20)',
           minimum: 1,
-          maximum: 20
-        }
-      }
-    }
+          maximum: 20,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
     description: 'Nombre de séries mis à jour avec succès',
   })
-  @ApiResponse({ status: 400, description: 'Données invalides ou session déjà terminée' })
+  @ApiResponse({
+    status: 400,
+    description: 'Données invalides ou session déjà terminée',
+  })
   @ApiResponse({ status: 404, description: 'Exercice de session non trouvé' })
   async updateExerciceSessionSets(
     @Param('id', ParseIntPipe) id: number,

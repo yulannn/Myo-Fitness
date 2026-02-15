@@ -1,1 +1,1 @@
-export class SessionAdaptation { }
+export class SessionAdaptation {}

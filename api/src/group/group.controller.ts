@@ -25,7 +25,7 @@ import { Throttle } from '@nestjs/throttler';
 @ApiTags('group')
 @Controller('api/v1/group')
 export class GroupController {
-  constructor(private readonly groupService: GroupService) { }
+  constructor(private readonly groupService: GroupService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post()
@@ -133,7 +133,7 @@ export class GroupController {
   @ApiBody({ schema: { example: { name: 'Nouveau nom' } } })
   updateGroup(
     @Param('groupId') groupId: number,
-    @Body() body: { name: string }
+    @Body() body: { name: string },
   ) {
     return this.groupService.updateGroup(groupId, body.name);
   }
@@ -146,7 +146,7 @@ export class GroupController {
   @ApiParam({ name: 'userId', type: Number })
   removeMember(
     @Param('groupId') groupId: number,
-    @Param('userId') userId: number
+    @Param('userId') userId: number,
   ) {
     return this.groupService.removeMember(groupId, userId);
   }

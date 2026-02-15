@@ -34,7 +34,7 @@ export class PersonalRecordDto {
   exerciseName: string;
 
   @ApiProperty({
-    description: 'ID de l\'exercice',
+    description: "ID de l'exercice",
     example: 5,
   })
   exerciseId: number;

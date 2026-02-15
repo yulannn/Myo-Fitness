@@ -16,7 +16,7 @@ import { ProgramModule } from './program/program.module';
 import { SessionModule } from './session/session.module';
 import { GroupModule } from './group/group.module';
 import { PerformanceModule } from './performance/performance.module';
-import { RateLimiterGuard } from '../src/guards/rateLimiterGuard'
+import { RateLimiterGuard } from '../src/guards/rateLimiterGuard';
 import { SessionAdaptationModule } from './session-adaptation/session-adaptation.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -39,8 +39,6 @@ import { SessionTemplateModule } from './session-template/session-template.modul
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AiChatbotModule } from './ai-chatbot/ai-chatbot.module';
 import { CoachingModule } from './coaching/coaching.module';
-
-
 
 @Module({
   imports: [
@@ -108,4 +106,4 @@ import { CoachingModule } from './coaching/coaching.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

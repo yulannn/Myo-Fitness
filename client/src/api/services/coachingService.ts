@@ -117,5 +117,12 @@ export const coachingService = {
   async getCoachSessions(): Promise<any[]> {
     const res = await api.get('/coaching/sessions');
     return res.data;
+  },
+
+  /**
+   * Accuser réception d'une modification du coach
+   */
+  async acknowledgeSessionUpdate(sessionTemplateId: number): Promise<void> {
+    await api.post(`/coaching/sessions/${sessionTemplateId}/acknowledge-update`);
   }
 };

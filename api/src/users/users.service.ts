@@ -1,10 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserEntity } from './entities/users.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async findUserByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
@@ -92,7 +96,6 @@ export class UsersService {
   // SYSTÈME D'XP ET DE NIVEAUX
   // ========================================
 
-
   private readonly XP_PER_LEVEL = 200; // XP nécessaire pour passer au niveau supérieur
 
   /**
@@ -132,7 +135,9 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(user.xp);
+    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(
+      user.xp,
+    );
 
     return {
       level: user.level,
@@ -145,7 +150,10 @@ export class UsersService {
   /**
    * Ajoute de l'XP à un utilisateur et gère automatiquement les montées de niveau
    */
-  async gainXp(id: number, xpGained: number): Promise<{
+  async gainXp(
+    id: number,
+    xpGained: number,
+  ): Promise<{
     level: number;
     totalXp: number;
     currentLevelXp: number;
@@ -185,7 +193,9 @@ export class UsersService {
     });
 
     // Calculer les informations du niveau actuel
-    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(updatedUser.xp);
+    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(
+      updatedUser.xp,
+    );
 
     return {
       level: updatedUser.level,
@@ -200,7 +210,10 @@ export class UsersService {
   /**
    * Définir l'XP et le niveau d'un utilisateur manuellement (admin)
    */
-  async setUserXp(id: number, xp: number): Promise<{
+  async setUserXp(
+    id: number,
+    xp: number,
+  ): Promise<{
     level: number;
     totalXp: number;
     currentLevelXp: number;
@@ -221,7 +234,9 @@ export class UsersService {
       select: { level: true, xp: true },
     });
 
-    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(updatedUser.xp);
+    const { currentLevelXp, xpForNextLevel } = this.calculateCurrentLevelXp(
+      updatedUser.xp,
+    );
 
     return {
       level: updatedUser.level,
@@ -230,6 +245,4 @@ export class UsersService {
       xpForNextLevel,
     };
   }
-
-
 }

@@ -10,4 +10,4 @@ import { PassportModule } from '@nestjs/passport';
   providers: [CoachingService],
   exports: [CoachingService],
 })
-export class CoachingModule { }
+export class CoachingModule {}

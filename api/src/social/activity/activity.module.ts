@@ -4,8 +4,8 @@ import { ActivityService } from './activity.service';
 import { PrismaService } from 'prisma/prisma.service';
 
 @Module({
-    controllers: [ActivityController],
-    providers: [ActivityService],
-    exports: [ActivityService],
+  controllers: [ActivityController],
+  providers: [ActivityService],
+  exports: [ActivityService],
 })
-export class ActivityModule { }
+export class ActivityModule {}

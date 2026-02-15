@@ -22,7 +22,7 @@ export class SessionService {
     private readonly badgeCheckerService: BadgeCheckerService,
     private readonly bodyAtlasService: BodyAtlasService,
     private readonly leaderboardService: LeaderboardService,
-  ) { }
+  ) {}
 
   /**
    * 🔄 Récupère la session IN_PROGRESS de l'utilisateur (s'il y en a une)
@@ -109,11 +109,11 @@ export class SessionService {
     this.programService.verifyPermissions(
       session.trainingProgram.fitnessProfile.userId,
       userId,
-      'cette session'
+      'cette session',
     );
 
     if (session.status !== 'IN_PROGRESS') {
-      throw new BadRequestException('Cette session n\'est pas en cours');
+      throw new BadRequestException("Cette session n'est pas en cours");
     }
 
     return this.prisma.$transaction(async (prisma) => {
@@ -142,7 +142,9 @@ export class SessionService {
         },
       });
 
-      return { message: 'Session annulée avec succès. Elle a été remise en attente.' };
+      return {
+        message: 'Session annulée avec succès. Elle a été remise en attente.',
+      };
     });
   }
 
@@ -173,7 +175,7 @@ export class SessionService {
     this.programService.verifyPermissions(
       sessionWithProgram.trainingProgram.fitnessProfile.userId,
       userId,
-      'cette session'
+      'cette session',
     );
 
     // Ensuite récupérer les données complètes optimisées
@@ -389,7 +391,7 @@ export class SessionService {
               select: {
                 id: true,
                 name: true, // Nécessaire pour PersonalRecords
-              }
+              },
             },
             // Performances nécessaires pour calculer les PR
             performances: {
@@ -397,10 +399,10 @@ export class SessionService {
                 id_set: true,
                 weight: true,
                 reps_effectuees: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: {
         date: 'desc',
@@ -440,7 +442,9 @@ export class SessionService {
     }
 
     if (session.trainingProgram.fitnessProfile.userId !== userId) {
-      throw new BadRequestException('You do not have permission to complete this session');
+      throw new BadRequestException(
+        'You do not have permission to complete this session',
+      );
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -514,11 +518,11 @@ export class SessionService {
               programName: session.trainingProgram.name,
               duration: updatedSession.duration || 0,
             },
-            tx // ✅ Passer la transaction
+            tx, // ✅ Passer la transaction
           );
         }
       } catch (error) {
-        console.error('Erreur lors du gain d\'XP ou activité sociale:', error);
+        console.error("Erreur lors du gain d'XP ou activité sociale:", error);
         //  On laisse l'erreur remonter pour rollback la transaction
         throw error;
       }
@@ -560,7 +564,7 @@ export class SessionService {
             badgeName: badgeData.name,
             badgeIcon: badgeData.iconUrl,
             badgeCode: badgeData.code,
-          }
+          },
         );
       }
     } catch (error) {
@@ -572,7 +576,10 @@ export class SessionService {
     try {
       await this.bodyAtlasService.updateMuscleStats(userId, id);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des stats musculaires:', error);
+      console.error(
+        'Erreur lors de la mise à jour des stats musculaires:',
+        error,
+      );
       // On ne fait pas échouer la requête si la mise à jour échoue
     }
 
@@ -587,7 +594,10 @@ export class SessionService {
     try {
       await this.leaderboardService.updateUserStats(userId);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des stats du leaderboard:', error);
+      console.error(
+        'Erreur lors de la mise à jour des stats du leaderboard:',
+        error,
+      );
       // On ne fait pas échouer la requête si la mise à jour échoue
     }
 
@@ -600,20 +610,28 @@ export class SessionService {
   /**
    * Retourne la liste des badges nouvellement débloqués
    */
-  private async checkBadgesAfterSession(userId: number, sessionId: number): Promise<any[]> {
+  private async checkBadgesAfterSession(
+    userId: number,
+    sessionId: number,
+  ): Promise<any[]> {
     const allUnlockedBadges: any[] = [];
 
     try {
       // Vérifier les badges de session
-      const sessionBadges = await this.badgeCheckerService.checkSessionBadges(userId, sessionId);
+      const sessionBadges = await this.badgeCheckerService.checkSessionBadges(
+        userId,
+        sessionId,
+      );
       allUnlockedBadges.push(...sessionBadges);
 
       // Vérifier les badges de volume
-      const volumeBadges = await this.badgeCheckerService.checkVolumeBadges(userId);
+      const volumeBadges =
+        await this.badgeCheckerService.checkVolumeBadges(userId);
       allUnlockedBadges.push(...volumeBadges);
 
       // Vérifier le badge "Semaine Parfaite"
-      const perfectWeekBadge = await this.badgeCheckerService.checkPerfectWeekBadge(userId);
+      const perfectWeekBadge =
+        await this.badgeCheckerService.checkPerfectWeekBadge(userId);
       if (perfectWeekBadge) {
         allUnlockedBadges.push(perfectWeekBadge);
       }
@@ -635,14 +653,15 @@ export class SessionService {
 
     for (const exercise of session.exercices) {
       // Ignorer si pas de performances ou exercice cardio (pour l'instant basé sur poids)
-      if (!exercise.performances || exercise.performances.length === 0) continue;
+      if (!exercise.performances || exercise.performances.length === 0)
+        continue;
       if (exercise.exercice.type === 'CARDIO') continue;
 
       // Calculer le max poids validé dans cette session
       const maxWeightSession = Math.max(
         ...exercise.performances
           .filter((p: any) => p.success)
-          .map((p: any) => p.weight || 0)
+          .map((p: any) => p.weight || 0),
       );
 
       if (maxWeightSession <= 0) continue;
@@ -681,7 +700,7 @@ export class SessionService {
             previousValue: previousMax > 0 ? `${previousMax}kg` : null,
             sessionId: session.id,
             exerciseId: exercise.exerciceId,
-          }
+          },
         );
       }
     }
@@ -704,7 +723,7 @@ export class SessionService {
 
       // 🔥 Variables pour le calcul de calories
       let standardExerciseTime = 0; // Minutes d'exercices standard
-      let cardioExerciseTime = 0;   // Minutes de cardio
+      let cardioExerciseTime = 0; // Minutes de cardio
 
       // Parcourir tous les exercices
       session.exercices.forEach((ex: any) => {
@@ -767,10 +786,11 @@ export class SessionService {
       // Valeurs MET (Metabolic Equivalent of Task)
       // Source: Compendium of Physical Activities
       const MET_STRENGTH_TRAINING = 4.5; // Musculation générale
-      const MET_CARDIO = 8.0;             // Cardio modéré-intense
+      const MET_CARDIO = 8.0; // Cardio modéré-intense
 
       // Durée réelle de la session (si disponible)
-      const sessionDuration = session.duration || (standardExerciseTime + cardioExerciseTime);
+      const sessionDuration =
+        session.duration || standardExerciseTime + cardioExerciseTime;
 
       // Si on a des infos détaillées sur les types d'exercices
       let caloriesBurned = 0;
@@ -778,12 +798,16 @@ export class SessionService {
       if (cardioExerciseTime > 0 || standardExerciseTime > 0) {
         // Calcul séparé par type
         // Formule: MET × poids (kg) × durée (heures)
-        const standardCalories = MET_STRENGTH_TRAINING * userWeight * (standardExerciseTime / 60);
-        const cardioCalories = MET_CARDIO * userWeight * (cardioExerciseTime / 60);
+        const standardCalories =
+          MET_STRENGTH_TRAINING * userWeight * (standardExerciseTime / 60);
+        const cardioCalories =
+          MET_CARDIO * userWeight * (cardioExerciseTime / 60);
         caloriesBurned = Math.round(standardCalories + cardioCalories);
       } else {
         // Pas d'info détaillée, utiliser la durée globale avec MET moyen
-        caloriesBurned = Math.round(MET_STRENGTH_TRAINING * userWeight * (sessionDuration / 60));
+        caloriesBurned = Math.round(
+          MET_STRENGTH_TRAINING * userWeight * (sessionDuration / 60),
+        );
       }
 
       // Créer ou mettre à jour le résumé
@@ -864,21 +888,33 @@ export class SessionService {
     });
   }
 
-
-  async addExerciseToSession(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
+  async addExerciseToSession(
+    sessionId: number,
+    exerciceId: number,
+    exerciseData: ExerciseDataDto,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (prisma) => {
       const session = await prisma.trainingSession.findUnique({
         where: { id: sessionId },
-        include: { exercices: true, trainingProgram: { include: { fitnessProfile: true } } },
+        include: {
+          exercices: true,
+          trainingProgram: { include: { fitnessProfile: true } },
+        },
       });
 
       if (!session) {
         throw new BadRequestException('Session introuvable');
       }
 
-      this.programService.verifyPermissions(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+      this.programService.verifyPermissions(
+        session.trainingProgram.fitnessProfile.userId,
+        userId,
+        'cette session',
+      );
 
-      if (!exerciseData.id) throw new BadRequestException('ID d\'exercice manquant');
+      if (!exerciseData.id)
+        throw new BadRequestException("ID d'exercice manquant");
 
       const exercice = await prisma.exercice.findUnique({
         where: { id: exerciceId },
@@ -905,23 +941,31 @@ export class SessionService {
     });
   }
 
-  async deleteExerciseFromSession(sessionId: number, exerciceId: number, userId: number) {
+  async deleteExerciseFromSession(
+    sessionId: number,
+    exerciceId: number,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (prisma) => {
       const session = await prisma.trainingSession.findUnique({
         where: { id: sessionId },
         include: {
-          exercices: true, trainingProgram: {
+          exercices: true,
+          trainingProgram: {
             include: { fitnessProfile: true },
           },
         },
       });
 
-
       if (!session) {
-        throw new BadRequestException('Session introuvable')
+        throw new BadRequestException('Session introuvable');
       }
 
-      this.programService.verifyPermissions(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+      this.programService.verifyPermissions(
+        session.trainingProgram.fitnessProfile.userId,
+        userId,
+        'cette session',
+      );
 
       await prisma.exerciceSession.delete({
         where: {
@@ -939,8 +983,12 @@ export class SessionService {
     });
   }
 
-
-  async updateExerciceFromSession(sessionId: number, exerciceId: number, exerciseData: ExerciseDataDto, userId: number) {
+  async updateExerciceFromSession(
+    sessionId: number,
+    exerciceId: number,
+    exerciseData: ExerciseDataDto,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (prisma) => {
       const session = await prisma.trainingSession.findUnique({
         where: { id: sessionId },
@@ -955,7 +1003,11 @@ export class SessionService {
         throw new BadRequestException('Session introuvable');
       }
 
-      this.programService.verifyPermissions(session.trainingProgram.fitnessProfile.userId, userId, 'cette session');
+      this.programService.verifyPermissions(
+        session.trainingProgram.fitnessProfile.userId,
+        userId,
+        'cette session',
+      );
 
       const exercice = await prisma.exerciceSession.findUnique({
         where: {
@@ -1015,7 +1067,7 @@ export class SessionService {
       this.programService.verifyPermissions(
         session.trainingProgram.fitnessProfile.userId,
         userId,
-        'cette session'
+        'cette session',
       );
 
       // 🆕 SOFT DELETE : Au lieu de supprimer, on marque comme CANCELLED
@@ -1048,7 +1100,10 @@ export class SessionService {
         },
       });
 
-      return { message: 'Session annulée avec succès. Vous pouvez la relancer plus tard.' };
+      return {
+        message:
+          'Session annulée avec succès. Vous pouvez la relancer plus tard.',
+      };
     });
   }
 
@@ -1057,40 +1112,41 @@ export class SessionService {
    */
   async getUserStats(userId: number) {
     // Utiliser des requêtes SQL optimisées avec comptage côté DB
-    const [totalSessions, completedSessions, upcomingSessions] = await Promise.all([
-      // Total de sessions (programmes actifs uniquement)
-      this.prisma.trainingSession.count({
-        where: {
-          trainingProgram: {
-            fitnessProfile: { userId },
-            status: 'ACTIVE',
+    const [totalSessions, completedSessions, upcomingSessions] =
+      await Promise.all([
+        // Total de sessions (programmes actifs uniquement)
+        this.prisma.trainingSession.count({
+          where: {
+            trainingProgram: {
+              fitnessProfile: { userId },
+              status: 'ACTIVE',
+            },
           },
-        },
-      }),
-      // Sessions complétées
-      this.prisma.trainingSession.count({
-        where: {
-          trainingProgram: {
-            fitnessProfile: { userId },
-            status: 'ACTIVE',
+        }),
+        // Sessions complétées
+        this.prisma.trainingSession.count({
+          where: {
+            trainingProgram: {
+              fitnessProfile: { userId },
+              status: 'ACTIVE',
+            },
+            completed: true,
           },
-          completed: true,
-        },
-      }),
-      // Sessions à venir (planifiées et non complétées)
-      this.prisma.trainingSession.count({
-        where: {
-          trainingProgram: {
-            fitnessProfile: { userId },
-            status: 'ACTIVE',
+        }),
+        // Sessions à venir (planifiées et non complétées)
+        this.prisma.trainingSession.count({
+          where: {
+            trainingProgram: {
+              fitnessProfile: { userId },
+              status: 'ACTIVE',
+            },
+            completed: false,
+            date: {
+              not: null,
+            },
           },
-          completed: false,
-          date: {
-            not: null,
-          },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
     return {
       totalSessions,
@@ -1143,19 +1199,24 @@ export class SessionService {
     });
 
     // Calculer le meilleur volume par exercice côté backend
-    const exerciseRecords = new Map<number, {
-      exerciseId: number;
-      exerciseName: string;
-      weight: number;
-      reps: number;
-      date: Date;
-      volume: number;
-    }>();
+    const exerciseRecords = new Map<
+      number,
+      {
+        exerciseId: number;
+        exerciseName: string;
+        weight: number;
+        reps: number;
+        date: Date;
+        volume: number;
+      }
+    >();
 
     exerciseSessions.forEach((exSession) => {
       const exerciseId = exSession.exerciceId;
       const exerciseName = exSession.exercice.name;
-      const sessionDate = exSession.trainingSession.performedAt || exSession.trainingSession.createdAt;
+      const sessionDate =
+        exSession.trainingSession.performedAt ||
+        exSession.trainingSession.createdAt;
 
       // Parcourir toutes les performances de cet exercice
       exSession.performances.forEach((perf) => {
@@ -1227,7 +1288,7 @@ export class SessionService {
     });
 
     const sortedDates = Array.from(uniqueDates)
-      .map(d => new Date(d))
+      .map((d) => new Date(d))
       .sort((a, b) => b.getTime() - a.getTime());
 
     // Calculer la série actuelle
@@ -1242,7 +1303,10 @@ export class SessionService {
       const expectedDate = new Date(today);
       expectedDate.setDate(expectedDate.getDate() - currentStreak);
 
-      const diffDays = Math.floor((expectedDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor(
+        (expectedDate.getTime() - sessionDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
 
       if (diffDays === 0) {
         currentStreak++;
@@ -1260,7 +1324,10 @@ export class SessionService {
         tempStreak = 1;
         longestStreak = 1;
       } else {
-        const diff = Math.floor((sortedDates[i - 1].getTime() - sortedDates[i].getTime()) / (1000 * 60 * 60 * 24));
+        const diff = Math.floor(
+          (sortedDates[i - 1].getTime() - sortedDates[i].getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
         if (diff <= 1) {
           tempStreak++;
           longestStreak = Math.max(longestStreak, tempStreak);
@@ -1276,7 +1343,7 @@ export class SessionService {
       date.setDate(date.getDate() - (6 - i));
       date.setHours(0, 0, 0, 0);
 
-      return sortedDates.some(sessionDate => {
+      return sortedDates.some((sessionDate) => {
         const sd = new Date(sessionDate);
         sd.setHours(0, 0, 0, 0);
         return sd.getTime() === date.getTime();
@@ -1297,7 +1364,7 @@ export class SessionService {
   async updateExerciceSessionSets(
     exerciceSessionId: number,
     newSets: number,
-    userId: number
+    userId: number,
   ) {
     // Valider que newSets est positif
     if (newSets < 1) {
@@ -1305,7 +1372,9 @@ export class SessionService {
     }
 
     if (newSets > 20) {
-      throw new BadRequestException('Le nombre de séries ne peut pas dépasser 20');
+      throw new BadRequestException(
+        'Le nombre de séries ne peut pas dépasser 20',
+      );
     }
 
     // 🚀 OPTIMISÉ: Requête légère pour récupérer uniquement le userId et le status de session
@@ -1335,14 +1404,19 @@ export class SessionService {
     }
 
     // Vérifier que l'utilisateur a le droit de modifier cette session
-    const ownerId = exerciceSession.trainingSession.trainingProgram.fitnessProfile.userId;
+    const ownerId =
+      exerciceSession.trainingSession.trainingProgram.fitnessProfile.userId;
     if (ownerId !== userId) {
-      throw new BadRequestException('Vous n\'avez pas la permission de modifier cette session');
+      throw new BadRequestException(
+        "Vous n'avez pas la permission de modifier cette session",
+      );
     }
 
     // Vérifier que la session n'est pas déjà complétée
     if (exerciceSession.trainingSession.completed) {
-      throw new BadRequestException('Impossible de modifier une session déjà terminée');
+      throw new BadRequestException(
+        'Impossible de modifier une session déjà terminée',
+      );
     }
 
     // 🚀 OPTIMISÉ: Update simple sans include inutile
@@ -1354,5 +1428,4 @@ export class SessionService {
 
     return { id: exerciceSessionId, sets: newSets };
   }
-
 }

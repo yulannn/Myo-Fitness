@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
@@ -33,7 +41,6 @@ export class EquipmentController {
     return this.equipmentService.create(createEquipmentDto);
   }
 
-  
   @Get()
   @ApiOperation({ summary: 'Récupérer tous les équipements' })
   @ApiResponse({
@@ -63,7 +70,6 @@ export class EquipmentController {
     return this.equipmentService.findAll();
   }
 
-
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un équipement par son ID' })
   @ApiResponse({
@@ -84,7 +90,6 @@ export class EquipmentController {
     return this.equipmentService.findOne(+id);
   }
 
-
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un équipement' })
@@ -103,10 +108,12 @@ export class EquipmentController {
       },
     },
   })
-  update(@Param('id') id: string, @Body() updateEquipmentDto: UpdateEquipmentDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateEquipmentDto: UpdateEquipmentDto,
+  ) {
     return this.equipmentService.update(+id, updateEquipmentDto);
   }
-
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete(':id')

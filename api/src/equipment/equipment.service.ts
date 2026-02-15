@@ -6,10 +6,11 @@ import { EquipmentEntity } from './entities/equipment.entity';
 
 @Injectable()
 export class EquipmentService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-
-  async create(createEquipmentDto: CreateEquipmentDto): Promise<EquipmentEntity> {
+  async create(
+    createEquipmentDto: CreateEquipmentDto,
+  ): Promise<EquipmentEntity> {
     try {
       const equipment = await this.prisma.equipment.create({
         data: createEquipmentDto,
@@ -43,7 +44,10 @@ export class EquipmentService {
     }
   }
 
-  async update(id: number, updateEquipmentDto: UpdateEquipmentDto): Promise<EquipmentEntity> {
+  async update(
+    id: number,
+    updateEquipmentDto: UpdateEquipmentDto,
+  ): Promise<EquipmentEntity> {
     try {
       const equipment = await this.prisma.equipment.update({
         where: { id },

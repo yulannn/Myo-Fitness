@@ -4,9 +4,9 @@ import { BodyAtlasService } from './body-atlas.service';
 import { PrismaModule } from 'prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [BodyAtlasController],
-    providers: [BodyAtlasService],
-    exports: [BodyAtlasService],
+  imports: [PrismaModule],
+  controllers: [BodyAtlasController],
+  providers: [BodyAtlasService],
+  exports: [BodyAtlasService],
 })
-export class BodyAtlasModule { }
+export class BodyAtlasModule {}

@@ -17,7 +17,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 @Controller('api/v1/badges')
 @UseGuards(AuthGuard('jwt'))
 export class BadgeController {
-  constructor(private readonly badgeService: BadgeService) { }
+  constructor(private readonly badgeService: BadgeService) {}
 
   @Get()
   @ApiOperation({ summary: 'Récupère tous les badges disponibles' })
@@ -26,7 +26,7 @@ export class BadgeController {
   }
 
   @Get('my-badges')
-  @ApiOperation({ summary: 'Récupère les badges débloqués par l\'utilisateur' })
+  @ApiOperation({ summary: "Récupère les badges débloqués par l'utilisateur" })
   async getMyBadges(@Req() req: any) {
     const userId = req.user.userId;
     return this.badgeService.getUserBadges(userId);
@@ -34,7 +34,7 @@ export class BadgeController {
 
   @Get('with-progress')
   @ApiOperation({
-    summary: 'Récupère tous les badges avec progression de l\'utilisateur',
+    summary: "Récupère tous les badges avec progression de l'utilisateur",
   })
   async getBadgesWithProgress(@Req() req: any, @Query() query: BadgeQueryDto) {
     const userId = req.user.userId;
@@ -42,7 +42,9 @@ export class BadgeController {
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Récupère les statistiques de badges de l\'utilisateur' })
+  @ApiOperation({
+    summary: "Récupère les statistiques de badges de l'utilisateur",
+  })
   async getBadgeStats(@Req() req: any) {
     const userId = req.user.userId;
     return this.badgeService.getUserBadgeStats(userId);

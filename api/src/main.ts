@@ -12,7 +12,6 @@ import { EnvValidationService } from './config/env-validation.service';
 import { Logger } from 'nestjs-pino';
 import { initializeSentry } from './config/sentry.config';
 
-
 async function bootstrap() {
   // 🔴 IMPORTANT : Initialiser Sentry EN PREMIER pour capturer toutes les erreurs
   initializeSentry();
@@ -36,14 +35,16 @@ async function bootstrap() {
     prefix: '/assets/',
   });
 
-
   // Middleware pour préserver le raw body pour Stripe webhook
   // DOIT être avant le parsing JSON global
-  app.use('/api/v1/stripe/webhook', json({
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf;
-    }
-  }));
+  app.use(
+    '/api/v1/stripe/webhook',
+    json({
+      verify: (req: any, res, buf) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
 
   // Global JSON body parser for all other routes
   app.use(json());
@@ -107,14 +108,10 @@ async function bootstrap() {
     '\x1b[36m%s\x1b[0m',
     '===============================================================',
   );
-  console.log(
-    '\x1b[32m🚀  Application running on:\x1b[0m',
-  );
+  console.log('\x1b[32m🚀  Application running on:\x1b[0m');
   console.log(`   - Local:   http://localhost:${port}`);
   console.log(`   - Network: http://10.15.4.156:${port}`);
-  console.log(
-    '\x1b[34m📘  Swagger docs:\x1b[0m',
-  );
+  console.log('\x1b[34m📘  Swagger docs:\x1b[0m');
   console.log(`   - Local:   http://localhost:${port}/api`);
   console.log(`   - Network: http://10.15.4.156:${port}/api`);
   console.log(

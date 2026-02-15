@@ -5,8 +5,8 @@ import { PrismaService } from 'prisma/prisma.service';
 import { GroqClient } from '../ia/groq/groq.client';
 
 @Module({
-    controllers: [AiChatbotController],
-    providers: [AiChatbotService, PrismaService, GroqClient],
-    exports: [AiChatbotService],
+  controllers: [AiChatbotController],
+  providers: [AiChatbotService, PrismaService, GroqClient],
+  exports: [AiChatbotService],
 })
-export class AiChatbotModule { }
+export class AiChatbotModule {}

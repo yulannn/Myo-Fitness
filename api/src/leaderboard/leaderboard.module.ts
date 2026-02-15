@@ -4,9 +4,9 @@ import { LeaderboardController } from './leaderboard.controller';
 import { PrismaModule } from 'prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [LeaderboardController],
-    providers: [LeaderboardService],
-    exports: [LeaderboardService], // Export pour pouvoir l'utiliser dans d'autres modules
+  imports: [PrismaModule],
+  controllers: [LeaderboardController],
+  providers: [LeaderboardService],
+  exports: [LeaderboardService], // Export pour pouvoir l'utiliser dans d'autres modules
 })
-export class LeaderboardModule { }
+export class LeaderboardModule {}

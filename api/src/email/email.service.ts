@@ -22,7 +22,11 @@ export class EmailService {
   /**
    * Envoie un email avec le code de réinitialisation du mot de passe
    */
-  async sendPasswordResetEmail(email: string, code: string, userName: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    code: string,
+    userName: string,
+  ): Promise<void> {
     try {
       const mailOptions = {
         from: `"Myo Fitness" <${this.configService.get<string>('SMTP_USER')}>`,
@@ -153,15 +157,20 @@ export class EmailService {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Password reset email sent to ${email}`);
     } catch (error: any) {
-      this.logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
-      throw new Error('Impossible d\'envoyer l\'email de réinitialisation');
+      this.logger.error(
+        `Failed to send password reset email to ${email}: ${error.message}`,
+      );
+      throw new Error("Impossible d'envoyer l'email de réinitialisation");
     }
   }
 
   /**
    * Envoie un email de confirmation après changement de mot de passe
    */
-  async sendPasswordChangedEmail(email: string, userName: string): Promise<void> {
+  async sendPasswordChangedEmail(
+    email: string,
+    userName: string,
+  ): Promise<void> {
     try {
       const mailOptions = {
         from: `"Myo Fitness" <${this.configService.get<string>('SMTP_USER')}>`,
@@ -277,14 +286,17 @@ export class EmailService {
                 </div>
 
                 <p class="message">
-                  Cette modification a été effectuée le ${new Date().toLocaleDateString('fr-FR', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}.
+                  Cette modification a été effectuée le ${new Date().toLocaleDateString(
+                    'fr-FR',
+                    {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    },
+                  )}.
                 </p>
 
                 <div class="info-box">
@@ -314,7 +326,9 @@ export class EmailService {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Password changed confirmation email sent to ${email}`);
     } catch (error: any) {
-      this.logger.error(`Failed to send password changed email to ${email}: ${error.message}`);
+      this.logger.error(
+        `Failed to send password changed email to ${email}: ${error.message}`,
+      );
       // On ne lance pas d'erreur ici car le mot de passe a déjà été changé
       // On log juste l'erreur
     }
@@ -323,7 +337,11 @@ export class EmailService {
   /**
    * Envoie un email de vérification avec le code
    */
-  async sendEmailVerification(email: string, code: string, userName: string): Promise<void> {
+  async sendEmailVerification(
+    email: string,
+    code: string,
+    userName: string,
+  ): Promise<void> {
     try {
       const mailOptions = {
         from: `"Myo Fitness" <${this.configService.get<string>('SMTP_USER')}>`,
@@ -453,8 +471,10 @@ export class EmailService {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Email verification sent to ${email}`);
     } catch (error: any) {
-      this.logger.error(`Failed to send email verification to ${email}: ${error.message}`);
-      throw new Error('Impossible d\'envoyer l\'email de vérification');
+      this.logger.error(
+        `Failed to send email verification to ${email}: ${error.message}`,
+      );
+      throw new Error("Impossible d'envoyer l'email de vérification");
     }
   }
 }

@@ -6,9 +6,12 @@ import { ExerciceEntity } from './entities/exercice.entity';
 
 @Injectable()
 export class ExerciceService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async create(createExerciceDto: CreateExerciceDto, userId: number): Promise<ExerciceEntity> {
+  async create(
+    createExerciceDto: CreateExerciceDto,
+    userId: number,
+  ): Promise<ExerciceEntity> {
     const { muscleGroupIds, equipmentIds, ...exerciceData } = createExerciceDto;
 
     const exercice = await this.prisma.exercice.create({
@@ -16,21 +19,23 @@ export class ExerciceService {
         ...exerciceData,
         isDefault: false,
         createdByUserId: userId,
-        groupes: muscleGroupIds && muscleGroupIds.length > 0
-          ? {
-            create: muscleGroupIds.map((groupeId, index) => ({
-              groupeId: groupeId,
-              isPrimary: index === 0,
-            })),
-          }
-          : undefined,
-        equipments: equipmentIds && equipmentIds.length > 0
-          ? {
-            create: equipmentIds.map((equipmentId) => ({
-              equipment: { connect: { id: equipmentId } },
-            })),
-          }
-          : undefined,
+        groupes:
+          muscleGroupIds && muscleGroupIds.length > 0
+            ? {
+                create: muscleGroupIds.map((groupeId, index) => ({
+                  groupeId: groupeId,
+                  isPrimary: index === 0,
+                })),
+              }
+            : undefined,
+        equipments:
+          equipmentIds && equipmentIds.length > 0
+            ? {
+                create: equipmentIds.map((equipmentId) => ({
+                  equipment: { connect: { id: equipmentId } },
+                })),
+              }
+            : undefined,
       },
       include: {
         groupes: { include: { groupe: true } },
@@ -41,14 +46,10 @@ export class ExerciceService {
     return exercice;
   }
 
-
   async findAll(userId: number): Promise<ExerciceEntity[]> {
     const exercices = await this.prisma.exercice.findMany({
       where: {
-        OR: [
-          { isDefault: true },
-          { createdByUserId: userId },
-        ],
+        OR: [{ isDefault: true }, { createdByUserId: userId }],
       },
       include: { groupes: { include: { groupe: true } }, equipments: true },
     });
@@ -60,13 +61,17 @@ export class ExerciceService {
     return exercices;
   }
 
-  async findAllMinimal(userId: number): Promise<{ id: number; name: string; type?: string | null; groupes: { isPrimary: boolean; groupe: { id: number; name: string } }[] }[]> {
+  async findAllMinimal(userId: number): Promise<
+    {
+      id: number;
+      name: string;
+      type?: string | null;
+      groupes: { isPrimary: boolean; groupe: { id: number; name: string } }[];
+    }[]
+  > {
     const exercices = await this.prisma.exercice.findMany({
       where: {
-        OR: [
-          { isDefault: true },
-          { createdByUserId: userId },
-        ],
+        OR: [{ isDefault: true }, { createdByUserId: userId }],
       },
       select: {
         id: true,
@@ -82,10 +87,10 @@ export class ExerciceService {
               select: {
                 id: true,
                 name: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
     });
 
@@ -96,14 +101,13 @@ export class ExerciceService {
     return exercices;
   }
 
-  async findCardioExercises(userId: number): Promise<{ id: number; name: string; imageUrl: string | null }[]> {
+  async findCardioExercises(
+    userId: number,
+  ): Promise<{ id: number; name: string; imageUrl: string | null }[]> {
     const exercices = await this.prisma.exercice.findMany({
       where: {
         type: 'CARDIO',
-        OR: [
-          { isDefault: true },
-          { createdByUserId: userId },
-        ],
+        OR: [{ isDefault: true }, { createdByUserId: userId }],
       },
       select: {
         id: true,
@@ -131,7 +135,10 @@ export class ExerciceService {
     return exercice;
   }
 
-  async update(id: number, updateExerciceDto: UpdateExerciceDto): Promise<ExerciceEntity> {
+  async update(
+    id: number,
+    updateExerciceDto: UpdateExerciceDto,
+  ): Promise<ExerciceEntity> {
     const { muscleGroupIds, equipmentIds, ...exerciceData } = updateExerciceDto;
 
     const exercice = await this.prisma.exercice.findUnique({
@@ -158,7 +165,10 @@ export class ExerciceService {
         where: { exerciceId: id },
       });
       await this.prisma.exerciceEquipment.createMany({
-        data: equipmentIds.map((equipmentId) => ({ exerciceId: id, equipmentId })),
+        data: equipmentIds.map((equipmentId) => ({
+          exerciceId: id,
+          equipmentId,
+        })),
       });
     }
 
@@ -173,7 +183,6 @@ export class ExerciceService {
 
     return updatedExercice;
   }
-
 
   async remove(id: number) {
     const exercice = await this.prisma.exercice.findUnique({
@@ -194,8 +203,10 @@ export class ExerciceService {
     });
   }
 
-
-  async addEquipment(exerciceId: number, equipmentId: number): Promise<ExerciceEntity> {
+  async addEquipment(
+    exerciceId: number,
+    equipmentId: number,
+  ): Promise<ExerciceEntity> {
     try {
       const exercice = await this.prisma.exercice.findUnique({
         where: { id: exerciceId },

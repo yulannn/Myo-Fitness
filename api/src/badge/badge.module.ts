@@ -11,4 +11,4 @@ import { UsersModule } from '../users/users.module';
   providers: [BadgeService, BadgeCheckerService],
   exports: [BadgeService, BadgeCheckerService],
 })
-export class BadgeModule { }
+export class BadgeModule {}

@@ -13,7 +13,7 @@ export class FriendService {
     private chatService: ChatService,
     private chatGateway: ChatGateway,
     private r2Service: R2Service,
-  ) { }
+  ) {}
 
   async searchUsers(query: string, currentUserId: number) {
     if (!query || query.length < 2) return [];
@@ -37,7 +37,7 @@ export class FriendService {
     if (users.length === 0) return [];
 
     // Extraire les IDs pour les requêtes bulk
-    const userIds = users.map(u => u.id);
+    const userIds = users.map((u) => u.id);
 
     // Récupérer TOUS les friends et requests en 2 requêtes
     const [friends, requests] = await Promise.all([
@@ -46,49 +46,50 @@ export class FriendService {
         where: {
           OR: [
             { userId: currentUserId, friendId: { in: userIds } },
-            { friendId: currentUserId, userId: { in: userIds } }
-          ]
+            { friendId: currentUserId, userId: { in: userIds } },
+          ],
         },
         select: {
           userId: true,
           friendId: true,
-        }
+        },
       }),
       // Récupérer toutes les demandes d'ami en une seule requête
       this.prisma.friendRequest.findMany({
         where: {
           OR: [
             { senderId: currentUserId, receiverId: { in: userIds } },
-            { receiverId: currentUserId, senderId: { in: userIds } }
+            { receiverId: currentUserId, senderId: { in: userIds } },
           ],
           status: 'PENDING',
         },
         select: {
           senderId: true,
           receiverId: true,
-        }
-      })
+        },
+      }),
     ]);
 
     const friendMap = new Map<number, boolean>();
     const requestMap = new Map<number, { sent: boolean }>();
 
     // Remplir le Map des amis
-    friends.forEach(f => {
+    friends.forEach((f) => {
       const otherUserId = f.userId === currentUserId ? f.friendId : f.userId;
       friendMap.set(otherUserId, true);
     });
 
     // Remplir le Map des requêtes
-    requests.forEach(r => {
-      const otherUserId = r.senderId === currentUserId ? r.receiverId : r.senderId;
+    requests.forEach((r) => {
+      const otherUserId =
+        r.senderId === currentUserId ? r.receiverId : r.senderId;
       requestMap.set(otherUserId, {
-        sent: r.senderId === currentUserId
+        sent: r.senderId === currentUserId,
       });
     });
 
     //  Mapper les résultats en mémoire (très rapide)
-    const results = users.map(user => {
+    const results = users.map((user) => {
       let status = 'NONE';
 
       if (friendMap.has(user.id)) {
@@ -108,14 +109,14 @@ export class FriendService {
     const { friendId } = createFriendDto;
 
     if (userId === friendId) {
-      throw new Error("You cannot add yourself as a friend");
+      throw new Error('You cannot add yourself as a friend');
     }
 
     const existingRequest = await this.prisma.friendRequest.findFirst({
       where: {
         OR: [
           { senderId: userId, receiverId: friendId },
-          { senderId: friendId, receiverId: userId }
+          { senderId: friendId, receiverId: userId },
         ],
         status: 'PENDING',
       },
@@ -129,13 +130,13 @@ export class FriendService {
       where: {
         OR: [
           { userId: userId, friendId: friendId },
-          { userId: friendId, friendId: userId }
-        ]
-      }
+          { userId: friendId, friendId: userId },
+        ],
+      },
     });
 
     if (existingFriend) {
-      throw new Error("You are already friends");
+      throw new Error('You are already friends');
     }
 
     const friendRequest = await this.prisma.friendRequest.create({
@@ -182,7 +183,7 @@ export class FriendService {
     //  Vérifier que c'est bien le destinataire qui accepte
     if (request.receiverId !== userId) {
       throw new ForbiddenException(
-        'Vous ne pouvez accepter que les demandes qui vous sont adressées'
+        'Vous ne pouvez accepter que les demandes qui vous sont adressées',
       );
     }
 
@@ -209,7 +210,8 @@ export class FriendService {
         const cleanPath = profilePictureUrl.startsWith('/')
           ? profilePictureUrl.substring(1)
           : profilePictureUrl;
-        profilePictureUrl = await this.r2Service.generatePresignedViewUrl(cleanPath);
+        profilePictureUrl =
+          await this.r2Service.generatePresignedViewUrl(cleanPath);
       } catch (error) {
         console.error('Error generating signed URL:', error);
         profilePictureUrl = null;
@@ -260,7 +262,7 @@ export class FriendService {
     //  Vérifier que c'est bien le destinataire qui refuse
     if (request.receiverId !== userId) {
       throw new ForbiddenException(
-        'Vous ne pouvez refuser que les demandes qui vous sont adressées'
+        'Vous ne pouvez refuser que les demandes qui vous sont adressées',
       );
     }
 
@@ -269,7 +271,10 @@ export class FriendService {
     });
 
     // Notifier l'expéditeur que sa demande a été refusée
-    this.chatGateway.notifyFriendRequestDeclined(request.senderId, request.receiver);
+    this.chatGateway.notifyFriendRequestDeclined(
+      request.senderId,
+      request.receiver,
+    );
 
     return { message: 'Friend request declined' };
   }
@@ -285,10 +290,10 @@ export class FriendService {
           select: {
             id: true,
             name: true,
-            profilePictureUrl: true
-          }
-        }
-      }
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
 
     return requests;
@@ -297,7 +302,7 @@ export class FriendService {
   async getFriendsList(userId: number) {
     const friendList = await this.prisma.friend.findMany({
       where: {
-        userId: userId
+        userId: userId,
       },
       include: {
         friend: {
@@ -305,10 +310,10 @@ export class FriendService {
             id: true,
             name: true,
             email: true,
-            profilePictureUrl: true
-          }
-        }
-      }
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
 
     if (!friendList) {

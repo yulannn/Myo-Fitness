@@ -7,7 +7,12 @@ import { SubscriptionSchedulerService } from './subscription-scheduler.service';
 
 @Module({
   controllers: [SubscriptionController],
-  providers: [SubscriptionService, PrismaService, PremiumGuard, SubscriptionSchedulerService],
+  providers: [
+    SubscriptionService,
+    PrismaService,
+    PremiumGuard,
+    SubscriptionSchedulerService,
+  ],
   exports: [SubscriptionService, PremiumGuard],
 })
-export class SubscriptionModule { }
+export class SubscriptionModule {}

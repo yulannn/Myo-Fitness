@@ -42,10 +42,13 @@ function DashboardRedirect() {
     : <Navigate to="/dashboard/user" replace />;
 }
 
+import { Toaster } from 'react-hot-toast';
+
 // ── App ──────────────────────────────────────────────────────
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#1c1c1e', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
       <BrowserRouter>
         <AuthProvider>
           <Routes>

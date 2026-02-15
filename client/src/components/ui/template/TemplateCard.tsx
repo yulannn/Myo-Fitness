@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { PlayIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon, CalendarIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { useState, useEffect, useRef } from 'react';
+import { PlayIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon, CalendarIcon, TrashIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DayPicker } from 'react-day-picker';
 import { fr } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
@@ -8,6 +9,7 @@ import type { ExerciceMinimal } from '../../../types/exercice.type';
 import useStartFromTemplate from '../../../api/hooks/session-template/useStartFromTemplate';
 import useScheduleFromTemplate from '../../../api/hooks/session-template/useScheduleFromTemplate';
 import useDeleteSessionTemplate from '../../../api/hooks/session-template/useDeleteSessionTemplate';
+import useAcknowledgeUpdate from '../../../api/hooks/coaching/useAcknowledgeUpdate';
 import { EditTemplateModal } from '../modal/EditTemplateModal';
 import { BottomSheet, BottomSheetHeader, BottomSheetTitle, BottomSheetFooter } from '../modal/BottomSheet';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../modal';
@@ -33,6 +35,7 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
   const { mutate: startTemplate, isPending: isStarting } = useStartFromTemplate();
   const { mutate: scheduleTemplate, isPending: isScheduling } = useScheduleFromTemplate();
   const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteSessionTemplate();
+  const { mutate: acknowledgeUpdate } = useAcknowledgeUpdate();
 
   // 🔍 Chercher l'instance planifiée (non complétée) pour ce template
   const scheduledInstance = template.instances?.find((instance: any) => !instance.completed);
@@ -50,6 +53,32 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
       setSelectedDate(new Date(scheduledInstance.date));
     }
   }, [scheduledInstance?.date]);
+
+  // 🔄 Gérer l'accusé de réception des modifications du coach
+  // On ne veut pas que l'indicateur disparaisse immédiatement à l'ouverture (pour laisser le temps de voir)
+  // On attend que l'utilisateur referme la séance ou quitte la page.
+  const wasExpandedRef = useRef(false);
+
+  useEffect(() => {
+    if (isExpanded && template.hasCoachUpdate) {
+      wasExpandedRef.current = true;
+    }
+
+    // Si on referme la séance alors qu'on l'avait ouverte
+    if (!isExpanded && wasExpandedRef.current && template.hasCoachUpdate) {
+      acknowledgeUpdate(template.id);
+      wasExpandedRef.current = false;
+    }
+  }, [isExpanded, template.hasCoachUpdate, template.id, acknowledgeUpdate]);
+
+  // Cleanup au démontage de la page (si on change de page)
+  useEffect(() => {
+    return () => {
+      if (wasExpandedRef.current && template.hasCoachUpdate) {
+        acknowledgeUpdate(template.id);
+      }
+    };
+  }, [template.id, template.hasCoachUpdate, acknowledgeUpdate]);
 
   const handleStartClick = () => {
     setIsConfirmStartModalOpen(true);
@@ -194,8 +223,11 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
           {/* Header : Titre + Expand button */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-white">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
                 {template.name}
+                {template.hasCoachUpdate && (
+                  <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
               </h3>
 
               {template.description && (
@@ -294,66 +326,110 @@ export const TemplateCard = ({ template, availableExercises = [] }: TemplateCard
         {/* Liste d'exercices (expandable) */}
         {isExpanded && template.exercises && template.exercises.length > 0 && (
           <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Exercices
-            </p>
-            {template.exercises.map((ex: any, idx: number) => {
-              const isCardio = ex.exercise?.type === 'CARDIO';
+            <div className="flex items-center justify-between mb-3 px-1">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Programme de la séance
+              </p>
+              {template.hasCoachUpdate && (
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full animate-pulse">
+                  <SparklesIcon className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] font-bold text-primary tracking-tight">AJUSTÉ PAR VOTRE COACH</span>
+                </div>
+              )}
+            </div>
 
-              return (
-                <div
-                  key={ex.id || idx}
-                  onClick={() => setSelectedExercise(ex.exercise)}
-                  className="flex items-center gap-3 p-2 bg-[#121214] rounded cursor-pointer hover:bg-[#252527] transition-colors"
-                >
-                  {/* Image */}
-                  <div className="relative w-10 h-10 bg-[#252527] flex-shrink-0 border border-white/5">
-                    {getExerciseImageUrl(ex.exercise?.imageUrl) ? (
-                      <img
-                        src={getExerciseImageUrl(ex.exercise?.imageUrl)!}
-                        alt={ex.exercise?.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          const parent = (e.target as HTMLImageElement).parentElement!;
-                          parent.className += ' flex items-center justify-center text-lg';
+            <AnimatePresence>
+              {template.exercises.map((ex: any, idx: number) => {
+                const isCardio = ex.exercise?.type === 'CARDIO';
+                const hasUpdate = ex.hasCoachUpdate;
 
-                          if (ex.exercise?.isDefault === false) {
-                            parent.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>`;
-                          } else {
-                            parent.innerText = '🏋️‍♂️';
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-lg">
-                        {ex.exercise?.isDefault === false ? (
-                          <DocumentTextIcon className="w-6 h-6 text-gray-500" />
-                        ) : (
-                          "🏋️‍♂️"
-                        )}
+                return (
+                  <motion.div
+                    key={ex.id || idx}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={() => setSelectedExercise(ex.exercise)}
+                    className={`group relative flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 ${hasUpdate
+                      ? 'bg-primary/5 border border-primary/20 shadow-[0_0_15px_rgba(148,251,221,0.05)]'
+                      : 'bg-white/5 border border-white/5 hover:bg-white/10'
+                      }`}
+                  >
+                    {hasUpdate && (
+                      <div className="absolute -top-2 -right-1 z-10">
+                        <div className="px-2 py-1 bg-primary text-[#121214] text-[9px] font-black rounded-lg shadow-lg flex items-center gap-1">
+                          Ajusté
+                        </div>
                       </div>
                     )}
-                  </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
-                      {ex.exercise?.name || 'Exercice'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {isCardio ? (
-                        `${ex.duration || 15} minutes`
+                    {/* Image */}
+                    <div className="relative w-12 h-12 bg-[#252527] rounded-xl flex-shrink-0 border border-white/5 overflow-hidden">
+                      {getExerciseImageUrl(ex.exercise?.imageUrl) ? (
+                        <img
+                          src={getExerciseImageUrl(ex.exercise?.imageUrl)!}
+                          alt={ex.exercise?.name}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const parent = (e.target as HTMLImageElement).parentElement!;
+                            parent.className += ' flex items-center justify-center text-lg';
+
+                            if (ex.exercise?.isDefault === false) {
+                              parent.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-400 opacity-50"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>`;
+                            } else {
+                              parent.innerText = '🏋️‍♂️';
+                            }
+                          }}
+                        />
                       ) : (
-                        <>
-                          {ex.sets} séries × {ex.reps} reps
-                          {ex.weight && ` @ ${ex.weight}kg`}
-                        </>
+                        <div className="w-full h-full flex items-center justify-center text-xl">
+                          {ex.exercise?.isDefault === false ? (
+                            <DocumentTextIcon className="w-6 h-6 text-gray-500" />
+                          ) : (
+                            "🏋️‍♂️"
+                          )}
+                        </div>
                       )}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">
+                        {ex.exercise?.name || 'Exercice'}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <p className="text-xs text-gray-400 font-medium">
+                          {isCardio ? (
+                            `${ex.duration || 15} min`
+                          ) : (
+                            <>
+                              {ex.sets}s × {ex.reps}r
+                              {ex.weight ? ` @${ex.weight}kg` : ''}
+                            </>
+                          )}
+                        </p>
+
+                        {hasUpdate && ex.lastDiff && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/20 rounded-md border border-primary/30">
+                            <span className="text-[9px] font-black text-primary uppercase whitespace-nowrap">
+                              {ex.lastDiff.includes('->') ? 'Modifié :' : 'Info :'}
+                            </span>
+                            <span className="text-[9px] font-bold text-white/90 italic truncate max-w-[120px]">
+                              {ex.lastDiff}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>

@@ -1,4 +1,13 @@
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateExerciceDto {
@@ -49,7 +58,10 @@ export class CreateExerciceDto {
   })
   @IsOptional()
   @IsArray()
-  @IsInt({ each: true, message: 'Chaque groupe musculaire doit être un entier (id).' })
+  @IsInt({
+    each: true,
+    message: 'Chaque groupe musculaire doit être un entier (id).',
+  })
   muscleGroupIds?: number[];
 
   @ApiPropertyOptional({

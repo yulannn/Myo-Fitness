@@ -11,4 +11,4 @@ import { SubscriptionModule } from 'src/subscription/subscription.module';
   providers: [ProgramService],
   exports: [ProgramService],
 })
-export class ProgramModule { }
+export class ProgramModule {}

@@ -20,7 +20,11 @@ export class GroqClient {
         model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: 'Tu es un assistant qui renvoie uniquement du JSON valide.' },
+          {
+            role: 'system',
+            content:
+              'Tu es un assistant qui renvoie uniquement du JSON valide.',
+          },
           { role: 'user', content: prompt },
         ],
         temperature: 0.2,
@@ -28,7 +32,10 @@ export class GroqClient {
       });
 
       const response = completion.choices[0]?.message?.content?.trim();
-      const cleaned = response?.replace(/```json/g, '').replace(/```/g, '').trim();
+      const cleaned = response
+        ?.replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
       const parsed = JSON.parse(cleaned || '{}');
       const validated = schema.parse(parsed);
 

@@ -170,7 +170,9 @@ describe('AuthController (e2e)', () => {
     });
 
     it('/api/v1/auth/refresh (POST) - should fail without refresh token', async () => {
-      await request(app.getHttpServer()).post('/api/v1/auth/refresh').expect(401);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .expect(401);
     });
 
     it('/api/v1/auth/refresh (POST) - should fail with invalid refresh token', async () => {
@@ -192,7 +194,9 @@ describe('AuthController (e2e)', () => {
     });
 
     it('/api/v1/auth/logout (POST) - should fail without token', async () => {
-      await request(app.getHttpServer()).post('/api/v1/auth/logout').expect(401);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .expect(401);
     });
 
     it('/api/v1/auth/refresh (POST) - should fail after logout', async () => {

@@ -5,9 +5,9 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ChatModule } from '../chat/chat.module';
 
 @Module({
-    imports: [PrismaModule, forwardRef(() => ChatModule)],
-    controllers: [SharedSessionController],
-    providers: [SharedSessionService],
-    exports: [SharedSessionService],
+  imports: [PrismaModule, forwardRef(() => ChatModule)],
+  controllers: [SharedSessionController],
+  providers: [SharedSessionService],
+  exports: [SharedSessionService],
 })
-export class SharedSessionModule { }
+export class SharedSessionModule {}

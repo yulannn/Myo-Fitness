@@ -32,7 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Si le tokenVersion a changé, le token a été révoqué
     if (payload.tokenVersion !== user.tokenVersion) {
-      throw new UnauthorizedException('Session révoquée - veuillez vous reconnecter');
+      throw new UnauthorizedException(
+        'Session révoquée - veuillez vous reconnecter',
+      );
     }
 
     return {

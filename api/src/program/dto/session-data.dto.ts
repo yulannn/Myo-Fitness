@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional } from 'class-validator';
 
 export class ExerciseDataDto {
-  @ApiProperty({ example: 5, description: 'ID de l\'exercice existant' })
+  @ApiProperty({ example: 5, description: "ID de l'exercice existant" })
   @IsNumber()
   id: number;
 
@@ -11,7 +11,11 @@ export class ExerciseDataDto {
   @IsNumber()
   sets?: number;
 
-  @ApiProperty({ example: 20, description: 'Nombre de répétitions', required: false })
+  @ApiProperty({
+    example: 20,
+    description: 'Nombre de répétitions',
+    required: false,
+  })
   @IsOptional()
   @IsNumber()
   reps?: number;

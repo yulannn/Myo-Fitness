@@ -21,7 +21,11 @@ export class GroupEntity {
     example: GroupStatus.PENDING,
   })
   status: GroupStatus;
-  @ApiPropertyOptional({ description: 'Membres du groupe', type: Object, isArray: true })
+  @ApiPropertyOptional({
+    description: 'Membres du groupe',
+    type: Object,
+    isArray: true,
+  })
   members?: User[];
 
   constructor(partial: Partial<GroupEntity>) {

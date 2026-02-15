@@ -11,9 +11,17 @@ import { BodyAtlasModule } from '../body-atlas/body-atlas.module';
 import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 
 @Module({
-  imports: [PrismaModule, ProgramModule, UsersModule, ActivityModule, BadgeModule, BodyAtlasModule, LeaderboardModule],
+  imports: [
+    PrismaModule,
+    ProgramModule,
+    UsersModule,
+    ActivityModule,
+    BadgeModule,
+    BodyAtlasModule,
+    LeaderboardModule,
+  ],
   controllers: [SessionController],
   providers: [SessionService, SessionCleanupService],
   exports: [SessionService],
 })
-export class SessionModule { }
+export class SessionModule {}

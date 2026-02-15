@@ -4,9 +4,9 @@ import { StripeService } from './stripe.service';
 import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
-    imports: [SubscriptionModule],
-    controllers: [StripeController],
-    providers: [StripeService],
-    exports: [StripeService],
+  imports: [SubscriptionModule],
+  controllers: [StripeController],
+  providers: [StripeService],
+  exports: [StripeService],
 })
-export class StripeModule { }
+export class StripeModule {}

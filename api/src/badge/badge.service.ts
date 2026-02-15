@@ -12,7 +12,7 @@ export interface BadgeRequirement {
 
 @Injectable()
 export class BadgeService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Récupère tous les badges du système
@@ -134,11 +134,7 @@ export class BadgeService {
   /**
    * Définit directement la valeur de progression
    */
-  async setBadgeProgress(
-    userId: number,
-    badgeCode: string,
-    value: number,
-  ) {
+  async setBadgeProgress(userId: number, badgeCode: string, value: number) {
     return this.prisma.badgeProgress.upsert({
       where: {
         userId_badgeCode: { userId, badgeCode },

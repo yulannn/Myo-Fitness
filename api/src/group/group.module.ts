@@ -8,4 +8,4 @@ import { ChatModule } from '../chat/chat.module';
   controllers: [GroupController],
   providers: [GroupService],
 })
-export class GroupModule { }
+export class GroupModule {}

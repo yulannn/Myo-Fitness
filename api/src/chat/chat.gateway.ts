@@ -1,11 +1,11 @@
 import {
-    WebSocketGateway,
-    WebSocketServer,
-    SubscribeMessage,
-    MessageBody,
-    ConnectedSocket,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UseGuards } from '@nestjs/common';
@@ -17,357 +17,371 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 const userSockets = new Map<number, Set<string>>();
 
 @WebSocketGateway({
-    cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
-        credentials: true,
-    },
-    namespace: '/chat',
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+  },
+  namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer()
-    server: Server;
+  @WebSocketServer()
+  server: Server;
 
-    constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
-    handleConnection(client: Socket) {
-
-
-        // Récupérer l'ID utilisateur depuis le handshake auth
-        const userId = client.handshake.auth?.userId;
-        if (userId) {
-            if (!userSockets.has(userId)) {
-                userSockets.set(userId, new Set());
-            }
-            userSockets.get(userId)?.add(client.id);
-        }
+  handleConnection(client: Socket) {
+    // Récupérer l'ID utilisateur depuis le handshake auth
+    const userId = client.handshake.auth?.userId;
+    if (userId) {
+      if (!userSockets.has(userId)) {
+        userSockets.set(userId, new Set());
+      }
+      userSockets.get(userId)?.add(client.id);
     }
+  }
 
-    handleDisconnect(client: Socket) {
-
-        const userId = client.handshake.auth?.userId;
-        if (userId) {
-            userSockets.get(userId)?.delete(client.id);
-            if (userSockets.get(userId)?.size === 0) {
-                userSockets.delete(userId);
-            }
-        }
+  handleDisconnect(client: Socket) {
+    const userId = client.handshake.auth?.userId;
+    if (userId) {
+      userSockets.get(userId)?.delete(client.id);
+      if (userSockets.get(userId)?.size === 0) {
+        userSockets.delete(userId);
+      }
     }
+  }
 
-    // ========== EVENTS ==========
+  // ========== EVENTS ==========
 
-    @SubscribeMessage('message:send')
-    async handleSendMessage(
-        @MessageBody() data: { dto: SendMessageDto; userId: number },
-        @ConnectedSocket() client: Socket,
-    ) {
-        try {
-            const message = await this.chatService.sendMessage(data.dto, data.userId);
+  @SubscribeMessage('message:send')
+  async handleSendMessage(
+    @MessageBody() data: { dto: SendMessageDto; userId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const message = await this.chatService.sendMessage(data.dto, data.userId);
 
-            // Ré envoyer le message à tous les participants de la conversation
-            const conversation = await this.chatService.getConversation(
-                data.dto.conversationId,
-                data.userId,
-            );
+      // Ré envoyer le message à tous les participants de la conversation
+      const conversation = await this.chatService.getConversation(
+        data.dto.conversationId,
+        data.userId,
+      );
 
-            conversation.participants.forEach((participant) => {
-                const socketIds = userSockets.get(participant.userId);
-                if (socketIds) {
-                    socketIds.forEach((socketId) => {
-                        this.server.to(socketId).emit('message:new', message);
-                    });
-                }
-            });
-
-            return { success: true, message };
-        } catch (error) {
-            client.emit('error', { message: error.message });
-            return { success: false, error: error.message };
+      conversation.participants.forEach((participant) => {
+        const socketIds = userSockets.get(participant.userId);
+        if (socketIds) {
+          socketIds.forEach((socketId) => {
+            this.server.to(socketId).emit('message:new', message);
+          });
         }
+      });
+
+      return { success: true, message };
+    } catch (error) {
+      client.emit('error', { message: error.message });
+      return { success: false, error: error.message };
     }
+  }
 
-    @SubscribeMessage('message:edit')
-    async handleEditMessage(
-        @MessageBody()
-        data: { messageId: string; dto: UpdateMessageDto; userId: number },
-        @ConnectedSocket() client: Socket,
-    ) {
-        try {
-            const message = await this.chatService.updateMessage(
-                data.messageId,
-                data.dto,
-                data.userId,
-            );
+  @SubscribeMessage('message:edit')
+  async handleEditMessage(
+    @MessageBody()
+    data: { messageId: string; dto: UpdateMessageDto; userId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const message = await this.chatService.updateMessage(
+        data.messageId,
+        data.dto,
+        data.userId,
+      );
 
-            // Notifier tous les participants
-            const messageWithConv = await this.chatService.getMessages(
-                message.conversationId,
-                data.userId,
-                0,
-                1,
-            );
+      // Notifier tous les participants
+      const messageWithConv = await this.chatService.getMessages(
+        message.conversationId,
+        data.userId,
+        0,
+        1,
+      );
 
-            if (messageWithConv.length > 0) {
-                const conversation = await this.chatService.getConversation(
-                    message.conversationId,
-                    data.userId,
-                );
-
-                conversation.participants.forEach((participant) => {
-                    const socketIds = userSockets.get(participant.userId);
-                    if (socketIds) {
-                        socketIds.forEach((socketId) => {
-                            this.server.to(socketId).emit('message:updated', message);
-                        });
-                    }
-                });
-            }
-
-            return { success: true, message };
-        } catch (error) {
-            client.emit('error', { message: error.message });
-            return { success: false, error: error.message };
-        }
-    }
-
-    @SubscribeMessage('message:delete')
-    async handleDeleteMessage(
-        @MessageBody() data: { messageId: string; userId: number },
-        @ConnectedSocket() client: Socket,
-    ) {
-        try {
-            const message = await this.chatService.deleteMessage(
-                data.messageId,
-                data.userId,
-            );
-
-            // Notifier tous les participants
-            const conversation = await this.chatService.getConversation(
-                message.conversationId,
-                data.userId,
-            );
-
-            conversation.participants.forEach((participant) => {
-                const socketIds = userSockets.get(participant.userId);
-                if (socketIds) {
-                    socketIds.forEach((socketId) => {
-                        this.server.to(socketId).emit('message:deleted', {
-                            messageId: data.messageId,
-                        });
-                    });
-                }
-            });
-
-            return { success: true };
-        } catch (error) {
-            client.emit('error', { message: error.message });
-            return { success: false, error: error.message };
-        }
-    }
-
-    @SubscribeMessage('typing:start')
-    async handleTypingStart(
-        @MessageBody() data: { conversationId: string; userId: number; userName: string },
-    ) {
+      if (messageWithConv.length > 0) {
         const conversation = await this.chatService.getConversation(
-            data.conversationId,
-            data.userId,
+          message.conversationId,
+          data.userId,
         );
 
         conversation.participants.forEach((participant) => {
-            if (participant.userId !== data.userId) {
-                const socketIds = userSockets.get(participant.userId);
-                if (socketIds) {
-                    socketIds.forEach((socketId) => {
-                        this.server.to(socketId).emit('user:typing', {
-                            conversationId: data.conversationId,
-                            userId: data.userId,
-                            userName: data.userName,
-                        });
-                    });
-                }
-            }
-        });
-    }
-
-    @SubscribeMessage('typing:stop')
-    async handleTypingStop(
-        @MessageBody() data: { conversationId: string; userId: number },
-    ) {
-        const conversation = await this.chatService.getConversation(
-            data.conversationId,
-            data.userId,
-        );
-
-        conversation.participants.forEach((participant) => {
-            if (participant.userId !== data.userId) {
-                const socketIds = userSockets.get(participant.userId);
-                if (socketIds) {
-                    socketIds.forEach((socketId) => {
-                        this.server.to(socketId).emit('user:stopped-typing', {
-                            conversationId: data.conversationId,
-                            userId: data.userId,
-                        });
-                    });
-                }
-            }
-        });
-    }
-
-    // Helper pour joindre une room de conversation
-    @SubscribeMessage('conversation:join')
-    handleJoinConversation(
-        @MessageBody() data: { conversationId: string },
-        @ConnectedSocket() client: Socket,
-    ) {
-        client.join(`conversation:${data.conversationId}`);
-        return { success: true };
-    }
-
-    @SubscribeMessage('conversation:leave')
-    handleLeaveConversation(
-        @MessageBody() data: { conversationId: string },
-        @ConnectedSocket() client: Socket,
-    ) {
-        client.leave(`conversation:${data.conversationId}`);
-        return { success: true };
-    }
-
-    // ========== SHARED SESSIONS EVENTS ==========
-
-    /**
-     * Notifier les membres d'un groupe ou des amis spécifiques qu'une séance a été créée
-     */
-    notifySessionCreated(session: any, memberIds: number[]) {
-        memberIds.forEach((memberId) => {
-            const socketIds = userSockets.get(memberId);
-            if (socketIds) {
-                socketIds.forEach((socketId) => {
-                    this.server.to(socketId).emit('session:invitation', {
-                        type: 'created',
-                        session,
-                    });
-                });
-            }
-        });
-    }
-
-    /**
-     * Notifier un nouveau message dans une conversation (utilisé par d'autres services)
-     */
-    async notifyNewMessage(message: any, conversationId: string) {
-        // Récupérer tous les participants de la conversation
-        const conversation = await this.chatService.getConversation(conversationId, message.senderId);
-
-        // Envoyer le message à tous les participants (incluant l'expéditeur)
-        conversation.participants.forEach((participant) => {
-            const socketIds = userSockets.get(participant.userId);
-            if (socketIds) {
-                socketIds.forEach((socketId) => {
-                    this.server.to(socketId).emit('message:new', message);
-                });
-            }
-        });
-    }
-
-
-    /**
-     * Notifier quand quelqu'un rejoint une séance
-     */
-    notifySessionJoined(sessionId: string, userId: number, userName: string, participantIds: number[]) {
-        participantIds.forEach((participantId) => {
-            const socketIds = userSockets.get(participantId);
-            if (socketIds) {
-                socketIds.forEach((socketId) => {
-                    this.server.to(socketId).emit('session:user-joined', {
-                        sessionId,
-                        userId,
-                        userName,
-                    });
-                });
-            }
-        });
-    }
-
-    /**
-     * Notifier quand quelqu'un quitte une séance
-     */
-    notifySessionLeft(sessionId: string, userId: number, userName: string, participantIds: number[]) {
-        participantIds.forEach((participantId) => {
-            const socketIds = userSockets.get(participantId);
-            if (socketIds) {
-                socketIds.forEach((socketId) => {
-                    this.server.to(socketId).emit('session:user-left', {
-                        sessionId,
-                        userId,
-                        userName,
-                    });
-                });
-            }
-        });
-    }
-
-    /**
-     * Notifier quand une séance est supprimée
-     */
-    notifySessionDeleted(sessionId: string, participantIds: number[]) {
-        participantIds.forEach((participantId) => {
-            const socketIds = userSockets.get(participantId);
-            if (socketIds) {
-                socketIds.forEach((socketId) => {
-                    this.server.to(socketId).emit('session:deleted', {
-                        sessionId,
-                    });
-                });
-            }
-        });
-    }
-
-    // ========== FRIEND REQUEST EVENTS ==========
-
-    /**
-     * Notifier quand une demande d'ami est reçue
-     */
-    notifyFriendRequestReceived(receiverId: number, friendRequest: any) {
-        const socketIds = userSockets.get(receiverId);
-        if (socketIds) {
+          const socketIds = userSockets.get(participant.userId);
+          if (socketIds) {
             socketIds.forEach((socketId) => {
-                this.server.to(socketId).emit('friend:request-received', friendRequest);
+              this.server.to(socketId).emit('message:updated', message);
             });
-        }
-    }
+          }
+        });
+      }
 
-    /**
-     * Notifier quand une demande d'ami est acceptée
-     */
-    notifyFriendRequestAccepted(senderId: number, acceptedBy: any) {
-        const socketIds = userSockets.get(senderId);
-        if (socketIds) {
-            socketIds.forEach((socketId) => {
-                this.server.to(socketId).emit('friend:request-accepted', acceptedBy);
-            });
-        }
+      return { success: true, message };
+    } catch (error) {
+      client.emit('error', { message: error.message });
+      return { success: false, error: error.message };
     }
+  }
 
-    /**
-     * Notifier quand une demande d'ami est refusée
-     */
-    notifyFriendRequestDeclined(senderId: number, declinedBy: any) {
-        const socketIds = userSockets.get(senderId);
+  @SubscribeMessage('message:delete')
+  async handleDeleteMessage(
+    @MessageBody() data: { messageId: string; userId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const message = await this.chatService.deleteMessage(
+        data.messageId,
+        data.userId,
+      );
+
+      // Notifier tous les participants
+      const conversation = await this.chatService.getConversation(
+        message.conversationId,
+        data.userId,
+      );
+
+      conversation.participants.forEach((participant) => {
+        const socketIds = userSockets.get(participant.userId);
         if (socketIds) {
-            socketIds.forEach((socketId) => {
-                this.server.to(socketId).emit('friend:request-declined', declinedBy);
+          socketIds.forEach((socketId) => {
+            this.server.to(socketId).emit('message:deleted', {
+              messageId: data.messageId,
             });
+          });
         }
+      });
+
+      return { success: true };
+    } catch (error) {
+      client.emit('error', { message: error.message });
+      return { success: false, error: error.message };
     }
-    /**
-     * Notifier quand une demande de groupe est reçue
-     */
-    notifyGroupRequestReceived(receiverId: number, request: any) {
-        const socketIds = userSockets.get(receiverId);
+  }
+
+  @SubscribeMessage('typing:start')
+  async handleTypingStart(
+    @MessageBody()
+    data: {
+      conversationId: string;
+      userId: number;
+      userName: string;
+    },
+  ) {
+    const conversation = await this.chatService.getConversation(
+      data.conversationId,
+      data.userId,
+    );
+
+    conversation.participants.forEach((participant) => {
+      if (participant.userId !== data.userId) {
+        const socketIds = userSockets.get(participant.userId);
         if (socketIds) {
-            socketIds.forEach((socketId) => {
-                this.server.to(socketId).emit('group:request-received', request);
+          socketIds.forEach((socketId) => {
+            this.server.to(socketId).emit('user:typing', {
+              conversationId: data.conversationId,
+              userId: data.userId,
+              userName: data.userName,
             });
+          });
         }
+      }
+    });
+  }
+
+  @SubscribeMessage('typing:stop')
+  async handleTypingStop(
+    @MessageBody() data: { conversationId: string; userId: number },
+  ) {
+    const conversation = await this.chatService.getConversation(
+      data.conversationId,
+      data.userId,
+    );
+
+    conversation.participants.forEach((participant) => {
+      if (participant.userId !== data.userId) {
+        const socketIds = userSockets.get(participant.userId);
+        if (socketIds) {
+          socketIds.forEach((socketId) => {
+            this.server.to(socketId).emit('user:stopped-typing', {
+              conversationId: data.conversationId,
+              userId: data.userId,
+            });
+          });
+        }
+      }
+    });
+  }
+
+  // Helper pour joindre une room de conversation
+  @SubscribeMessage('conversation:join')
+  handleJoinConversation(
+    @MessageBody() data: { conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.join(`conversation:${data.conversationId}`);
+    return { success: true };
+  }
+
+  @SubscribeMessage('conversation:leave')
+  handleLeaveConversation(
+    @MessageBody() data: { conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.leave(`conversation:${data.conversationId}`);
+    return { success: true };
+  }
+
+  // ========== SHARED SESSIONS EVENTS ==========
+
+  /**
+   * Notifier les membres d'un groupe ou des amis spécifiques qu'une séance a été créée
+   */
+  notifySessionCreated(session: any, memberIds: number[]) {
+    memberIds.forEach((memberId) => {
+      const socketIds = userSockets.get(memberId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('session:invitation', {
+            type: 'created',
+            session,
+          });
+        });
+      }
+    });
+  }
+
+  /**
+   * Notifier un nouveau message dans une conversation (utilisé par d'autres services)
+   */
+  async notifyNewMessage(message: any, conversationId: string) {
+    // Récupérer tous les participants de la conversation
+    const conversation = await this.chatService.getConversation(
+      conversationId,
+      message.senderId,
+    );
+
+    // Envoyer le message à tous les participants (incluant l'expéditeur)
+    conversation.participants.forEach((participant) => {
+      const socketIds = userSockets.get(participant.userId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('message:new', message);
+        });
+      }
+    });
+  }
+
+  /**
+   * Notifier quand quelqu'un rejoint une séance
+   */
+  notifySessionJoined(
+    sessionId: string,
+    userId: number,
+    userName: string,
+    participantIds: number[],
+  ) {
+    participantIds.forEach((participantId) => {
+      const socketIds = userSockets.get(participantId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('session:user-joined', {
+            sessionId,
+            userId,
+            userName,
+          });
+        });
+      }
+    });
+  }
+
+  /**
+   * Notifier quand quelqu'un quitte une séance
+   */
+  notifySessionLeft(
+    sessionId: string,
+    userId: number,
+    userName: string,
+    participantIds: number[],
+  ) {
+    participantIds.forEach((participantId) => {
+      const socketIds = userSockets.get(participantId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('session:user-left', {
+            sessionId,
+            userId,
+            userName,
+          });
+        });
+      }
+    });
+  }
+
+  /**
+   * Notifier quand une séance est supprimée
+   */
+  notifySessionDeleted(sessionId: string, participantIds: number[]) {
+    participantIds.forEach((participantId) => {
+      const socketIds = userSockets.get(participantId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('session:deleted', {
+            sessionId,
+          });
+        });
+      }
+    });
+  }
+
+  // ========== FRIEND REQUEST EVENTS ==========
+
+  /**
+   * Notifier quand une demande d'ami est reçue
+   */
+  notifyFriendRequestReceived(receiverId: number, friendRequest: any) {
+    const socketIds = userSockets.get(receiverId);
+    if (socketIds) {
+      socketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('friend:request-received', friendRequest);
+      });
     }
+  }
+
+  /**
+   * Notifier quand une demande d'ami est acceptée
+   */
+  notifyFriendRequestAccepted(senderId: number, acceptedBy: any) {
+    const socketIds = userSockets.get(senderId);
+    if (socketIds) {
+      socketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('friend:request-accepted', acceptedBy);
+      });
+    }
+  }
+
+  /**
+   * Notifier quand une demande d'ami est refusée
+   */
+  notifyFriendRequestDeclined(senderId: number, declinedBy: any) {
+    const socketIds = userSockets.get(senderId);
+    if (socketIds) {
+      socketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('friend:request-declined', declinedBy);
+      });
+    }
+  }
+  /**
+   * Notifier quand une demande de groupe est reçue
+   */
+  notifyGroupRequestReceived(receiverId: number, request: any) {
+    const socketIds = userSockets.get(receiverId);
+    if (socketIds) {
+      socketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('group:request-received', request);
+      });
+    }
+  }
 }

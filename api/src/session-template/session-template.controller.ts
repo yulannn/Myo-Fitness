@@ -1,13 +1,29 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SessionTemplateService } from './session-template.service';
-import { CreateSessionTemplateDto, UpdateSessionTemplateDto } from './dto/session-template.dto';
+import {
+  CreateSessionTemplateDto,
+  UpdateSessionTemplateDto,
+} from './dto/session-template.dto';
 import { ScheduleSessionDto } from './dto/schedule-session.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/session-templates')
 export class SessionTemplateController {
-  constructor(private readonly sessionTemplateService: SessionTemplateService) { }
+  constructor(
+    private readonly sessionTemplateService: SessionTemplateService,
+  ) {}
 
   @Get(':id')
   getTemplate(@Param('id', ParseIntPipe) id: number, @Request() req) {
@@ -39,7 +55,11 @@ export class SessionTemplateController {
     @Body() dto: ScheduleSessionDto,
     @Request() req,
   ) {
-    return this.sessionTemplateService.scheduleFromTemplate(id, dto, req.user.userId);
+    return this.sessionTemplateService.scheduleFromTemplate(
+      id,
+      dto,
+      req.user.userId,
+    );
   }
 
   @Post(':id/start')

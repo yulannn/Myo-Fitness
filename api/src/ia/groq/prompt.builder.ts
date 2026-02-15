@@ -8,32 +8,41 @@ export class PromptBuilder {
     template: string,
     exercices: Exercice[],
     priorityMuscles?: MuscleGroup[],
-    sessionStructure?: string[]
+    sessionStructure?: string[],
   ): string {
     // Construction des informations de personnalisation
     const weightGoalInfo = fitnessProfile.targetWeight
       ? `\n🎯 Objectif de poids: ${fitnessProfile.targetWeight}kg (actuellement ${fitnessProfile.weight}kg, delta: ${(fitnessProfile.targetWeight - fitnessProfile.weight).toFixed(1)}kg).`
       : '';
 
-    const musclePrioritiesInfo = priorityMuscles && priorityMuscles.length > 0
-      ? `\n💪 Priorités musculaires: ${priorityMuscles.map(m => m.name).join(', ')}. AUGMENTER le volume pour ces groupes musculaires.`
-      : '';
+    const musclePrioritiesInfo =
+      priorityMuscles && priorityMuscles.length > 0
+        ? `\n💪 Priorités musculaires: ${priorityMuscles.map((m) => m.name).join(', ')}. AUGMENTER le volume pour ces groupes musculaires.`
+        : '';
 
     const environmentInfo = fitnessProfile.trainingEnvironment
       ? `\n🏋️ Environnement: ${fitnessProfile.trainingEnvironment} - ${fitnessProfile.trainingEnvironment === 'HOME' ? 'Privilégier exercices au poids du corps et équipement minimal' : 'Accès à tous les équipements'}.`
       : '';
 
     // 🎯 Structure des sessions explicite
-    const sessionNames = sessionStructure && sessionStructure.length > 0
-      ? sessionStructure
-      : this.getDefaultSessionNames(template, fitnessProfile.trainingFrequency);
+    const sessionNames =
+      sessionStructure && sessionStructure.length > 0
+        ? sessionStructure
+        : this.getDefaultSessionNames(
+            template,
+            fitnessProfile.trainingFrequency,
+          );
 
     const sessionStructureInfo = `\n📋 Sessions à générer (dans cet ordre EXACT): ${sessionNames.join(', ')}`;
 
     // Générer l'exemple JSON avec les vrais noms de sessions
-    const exampleSessions = sessionNames.slice(0, 2).map(name =>
-      `    { "name": "${name}", "exercises": [{ "id": 2, "sets": 4, "reps": 8 }, { "id": 3, "sets": 3, "reps": 10 }] }`
-    ).join(',\n');
+    const exampleSessions = sessionNames
+      .slice(0, 2)
+      .map(
+        (name) =>
+          `    { "name": "${name}", "exercises": [{ "id": 2, "sets": 4, "reps": 8 }, { "id": 3, "sets": 3, "reps": 10 }] }`,
+      )
+      .join(',\n');
 
     return `
 Tu es un coach sportif expert.
@@ -60,7 +69,7 @@ ${exampleSessions}
 }
 
 Voici la liste des exercices disponibles :
-${exercices.map(e => `ID: ${e.id} - ${e.name}`).join('\n')}
+${exercices.map((e) => `ID: ${e.id} - ${e.name}`).join('\n')}
 
 Ne renvoie que des IDs existants. Pas de texte, pas de phrase. JSON uniquement.
     `;
@@ -69,7 +78,10 @@ Ne renvoie que des IDs existants. Pas de texte, pas de phrase. JSON uniquement.
   /**
    * Retourne les noms de sessions par défaut selon le template (fallback)
    */
-  private getDefaultSessionNames(template: string, frequency: number): string[] {
+  private getDefaultSessionNames(
+    template: string,
+    frequency: number,
+  ): string[] {
     switch (template) {
       case 'FULL_BODY':
         return Array(frequency).fill('Full Body');
@@ -77,7 +89,8 @@ Ne renvoie que des IDs existants. Pas de texte, pas de phrase. JSON uniquement.
         return ['Upper', 'Lower', 'Upper', 'Lower'].slice(0, frequency);
       case 'PUSH_PULL_LEGS':
         if (frequency <= 3) return ['Push', 'Pull', 'Legs'];
-        if (frequency === 6) return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs'];
+        if (frequency === 6)
+          return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs'];
         return ['Push', 'Pull', 'Legs'];
       default:
         return ['Session 1', 'Session 2', 'Session 3'].slice(0, frequency);

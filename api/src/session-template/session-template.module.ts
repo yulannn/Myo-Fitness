@@ -9,4 +9,4 @@ import { PrismaModule } from 'prisma/prisma.module';
   providers: [SessionTemplateService],
   exports: [SessionTemplateService],
 })
-export class SessionTemplateModule { }
+export class SessionTemplateModule {}

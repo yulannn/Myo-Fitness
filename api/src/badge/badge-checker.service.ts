@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { BadgeService, BadgeRequirement } from './badge.service';
 
-
 @Injectable()
 export class BadgeCheckerService {
   private readonly logger = new Logger(BadgeCheckerService.name);
@@ -10,7 +9,7 @@ export class BadgeCheckerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly badgeService: BadgeService,
-  ) { }
+  ) {}
 
   /**
    * Vérifie et débloque les badges liés aux sessions après une session complétée
@@ -33,7 +32,6 @@ export class BadgeCheckerService {
         'NIGHT_OWL',
       ];
 
-
       const [badges, existingUserBadges] = await Promise.all([
         this.prisma.badge.findMany({
           where: {
@@ -54,7 +52,6 @@ export class BadgeCheckerService {
       const unlockedBadgeCodes = new Set(
         existingUserBadges.map((ub) => ub.badge.code),
       );
-
 
       for (const badge of badges) {
         //  Vérifier si déjà débloqué sans requête

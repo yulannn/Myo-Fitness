@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Delete, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  Delete,
+  BadRequestException,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -23,14 +36,13 @@ export class UsersController {
     private usersService: UsersService,
     private r2Service: R2Service,
     private authService: AuthService,
-  ) { }
-
+  ) {}
 
   @Get('email/:email')
   @ApiOperation({ summary: 'Récupérer un utilisateur par email' })
   @ApiParam({
     name: 'email',
-    description: 'Email de l\'utilisateur',
+    description: "Email de l'utilisateur",
     example: 'jean.dupont@example.com',
   })
   @ApiResponse({
@@ -41,7 +53,7 @@ export class UsersController {
   async getUserByEmail(@Param('email') email: string, @Req() req) {
     if (email !== req.user.email) {
       throw new UnauthorizedException(
-        'Vous ne pouvez consulter que vos propres informations'
+        'Vous ne pouvez consulter que vos propres informations',
       );
     }
 
@@ -50,16 +62,22 @@ export class UsersController {
       throw new NotFoundException('Utilisateur non trouvé');
     }
 
-
-    const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
-      emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
+    const {
+      password,
+      refreshToken,
+      resetPasswordCode,
+      resetPasswordExpires,
+      emailVerificationCode,
+      emailVerificationExpires,
+      ...safeUser
+    } = user;
 
     return safeUser;
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un utilisateur par ID' })
-  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur', example: 1 })
+  @ApiParam({ name: 'id', description: "ID de l'utilisateur", example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Utilisateur trouvé',
@@ -68,14 +86,21 @@ export class UsersController {
   async getUserById(@Param('id') id: number, @Req() req) {
     if (Number(id) !== req.user.userId) {
       throw new UnauthorizedException(
-        'Vous ne pouvez consulter que vos propres informations'
+        'Vous ne pouvez consulter que vos propres informations',
       );
     }
 
     const user = await this.usersService.findUserById(Number(id));
 
-    const { password, refreshToken, resetPasswordCode, resetPasswordExpires,
-      emailVerificationCode, emailVerificationExpires, ...safeUser } = user;
+    const {
+      password,
+      refreshToken,
+      resetPasswordCode,
+      resetPasswordExpires,
+      emailVerificationCode,
+      emailVerificationExpires,
+      ...safeUser
+    } = user;
 
     return safeUser;
   }
@@ -84,11 +109,11 @@ export class UsersController {
    *  Profil public d'un autre utilisateur
    */
   @Get(':id/public-profile')
-  @ApiOperation({ summary: 'Récupérer le profil public d\'un utilisateur' })
-  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur', example: 1 })
+  @ApiOperation({ summary: "Récupérer le profil public d'un utilisateur" })
+  @ApiParam({ name: 'id', description: "ID de l'utilisateur", example: 1 })
   @ApiResponse({
     status: 200,
-    description: 'Profil public de l\'utilisateur',
+    description: "Profil public de l'utilisateur",
     schema: {
       type: 'object',
       properties: {
@@ -116,7 +141,6 @@ export class UsersController {
     createdAt: Date;
     userBadges: any[];
   }> {
-
     const userId = Number(id);
     if (isNaN(userId) || userId <= 0) {
       throw new BadRequestException('ID utilisateur invalide');
@@ -126,7 +150,9 @@ export class UsersController {
   }
 
   @Post('me/profile-picture/presigned-url')
-  @ApiOperation({ summary: 'Générer une URL présignée pour uploader une photo de profil' })
+  @ApiOperation({
+    summary: 'Générer une URL présignée pour uploader une photo de profil',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -153,7 +179,10 @@ export class UsersController {
       properties: {
         uploadUrl: { type: 'string', description: 'URL présignée pour upload' },
         key: { type: 'string', description: 'Clé du fichier dans R2' },
-        publicUrl: { type: 'string', description: 'URL publique du fichier une fois uploadé' },
+        publicUrl: {
+          type: 'string',
+          description: 'URL publique du fichier une fois uploadé',
+        },
       },
     },
   })
@@ -167,7 +196,9 @@ export class UsersController {
     // Valider le type de fichier
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(contentType)) {
-      throw new BadRequestException('Seules les images sont autorisées (JPEG, PNG, GIF)');
+      throw new BadRequestException(
+        'Seules les images sont autorisées (JPEG, PNG, GIF)',
+      );
     }
 
     // Valider l'extension
@@ -189,7 +220,9 @@ export class UsersController {
   }
 
   @Post('me/profile-picture/confirm')
-  @ApiOperation({ summary: 'Confirmer l\'upload et sauvegarder l\'URL de la photo de profil' })
+  @ApiOperation({
+    summary: "Confirmer l'upload et sauvegarder l'URL de la photo de profil",
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -197,7 +230,8 @@ export class UsersController {
         publicUrl: {
           type: 'string',
           description: 'URL publique de la photo de profil uploadée',
-          example: 'https://bucket.accountid.r2.cloudflarestorage.com/profile-pictures/user-123.jpg',
+          example:
+            'https://bucket.accountid.r2.cloudflarestorage.com/profile-pictures/user-123.jpg',
         },
       },
       required: ['publicUrl'],
@@ -231,7 +265,10 @@ export class UsersController {
           await this.r2Service.deleteFile(oldKey);
         } catch (error) {
           // Log l'erreur mais ne pas bloquer la mise à jour
-          console.error('Erreur lors de la suppression de l\'ancienne photo:', error);
+          console.error(
+            "Erreur lors de la suppression de l'ancienne photo:",
+            error,
+          );
         }
       }
     }
@@ -273,7 +310,9 @@ export class UsersController {
   }
 
   @Post('me/change-password')
-  @ApiOperation({ summary: 'Modifier le mot de passe de l\'utilisateur connecté' })
+  @ApiOperation({
+    summary: "Modifier le mot de passe de l'utilisateur connecté",
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -308,7 +347,7 @@ export class UsersController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Le nouveau mot de passe doit être différent de l\'ancien',
+    description: "Le nouveau mot de passe doit être différent de l'ancien",
   })
   async changePassword(
     @Body() body: { currentPassword: string; newPassword: string },
@@ -317,7 +356,11 @@ export class UsersController {
     const userId = req.user.userId;
     const { currentPassword, newPassword } = body;
 
-    return this.authService.changePassword(userId, currentPassword, newPassword);
+    return this.authService.changePassword(
+      userId,
+      currentPassword,
+      newPassword,
+    );
   }
 
   // ========================================
@@ -325,10 +368,12 @@ export class UsersController {
   // ========================================
 
   @Get('me/xp')
-  @ApiOperation({ summary: 'Récupérer le niveau et l\'XP de l\'utilisateur connecté' })
+  @ApiOperation({
+    summary: "Récupérer le niveau et l'XP de l'utilisateur connecté",
+  })
   @ApiResponse({
     status: 200,
-    description: 'Informations sur le niveau et l\'XP',
+    description: "Informations sur le niveau et l'XP",
     schema: {
       type: 'object',
       properties: {
@@ -345,14 +390,14 @@ export class UsersController {
   }
 
   @Post('me/xp/gain')
-  @ApiOperation({ summary: 'Ajouter de l\'XP à l\'utilisateur connecté' })
+  @ApiOperation({ summary: "Ajouter de l'XP à l'utilisateur connecté" })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         xp: {
           type: 'number',
-          description: 'Quantité d\'XP à ajouter',
+          description: "Quantité d'XP à ajouter",
           example: 50,
         },
       },
@@ -386,7 +431,9 @@ export class UsersController {
   }
 
   @Patch('me')
-  @ApiOperation({ summary: 'Mettre à jour le profil de l\'utilisateur connecté' })
+  @ApiOperation({
+    summary: "Mettre à jour le profil de l'utilisateur connecté",
+  })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({
     status: 200,

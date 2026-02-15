@@ -28,7 +28,7 @@ import {
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/performance')
 export class PerformanceController {
-  constructor(private readonly performanceService: PerformanceService) { }
+  constructor(private readonly performanceService: PerformanceService) {}
 
   @Post()
   @ApiOperation({ summary: 'Créer une nouvelle série de performance' })

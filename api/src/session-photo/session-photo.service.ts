@@ -5,7 +5,7 @@ import { CreateSessionPhotoDto } from './dto/create-session-photo.dto';
 
 @Injectable()
 export class SessionPhotoService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(
     createDto: CreateSessionPhotoDto,

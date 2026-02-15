@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateSessionTemplateDto, UpdateSessionTemplateDto } from './dto/session-template.dto';
+import {
+  CreateSessionTemplateDto,
+  UpdateSessionTemplateDto,
+} from './dto/session-template.dto';
 import { ScheduleSessionDto } from './dto/schedule-session.dto';
 
 @Injectable()
 export class SessionTemplateService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * 🔍 Récupère un template avec ses exercices
@@ -102,7 +110,11 @@ export class SessionTemplateService {
   /**
    * ✏️ Met à jour un template existant
    */
-  async updateTemplate(templateId: number, dto: UpdateSessionTemplateDto, userId: number) {
+  async updateTemplate(
+    templateId: number,
+    dto: UpdateSessionTemplateDto,
+    userId: number,
+  ) {
     // Vérifier permissions
     await this.getTemplateById(templateId, userId);
 
@@ -225,7 +237,11 @@ export class SessionTemplateService {
    * ✅ Les sessions sont maintenant créées lors de la génération du programme
    * Cette méthode met simplement à jour la date de la session existante
    */
-  async scheduleFromTemplate(templateId: number, dto: ScheduleSessionDto, userId: number) {
+  async scheduleFromTemplate(
+    templateId: number,
+    dto: ScheduleSessionDto,
+    userId: number,
+  ) {
     const sessionDate = dto.date ? new Date(dto.date) : new Date();
 
     // 1️⃣ Vérifier permissions et récupérer le template
@@ -252,14 +268,14 @@ export class SessionTemplateService {
             create: template.exercises.map((ex) => {
               const isCardio = ex.exercise?.type === 'CARDIO';
               const repsValue = isCardio
-                ? (ex.duration || ex.reps || 15)
+                ? ex.duration || ex.reps || 15
                 : ex.reps;
 
               return {
                 exerciceId: ex.exerciseId,
                 sets: isCardio ? 1 : ex.sets,
                 reps: repsValue,
-                weight: isCardio ? null : (ex.weight || null),
+                weight: isCardio ? null : ex.weight || null,
               };
             }),
           },
@@ -343,7 +359,7 @@ export class SessionTemplateService {
       // 3️⃣ Si aucune session trouvée, c'est un problème de cohérence
       if (!existingSession) {
         throw new NotFoundException(
-          `No training session found for template #${templateId}. This should have been created during program generation.`
+          `No training session found for template #${templateId}. This should have been created during program generation.`,
         );
       }
 
@@ -351,7 +367,10 @@ export class SessionTemplateService {
       // Cela garantit la synchronisation avec les modifications du template (Problème 1 résolu ✅)
 
       // Si la session a été annulée ou n'a jamais été démarrée, (re)créer les ExerciceSessions
-      if (existingSession.status === 'CANCELLED' || existingSession.status === 'SCHEDULED') {
+      if (
+        existingSession.status === 'CANCELLED' ||
+        existingSession.status === 'SCHEDULED'
+      ) {
         // Supprimer les anciennes ExerciceSessions si elles existent
         await tx.exerciceSession.deleteMany({
           where: { sessionId: existingSession.id },
@@ -362,7 +381,7 @@ export class SessionTemplateService {
           // 🆕 Pour les exercices cardio : utiliser duration comme valeur de reps
           const isCardio = exTemplate.exercise?.type === 'CARDIO';
           const repsValue = isCardio
-            ? (exTemplate.duration || exTemplate.reps || 15)
+            ? exTemplate.duration || exTemplate.reps || 15
             : exTemplate.reps;
 
           await tx.exerciceSession.create({
@@ -371,7 +390,7 @@ export class SessionTemplateService {
               exerciceId: exTemplate.exerciseId,
               sets: isCardio ? 1 : exTemplate.sets, // Cardio = 1 seule "série"
               reps: repsValue,
-              weight: isCardio ? null : (exTemplate.weight || null),
+              weight: isCardio ? null : exTemplate.weight || null,
             },
           });
         }

@@ -17,7 +17,10 @@ export class CoachingService {
   // ────────────────────────────────────────────────────────────
 
   /** Vérifie qu'une relation ACCEPTED existe entre le coach et le client */
-  private async assertCoachClientRelationship(coachId: number, clientId: number) {
+  private async assertCoachClientRelationship(
+    coachId: number,
+    clientId: number,
+  ) {
     const rel = await this.prisma.coachingRelationship.findFirst({
       where: { coachId, clientId, status: 'ACCEPTED' },
     });
@@ -59,7 +62,9 @@ export class CoachingService {
       );
     }
     if (client.id === coachId) {
-      throw new BadRequestException('Vous ne pouvez pas vous coacher vous-même.');
+      throw new BadRequestException(
+        'Vous ne pouvez pas vous coacher vous-même.',
+      );
     }
 
     const existing = await this.prisma.coachingRelationship.findUnique({
@@ -218,35 +223,39 @@ export class CoachingService {
 
     // Map programId → userId pour agréger par client
     const programToUser = new Map<number, number>();
-    allPrograms.forEach((p) => programToUser.set(p.id, p.fitnessProfile.userId));
+    allPrograms.forEach((p) =>
+      programToUser.set(p.id, p.fitnessProfile.userId),
+    );
 
     const allProgramIds = allPrograms.map((p) => p.id);
 
     // Batch : compteur de sessions complétées sur 30j
     // groupBy avec filtre scalaire (programId IN [...]) — compatible Prisma
-    const recentSessionCounts = allProgramIds.length > 0
-      ? await this.prisma.trainingSession.groupBy({
-        by: ['programId'],
-        where: {
-          completed: true,
-          performedAt: { gte: thirtyDaysAgo },
-          programId: { in: allProgramIds },
-        },
-        _count: { id: true },
-      })
-      : [];
+    const recentSessionCounts =
+      allProgramIds.length > 0
+        ? await this.prisma.trainingSession.groupBy({
+          by: ['programId'],
+          where: {
+            completed: true,
+            performedAt: { gte: thirtyDaysAgo },
+            programId: { in: allProgramIds },
+          },
+          _count: { id: true },
+        })
+        : [];
 
     // Batch : total des sessions sur 30j (complétées ou non)
-    const totalSessionCounts = allProgramIds.length > 0
-      ? await this.prisma.trainingSession.groupBy({
-        by: ['programId'],
-        where: {
-          performedAt: { gte: thirtyDaysAgo },
-          programId: { in: allProgramIds },
-        },
-        _count: { id: true },
-      })
-      : [];
+    const totalSessionCounts =
+      allProgramIds.length > 0
+        ? await this.prisma.trainingSession.groupBy({
+          by: ['programId'],
+          where: {
+            performedAt: { gte: thirtyDaysAgo },
+            programId: { in: allProgramIds },
+          },
+          _count: { id: true },
+        })
+        : [];
 
     // Agréger les counts par userId
     const completedByUser = new Map<number, number>();
@@ -286,18 +295,16 @@ export class CoachingService {
       return { cId, session };
     });
     const lastSessions = await Promise.all(lastSessionsPromises);
-    const lastSessionByUser = new Map<number, { sessionName: string | null; performedAt: Date | null } | null>(
-      lastSessions.map((ls) => [ls.cId, ls.session]),
-    );
+    const lastSessionByUser = new Map<
+      number,
+      { sessionName: string | null; performedAt: Date | null } | null
+    >(lastSessions.map((ls) => [ls.cId, ls.session]));
 
     // 3. Assembler les résultats
     const activeProgramByUser = new Map(
       allPrograms
         .filter((p) => p.status === 'ACTIVE')
-        .map((p) => [
-          p.fitnessProfile.userId,
-          { id: p.id, name: p.name },
-        ]),
+        .map((p) => [p.fitnessProfile.userId, { id: p.id, name: p.name }]),
     );
 
     return relationships.map((rel) => {
@@ -344,7 +351,6 @@ export class CoachingService {
     await this.assertIsCoach(coachId);
     await this.assertCoachClientRelationship(coachId, clientId);
 
-    // Profil + programmes (sans les sessions — chargées séparément)
     const user = await this.prisma.user.findUnique({
       where: { id: clientId },
       select: {
@@ -363,12 +369,41 @@ export class CoachingService {
             weight: true,
             gender: true,
             trainingPrograms: {
-              orderBy: { createdAt: 'desc' },
+              where: { status: 'ACTIVE' },
+              take: 1,
               select: {
                 id: true,
                 name: true,
                 status: true,
                 startDate: true,
+                sessionTemplates: {
+                  orderBy: { orderInProgram: 'asc' },
+                  select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    orderInProgram: true,
+                    exercises: {
+                      orderBy: { orderInSession: 'asc' },
+                      select: {
+                        id: true,
+                        sets: true,
+                        reps: true,
+                        weight: true,
+                        duration: true,
+                        orderInSession: true,
+                        exercise: {
+                          select: {
+                            id: true,
+                            name: true,
+                            imageUrl: true,
+                            type: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -378,7 +413,6 @@ export class CoachingService {
 
     if (!user) throw new NotFoundException('Client introuvable.');
 
-    // Sessions : uniquement les 50 dernières (paginé, scalable)
     const sessions = await this.prisma.trainingSession.findMany({
       where: {
         trainingProgram: {
@@ -411,7 +445,6 @@ export class CoachingService {
       },
     });
 
-    // Enrichir les sessions avec le nom du programme
     const enrichedSessions = sessions.map((s) => ({
       id: s.id,
       sessionName: s.sessionName,
@@ -428,6 +461,340 @@ export class CoachingService {
       ...user,
       sessions: enrichedSessions,
     };
+  }
+
+  /**
+   * Modifier un exercice dans un template (Coach)
+   */
+  async updateExerciseTemplate(
+    coachId: number,
+    clientId: number,
+    exerciseTemplateId: number,
+    data: { sets?: number; reps?: number; weight?: number; duration?: number },
+  ) {
+    await this.assertIsCoach(coachId);
+    await this.assertCoachClientRelationship(coachId, clientId);
+
+    const template = await this.prisma.exerciseTemplate.findUnique({
+      where: { id: exerciseTemplateId },
+      include: {
+        sessionTemplate: {
+          include: { trainingProgram: true },
+        },
+        exercise: true,
+      },
+    });
+
+    if (!template) throw new NotFoundException('Exercice introuvable.');
+
+    const beforeState = {
+      id: exerciseTemplateId,
+      sets: template.sets,
+      reps: template.reps,
+      weight: template.weight,
+      duration: template.duration,
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      const lastDiff = template.exercise.type === 'CARDIO'
+        ? `${template.duration || 0}m -> ${data.duration || template.duration}m`
+        : `${template.sets}x${template.reps}${template.weight ? ` @${template.weight}kg` : ''} -> ${data.sets || template.sets}x${data.reps || template.reps}${data.weight !== undefined ? (data.weight ? ` @${data.weight}kg` : '') : (template.weight ? ` @${template.weight}kg` : '')}`;
+
+      const updated = await tx.exerciseTemplate.update({
+        where: { id: exerciseTemplateId },
+        data: {
+          ...data,
+          hasCoachUpdate: true,
+          lastDiff,
+        },
+      });
+
+      const mod = await tx.programModification.create({
+        data: {
+          programId: template.sessionTemplate.programId,
+          coachId,
+          type: 'EXERCISE_UPDATED',
+          beforeState,
+          afterState: { id: exerciseTemplateId, ...data },
+          description: `Modification de ${template.exercise.name} : ${data.sets || template.sets} sets, ${data.reps || template.reps} reps`,
+        },
+      });
+
+      // Créer une activité pour le client
+      await tx.activity.create({
+        data: {
+          userId: clientId,
+          type: 'COACH_MODIFICATION',
+          data: {
+            modificationId: mod.id,
+            coachName: (
+              await tx.user.findUnique({
+                where: { id: coachId },
+                select: { name: true },
+              })
+            )?.name,
+            description: mod.description,
+          },
+        },
+      });
+
+      // Marquer le template comme ayant une mise à jour du coach
+      await tx.sessionTemplate.update({
+        where: { id: template.sessionTemplateId },
+        data: { hasCoachUpdate: true },
+      });
+
+      return updated;
+    });
+  }
+
+  /**
+   * Ajouter un exercice à un template (Coach)
+   */
+  async addExerciseToTemplate(
+    coachId: number,
+    clientId: number,
+    sessionTemplateId: number,
+    exerciseId: number,
+    data: { sets?: number; reps?: number; weight?: number; duration?: number },
+  ) {
+    await this.assertIsCoach(coachId);
+    await this.assertCoachClientRelationship(coachId, clientId);
+
+    const sessionTemplate = await this.prisma.sessionTemplate.findUnique({
+      where: { id: sessionTemplateId },
+      include: { exercises: true },
+    });
+
+    if (!sessionTemplate)
+      throw new NotFoundException('Template de séance introuvable.');
+
+    const exercise = await this.prisma.exercice.findUnique({
+      where: { id: exerciseId },
+    });
+    if (!exercise) throw new NotFoundException('Exercice introuvable.');
+
+    const maxOrder = sessionTemplate.exercises.reduce(
+      (max, ex) => Math.max(max, ex.orderInSession),
+      -1,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.exerciseTemplate.create({
+        data: {
+          sessionTemplateId,
+          exerciseId,
+          sets: data.sets ?? 3,
+          reps: data.reps ?? 10,
+          weight: data.weight ?? 0,
+          duration: data.duration,
+          orderInSession: maxOrder + 1,
+          hasCoachUpdate: true,
+          lastDiff: 'Nouvel exercice !',
+        },
+      });
+
+      const mod = await tx.programModification.create({
+        data: {
+          programId: sessionTemplate.programId,
+          coachId,
+          type: 'EXERCISE_ADDED',
+          afterState: created,
+          description: `Ajout de l'exercice ${exercise.name} à la séance ${sessionTemplate.name}`,
+        },
+      });
+
+      await tx.activity.create({
+        data: {
+          userId: clientId,
+          type: 'COACH_MODIFICATION',
+          data: {
+            modificationId: mod.id,
+            coachName: (
+              await tx.user.findUnique({
+                where: { id: coachId },
+                select: { name: true },
+              })
+            )?.name,
+            description: mod.description,
+          },
+        },
+      });
+
+      // Marquer le template comme ayant une mise à jour du coach
+      await tx.sessionTemplate.update({
+        where: { id: sessionTemplateId },
+        data: { hasCoachUpdate: true },
+      });
+
+      return created;
+    });
+  }
+
+  /**
+   * Supprimer un exercice d'un template (Coach)
+   */
+  async removeExerciseFromTemplate(
+    coachId: number,
+    clientId: number,
+    exerciseTemplateId: number,
+  ) {
+    await this.assertIsCoach(coachId);
+    await this.assertCoachClientRelationship(coachId, clientId);
+
+    const template = await this.prisma.exerciseTemplate.findUnique({
+      where: { id: exerciseTemplateId },
+      include: {
+        sessionTemplate: true,
+        exercise: true,
+      },
+    });
+
+    if (!template) throw new NotFoundException('Exercice introuvable.');
+
+    return this.prisma.$transaction(async (tx) => {
+      const mod = await tx.programModification.create({
+        data: {
+          programId: template.sessionTemplate.programId,
+          coachId,
+          type: 'EXERCISE_REMOVED',
+          beforeState: template,
+          description: `Suppression de l'exercice ${template.exercise.name} de la séance ${template.sessionTemplate.name}`,
+        },
+      });
+
+      await tx.exerciseTemplate.delete({ where: { id: exerciseTemplateId } });
+
+      await tx.activity.create({
+        data: {
+          userId: clientId,
+          type: 'COACH_MODIFICATION',
+          data: {
+            modificationId: mod.id,
+            coachName: (
+              await tx.user.findUnique({
+                where: { id: coachId },
+                select: { name: true },
+              })
+            )?.name,
+            description: mod.description,
+          },
+        },
+      });
+
+      // Réordonner
+      const remaining = await tx.exerciseTemplate.findMany({
+        where: { sessionTemplateId: template.sessionTemplateId },
+        orderBy: { orderInSession: 'asc' },
+      });
+
+      for (let i = 0; i < remaining.length; i++) {
+        await tx.exerciseTemplate.update({
+          where: { id: remaining[i].id },
+          data: { orderInSession: i },
+        });
+      }
+
+      // Marquer le template comme ayant une mise à jour du coach
+      await tx.sessionTemplate.update({
+        where: { id: template.sessionTemplateId },
+        data: { hasCoachUpdate: true },
+      });
+
+      return { success: true };
+    });
+  }
+
+  /**
+   * Récupérer les modifications d'un programme
+   */
+  async getProgramModifications(userId: number, programId: number) {
+    const program = await this.prisma.trainingProgram.findUnique({
+      where: { id: programId },
+      include: { fitnessProfile: true },
+    });
+
+    if (!program) throw new NotFoundException('Programme introuvable.');
+
+    // Sécurité: Proprio ou son coach
+    if (program.fitnessProfile.userId !== userId) {
+      await this.assertCoachClientRelationship(
+        userId,
+        program.fitnessProfile.userId,
+      );
+    }
+
+    return this.prisma.programModification.findMany({
+      where: { programId },
+      include: {
+        coach: { select: { name: true, profilePictureUrl: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Annuler une modification (Revert)
+   */
+  async revertModification(userId: number, modificationId: number) {
+    const mod = await this.prisma.programModification.findUnique({
+      where: { id: modificationId },
+      include: {
+        program: {
+          include: { fitnessProfile: true },
+        },
+      },
+    });
+
+    if (!mod) throw new NotFoundException('Modification introuvable.');
+
+    // Sécurité: Proprio ou son coach
+    if (mod.program.fitnessProfile.userId !== userId) {
+      await this.assertCoachClientRelationship(
+        userId,
+        mod.program.fitnessProfile.userId,
+      );
+    }
+
+    if (mod.isReverted)
+      throw new BadRequestException('Cette modification a déjà été annulée.');
+
+    return this.prisma.$transaction(async (tx) => {
+      if (mod.type === 'EXERCISE_UPDATED') {
+        const before = mod.beforeState as any;
+        const { id, ...updateData } = before;
+        await tx.exerciseTemplate.update({
+          where: { id },
+          data: updateData,
+        });
+      } else if (mod.type === 'EXERCISE_ADDED') {
+        const after = mod.afterState as any;
+        await tx.exerciseTemplate.delete({
+          where: { id: after.id },
+        });
+      } else if (mod.type === 'EXERCISE_REMOVED') {
+        const before = mod.beforeState as any;
+        await tx.exerciseTemplate.create({
+          data: {
+            sessionTemplateId: before.sessionTemplateId,
+            exerciseId: before.exerciseId,
+            sets: before.sets,
+            reps: before.reps,
+            weight: before.weight,
+            duration: before.duration,
+            orderInSession: before.orderInSession,
+            notes: before.notes,
+          },
+        });
+      }
+
+      await tx.programModification.update({
+        where: { id: modificationId },
+        data: { isReverted: true },
+      });
+
+      return { success: true };
+    });
   }
 
   // ────────────────────────────────────────────────────────────
@@ -604,7 +971,7 @@ export class CoachingService {
     return this.prisma.$transaction(async (tx) => {
       const template = await tx.sessionTemplate.create({
         data: {
-          programId: coachProgram!.id,
+          programId: coachProgram.id,
           name: sessionData.name || 'Séance sans nom',
           description: sessionData.description || '',
           orderInProgram: 0,
@@ -663,5 +1030,37 @@ export class CoachingService {
     });
 
     return coachProgram?.sessionTemplates || [];
+  }
+
+  /**
+   * Marquer un template de séance comme "vu" par le client (supprime l'indicateur)
+   */
+  async acknowledgeSessionUpdate(userId: number, sessionTemplateId: number) {
+    const template = await this.prisma.sessionTemplate.findUnique({
+      where: { id: sessionTemplateId },
+      include: { trainingProgram: { include: { fitnessProfile: true } } },
+    });
+
+    if (!template) throw new NotFoundException('Template introuvable.');
+
+    // Sécurité: Seul le client propriétaire du programme peut accuser réception
+    if (template.trainingProgram.fitnessProfile.userId !== userId) {
+      throw new ForbiddenException(
+        "Vous n'avez pas l'autorisation de modifier ce programme.",
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Nettoyer tous les flags d'exercices de cette séance
+      await tx.exerciseTemplate.updateMany({
+        where: { sessionTemplateId },
+        data: { hasCoachUpdate: false, lastDiff: null },
+      });
+
+      return tx.sessionTemplate.update({
+        where: { id: sessionTemplateId },
+        data: { hasCoachUpdate: false },
+      });
+    });
   }
 }

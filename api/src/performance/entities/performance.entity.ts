@@ -16,6 +16,11 @@ export class PerformanceEntity {
   @ApiPropertyOptional({ description: 'Poids utilisé', example: 50.5 })
   weight?: number;
 
-  @ApiPropertyOptional({ description: 'RPE de la série', example: 8, minimum: 1, maximum: 10 })
+  @ApiPropertyOptional({
+    description: 'RPE de la série',
+    example: 8,
+    minimum: 1,
+    maximum: 10,
+  })
   rpe?: number;
 }

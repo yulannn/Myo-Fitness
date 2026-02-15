@@ -10,4 +10,4 @@ import { R2Module } from '../r2/r2.module';
   controllers: [UsersController],
   exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

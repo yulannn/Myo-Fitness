@@ -1,96 +1,94 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-    IsArray,
-    IsNumber,
-    IsOptional,
-    IsString,
-    ValidateNested,
-    IsDateString,
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+  IsDateString,
 } from 'class-validator';
 
 // --- Exercices ---
 export class ExerciseDataDto {
-    @ApiProperty({ example: 1, description: 'ID de l’exercice existant' })
-    @IsNumber()
-    id: number;
+  @ApiProperty({ example: 1, description: 'ID de l’exercice existant' })
+  @IsNumber()
+  id: number;
 
-    @ApiProperty({ example: 3, description: 'Nombre de séries', required: false })
-    @IsOptional()
-    @IsNumber()
-    sets?: number;
+  @ApiProperty({ example: 3, description: 'Nombre de séries', required: false })
+  @IsOptional()
+  @IsNumber()
+  sets?: number;
 
-    @ApiProperty({
-        example: 10,
-        description: 'Nombre de répétitions',
-        required: false,
-    })
-    @IsOptional()
-    @IsNumber()
-    reps?: number;
+  @ApiProperty({
+    example: 10,
+    description: 'Nombre de répétitions',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  reps?: number;
 
-    @ApiProperty({
-        example: 50,
-        description: 'Poids utilisé pour l’exercice',
-        required: false,
-    })
-    @IsOptional()
-    @IsNumber()
-    weight?: number;
+  @ApiProperty({
+    example: 50,
+    description: 'Poids utilisé pour l’exercice',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
 }
 
 // --- Sessions ---
 export class SessionDataDto {
-    @ApiProperty({ example: 'Jour 1 - Haut du corps', required: false })
-    @IsOptional()
-    @IsString()
-    name?: string;
+  @ApiProperty({ example: 'Jour 1 - Haut du corps', required: false })
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-    @ApiProperty({
-        type: [ExerciseDataDto],
-        description: 'Liste des exercices de la séance (objets ou IDs)',
-    })
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => ExerciseDataDto)
-    exercises: ExerciseDataDto[];
+  @ApiProperty({
+    type: [ExerciseDataDto],
+    description: 'Liste des exercices de la séance (objets ou IDs)',
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExerciseDataDto)
+  exercises: ExerciseDataDto[];
 }
 
 // --- Programme ---
 export class CreateProgramDataDto {
-    @ApiProperty({ example: 'Full Body Débutant' })
-    @IsString()
-    name: string;
+  @ApiProperty({ example: 'Full Body Débutant' })
+  @IsString()
+  name: string;
 
+  @ApiProperty({ example: 1, description: 'ID du profil fitness associé' })
+  @IsNumber()
+  fitnessProfileId: number;
 
-
-    @ApiProperty({ example: 1, description: 'ID du profil fitness associé' })
-    @IsNumber()
-    fitnessProfileId: number;
-
-    @ApiProperty({
-        example: '2025-12-05T00:00:00.000Z',
-        description: 'Date de début du programme (pour planification auto)',
-        required: false,
-    })
-    @IsOptional()
-    @IsDateString()
-    startDate?: string;
+  @ApiProperty({
+    example: '2025-12-05T00:00:00.000Z',
+    description: 'Date de début du programme (pour planification auto)',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
 }
 
 // --- DTO combiné ---
 export class CreateManualProgramDto {
-    @ApiProperty({ type: CreateProgramDataDto })
-    @ValidateNested()
-    @Type(() => CreateProgramDataDto)
-    createProgramDto: CreateProgramDataDto;
+  @ApiProperty({ type: CreateProgramDataDto })
+  @ValidateNested()
+  @Type(() => CreateProgramDataDto)
+  createProgramDto: CreateProgramDataDto;
 
-    @ApiProperty({
-        type: [SessionDataDto],
-        description: 'Liste des séances du programme'
-    })
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => SessionDataDto)
-    sessions: SessionDataDto[];
+  @ApiProperty({
+    type: [SessionDataDto],
+    description: 'Liste des séances du programme',
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SessionDataDto)
+  sessions: SessionDataDto[];
 }

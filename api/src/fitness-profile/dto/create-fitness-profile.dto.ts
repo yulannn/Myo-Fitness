@@ -1,6 +1,23 @@
-import { IsInt, IsNumber, IsEnum, IsBoolean, IsArray, ArrayNotEmpty, Min, Max, IsOptional, IsString } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsEnum,
+  IsBoolean,
+  IsArray,
+  ArrayNotEmpty,
+  Min,
+  Max,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { Gender, Goal, ExperienceLevel, WeekDay, TrainingEnvironment } from '@prisma/client';
+import {
+  Gender,
+  Goal,
+  ExperienceLevel,
+  WeekDay,
+  TrainingEnvironment,
+} from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFitnessProfileDto {
@@ -84,14 +101,16 @@ export class CreateFitnessProfileDto {
   gender: Gender;
 
   @ApiProperty({
-    description: 'Indique si l utilisateur souhaite uniquement des exercices au poids du corps',
+    description:
+      'Indique si l utilisateur souhaite uniquement des exercices au poids du corps',
     example: true,
   })
   @IsBoolean()
   bodyWeight: boolean;
 
   @ApiPropertyOptional({
-    description: 'Jours de la semaine pour les entraînements (tableau vide = planification manuelle)',
+    description:
+      'Jours de la semaine pour les entraînements (tableau vide = planification manuelle)',
     enum: WeekDay,
     isArray: true,
     example: [WeekDay.MONDAY, WeekDay.WEDNESDAY, WeekDay.FRIDAY],
@@ -115,7 +134,8 @@ export class CreateFitnessProfileDto {
   targetWeight?: number;
 
   @ApiPropertyOptional({
-    description: 'IDs des groupes musculaires prioritaires (ex: [1, 5, 6] pour Pectoraux, Biceps, Triceps)',
+    description:
+      'IDs des groupes musculaires prioritaires (ex: [1, 5, 6] pour Pectoraux, Biceps, Triceps)',
     type: [Number],
     isArray: true,
     example: [1, 5, 6],
@@ -127,7 +147,7 @@ export class CreateFitnessProfileDto {
   musclePriorities?: number[];
 
   @ApiPropertyOptional({
-    description: 'Environnement d\'entraînement préféré',
+    description: "Environnement d'entraînement préféré",
     enum: TrainingEnvironment,
     example: TrainingEnvironment.GYM,
   })

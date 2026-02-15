@@ -49,6 +49,18 @@ export const CoachingService = {
     const { data } = await api.get<any[]>('/coaching/pending');
     return data;
   },
+
+  /** Récupérer l'historique des modifications d'un programme */
+  getProgramModifications: async (programId: number): Promise<any[]> => {
+    const { data } = await api.get(`/coaching/programs/${programId}/modifications`);
+    return data;
+  },
+
+  /** Annuler une modification */
+  revertModification: async (modificationId: number): Promise<any> => {
+    const { data } = await api.post(`/coaching/modifications/${modificationId}/revert`);
+    return data;
+  },
 };
 
 export default CoachingService;

@@ -36,10 +36,12 @@ import { PremiumGuard } from '../subscription/guards/premium.guard';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/program')
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) { }
+  constructor(private readonly programService: ProgramService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Récupérer tous les programmes d’entraînement de l’utilisateur' })
+  @ApiOperation({
+    summary: 'Récupérer tous les programmes d’entraînement de l’utilisateur',
+  })
   @ApiResponse({
     status: 200,
     description: 'Programmes récupérés avec succès',
@@ -63,7 +65,9 @@ export class ProgramController {
   }
 
   @Get('archived')
-  @ApiOperation({ summary: 'Récupérer les programmes archivés de l’utilisateur' })
+  @ApiOperation({
+    summary: 'Récupérer les programmes archivés de l’utilisateur',
+  })
   @ApiResponse({
     status: 200,
     description: 'Programmes archivés récupérés avec succès',
@@ -81,7 +85,10 @@ export class ProgramController {
     description: 'Programme récupéré avec succès',
     type: TrainingProgramEntity,
   })
-  getProgramById(@Param('programId', ParseIntPipe) programId: number, @Request() req) {
+  getProgramById(
+    @Param('programId', ParseIntPipe) programId: number,
+    @Request() req,
+  ) {
     const userId = req.user.userId;
     return this.programService.getProgramById(programId, userId);
   }
@@ -89,7 +96,10 @@ export class ProgramController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post()
   @UseGuards(PremiumGuard) // 🔒 Premium uniquement pour la génération IA
-  @ApiOperation({ summary: 'Créer un nouveau programme d\'entraînement (IA - Premium uniquement)' })
+  @ApiOperation({
+    summary:
+      "Créer un nouveau programme d'entraînement (IA - Premium uniquement)",
+  })
   @ApiBody({ type: CreateTrainingProgramDto })
   @ApiResponse({
     status: 201,
@@ -166,7 +176,7 @@ export class ProgramController {
   }
 
   @Patch(':programId/status')
-  @ApiOperation({ summary: 'Mettre à jour le statut d\'un programme' })
+  @ApiOperation({ summary: "Mettre à jour le statut d'un programme" })
   @ApiBody({ type: UpdateProgramStatusDto })
   @ApiResponse({
     status: 200,
@@ -179,7 +189,11 @@ export class ProgramController {
     @Request() req,
   ) {
     const userId = req.user.userId;
-    return this.programService.updateProgramStatus(programId, updateStatusDto.status, userId);
+    return this.programService.updateProgramStatus(
+      programId,
+      updateStatusDto.status,
+      userId,
+    );
   }
 
   @Patch(':programId')
@@ -196,7 +210,11 @@ export class ProgramController {
     @Request() req,
   ) {
     const userId = req.user.userId;
-    return this.programService.updateProgram(programId, updateProgramDto, userId);
+    return this.programService.updateProgram(
+      programId,
+      updateProgramDto,
+      userId,
+    );
   }
 
   @Post(':programId/clone')
@@ -224,7 +242,9 @@ export class ProgramController {
 
   // 🆕 Endpoints Cardio
   @Post(':programId/cardio')
-  @ApiOperation({ summary: 'Ajouter un exercice cardio à tous les templates du programme' })
+  @ApiOperation({
+    summary: 'Ajouter un exercice cardio à tous les templates du programme',
+  })
   @ApiBody({ type: AddCardioToProgramDto })
   @ApiResponse({
     status: 201,

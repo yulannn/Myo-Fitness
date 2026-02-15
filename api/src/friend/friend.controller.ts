@@ -30,11 +30,15 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/v1/friend')
 export class FriendController {
-  constructor(private readonly friendService: FriendService) { }
+  constructor(private readonly friendService: FriendService) {}
 
   @Get('search')
   @ApiOperation({ summary: 'Rechercher des utilisateurs' })
-  @ApiQuery({ name: 'q', required: true, description: 'Terme de recherche (nom ou email)' })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    description: 'Terme de recherche (nom ou email)',
+  })
   searchUsers(@Query('q') query: string, @Request() req) {
     const userId = req.user.userId;
     return this.friendService.searchUsers(query, userId);
@@ -119,7 +123,8 @@ export class FriendController {
 
   @Get('sent')
   @ApiOperation({
-    summary: 'Récupérer toutes les demandes d\'amitié envoyées par l\'utilisateur',
+    summary:
+      "Récupérer toutes les demandes d'amitié envoyées par l'utilisateur",
   })
   @ApiResponse({
     status: 200,
@@ -187,7 +192,7 @@ export class FriendController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Delete('request/:requestId')
-  @ApiOperation({ summary: 'Annuler une demande d\'amitié envoyée' })
+  @ApiOperation({ summary: "Annuler une demande d'amitié envoyée" })
   @ApiParam({
     name: 'requestId',
     description: 'ID de la demande à annuler',

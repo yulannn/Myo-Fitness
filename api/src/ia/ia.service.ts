@@ -4,8 +4,10 @@ import { GroqClient } from './groq/groq.client';
 import { PromptBuilder } from './groq/prompt.builder';
 import { LlmProgramSchema } from './schemas/llm-program.schema';
 import { FitnessProfile, ProgramTemplate } from '@prisma/client';
-import { selectTemplateByFrequency, getTemplateSelectionLog } from './template-selector.helper';
-
+import {
+  selectTemplateByFrequency,
+  getTemplateSelectionLog,
+} from './template-selector.helper';
 
 @Injectable()
 export class IaService {
@@ -13,28 +15,43 @@ export class IaService {
     private readonly prisma: PrismaService,
     private readonly groqClient: GroqClient,
     private readonly promptBuilder: PromptBuilder,
-  ) { }
+  ) {}
 
-  async generateProgram(fitnessProfile: FitnessProfile, overrideTemplate?: ProgramTemplate) {
+  async generateProgram(
+    fitnessProfile: FitnessProfile,
+    overrideTemplate?: ProgramTemplate,
+  ) {
     // 🎯 Sélection du template : utilise l'override si fourni, sinon calcule selon la fréquence
-    const templateSelection = selectTemplateByFrequency(fitnessProfile.trainingFrequency);
+    const templateSelection = selectTemplateByFrequency(
+      fitnessProfile.trainingFrequency,
+    );
 
     // Si l'utilisateur a choisi un template différent, on l'utilise
     const effectiveTemplate = overrideTemplate || templateSelection.template;
     const effectiveSessionStructure = overrideTemplate
-      ? this.getSessionStructureForTemplate(overrideTemplate, fitnessProfile.trainingFrequency)
+      ? this.getSessionStructureForTemplate(
+          overrideTemplate,
+          fitnessProfile.trainingFrequency,
+        )
       : templateSelection.sessionStructure;
 
     // 📊 Log pour debugging
     if (overrideTemplate) {
       console.log(`🎯 ===== USER OVERRIDE TEMPLATE =====`);
-      console.log(`📅 Fréquence: ${fitnessProfile.trainingFrequency} jours/semaine`);
+      console.log(
+        `📅 Fréquence: ${fitnessProfile.trainingFrequency} jours/semaine`,
+      );
       console.log(`🔄 Recommandé: ${templateSelection.template}`);
       console.log(`✅ Choisi par l'utilisateur: ${effectiveTemplate}`);
       console.log(`📋 Structure: ${effectiveSessionStructure.join(' → ')}`);
       console.log(`🎯 ================================`);
     } else {
-      console.log(getTemplateSelectionLog(fitnessProfile.trainingFrequency, templateSelection));
+      console.log(
+        getTemplateSelectionLog(
+          fitnessProfile.trainingFrequency,
+          templateSelection,
+        ),
+      );
     }
 
     // Charger les exercices selon le niveau et type d'entraînement
@@ -52,8 +69,13 @@ export class IaService {
     });
 
     // 🎯 Charger les groupes musculaires prioritaires si définis
-    let priorityMuscles: Awaited<ReturnType<typeof this.prisma.muscleGroup.findMany>> | undefined = undefined;
-    if (fitnessProfile.musclePriorities && fitnessProfile.musclePriorities.length > 0) {
+    let priorityMuscles:
+      | Awaited<ReturnType<typeof this.prisma.muscleGroup.findMany>>
+      | undefined = undefined;
+    if (
+      fitnessProfile.musclePriorities &&
+      fitnessProfile.musclePriorities.length > 0
+    ) {
       priorityMuscles = await this.prisma.muscleGroup.findMany({
         where: {
           id: { in: fitnessProfile.musclePriorities },
@@ -66,9 +88,8 @@ export class IaService {
       effectiveTemplate,
       exercices,
       priorityMuscles,
-      effectiveSessionStructure  // 🎯 Passe la structure exacte des sessions
+      effectiveSessionStructure, // 🎯 Passe la structure exacte des sessions
     );
-
 
     try {
       const result = await this.groqClient.generateJsonResponse(
@@ -90,7 +111,10 @@ export class IaService {
    * 🎯 Génère la structure des sessions pour un template donné
    * Chaque template a maintenant sa propre structure explicite
    */
-  private getSessionStructureForTemplate(template: ProgramTemplate, frequency: number): string[] {
+  private getSessionStructureForTemplate(
+    template: ProgramTemplate,
+    frequency: number,
+  ): string[] {
     switch (template) {
       case 'FULL_BODY':
         // Full Body répété selon la fréquence
@@ -118,9 +142,10 @@ export class IaService {
     }
   }
 
-
-
-  private async generateProgramBackup(fitnessProfile: FitnessProfile, template: ProgramTemplate) {
+  private async generateProgramBackup(
+    fitnessProfile: FitnessProfile,
+    template: ProgramTemplate,
+  ) {
     type ExerciseEntry = { id: number; sets: number; reps: number };
     type SessionEntry = { name: string; exercises: ExerciseEntry[] };
 
@@ -138,7 +163,11 @@ export class IaService {
       include: { groupes: { include: { groupe: true } } },
     });
 
-    const defaultReps = { BEGINNER: { upper: 12, lower: 15 }, INTERMEDIATE: { upper: 10, lower: 12 }, ADVANCED: { upper: 8, lower: 10 } };
+    const defaultReps = {
+      BEGINNER: { upper: 12, lower: 15 },
+      INTERMEDIATE: { upper: 10, lower: 12 },
+      ADVANCED: { upper: 8, lower: 10 },
+    };
     const defaultSets = { BEGINNER: 3, INTERMEDIATE: 3, ADVANCED: 4 };
 
     const reps = defaultReps[fitnessProfile.experienceLevel];
@@ -148,28 +177,39 @@ export class IaService {
     const lowerGroups = ['quads', 'hamstrings', 'glutes', 'calves'];
 
     const pickExercises = (groups: string[], count = 5): ExerciseEntry[] => {
-      const filtered = allExercises.filter(ex =>
-        ex.groupes.some(g => groups.includes(g.groupe.name.toLowerCase())),
+      const filtered = allExercises.filter((ex) =>
+        ex.groupes.some((g) => groups.includes(g.groupe.name.toLowerCase())),
       );
       return filtered
         .sort(() => 0.5 - Math.random())
         .slice(0, count)
-        .map(ex => ({
+        .map((ex) => ({
           id: ex.id,
           sets,
-          reps: groups.some(g => upperGroups.includes(g)) ? reps.upper : reps.lower,
+          reps: groups.some((g) => upperGroups.includes(g))
+            ? reps.upper
+            : reps.lower,
         }));
     };
 
     // 🎯 Utiliser la structure de sessions exacte selon le template et la fréquence
-    const sessionStructure = this.getSessionStructureForTemplate(template, fitnessProfile.trainingFrequency);
+    const sessionStructure = this.getSessionStructureForTemplate(
+      template,
+      fitnessProfile.trainingFrequency,
+    );
 
-    const sessions: SessionEntry[] = sessionStructure.map(sessionName => {
+    const sessions: SessionEntry[] = sessionStructure.map((sessionName) => {
       switch (sessionName) {
         case 'Push':
-          return { name: 'Push', exercises: pickExercises(['chest', 'shoulders', 'triceps'], 5) };
+          return {
+            name: 'Push',
+            exercises: pickExercises(['chest', 'shoulders', 'triceps'], 5),
+          };
         case 'Pull':
-          return { name: 'Pull', exercises: pickExercises(['back', 'biceps'], 5) };
+          return {
+            name: 'Pull',
+            exercises: pickExercises(['back', 'biceps'], 5),
+          };
         case 'Legs':
           return { name: 'Legs', exercises: pickExercises(lowerGroups, 5) };
         case 'Upper':
@@ -178,11 +218,13 @@ export class IaService {
           return { name: 'Lower', exercises: pickExercises(lowerGroups, 5) };
         case 'Full Body':
         default:
-          return { name: 'Full Body', exercises: pickExercises([...upperGroups, ...lowerGroups], 6) };
+          return {
+            name: 'Full Body',
+            exercises: pickExercises([...upperGroups, ...lowerGroups], 6),
+          };
       }
     });
 
     return { template, sessions };
   }
-
 }

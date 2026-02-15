@@ -1,4 +1,11 @@
-import { IsInt, IsOptional, IsNumber, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePerformanceDto {

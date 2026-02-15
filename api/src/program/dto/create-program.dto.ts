@@ -1,11 +1,19 @@
-import { IsString, IsOptional, IsEnum, IsInt, IsNotEmpty, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProgramStatus, ProgramTemplate } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTrainingProgramDto {
   @ApiPropertyOptional({
-    description: 'Template d\'entraînement choisi par l\'utilisateur (optionnel, sinon calculé automatiquement)',
+    description:
+      "Template d'entraînement choisi par l'utilisateur (optionnel, sinon calculé automatiquement)",
     enum: ProgramTemplate,
     example: ProgramTemplate.PUSH_PULL_LEGS,
   })
@@ -27,8 +35,6 @@ export class CreateTrainingProgramDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-
 
   @ApiPropertyOptional({
     description: 'Statut du programme',

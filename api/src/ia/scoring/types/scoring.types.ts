@@ -4,31 +4,31 @@ import { ProgramTemplate, ExperienceLevel, Goal } from '@prisma/client';
  * Résultat du scoring d'un template
  */
 export interface TemplateScore {
-    template: ProgramTemplate;
-    score: number;
-    reasons: string[];
+  template: ProgramTemplate;
+  score: number;
+  reasons: string[];
 }
 
 /**
  * Contraintes de faisabilité d'un template
  */
 export interface TemplateConstraints {
-    minFrequency: number;
-    maxFrequency: number;
-    optimalFrequency: number[];
+  minFrequency: number;
+  maxFrequency: number;
+  optimalFrequency: number[];
 }
 
 /**
  * Profil simplifié pour le scoring
  */
 export interface ScoringProfile {
-    trainingFrequency: number;
-    experienceLevel: ExperienceLevel;
-    goals: Goal[];
-    musclePriorities: number[];
-    age: number;
-    weight: number;
-    targetWeight?: number | null;
+  trainingFrequency: number;
+  experienceLevel: ExperienceLevel;
+  goals: Goal[];
+  musclePriorities: number[];
+  age: number;
+  weight: number;
+  targetWeight?: number | null;
 }
 
 /**

@@ -2,16 +2,16 @@ import { Exclude } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UserEntity {
-  @ApiProperty({ description: 'ID de l\'utilisateur', example: 1 })
+  @ApiProperty({ description: "ID de l'utilisateur", example: 1 })
   id: number;
 
   @ApiProperty({
-    description: 'Email de l\'utilisateur',
+    description: "Email de l'utilisateur",
     example: 'jean.dupont@example.com',
   })
   email: string;
 
-  @ApiProperty({ description: 'Nom de l\'utilisateur', example: 'Jean' })
+  @ApiProperty({ description: "Nom de l'utilisateur", example: 'Jean' })
   name: string;
 
   @ApiPropertyOptional({
@@ -27,13 +27,13 @@ export class UserEntity {
   password: string;
 
   @ApiProperty({
-    description: 'Niveau de l\'utilisateur',
+    description: "Niveau de l'utilisateur",
     example: 1,
   })
   level: number;
 
   @ApiProperty({
-    description: 'Expérience de l\'utilisateur',
+    description: "Expérience de l'utilisateur",
     example: 0,
   })
   xp: number;
@@ -57,14 +57,14 @@ export class UserEntity {
   tokenVersion: number;
 
   @ApiProperty({
-    description: 'Rôle de l\'utilisateur',
+    description: "Rôle de l'utilisateur",
     example: 'USER',
     enum: ['USER', 'COACH'],
   })
   role: 'USER' | 'COACH';
 
   @ApiPropertyOptional({
-    description: 'Refresh token de l\'utilisateur',
+    description: "Refresh token de l'utilisateur",
     example: null,
   })
   refreshToken?: string | null;
@@ -76,7 +76,7 @@ export class UserEntity {
   resetPasswordExpires?: Date | null;
 
   @ApiProperty({
-    description: 'Indique si l\'email a été vérifié',
+    description: "Indique si l'email a été vérifié",
     example: true,
   })
   emailVerified: boolean;

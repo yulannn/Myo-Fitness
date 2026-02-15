@@ -9,4 +9,4 @@ import { PrismaService } from 'prisma/prisma.service';
   providers: [IaService, GroqClient, PromptBuilder, PrismaService],
   exports: [IaService],
 })
-export class IaModule { }
+export class IaModule {}

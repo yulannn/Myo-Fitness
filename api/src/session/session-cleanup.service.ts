@@ -4,10 +4,10 @@ import { PrismaService } from 'prisma/prisma.service';
 
 /**
  * 🧹 Service de nettoyage automatique des sessions abandonnées
- * 
+ *
  * Détecte et annule les sessions IN_PROGRESS qui n'ont pas été mises à jour
  * depuis plus de 12 heures.
- * 
+ *
  * Configuration :
  * - Timeout: 12 heures (hardcodé)
  * - Cron: Toutes les 6 heures (00h, 06h, 12h, 18h)
@@ -18,7 +18,9 @@ export class SessionCleanupService {
   private readonly TIMEOUT_HOURS = 12; // Timeout en dur : 12 heures
 
   constructor(private readonly prisma: PrismaService) {
-    this.logger.log(`🔧 SessionCleanupService initialisé avec timeout de ${this.TIMEOUT_HOURS}h`);
+    this.logger.log(
+      `🔧 SessionCleanupService initialisé avec timeout de ${this.TIMEOUT_HOURS}h`,
+    );
   }
 
   /**
@@ -36,7 +38,7 @@ export class SessionCleanupService {
 
       if (result.cleanedCount > 0) {
         this.logger.warn(
-          `✅ ${result.cleanedCount} session(s) abandonnée(s) annulée(s) (timeout: ${this.TIMEOUT_HOURS}h)`
+          `✅ ${result.cleanedCount} session(s) abandonnée(s) annulée(s) (timeout: ${this.TIMEOUT_HOURS}h)`,
         );
       } else {
         this.logger.log('✅ Aucune session abandonnée détectée');
@@ -48,17 +50,17 @@ export class SessionCleanupService {
 
   /**
    * 🧹 Nettoie les sessions abandonnées
-   * 
+   *
    * Critères :
    * - Status: IN_PROGRESS
    * - Dernière mise à jour: > SESSION_TIMEOUT_HOURS (défaut 12h)
-   * 
+   *
    * Actions :
    * - Supprime SetPerformances
    * - Supprime ExerciceSessions
    * - Supprime SessionSummary
    * - Marque la session comme CANCELLED
-   * 
+   *
    * @returns Nombre de sessions nettoyées et date limite utilisée
    */
   async cleanupAbandonedSessions(): Promise<{
@@ -67,10 +69,12 @@ export class SessionCleanupService {
     sessionIds: number[];
   }> {
     // Calculer la date limite (maintenant - 12 heures)
-    const cutoffDate = new Date(Date.now() - this.TIMEOUT_HOURS * 60 * 60 * 1000);
+    const cutoffDate = new Date(
+      Date.now() - this.TIMEOUT_HOURS * 60 * 60 * 1000,
+    );
 
     this.logger.debug(
-      `🔍 Recherche des sessions IN_PROGRESS non modifiées depuis ${cutoffDate.toISOString()}`
+      `🔍 Recherche des sessions IN_PROGRESS non modifiées depuis ${cutoffDate.toISOString()}`,
     );
 
     // 1️⃣ Trouver les sessions abandonnées
@@ -103,7 +107,7 @@ export class SessionCleanupService {
     }
 
     this.logger.log(
-      `🧹 ${abandonedSessions.length} session(s) abandonnée(s) détectée(s)`
+      `🧹 ${abandonedSessions.length} session(s) abandonnée(s) détectée(s)`,
     );
 
     const cleanedSessionIds: number[] = [];
@@ -143,8 +147,8 @@ export class SessionCleanupService {
 
           this.logger.debug(
             `  ✓ Session #${session.id} "${session.sessionName || 'Sans nom'}" annulée ` +
-            `(userId: ${session.trainingProgram.fitnessProfile.userId}, ` +
-            `${deletedPerformances.count} performances, ${deletedExercices.count} exercices)`
+              `(userId: ${session.trainingProgram.fitnessProfile.userId}, ` +
+              `${deletedPerformances.count} performances, ${deletedExercices.count} exercices)`,
           );
         });
 
@@ -152,7 +156,7 @@ export class SessionCleanupService {
       } catch (error) {
         this.logger.error(
           `  ✗ Erreur lors de l'annulation de la session #${session.id}`,
-          error.stack
+          error.stack,
         );
         // Continue avec les autres sessions même si une échoue
       }
@@ -167,7 +171,7 @@ export class SessionCleanupService {
 
   /**
    * 🔧 Méthode manuelle pour forcer le cleanup (utile pour tests)
-   * 
+   *
    * @returns Résultat du cleanup
    */
   async forceCleanup() {

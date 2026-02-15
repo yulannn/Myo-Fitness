@@ -5,6 +5,8 @@ import { useClientDetail } from '../../api/hooks/useCoaching';
 import VolumeChart from '../../components/coach/VolumeChart';
 import SessionHistory from '../../components/coach/SessionHistory';
 import SessionDetailModal from '../../components/coach/SessionDetailModal';
+import CoachProgramManager from '../../components/coach/CoachProgramManager';
+import ModificationHistory from '../../components/coach/ModificationHistory';
 import {
   ArrowLeftIcon,
   AcademicCapIcon,
@@ -129,23 +131,15 @@ export default function ClientDetailPage() {
         </div>
       )}
 
-      {/* ── Active Programme ──────────────────────────────────── */}
+      {/* ── Active Programme & History ────────────────────────── */}
       {activeProgram && (
-        <div className="mb-8 bg-surface border border-border-subtle rounded-2xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold mb-1">Programme actif</p>
-              <h3 className="text-lg font-bold text-white">{activeProgram.name}</h3>
-            </div>
-            <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-500/20 uppercase tracking-wider">
-              Actif
-            </span>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+          <div className="xl:col-span-2">
+            <CoachProgramManager clientId={parseInt(clientId!)} program={activeProgram} />
           </div>
-          {activeProgram.startDate && (
-            <p className="text-xs text-text-secondary mt-2">
-              Depuis le {new Date(activeProgram.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-          )}
+          <div className="xl:col-span-1">
+            <ModificationHistory programId={activeProgram.id} />
+          </div>
         </div>
       )}
 

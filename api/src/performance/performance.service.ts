@@ -6,7 +6,7 @@ import { error } from 'console';
 
 @Injectable()
 export class PerformanceService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
   async create(createPerformanceDto: CreatePerformanceDto) {
     const exerciceSession = await this.prisma.exerciceSession.findUnique({
       where: { id: createPerformanceDto.exerciceSessionId },
@@ -21,9 +21,11 @@ export class PerformanceService {
       orderBy: { set_index: 'desc' },
     });
 
-
-    let success = true
-    if (createPerformanceDto.reps_effectuees && createPerformanceDto.reps_effectuees < exerciceSession.reps) {
+    let success = true;
+    if (
+      createPerformanceDto.reps_effectuees &&
+      createPerformanceDto.reps_effectuees < exerciceSession.reps
+    ) {
       success = false;
     }
 
@@ -45,13 +47,12 @@ export class PerformanceService {
     return performance;
   }
 
-
   async findOne(id: number) {
     const performance = await this.prisma.setPerformance.findUnique({
-      where: { id_set: id }
+      where: { id_set: id },
     });
     if (!performance) {
-      throw new error(`Performance #${id} not found`)
+      throw new error(`Performance #${id} not found`);
     }
   }
 
@@ -91,12 +92,14 @@ export class PerformanceService {
     const updated = await this.prisma.setPerformance.update({
       where: { id_set: id },
       data: {
-        reps_effectuees: updatePerformanceDto.reps_effectuees ?? existing.reps_effectuees,
+        reps_effectuees:
+          updatePerformanceDto.reps_effectuees ?? existing.reps_effectuees,
         weight: updatePerformanceDto.weight ?? existing.weight,
         rpe: updatePerformanceDto.rpe ?? existing.rpe,
         success:
           updatePerformanceDto.reps_effectuees !== undefined
-            ? updatePerformanceDto.reps_effectuees > (existing.reps_prevues ?? 0)
+            ? updatePerformanceDto.reps_effectuees >
+              (existing.reps_prevues ?? 0)
             : existing.success,
       },
     });

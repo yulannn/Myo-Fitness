@@ -7,7 +7,8 @@ import {
     CalendarIcon,
     ChevronDownIcon,
     ChevronUpIcon,
-    StarIcon
+    StarIcon,
+    WrenchScrewdriverIcon
 } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -105,6 +106,7 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
             case 'PROGRAM_COMPLETED': return <CalendarIcon className="h-6 w-6 text-purple-500" />;
             case 'STREAK_REACHED': return <FireIcon className="h-6 w-6 text-orange-500" />;
             case 'BADGE_UNLOCKED': return <StarIcon className="h-6 w-6 text-indigo-400" />;
+            case 'COACH_MODIFICATION': return <WrenchScrewdriverIcon className="h-6 w-6 text-[#94fbdd]" />;
             default: return <CheckCircleIcon className="h-6 w-6 text-gray-500" />;
         }
     };
@@ -145,6 +147,17 @@ export default function ActivityItem({ activity, onReact }: { activity: any, onR
                                 </div>
                             </div>
                         )}
+                    </div>
+                );
+            case 'COACH_MODIFICATION':
+                return (
+                    <div>
+                        <p className="text-sm text-gray-300">
+                            <span className="font-bold text-white">Votre coach {data.coachName}</span> a mis à jour votre programme
+                        </p>
+                        <p className="text-xs text-[#94fbdd] font-medium mt-1 italic">
+                            "{data.description}"
+                        </p>
                     </div>
                 );
             default:

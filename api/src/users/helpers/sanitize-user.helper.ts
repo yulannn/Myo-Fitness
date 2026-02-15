@@ -3,7 +3,15 @@ import { UserEntity } from '../entities/users.entity';
 /**
  * 🔒 Type pour un utilisateur "safe" sans données sensibles
  */
-export type SafeUser = Omit<UserEntity, 'password' | 'refreshToken' | 'resetPasswordCode' | 'resetPasswordExpires' | 'emailVerificationCode' | 'emailVerificationExpires'>;
+export type SafeUser = Omit<
+  UserEntity,
+  | 'password'
+  | 'refreshToken'
+  | 'resetPasswordCode'
+  | 'resetPasswordExpires'
+  | 'emailVerificationCode'
+  | 'emailVerificationExpires'
+>;
 
 /**
  * 🧹 Nettoie un objet User pour retirer toutes les données sensibles
