@@ -6,6 +6,7 @@ export function useExercicesMinimal() {
   return useQuery<ExerciceMinimal[], unknown>({
     queryKey: ['exercices', 'minimal'],
     queryFn: () => ExerciceFetchDataService.getExercicesMinimalByUser(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

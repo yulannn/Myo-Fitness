@@ -66,15 +66,9 @@ export const SelectExerciseModal: React.FC<SelectExerciseModalProps> = ({
   const processedExercises = useMemo(() => {
     let filtered = availableExercises;
 
-    // Debug logging
-    console.log('🔍 SelectExerciseModal - Available exercises:', availableExercises);
-    console.log('🔍 SelectExerciseModal - Show my exercises only:', showMyExercisesOnly);
-
     // Filter by "My Exercises Only"
     if (showMyExercisesOnly) {
       filtered = filtered.filter(ex => ex.isDefault === false);
-      console.log('🔍 SelectExerciseModal - After "My Exercises" filter:', filtered);
-      console.log('🔍 SelectExerciseModal - Sample exercise isDefault value:', availableExercises[0]?.isDefault);
     }
 
     // Search filter - normalized (accent-insensitive)

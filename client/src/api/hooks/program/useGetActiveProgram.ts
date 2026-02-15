@@ -10,6 +10,7 @@ export function useActiveProgram() {
   return useQuery<Program | null, unknown>({
     queryKey: ['program', 'active'],
     queryFn: () => ProgramFetchDataService.getActiveProgram(),
+    staleTime: 60 * 1000, // 1 minute
   });
 }
 

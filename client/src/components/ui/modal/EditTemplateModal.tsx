@@ -50,10 +50,7 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
 
   // Initialize from template
   useEffect(() => {
-    console.log('Template reçu:', template);
-
     if (template?.exercises) {
-      console.log('Premier exercice brut:', template.exercises[0]);
 
       const mappedExercises: ExerciseRow[] = template.exercises.map((ex: any, index: number) => {
         const isCardio = ex.exercise?.type === 'CARDIO';
@@ -69,7 +66,6 @@ export const EditTemplateModal = ({ isOpen, onClose, template, availableExercise
         };
       });
 
-      console.log('Exercices après mapping:', mappedExercises);
       setExercises(mappedExercises);
     }
     setTemplateName(template?.name || '');
