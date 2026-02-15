@@ -61,6 +61,12 @@ export const CoachingService = {
     const { data } = await api.post(`/coaching/modifications/${modificationId}/revert`);
     return data;
   },
+
+  /** Vider l'historique des modifications */
+  clearProgramModifications: async (programId: number): Promise<any> => {
+    const { data } = await api.delete(`/coaching/programs/${programId}/modifications`);
+    return data;
+  },
 };
 
 export default CoachingService;

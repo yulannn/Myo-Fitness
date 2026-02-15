@@ -209,6 +209,20 @@ export class CoachingController {
     );
   }
 
+  @Delete('programs/:programId/modifications')
+  @ApiOperation({
+    summary: "Vider l'historique des modifications d'un programme",
+  })
+  async clearProgramModifications(
+    @Request() req,
+    @Param('programId', ParseIntPipe) programId: number,
+  ) {
+    return this.coachingService.clearProgramModifications(
+      req.user.userId,
+      programId,
+    );
+  }
+
   @Post('modifications/:modificationId/revert')
   @ApiOperation({ summary: 'Annuler une modification (Revert)' })
   async revertModification(

@@ -734,6 +734,30 @@ export class CoachingService {
   }
 
   /**
+   * Vider l'historique des modifications d'un programme
+   */
+  async clearProgramModifications(userId: number, programId: number) {
+    const program = await this.prisma.trainingProgram.findUnique({
+      where: { id: programId },
+      include: { fitnessProfile: true },
+    });
+
+    if (!program) throw new NotFoundException('Programme introuvable.');
+
+    // Sécurité: Proprio ou son coach (seul le coach peut généralement vider l'historique s'il gère le programme)
+    if (program.fitnessProfile.userId !== userId) {
+      await this.assertCoachClientRelationship(
+        userId,
+        program.fitnessProfile.userId,
+      );
+    }
+
+    return this.prisma.programModification.deleteMany({
+      where: { programId },
+    });
+  }
+
+  /**
    * Annuler une modification (Revert)
    */
   async revertModification(userId: number, modificationId: number) {
